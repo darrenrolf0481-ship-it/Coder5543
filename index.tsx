@@ -1,5 +1,6 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import './index.css';
 import { createRoot } from 'react-dom/client';
 import { 
   Terminal as TerminalIcon, 
@@ -64,14 +65,27 @@ import {
   Lock,
   Unlock,
   Users,
-  Save
+  Save,
+  Search,
+  SearchCode,
+  ShieldAlert,
+  Copy,
+  MousePointer2,
+  Info,
+  Box,
+  Palette,
+  Layout,
+  ExternalLink,
+  RefreshCw,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type } from "@google/genai";
 import Editor from '@monaco-editor/react';
 
 // Initialize AI
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // LocalStorage Key
 const STORAGE_KEY = 'crimson_os_prefs';
@@ -157,11 +171,76 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'terminal' | 'studio' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron'>('toolneuron');
   
   // ToolNeuron State
-  const [tnModule, setTnModule] = useState<'chat' | 'vision' | 'knowledge' | 'vault' | 'swarm' | 'help'>('chat');
+  const [tnModule, setTnModule] = useState<'chat' | 'vision' | 'knowledge' | 'vault' | 'swarm' | 'help' | 'debug'>('chat');
   const [tnKnowledgePacks, setTnKnowledgePacks] = useState([
     { id: 1, name: 'Medical_Core_v2', size: '1.2GB', status: 'indexed' },
     { id: 2, name: 'Legal_Archive_2025', size: '850MB', status: 'indexed' }
   ]);
+
+  const [debugAnalysis, setDebugAnalysis] = useState<{
+    static: { status: 'idle' | 'running' | 'done', issues: { type: 'error' | 'warning' | 'info', message: string, line?: number }[] },
+    tracing: { status: 'idle' | 'running' | 'done', logs: string[] },
+    refactoring: { status: 'idle' | 'running' | 'done', suggestions: string[] }
+  }>({
+    static: { status: 'idle', issues: [] },
+    tracing: { status: 'idle', logs: [] },
+    refactoring: { status: 'idle', suggestions: [] }
+  });
+
+  const runStaticAnalysis = () => {
+    setDebugAnalysis(prev => ({ ...prev, static: { ...prev.static, status: 'running' } }));
+    setTimeout(() => {
+      setDebugAnalysis(prev => ({
+        ...prev,
+        static: {
+          status: 'done',
+          issues: [
+            { type: 'error', message: 'Unused variable "neural_link_v3" detected in core.py', line: 12 },
+            { type: 'warning', message: 'Potential memory leak in async trace loop', line: 45 },
+            { type: 'info', message: 'Optimization possible: Use list comprehension for neural vector mapping', line: 89 }
+          ]
+        }
+      }));
+    }, 2000);
+  };
+
+  const runDynamicTracing = () => {
+    setDebugAnalysis(prev => ({ ...prev, tracing: { ...prev.tracing, status: 'running', logs: [] } }));
+    const logs = [
+      '[TRACE] Initializing Neural Link...',
+      '[TRACE] Mapping memory address 0xFA32...',
+      '[TRACE] Injecting personality vectors...',
+      '[TRACE] Monitoring thread 0x442...',
+      '[TRACE] Captured exception in sub-module B',
+      '[TRACE] Tracing complete. 0 errors, 1 warning.'
+    ];
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < logs.length) {
+        setDebugAnalysis(prev => ({ ...prev, tracing: { ...prev.tracing, logs: [...prev.tracing.logs, logs[i]] } }));
+        i++;
+      } else {
+        clearInterval(interval);
+        setDebugAnalysis(prev => ({ ...prev, tracing: { ...prev.tracing, status: 'done' } }));
+      }
+    }, 500);
+  };
+
+  const getRefactoringSuggestions = async () => {
+    setDebugAnalysis(prev => ({ ...prev, refactoring: { ...prev.refactoring, status: 'running' } }));
+    try {
+      const response = await generateAIResponse(
+        `As the ${activePersonality.name} personality, provide 3 short, high-impact code refactoring suggestions for a futuristic neural-linked application. Format as a simple list.`,
+        activePersonality.instruction,
+        { modelType: 'fast' }
+      );
+      const suggestions = response?.split('\n').filter(s => s.trim()) || [];
+      setDebugAnalysis(prev => ({ ...prev, refactoring: { status: 'done', suggestions } }));
+    } catch (error) {
+      console.error(error);
+      setDebugAnalysis(prev => ({ ...prev, refactoring: { status: 'done', suggestions: ['Error retrieving suggestions. Neural link unstable.'] } }));
+    }
+  };
 
   // --- SWARM STATE ---
   const [swarmAnxiety, setSwarmAnxiety] = useState(0.12);
@@ -194,10 +273,25 @@ const App: React.FC = () => {
   const [editorMode, setEditorMode] = useState<'code' | 'preview' | 'debug' | 'git' | 'settings'>('code');
   const [isRunningCode, setIsRunningCode] = useState(false);
   const [isEditorAssistantOpen, setIsEditorAssistantOpen] = useState(false);
+  const [isPairProgrammerActive, setIsPairProgrammerActive] = useState(false);
+  const [isMobileFileTreeOpen, setIsMobileFileTreeOpen] = useState(false);
   const [editorAssistantInput, setEditorAssistantInput] = useState('');
   const [editorAssistantMessages, setEditorAssistantMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
   const [cursorLine, setCursorLine] = useState(1);
   const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState('');
+  const [creatingInId, setCreatingInId] = useState<{ parentId: string | null, type: 'file' | 'folder' } | null>(null);
+  const [isInspectorActive, setIsInspectorActive] = useState(false);
+  const [inspectedElement, setInspectedElement] = useState<{
+    tagName: string;
+    className: string;
+    id: string;
+    rect: { top: number; left: number; width: number; height: number } | null;
+    styles: Record<string, string>;
+  } | null>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const inspectedElementRef = useRef<HTMLElement | null>(null);
   const editorRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
 
@@ -236,11 +330,50 @@ const App: React.FC = () => {
   const [projectSettings, setProjectSettings] = useState({
     buildPath: './dist',
     compilerFlags: '-O3 -march=native',
+    ollamaUrl: 'http://localhost:11434',
     envVariables: [
       { key: 'NEURAL_MODE', value: 'production' },
       { key: 'BRAIN_CORE_COUNT', value: '128' }
     ]
   });
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  
+  const validateProjectSettings = (settings: typeof projectSettings) => {
+    const errors: Record<string, string> = {};
+    
+    // Build Path Validation
+    if (!settings.buildPath.trim()) {
+      errors.buildPath = 'Build path is required';
+    } else if (!/^[\.\/a-zA-Z0-9_-]+$/.test(settings.buildPath)) {
+      errors.buildPath = 'Invalid path format (use alphanumeric, dots, slashes, underscores, hyphens)';
+    }
+
+    // Ollama URL Validation
+    if (settings.ollamaUrl && !/^https?:\/\/.+/.test(settings.ollamaUrl)) {
+      errors.ollamaUrl = 'Invalid URL format (must start with http:// or https://)';
+    }
+
+    // Compiler Flags Validation
+    if (!settings.compilerFlags.trim()) {
+      errors.compilerFlags = 'Compiler flags are required';
+    }
+
+    // Env Variables Validation
+    settings.envVariables.forEach((env, idx) => {
+      if (!env.key.trim()) {
+        errors[`env_key_${idx}`] = 'Key is required';
+      } else if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(env.key)) {
+        errors[`env_key_${idx}`] = 'Invalid key format (must start with letter/underscore and contain only alphanumeric/underscore)';
+      }
+      
+      if (!env.value.trim()) {
+        errors[`env_value_${idx}`] = 'Value is required';
+      }
+    });
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
   
   // AI Studio / SD State
   const [negativePrompt, setNegativePrompt] = useState('blurry, low resolution, artifacts, mutated limbs, bad anatomy');
@@ -253,6 +386,62 @@ const App: React.FC = () => {
   });
 
   // Personalities
+  const [aiProvider, setAiProvider] = useState<'google' | 'grok' | 'ollama'>('google');
+  const [aiModel, setAiModel] = useState<string>('gemini-3.1-pro-preview');
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [ollamaStatus, setOllamaStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+
+  const refreshOllamaModels = useCallback(async (silent = false) => {
+    setOllamaStatus('connecting');
+    const url = projectSettings.ollamaUrl || 'http://localhost:11434';
+    
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const res = await fetch(`${url}/api/tags`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      
+      if (data.models) {
+        const models = data.models.map((m: any) => m.name);
+        setOllamaModels(models);
+        setOllamaStatus('connected');
+        if (models.length > 0 && !models.includes(aiModel)) {
+          setAiModel(models[0]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch Ollama models:", err);
+      setOllamaModels([]);
+      setOllamaStatus('error');
+      
+      if (!silent) {
+        setChatMessages(prev => [{
+          role: 'ai',
+          text: `⚠️ **Ollama Connection Error**: Could not connect to \`${url}\`. 
+          
+**Common Fixes:**
+1. Ensure Ollama is running.
+2. Set the environment variable: \`OLLAMA_ORIGINS="*" ollama serve\` to allow browser access.
+3. Check the URL in **Project Config**.`,
+          timestamp: Date.now()
+        }, ...prev]);
+      }
+    }
+  }, [aiProvider, projectSettings.ollamaUrl, aiModel]);
+
+  // --- OLLAMA MODELS FETCH ---
+  useEffect(() => {
+    if (aiProvider === 'ollama') {
+      refreshOllamaModels(true);
+    }
+  }, [aiProvider, projectSettings.ollamaUrl]);
+
+  const [grokApiKey, setGrokApiKey] = useState<string>('');
+
   const [personalities, setPersonalities] = useState([
     { id: 1, name: 'Architect', instruction: 'You are a cold, logical, and highly efficient system architect. You provide precise terminal directives.', active: true, suggestions: ['sys_audit', 'net_scan', 'core_reboot', 'status_check'] },
     { id: 2, name: 'Claude-Code', instruction: 'You are a world-class coding assistant with deep expertise in Python, C++, Rust, and Java. You focus on clean, efficient, and secure code.', active: false, suggestions: ['analyze_refactor', 'debug_trace', 'optimize_neural', 'lint_check'] },
@@ -276,6 +465,7 @@ const App: React.FC = () => {
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', text: string, type?: 'text' | 'image', url?: string, timestamp: number }[]>([
     { role: 'ai', text: 'Neural Interface Active. Stable Diffusion engine synchronized with local hardware.', timestamp: Date.now() }
   ]);
+  const [chatSummary, setChatSummary] = useState<string>('');
   const [studioInput, setStudioInput] = useState('');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [studioRefImage, setStudioRefImage] = useState<{ data: string, mimeType: string } | null>(null);
@@ -391,6 +581,9 @@ const App: React.FC = () => {
         if (parsed.negativePrompt) setNegativePrompt(parsed.negativePrompt);
         if (parsed.sdParams) setSdParams(parsed.sdParams);
         if (parsed.personalities) setPersonalities(parsed.personalities);
+        if (parsed.aiProvider) setAiProvider(parsed.aiProvider);
+        if (parsed.aiModel) setAiModel(parsed.aiModel);
+        if (parsed.grokApiKey) setGrokApiKey(parsed.grokApiKey);
         if (parsed.projectFiles) setProjectFiles(parsed.projectFiles);
         if (parsed.gitRepo) setGitRepo(parsed.gitRepo);
         if (parsed.projectSettings) setProjectSettings(parsed.projectSettings);
@@ -415,13 +608,16 @@ const App: React.FC = () => {
       negativePrompt,
       sdParams,
       personalities,
+      aiProvider,
+      aiModel,
+      grokApiKey,
       projectFiles,
       gitRepo,
       projectSettings,
       activeFileId
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-  }, [activeTab, negativePrompt, sdParams, personalities, projectFiles, gitRepo, projectSettings, activeFileId]);
+  }, [activeTab, negativePrompt, sdParams, personalities, aiProvider, aiModel, grokApiKey, projectFiles, gitRepo, projectSettings, activeFileId]);
 
   useEffect(() => {
     if (activeTab === 'terminal') triggerTerminalGreeting();
@@ -434,6 +630,54 @@ const App: React.FC = () => {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isAiProcessing]);
+
+  useEffect(() => {
+    if (chatMessages.length > 15 && chatMessages.length % 5 === 0) {
+      const olderMessages = chatMessages.slice(0, -10);
+      const summarize = async () => {
+        try {
+          const response = await generateAIResponse(
+            `Summarize the following conversation history concisely. ${chatSummary ? `Incorporate this previous summary: ${chatSummary}` : ''}\n\nNew messages to summarize:\n${olderMessages.map(m => `${m.role}: ${m.text}`).join('\n')}`,
+            "You are a memory management specialist. Provide a concise, high-impact summary of the conversation history for a futuristic AI hub. Focus on user intent and key decisions.",
+            { modelType: 'fast' }
+          );
+          if (response) setChatSummary(response);
+        } catch (err) {
+          console.error("Neural summary failed", err);
+        }
+      };
+      summarize();
+    }
+  }, [chatMessages.length]);
+
+  // --- AI PAIR PROGRAMMER LOGIC ---
+  useEffect(() => {
+    if (!isPairProgrammerActive || !editorContent.trim()) return;
+
+    const debounceTimer = setTimeout(async () => {
+      try {
+        const response = await generateAIResponse(
+          `Language: ${editorLanguage}\nCode:\n${editorContent}\n\nProvide a very brief, high-impact suggestion for improvement or an alternative implementation for the current code. Focus on the most recent changes or overall structure. Keep it under 3 sentences.`,
+          "You are an elite AI Pair Programmer. Your goal is to provide real-time, actionable, and concise code improvements. If the code is already optimal, say 'System optimized. No immediate improvements detected.' Start your response with 'PAIR_PROGRAMMER_SUGGESTION:'",
+          { modelType: 'smart' }
+        );
+
+        const suggestion = response;
+        if (suggestion && !suggestion.includes('System optimized')) {
+          setEditorAssistantMessages(prev => {
+            // Avoid duplicate suggestions if they are very similar
+            if (prev.length > 0 && prev[prev.length - 1].text === suggestion) return prev;
+            return [...prev, { role: 'ai', text: suggestion }];
+          });
+          setIsEditorAssistantOpen(true);
+        }
+      } catch (err) {
+        console.error("Pair Programmer link failed", err);
+      }
+    }, 10000); // 10 second debounce to avoid excessive API calls
+
+    return () => clearTimeout(debounceTimer);
+  }, [editorContent, isPairProgrammerActive, editorLanguage]);
 
   // --- AUTOSAVE LOGIC ---
   useEffect(() => {
@@ -502,13 +746,78 @@ const App: React.FC = () => {
     setIsAiProcessing(true);
     try {
       await new Promise(r => setTimeout(r, 600));
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Context: SD Android Manager. Dir: ${currentDir}. Personality: ${activePersonality.instruction}`,
-        config: { systemInstruction: "Suggest one command for SD model management or environment check in a futuristic sci-fi terminal style." }
-      });
-      setTerminalOutput(prev => [...prev, `COMMAND_INTEL: ${response.text?.trim() || "python3 node_status.py --verbose"}`]);
+      const response = await generateAIResponse(
+        `Context: SD Android Manager. Dir: ${currentDir}. Personality: ${activePersonality.instruction}`,
+        "Suggest one command for SD model management or environment check in a futuristic sci-fi terminal style.",
+        { modelType: 'fast' }
+      );
+      setTerminalOutput(prev => [...prev, `COMMAND_INTEL: ${response?.trim() || "python3 node_status.py --verbose"}`]);
     } catch (err) {} finally { setIsAiProcessing(false); }
+  };
+
+  const generateAIResponse = async (
+    prompt: string | any[],
+    systemInstruction: string,
+    options?: { modelType?: 'fast' | 'smart', json?: boolean, responseSchema?: any }
+  ) => {
+    const isFast = options?.modelType === 'fast';
+    const isJson = options?.json;
+
+    if (aiProvider === 'google') {
+      const model = aiModel || (isFast ? 'gemini-3-flash-preview' : 'gemini-3.1-pro-preview');
+      const config: any = { systemInstruction };
+      if (isJson) {
+        config.responseMimeType = "application/json";
+        if (options?.responseSchema) {
+          config.responseSchema = options.responseSchema;
+        }
+      }
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config
+      });
+      return response.text;
+    } else if (aiProvider === 'grok') {
+      const model = aiModel || 'grok-beta';
+      const messages = [
+        { role: 'system', content: systemInstruction },
+        { role: 'user', content: typeof prompt === 'string' ? prompt : JSON.stringify(prompt) }
+      ];
+      const res = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${grokApiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          response_format: isJson ? { type: "json_object" } : undefined
+        })
+      });
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content;
+    } else if (aiProvider === 'ollama') {
+      const url = projectSettings.ollamaUrl || 'http://localhost:11434';
+      const model = aiModel || (ollamaModels.length > 0 ? ollamaModels[0] : 'llama3');
+      const res = await fetch(`${url}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: systemInstruction },
+            { role: 'user', content: typeof prompt === 'string' ? prompt : JSON.stringify(prompt) }
+          ],
+          stream: false,
+          format: isJson ? 'json' : undefined
+        })
+      });
+      const data = await res.json();
+      return data.message?.content;
+    }
+    return '';
   };
 
   const handleRunCode = async () => {
@@ -520,15 +829,13 @@ const App: React.FC = () => {
       // Simulation of code execution
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: `Execute this ${editorLanguage} code in a simulated environment and provide the output. If it's the AI brain, simulate its initialization. If it's UI, describe its rendering. Code:\n${editorContent}`,
-        config: {
-          systemInstruction: "You are the Crimson OS Neural Runtime. Simulate the execution of the provided code. Output should look like a terminal log. Be technical and realistic."
-        }
-      });
+      const response = await generateAIResponse(
+        `Execute this ${editorLanguage} code in a simulated environment and provide the output. If it's the AI brain, simulate its initialization. If it's UI, describe its rendering. Code:\n${editorContent}`,
+        "You are the Crimson OS Neural Runtime. Simulate the execution of the provided code. Output should look like a terminal log. Be technical and realistic.",
+        { modelType: 'smart' }
+      );
       
-      setEditorOutput(response.text || "[ERROR] Runtime execution failed.");
+      setEditorOutput(response || "[ERROR] Runtime execution failed.");
     } catch (err) {
       setEditorOutput("[CRITICAL] Neural runtime bridge failure.");
     } finally {
@@ -551,12 +858,12 @@ const App: React.FC = () => {
 
     setIsAiProcessing(true);
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: `Refactor this ${editorLanguage} code for better performance, readability, and structural integrity. Return a JSON object with 'refactoredCode' and 'explanation' fields.\n\nCode:\n${codeToRefactor}`,
-        config: {
-          systemInstruction: "You are a world-class software architect. You refactor code to be production-ready. Always return valid JSON.",
-          responseMimeType: "application/json",
+      const response = await generateAIResponse(
+        `Refactor this ${editorLanguage} code for better performance, readability, and structural integrity. Return a JSON object with 'refactoredCode' and 'explanation' fields.\n\nCode:\n${codeToRefactor}`,
+        "You are a world-class software architect. You refactor code to be production-ready. Always return valid JSON.",
+        {
+          modelType: 'smart',
+          json: true,
           responseSchema: {
             type: Type.OBJECT,
             properties: {
@@ -566,9 +873,9 @@ const App: React.FC = () => {
             required: ["refactoredCode", "explanation"]
           }
         }
-      });
+      );
       
-      const result = JSON.parse(response.text);
+      const result = JSON.parse(response || '{}');
       
       setEditorAssistantMessages(prev => [...prev, { 
         role: 'ai', 
@@ -617,12 +924,12 @@ const App: React.FC = () => {
 
     setIsAiProcessing(true);
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: `Generate comprehensive documentation (docstrings, JSDoc, or comments) for this ${editorLanguage} code. Return a JSON object with 'documentedCode' and 'summary' fields.\n\nCode:\n${codeToDocument}`,
-        config: {
-          systemInstruction: "You are a world-class documentation expert. You write clear, concise, and helpful documentation. Always return valid JSON.",
-          responseMimeType: "application/json",
+      const response = await generateAIResponse(
+        `Generate comprehensive documentation (docstrings, JSDoc, or comments) for this ${editorLanguage} code. Focus on explaining the logic, parameters, and return values. Return a JSON object with 'documentedCode' and 'summary' fields.\n\nCode:\n${codeToDocument}`,
+        `You are a world-class documentation expert. Generate clear, concise, and helpful documentation for the provided ${editorLanguage} code. Always return valid JSON.`,
+        {
+          modelType: 'smart',
+          json: true,
           responseSchema: {
             type: Type.OBJECT,
             properties: {
@@ -632,13 +939,13 @@ const App: React.FC = () => {
             required: ["documentedCode", "summary"]
           }
         }
-      });
+      );
       
-      const result = JSON.parse(response.text);
+      const result = JSON.parse(response || '{}');
       
       setEditorAssistantMessages(prev => [...prev, { 
         role: 'ai', 
-        text: `DOCUMENTATION_GENERATED:\n${result.summary}\n\n${result.documentedCode}`,
+        text: `DOCUMENTATION_GENERATED: Neural analysis complete. Comprehensive documentation has been synthesized for the ${isSelection ? 'selected block' : 'entire file'}.\n\nSUMMARY:\n${result.summary}`,
         metadata: {
           documentedCode: result.documentedCode,
           isSelection,
@@ -668,32 +975,82 @@ const App: React.FC = () => {
     setEditorOutput(prev => prev + `[SYSTEM] Documentation applied successfully.\n`);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      const fileName = file.name;
-      const extension = fileName.split('.').pop() || 'text';
-      
-      const newFile = {
-        id: `upload_${Date.now()}`,
-        name: fileName,
-        type: 'file',
-        parentId: 'root',
-        language: extension,
-        content: content
+    const newFiles: any[] = [];
+    const folderCache: Record<string, string> = {};
+
+    const getOrCreateFolder = (path: string, parentId: string | null): string => {
+      const fullPath = parentId ? `${parentId}/${path}` : path;
+      if (folderCache[fullPath]) return folderCache[fullPath];
+
+      const existingFolder = projectFiles.find(f => f.name === path && f.parentId === parentId && f.type === 'folder');
+      if (existingFolder) {
+        folderCache[fullPath] = existingFolder.id;
+        return existingFolder.id;
+      }
+
+      const batchFolder = newFiles.find(f => f.name === path && f.parentId === parentId && f.type === 'folder');
+      if (batchFolder) {
+        folderCache[fullPath] = batchFolder.id;
+        return batchFolder.id;
+      }
+
+      const newFolderId = `folder_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const newFolder = {
+        id: newFolderId,
+        name: path,
+        type: 'folder',
+        parentId: parentId,
+        isOpen: true
       };
-
-      setProjectFiles(prev => [...prev, newFile]);
-      setActiveFileId(newFile.id);
-      setEditorContent(content);
-      setEditorLanguage(extension);
-      setEditorOutput(prev => prev + `[SYSTEM] File "${fileName}" uploaded and synchronized.\n`);
+      newFiles.push(newFolder);
+      folderCache[fullPath] = newFolderId;
+      return newFolderId;
     };
-    reader.readAsText(file);
+
+    for (const file of Array.from(files) as File[]) {
+      try {
+        const content = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (event) => resolve(event.target?.result as string);
+          reader.readAsText(file);
+        });
+
+        const fileName = file.name;
+        const extension = fileName.split('.').pop() || 'text';
+        const relativePath = (file as any).webkitRelativePath || fileName;
+        const pathParts = relativePath.split('/');
+        
+        let currentParentId: string | null = 'root';
+        
+        if (pathParts.length > 1) {
+          for (let i = 0; i < pathParts.length - 1; i++) {
+            currentParentId = getOrCreateFolder(pathParts[i], currentParentId);
+          }
+        }
+
+        const newFile = {
+          id: `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          name: fileName,
+          type: 'file',
+          parentId: currentParentId,
+          language: extension,
+          content: content
+        };
+        newFiles.push(newFile);
+      } catch (err) {
+        console.error("File upload error:", err);
+      }
+    }
+
+    if (newFiles.length > 0) {
+      setProjectFiles(prev => [...prev, ...newFiles]);
+      setEditorOutput(prev => prev + `[SYSTEM] ${newFiles.length} items uploaded and synchronized.\n`);
+    }
+    e.target.value = '';
   };
 
   const handleFullProjectAnalysis = async () => {
@@ -704,17 +1061,15 @@ const App: React.FC = () => {
         .map(f => `File: ${f.name}\nContent:\n${f.content}`)
         .join('\n\n---\n\n');
 
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: `Analyze this entire project. Provide a comprehensive overview of the architecture, potential bugs, and optimization strategies.\n\nProject Context:\n${projectContext}`,
-        config: {
-          systemInstruction: "You are a world-class software architect. Provide a deep, holistic analysis of the entire project. Focus on inter-file dependencies and overall design patterns."
-        }
-      });
+      const response = await generateAIResponse(
+        `Analyze this entire project. Provide a comprehensive overview of the architecture, potential bugs, and optimization strategies.\n\nProject Context:\n${projectContext}`,
+        "You are a world-class software architect. Provide a deep, holistic analysis of the entire project. Focus on inter-file dependencies and overall design patterns.",
+        { modelType: 'smart' }
+      );
       
       setEditorAssistantMessages(prev => [...prev, { 
         role: 'ai', 
-        text: `FULL_PROJECT_ANALYSIS:\n${response.text}`
+        text: `FULL_PROJECT_ANALYSIS:\n${response}`
       }]);
       setIsEditorAssistantOpen(true);
     } catch (err) {
@@ -724,10 +1079,90 @@ const App: React.FC = () => {
     }
   };
 
+  const handleDeepProjectAudit = async () => {
+    setIsAiProcessing(true);
+    try {
+      const projectContext = projectFiles
+        .filter(f => f.type === 'file')
+        .map(f => `File: ${f.name}\nContent:\n${f.content}`)
+        .join('\n\n---\n\n');
+
+      const response = await generateAIResponse(
+        `Perform a deep audit of this project. 
+        Specifically identify:
+        1. Code Redundancies: Duplicate logic, unused variables/functions, or redundant components.
+        2. Security Vulnerabilities: Potential injection points, insecure data handling, or weak authentication patterns.
+        3. Refactoring Opportunities: Suggestions for better modularization, cleaner abstractions, and improved performance.
+        
+        Provide the analysis in a clear, structured format with actionable recommendations.
+
+        Project Context:\n${projectContext}`,
+        "You are a senior security researcher and lead software engineer. Your goal is to find flaws, inefficiencies, and risks in the codebase. Be thorough and critical.",
+        { modelType: 'smart' }
+      );
+      
+      setEditorAssistantMessages(prev => [...prev, { 
+        role: 'ai', 
+        text: `DEEP_PROJECT_AUDIT:\n${response}`
+      }]);
+      setIsEditorAssistantOpen(true);
+      setEditorOutput(prev => prev + "[SYSTEM] Deep project audit complete. Check Neural Assistant for details.\n");
+    } catch (err) {
+      setEditorOutput(prev => prev + "[ERROR] Deep project audit failed.\n");
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  const handleGenerateCode = async () => {
+    const prompt = window.prompt('Describe the code or function you want to generate:');
+    if (!prompt) return;
+
+    setIsAiProcessing(true);
+    setEditorAssistantMessages(prev => [...prev, { role: 'user', text: `Forge request: ${prompt}` }]);
+    setIsEditorAssistantOpen(true);
+
+    try {
+      const response = await generateAIResponse(
+        `Language: ${editorLanguage}\nContext:\n${editorContent}\n\nGenerate code for: ${prompt}`,
+        "You are a master software engineer. Generate high-quality, efficient code based on the user's prompt. Provide ONLY the code snippet without markdown blocks if possible, or wrap it in a clear CODE_FORGE block. Include a brief explanation of how to use it.",
+        { modelType: 'smart' }
+      );
+
+      const generatedText = response || 'Forge failed to materialize code.';
+      const codeMatch = generatedText.match(/```[\s\S]*?```/);
+      const extractedCode = codeMatch ? codeMatch[0].replace(/```[a-z]*\n|```/g, '') : generatedText;
+
+      setEditorAssistantMessages(prev => [...prev, { 
+        role: 'ai', 
+        text: generatedText,
+        metadata: { generatedCode: extractedCode }
+      }]);
+    } catch (err) {
+      setEditorAssistantMessages(prev => [...prev, { role: 'ai', text: 'FORGE_ERROR: Neural materialization failed.' }]);
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  const handleApplyForge = (code: string) => {
+    if (!editorRef.current) return;
+    const selection = editorRef.current.getSelection();
+    
+    editorRef.current.executeEdits('forge', [{
+      range: selection,
+      text: code,
+      forceMoveMarkers: true
+    }]);
+    setEditorOutput(prev => prev + "[SYSTEM] Neural Forge code integrated.\n");
+  };
+
   const handleSaveAnalysis = (analysisText: string) => {
-    const fileName = `analysis_${new Date().getTime()}.md`;
+    const isAudit = analysisText.includes('DEEP_PROJECT_AUDIT');
+    const prefix = isAudit ? 'audit' : 'analysis';
+    const fileName = `${prefix}_${new Date().getTime()}.md`;
     const newFile = {
-      id: `analysis_${Date.now()}`,
+      id: `${prefix}_${Date.now()}`,
       name: fileName,
       type: 'file',
       parentId: 'root',
@@ -739,23 +1174,21 @@ const App: React.FC = () => {
     setActiveFileId(newFile.id);
     setEditorContent(analysisText);
     setEditorLanguage('markdown');
-    setEditorOutput(prev => prev + `[SYSTEM] Analysis saved as "${fileName}".\n`);
+    setEditorOutput(prev => prev + `[SYSTEM] ${isAudit ? 'Audit' : 'Analysis'} saved as "${fileName}".\n`);
   };
 
   const handleExplainCode = async () => {
     setIsAiProcessing(true);
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: `Analyze and explain this ${editorLanguage} code. Suggest optimizations if possible.\n\nCode:\n${editorContent}`,
-        config: {
-          systemInstruction: "You are a senior software engineer. Provide a deep technical analysis of the code. Be concise but thorough."
-        }
-      });
+      const response = await generateAIResponse(
+        `Analyze and explain this ${editorLanguage} code. Suggest optimizations if possible.\n\nCode:\n${editorContent}`,
+        "You are a senior software engineer. Provide a deep technical analysis of the code. Be concise but thorough.",
+        { modelType: 'smart' }
+      );
       
       setEditorAssistantMessages(prev => [...prev, { 
         role: 'ai', 
-        text: `CODE_ANALYSIS:\n${response.text}`
+        text: `CODE_ANALYSIS:\n${response}`
       }]);
       setIsEditorAssistantOpen(true);
     } catch (err) {
@@ -802,19 +1235,17 @@ const App: React.FC = () => {
     
     setIsAiProcessing(true);
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Simulate one step of debugging for this ${editorLanguage} code. 
+      const response = await generateAIResponse(
+        `Simulate one step of debugging for this ${editorLanguage} code. 
         Current line: ${debugState.currentLine}. 
         Breakpoints: ${breakpoints.join(', ')}.
         Current variables: ${JSON.stringify(debugState.variables)}.
         Code:\n${editorContent}`,
-        config: {
-          systemInstruction: "You are the Crimson OS Debugger. Provide the state of variables and the next logical line to execute in JSON format. Schema: { \"nextLine\": number, \"variables\": object, \"output\": string, \"callStack\": string[] }"
-        }
-      });
+        "You are the Crimson OS Debugger. Provide the state of variables and the next logical line to execute in JSON format. Schema: { \"nextLine\": number, \"variables\": object, \"output\": string, \"callStack\": string[] }",
+        { modelType: 'fast', json: true }
+      );
 
-      const text = response.text || '{}';
+      const text = response || '{}';
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       const result = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
       
@@ -854,44 +1285,167 @@ const App: React.FC = () => {
     }
   };
 
-  const createFile = (parentId: string) => {
-    const name = prompt('Enter file name:');
-    if (!name) return;
-    const id = `file_${Date.now()}`;
-    const ext = name.split('.').pop();
-    const langMap: Record<string, string> = { 'py': 'python', 'js': 'javascript', 'ts': 'typescript', 'html': 'html', 'css': 'css', 'rs': 'rust', 'cpp': 'cpp' };
-    setProjectFiles(prev => [...prev, {
-      id,
-      name,
-      type: 'file',
-      parentId,
-      language: langMap[ext || ''] || 'text',
-      content: ''
-    }]);
-    if (gitRepo.initialized) {
-      setGitRepo(prev => ({ ...prev, modified: [...prev.modified, id] }));
+  const handleInspectMouseMove = (e: React.MouseEvent) => {
+    if (!isInspectorActive || !previewContainerRef.current) return;
+
+    const container = previewContainerRef.current;
+    const containerRect = container.getBoundingClientRect();
+
+    // Find the element at the cursor position
+    const element = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement;
+    
+    if (element && container.contains(element) && element !== container) {
+      inspectedElementRef.current = element;
+      const elRect = element.getBoundingClientRect();
+      const styles = window.getComputedStyle(element);
+      
+      setInspectedElement({
+        tagName: element.tagName.toLowerCase(),
+        className: element.className,
+        id: element.id,
+        rect: {
+          top: elRect.top - containerRect.top,
+          left: elRect.left - containerRect.left,
+          width: elRect.width,
+          height: elRect.height
+        },
+        styles: {
+          color: styles.color,
+          backgroundColor: styles.backgroundColor,
+          padding: styles.padding,
+          margin: styles.margin,
+          fontSize: styles.fontSize,
+          fontFamily: styles.fontFamily,
+          display: styles.display,
+          position: styles.position,
+          zIndex: styles.zIndex
+        }
+      });
+    } else {
+      setInspectedElement(null);
     }
   };
 
-  const createFolder = (parentId: string) => {
-    const name = prompt('Enter folder name:');
-    if (!name) return;
-    const id = `folder_${Date.now()}`;
-    setProjectFiles(prev => [...prev, {
-      id,
-      name,
-      type: 'folder',
-      parentId,
-      isOpen: true
-    }]);
+  const handleInspectClick = (e: React.MouseEvent) => {
+    if (!isInspectorActive) return;
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Mark the element for tracking
+    const element = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement;
+    if (element && previewContainerRef.current?.contains(element)) {
+      // Remove previous marks
+      previewContainerRef.current.querySelectorAll('[data-neural-inspect]').forEach(el => {
+        el.removeAttribute('data-neural-inspect');
+      });
+      element.setAttribute('data-neural-inspect', 'true');
+      inspectedElementRef.current = element;
+    }
+
+    setIsInspectorActive(false);
+  };
+
+  const handleStyleChange = (property: string, value: string) => {
+    if (!inspectedElementRef.current || !previewContainerRef.current) return;
+
+    // Apply style directly to DOM for immediate feedback
+    const element = inspectedElementRef.current;
+    (element.style as any)[property] = value;
+
+    // Update state to reflect change in inspector UI
+    setInspectedElement(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        styles: {
+          ...prev.styles,
+          [property]: value
+        }
+      };
+    });
+
+    // Sync back to editor content
+    const contentWrapper = previewContainerRef.current.querySelector('.bg-black\\/40');
+    if (contentWrapper) {
+      // We need to keep the data attribute for now so we can find it after re-render
+      const newContent = contentWrapper.innerHTML;
+      setEditorContent(newContent);
+      
+      // After React re-renders, we'll need to re-find the element
+      setTimeout(() => {
+        const reFoundElement = previewContainerRef.current?.querySelector('[data-neural-inspect]') as HTMLElement;
+        if (reFoundElement) {
+          inspectedElementRef.current = reFoundElement;
+        }
+      }, 0);
+    }
+  };
+
+  const createFile = (parentId: string | null) => {
+    setCreatingInId({ parentId, type: 'file' });
+    setNewName('');
+  };
+
+  const createFolder = (parentId: string | null) => {
+    setCreatingInId({ parentId, type: 'folder' });
+    setNewName('');
   };
 
   const renameItem = (id: string) => {
     const item = projectFiles.find(f => f.id === id);
     if (!item) return;
-    const newName = prompt('Enter new name:', item.name);
-    if (!newName) return;
-    setProjectFiles(prev => prev.map(f => f.id === id ? { ...f, name: newName } : f));
+    setRenamingId(id);
+    setNewName(item.name);
+  };
+
+  const handleConfirmRename = () => {
+    if (!renamingId || !newName.trim()) {
+      setRenamingId(null);
+      setNewName('');
+      return;
+    }
+    setProjectFiles(prev => prev.map(f => f.id === renamingId ? { ...f, name: newName.trim() } : f));
+    setRenamingId(null);
+    setNewName('');
+  };
+
+  const handleConfirmCreate = () => {
+    if (!creatingInId || !newName.trim()) {
+      setCreatingInId(null);
+      setNewName('');
+      return;
+    }
+    const id = `${creatingInId.type}_${Date.now()}`;
+    if (creatingInId.type === 'file') {
+      const ext = newName.split('.').pop();
+      const langMap: Record<string, string> = { 'py': 'python', 'js': 'javascript', 'ts': 'typescript', 'html': 'html', 'css': 'css', 'rs': 'rust', 'cpp': 'cpp' };
+      const newFile = {
+        id,
+        name: newName.trim(),
+        type: 'file',
+        parentId: creatingInId.parentId,
+        language: langMap[ext || ''] || 'text',
+        content: ''
+      };
+      setProjectFiles(prev => [...prev, newFile]);
+      if (gitRepo.initialized) {
+        setGitRepo(prev => ({ ...prev, modified: [...prev.modified, id] }));
+      }
+      setActiveFileId(id);
+      setEditorContent('');
+      setEditorLanguage(newFile.language);
+      setEditorMode(newFile.language === 'html' ? 'preview' : 'code');
+    } else {
+      setProjectFiles(prev => [...prev, {
+        id,
+        name: newName.trim(),
+        type: 'folder',
+        parentId: creatingInId.parentId,
+        isOpen: true
+      }]);
+    }
+    setCreatingInId(null);
+    setNewName('');
   };
 
   const deleteItem = (id: string) => {
@@ -943,9 +1497,8 @@ const App: React.FC = () => {
 
     setIsAiProcessing(true);
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: `Analyze and refactor this ${editorLanguage} code. 
+      const response = await generateAIResponse(
+        `Analyze and refactor this ${editorLanguage} code. 
 The debugger is currently at line ${debugState.currentLine}.
 Current variables in scope: ${JSON.stringify(debugState.variables)}.
 Current call stack: ${debugState.callStack.join(' -> ')}.
@@ -955,9 +1508,10 @@ ${codeToRefactor}
 
 Provide a refactored version that improves quality, fixes potential issues, or optimizes performance. 
 Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
-        config: {
-          systemInstruction: "You are a world-class software architect and debugger. You provide precise refactorings and clear explanations. Always return valid JSON.",
-          responseMimeType: "application/json",
+        "You are a world-class software architect and debugger. You provide precise refactorings and clear explanations. Always return valid JSON.",
+        {
+          modelType: 'smart',
+          json: true,
           responseSchema: {
             type: Type.OBJECT,
             properties: {
@@ -967,9 +1521,9 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
             required: ["refactoredCode", "explanation"]
           }
         }
-      });
+      );
 
-      const result = JSON.parse(response.text);
+      const result = JSON.parse(response || '{}');
       setDebugRefactorResult(result);
     } catch (error) {
       console.error("Debug refactor failed:", error);
@@ -1144,15 +1698,21 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
     setIsAiProcessing(true);
 
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: `Context: Coding in ${editorLanguage}. Current code:\n${editorContent}\n\nUser request: ${prompt}`,
-        config: {
-          systemInstruction: "You are a world-class coding assistant. Help the user with their code. You can provide code snippets, debug, or explain concepts. Keep responses concise and technical."
-        }
-      });
+      const response = await generateAIResponse(
+        `Context: Coding in ${editorLanguage}. Current code:\n${editorContent}\n\nUser request: ${prompt}`,
+        "You are a world-class coding assistant. Help the user with their code. You can provide code snippets, debug, or explain concepts. Keep responses concise and technical. If you provide a code snippet, wrap it in triple backticks with the language specified.",
+        { modelType: 'smart' }
+      );
       
-      setEditorAssistantMessages(prev => [...prev, { role: 'ai', text: response.text || 'Process finalized.' }]);
+      const text = response || 'Process finalized.';
+      const codeMatch = text.match(/```[\s\S]*?```/);
+      const extractedCode = codeMatch ? codeMatch[0].replace(/```[a-z]*\n|```/g, '') : null;
+
+      setEditorAssistantMessages(prev => [...prev, { 
+        role: 'ai', 
+        text,
+        metadata: extractedCode ? { generatedCode: extractedCode } : undefined
+      }]);
     } catch (err) {
       setEditorAssistantMessages(prev => [...prev, { role: 'ai', text: 'CRITICAL ERROR: Neural link failed.' }]);
     } finally {
@@ -1210,12 +1770,12 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
   const getAiTerminalAssistance = async (prompt: string) => {
     setIsAiProcessing(true);
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt,
-        config: { systemInstruction: `Futuristic crimson terminal specialist. ${activePersonality.instruction}` }
-      });
-      setTerminalOutput(prev => [...prev, `CORE (${activePersonality.name.toUpperCase()}): ${response.text}`]);
+      const response = await generateAIResponse(
+        prompt,
+        `Futuristic crimson terminal specialist. ${activePersonality.instruction}`,
+        { modelType: 'fast' }
+      );
+      setTerminalOutput(prev => [...prev, `CORE (${activePersonality.name.toUpperCase()}): ${response}`]);
     } catch (err) { setTerminalOutput(prev => [...prev, `[ERROR] Neural bridge collapsed.`]); } finally { setIsAiProcessing(false); }
   };
 
@@ -1230,6 +1790,15 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
 
     try {
       const isImageRequest = studioRefImage || /\b(generate|image|draw|create|picture|photo|edit|change|add|sd|stable|render)\b/i.test(prompt);
+      
+      const windowSize = 10;
+      const recentMessages = chatMessages.slice(-windowSize).map(msg => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.text }]
+      }));
+      recentMessages.push({ role: 'user', parts: [{ text: prompt || 'Frame-to-Image Generation Requested' }] });
+
+      const systemInstruction = `${activePersonality.instruction}${chatSummary ? `\n\nCONVERSATION_SUMMARY: ${chatSummary}` : ''}`;
 
       if (isImageRequest) {
         const parts: any[] = [];
@@ -1241,7 +1810,7 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
           contents: [{ parts }],
           config: { 
             imageConfig: { aspectRatio: sdParams.aspectRatio },
-            systemInstruction: `You are the Crimson Engine SD Renderer. Output high-impact futuristic visuals. Active personality: ${activePersonality.instruction}`
+            systemInstruction: `You are the Crimson Engine SD Renderer. Output high-impact futuristic visuals. Active personality: ${systemInstruction}`
           }
         });
 
@@ -1254,12 +1823,12 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
           setChatMessages(prev => [...prev, { role: 'ai', text: `SYNTHESIS_COMPLETE: Manifesting result via ${sdParams.checkpoint}. Node ${Math.floor(Math.random() * 999)} ready.`, type: 'image', url: imageUrl, timestamp: Date.now() }]);
         }
       } else {
-        const response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: prompt,
-          config: { systemInstruction: activePersonality.instruction }
-        });
-        setChatMessages(prev => [...prev, { role: 'ai', text: response.text || 'Process finalized.', timestamp: Date.now() }]);
+        const response = await generateAIResponse(
+          recentMessages.map((m: any) => `${m.role}: ${m.text}`).join('\n'),
+          systemInstruction,
+          { modelType: 'fast' }
+        );
+        setChatMessages(prev => [...prev, { role: 'ai', text: response || 'Process finalized.', timestamp: Date.now() }]);
       }
     } catch (err) { setChatMessages(prev => [...prev, { role: 'ai', text: 'CRITICAL ERROR: Synthesis failure.', timestamp: Date.now() }]); } finally { setIsAiProcessing(false); }
     setStudioRefImage(null);
@@ -1367,42 +1936,95 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
   };
 
   const renderTree = (parentId: string | null, level: number = 0) => {
-    return projectFiles
-      .filter(f => f.parentId === parentId)
-      .map(item => (
-        <div key={item.id} className="flex flex-col">
-          <div 
-            className={`group flex items-center gap-3 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer ${activeFileId === item.id ? 'bg-red-700 text-white shadow-lg' : 'hover:bg-red-950/20 text-red-900 hover:text-red-500'}`}
-            style={{ paddingLeft: `${level * 12 + 12}px` }}
-            onClick={() => item.type === 'folder' ? toggleFolder(item.id) : handleFileSwitch(item.id)}
-          >
-            {item.type === 'folder' ? (
-              <ChevronDown className={`w-3 h-3 transition-transform ${item.isOpen ? '' : '-rotate-90'}`} />
-            ) : (
-              <FileCode className="w-3 h-3" />
-            )}
-            <span className="flex-1 truncate">{item.name}</span>
-            
-            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
-              {item.type === 'folder' && (
-                <>
-                  <button onClick={(e) => { e.stopPropagation(); createFile(item.id); }} title="New File" className="p-1 hover:text-white"><Plus className="w-3 h-3" /></button>
-                  <button onClick={(e) => { e.stopPropagation(); createFolder(item.id); }} title="New Folder" className="p-1 hover:text-white"><Folder className="w-3 h-3" /></button>
-                </>
-              )}
-              <button onClick={(e) => { e.stopPropagation(); renameItem(item.id); }} title="Rename" className="p-1 hover:text-white"><Edit2 className="w-3 h-3" /></button>
-              <button onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }} title="Delete" className="p-1 text-red-600 hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
+    const items = projectFiles.filter(f => f.parentId === parentId);
+    
+    return (
+      <>
+        {items.map(item => {
+          const isModified = gitRepo.modified.includes(item.id);
+          const isStaged = gitRepo.staged.includes(item.id);
+          const isRenaming = renamingId === item.id;
+
+          return (
+            <div key={item.id} className="flex flex-col">
+              <div 
+                className={`group flex items-center gap-3 px-4 py-2.5 md:py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer ${activeFileId === item.id ? 'bg-red-700 text-white shadow-lg' : 'hover:bg-red-950/20 text-red-900 hover:text-red-500'}`}
+                style={{ paddingLeft: `${level * 12 + 12}px` }}
+                onClick={() => item.type === 'folder' ? toggleFolder(item.id) : handleFileSwitch(item.id)}
+              >
+                {item.type === 'folder' ? (
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform shrink-0 ${item.isOpen ? '' : '-rotate-90'}`} />
+                ) : (
+                  <FileCode className={`w-3.5 h-3.5 shrink-0 ${isModified ? 'text-orange-500' : isStaged ? 'text-green-500' : ''}`} />
+                )}
+                
+                {isRenaming ? (
+                  <input
+                    autoFocus
+                    className="flex-1 bg-red-950/40 border border-red-500/50 rounded px-2 py-0.5 text-white outline-none font-mono text-[10px]"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleConfirmRename();
+                      if (e.key === 'Escape') { setRenamingId(null); setNewName(''); }
+                    }}
+                    onBlur={handleConfirmRename}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className={`flex-1 truncate ${isModified ? 'text-orange-500' : isStaged ? 'text-green-500' : ''}`}>
+                    {item.name}
+                    {isModified && <span className="ml-2 w-1.5 h-1.5 rounded-full bg-orange-500 inline-block animate-pulse" title="Modified" />}
+                    {isStaged && <span className="ml-2 w-1.5 h-1.5 rounded-full bg-green-500 inline-block" title="Staged" />}
+                  </span>
+                )}
+                
+                {!isRenaming && (
+                  <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center gap-1 shrink-0">
+                    {item.type === 'folder' && (
+                      <>
+                        <button onClick={(e) => { e.stopPropagation(); createFile(item.id); }} title="New File" className="p-1.5 hover:text-white transition-colors"><Plus className="w-3.5 h-3.5" /></button>
+                        <button onClick={(e) => { e.stopPropagation(); createFolder(item.id); }} title="New Folder" className="p-1.5 hover:text-white transition-colors"><Folder className="w-3.5 h-3.5" /></button>
+                      </>
+                    )}
+                    <button onClick={(e) => { e.stopPropagation(); renameItem(item.id); }} title="Rename" className="p-1.5 hover:text-white transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }} title="Delete" className="p-1.5 text-red-600 hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                  </div>
+                )}
+              </div>
+              {item.type === 'folder' && item.isOpen && renderTree(item.id, level + 1)}
             </div>
+          );
+        })}
+        
+        {creatingInId?.parentId === parentId && (
+          <div 
+            className="flex items-center gap-3 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-red-950/20 border border-dashed border-red-500/30"
+            style={{ paddingLeft: `${level * 12 + 12}px` }}
+          >
+            {creatingInId.type === 'folder' ? <Folder className="w-3 h-3 text-red-500" /> : <FileCode className="w-3 h-3 text-red-500" />}
+            <input
+              autoFocus
+              placeholder={creatingInId.type === 'folder' ? "Folder name..." : "File name..."}
+              className="flex-1 bg-transparent border-b border-red-500/50 text-white outline-none font-mono text-[10px]"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleConfirmCreate();
+                if (e.key === 'Escape') { setCreatingInId(null); setNewName(''); }
+              }}
+              onBlur={handleConfirmCreate}
+            />
           </div>
-          {item.type === 'folder' && item.isOpen && renderTree(item.id, level + 1)}
-        </div>
-      ));
+        )}
+      </>
+    );
   };
 
   return (
-    <div className="flex h-screen w-full bg-[#020204] text-red-100 font-sans selection:bg-red-900/40 overflow-hidden">
-      {/* Sidebar Navigation */}
-      <nav className="w-16 md:w-20 border-r border-red-900/30 flex flex-col items-center py-8 space-y-8 bg-[#080101] z-30 shadow-[10px_0_40px_rgba(153,27,27,0.1)] relative">
+    <div className="flex flex-col md:flex-row h-screen w-full bg-[#020204] text-red-100 font-sans selection:bg-red-900/40 overflow-hidden">
+      {/* Sidebar Navigation - Hidden on mobile */}
+      <nav className="hidden md:flex w-20 border-r border-red-900/30 flex-col items-center py-8 space-y-8 bg-[#080101] z-30 shadow-[10px_0_40px_rgba(153,27,27,0.1)] relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(153,27,27,0.05),transparent)] pointer-events-none" />
         <div className="p-3 bg-red-800 rounded-2xl shadow-[0_0_20px_rgba(185,28,28,0.5)] group cursor-pointer hover:rotate-12 transition-transform relative z-10">
           <Cpu className="w-6 h-6 text-white" />
@@ -1418,22 +2040,92 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
         <SidebarIcon icon={<SettingsIcon />} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label="System Config" />
       </nav>
 
+      {/* Bottom Navigation - Visible only on mobile */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#080101]/95 backdrop-blur-xl border-t border-red-900/30 flex items-center justify-around px-2 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        <button onClick={() => setActiveTab('toolneuron')} className={`p-3 rounded-xl transition-all ${activeTab === 'toolneuron' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}>
+          <Zap size={20} />
+        </button>
+        <button onClick={() => setActiveTab('terminal')} className={`p-3 rounded-xl transition-all ${activeTab === 'terminal' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}>
+          <TerminalIcon size={20} />
+        </button>
+        <button onClick={() => setActiveTab('editor')} className={`p-3 rounded-xl transition-all ${activeTab === 'editor' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}>
+          <Code2 size={20} />
+        </button>
+        <button onClick={() => setActiveTab('studio')} className={`p-3 rounded-xl transition-all ${activeTab === 'studio' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}>
+          <ImageIcon size={20} />
+        </button>
+        <button onClick={() => setActiveTab('settings')} className={`p-3 rounded-xl transition-all ${activeTab === 'settings' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}>
+          <SettingsIcon size={20} />
+        </button>
+      </nav>
+
       {/* Main Interface */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] bg-repeat">
-        <header className="h-16 border-b border-red-900/30 flex items-center justify-between px-8 bg-[#0a0202]/95 backdrop-blur-xl z-20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
-          <div className="flex items-center space-x-6">
-            <h1 className="text-sm font-black tracking-[0.4em] text-red-500 uppercase drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">{activeTab} node</h1>
-            <div className="px-4 py-1.5 bg-red-950/40 border border-red-800/40 rounded-full text-[10px] text-red-400 font-black flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_12px_#ef4444]" />
-              {activePersonality.name.toUpperCase()} CORE ACTIVE
+      <main className="flex-1 flex flex-col min-w-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] bg-repeat pb-16 md:pb-0">
+        <header className="h-14 md:h-16 border-b border-red-900/30 flex items-center justify-between px-4 md:px-8 bg-[#0a0202]/95 backdrop-blur-xl z-20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+          <div className="flex items-center space-x-3 md:space-x-6">
+            <h1 className="text-[10px] md:text-sm font-black tracking-[0.2em] md:tracking-[0.4em] text-red-500 uppercase drop-shadow-[0_0_10px_rgba(239,68,68,0.5)] truncate max-w-[80px] md:max-w-none">{activeTab} node</h1>
+            
+            {/* Model Selector */}
+            <div className="flex items-center gap-1 md:gap-2 bg-red-950/40 border border-red-800/40 rounded-full px-2 md:px-3 py-1">
+              <select 
+                value={aiProvider}
+                onChange={(e) => {
+                  const p = e.target.value as 'google' | 'grok' | 'ollama';
+                  setAiProvider(p);
+                  if (p === 'google') setAiModel('gemini-3.1-pro-preview');
+                  else if (p === 'grok') setAiModel('grok-beta');
+                  else if (p === 'ollama') setAiModel(ollamaModels[0] || 'llama3');
+                }}
+                className="bg-transparent text-[8px] md:text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest"
+              >
+                <option value="google" className="bg-[#0a0202]">Google</option>
+                <option value="grok" className="bg-[#0a0202]">Grok</option>
+                <option value="ollama" className="bg-[#0a0202]">Ollama</option>
+              </select>
+              <div className="w-px h-3 bg-red-900/50" />
+              {aiProvider === 'ollama' ? (
+                <select
+                  value={aiModel}
+                  onChange={(e) => setAiModel(e.target.value)}
+                  className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest w-24 truncate"
+                >
+                  {ollamaModels.length > 0 ? ollamaModels.map(m => (
+                    <option key={m} value={m} className="bg-[#0a0202]">{m}</option>
+                  )) : <option value="llama3" className="bg-[#0a0202]">llama3</option>}
+                </select>
+              ) : aiProvider === 'google' ? (
+                <select
+                  value={aiModel}
+                  onChange={(e) => setAiModel(e.target.value)}
+                  className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest w-24 truncate"
+                >
+                  <option value="gemini-3.1-pro-preview" className="bg-[#0a0202]">gemini-3.1-pro</option>
+                  <option value="gemini-3.1-flash-preview" className="bg-[#0a0202]">gemini-3.1-flash</option>
+                  <option value="gemini-2.5-flash-image" className="bg-[#0a0202]">gemini-2.5-image</option>
+                </select>
+              ) : (
+                <select
+                  value={aiModel}
+                  onChange={(e) => setAiModel(e.target.value)}
+                  className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest w-24 truncate"
+                >
+                  <option value="grok-beta" className="bg-[#0a0202]">grok-beta</option>
+                  <option value="grok-vision-beta" className="bg-[#0a0202]">grok-vision</option>
+                </select>
+              )}
+            </div>
+
+            <div className="px-2 md:px-4 py-1 bg-red-950/40 border border-red-800/40 rounded-full text-[8px] md:text-[10px] text-red-400 font-black flex items-center gap-1.5 md:gap-3">
+              <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_12px_#ef4444]" />
+              <span className="truncate max-w-[60px] md:max-w-none">{activePersonality.name.toUpperCase()} ACTIVE</span>
             </div>
           </div>
-          <div className="flex items-center space-x-8">
-             <div className="flex items-center gap-3 text-[10px] font-mono text-red-400/60 bg-red-950/20 px-4 py-2 rounded-xl border border-red-900/20">
+          <div className="flex items-center space-x-4 md:space-x-8">
+             <div className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-red-400/60 bg-red-950/20 px-4 py-2 rounded-xl border border-red-900/20">
                 <Gauge className="w-4 h-4 text-red-600" />
-                <span className="font-black tracking-widest">THROUGHPUT: 88%</span>
+                <span className="font-black tracking-widest">88%</span>
              </div>
-             <div className={`w-3.5 h-3.5 rounded-full ${termuxStatus === 'connected' ? 'bg-red-500 shadow-[0_0_15px_#ef4444]' : 'bg-red-950/40 border border-red-900/30'}`} />
+             <div className={`w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full ${termuxStatus === 'connected' ? 'bg-red-500 shadow-[0_0_15px_#ef4444]' : 'bg-red-950/40 border border-red-900/30'}`} />
           </div>
         </header>
 
@@ -1443,37 +2135,38 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
           
           {/* TOOLNEURON HUB */}
           {activeTab === 'toolneuron' && (
-            <div className="h-full flex flex-col p-8 animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
-              <div className="flex-1 flex flex-col lg:flex-row gap-8 min-h-0">
+            <div className="h-full flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+              <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-8 min-h-0 overflow-y-auto lg:overflow-hidden custom-scrollbar">
                 {/* Module Navigation */}
-                <div className="w-full lg:w-72 flex flex-col gap-6">
-                  <div className="bg-[#0d0404]/80 rounded-[40px] border border-red-900/30 p-8 space-y-8 shadow-2xl">
-                    <div className="space-y-2">
-                       <h3 className="text-xl font-black text-red-100 uppercase tracking-tighter">ToolNeuron</h3>
-                       <p className="text-[10px] text-red-900 font-black tracking-[0.3em] uppercase">Offline AI Ecosystem</p>
+                <div className="w-full lg:w-72 flex flex-col gap-4 md:gap-6 shrink-0">
+                  <div className="bg-[#0d0404]/80 rounded-[30px] md:rounded-[40px] border border-red-900/30 p-6 md:p-8 space-y-6 md:space-y-8 shadow-2xl">
+                    <div className="space-y-1 md:space-y-2">
+                       <h3 className="text-lg md:text-xl font-black text-red-100 uppercase tracking-tighter">ToolNeuron</h3>
+                       <p className="text-[9px] md:text-[10px] text-red-900 font-black tracking-[0.3em] uppercase">Offline AI Ecosystem</p>
                     </div>
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 md:gap-3">
                       {[
-                        { id: 'chat', label: 'Neural Chat', icon: <MessageSquare className="w-4 h-4" /> },
-                        { id: 'vision', label: 'Vision Synth', icon: <ImageIcon className="w-4 h-4" /> },
-                        { id: 'knowledge', label: 'Neural Database', icon: <Database className="w-4 h-4" /> },
-                        { id: 'vault', label: 'Memory Vault', icon: <ShieldCheck className="w-4 h-4" /> },
-                        { id: 'swarm', label: 'Neural Swarm', icon: <Network className="w-4 h-4" /> },
-                        { id: 'help', label: 'Neural Guide', icon: <HelpCircle className="w-4 h-4" /> }
+                        { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
+                        { id: 'vision', label: 'Vision', icon: <ImageIcon className="w-4 h-4" /> },
+                        { id: 'knowledge', label: 'Database', icon: <Database className="w-4 h-4" /> },
+                        { id: 'vault', label: 'Vault', icon: <ShieldCheck className="w-4 h-4" /> },
+                        { id: 'swarm', label: 'Swarm', icon: <Network className="w-4 h-4" /> },
+                        { id: 'debug', label: 'Debug', icon: <Bug className="w-4 h-4" /> },
+                        { id: 'help', label: 'Guide', icon: <HelpCircle className="w-4 h-4" /> }
                       ].map(mod => (
                         <button 
                           key={mod.id}
                           onClick={() => setTnModule(mod.id as any)}
-                          className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${tnModule === mod.id ? 'bg-red-700 text-white shadow-lg scale-105' : 'bg-red-950/10 text-red-900 hover:text-red-500'}`}
+                          className={`flex items-center gap-3 md:gap-4 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl text-[9px] md:text-[11px] font-black uppercase tracking-widest transition-all ${tnModule === mod.id ? 'bg-red-700 text-white shadow-lg scale-[1.02]' : 'bg-red-950/10 text-red-900 hover:text-red-500'}`}
                         >
                           {mod.icon}
-                          {mod.label}
+                          <span className="truncate">{mod.label}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  <div className="flex-1 bg-[#0d0404]/80 rounded-[40px] border border-red-900/30 p-8 space-y-6 shadow-2xl overflow-y-auto custom-scrollbar">
+                  <div className="hidden lg:flex flex-1 bg-[#0d0404]/80 rounded-[40px] border border-red-900/30 p-8 space-y-6 shadow-2xl overflow-y-auto custom-scrollbar">
                      <h4 className="text-[10px] font-black text-red-800 uppercase tracking-[0.4em]">System Status</h4>
                      <div className="space-y-4">
                         <div className="p-4 bg-red-950/10 rounded-2xl border border-red-900/10">
@@ -1839,6 +2532,140 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                     </div>
                   )}
 
+                  {tnModule === 'debug' && (
+                    <div className="flex-1 p-6 md:p-12 space-y-8 md:space-y-10 overflow-y-auto custom-scrollbar">
+                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                          <div className="space-y-2">
+                             <h3 className="text-2xl md:text-3xl font-black text-red-100 uppercase tracking-tighter">Neural Debugger</h3>
+                             <p className="text-xs md:text-sm text-red-900 font-bold tracking-widest uppercase">Real-time code analysis and dynamic tracing.</p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                             <button 
+                               onClick={runStaticAnalysis}
+                               disabled={debugAnalysis.static.status === 'running'}
+                               className="px-4 md:px-6 py-2.5 md:py-3 bg-red-950/20 border border-red-900/30 text-red-500 rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-widest hover:bg-red-900/20 transition-all disabled:opacity-50"
+                             >
+                               {debugAnalysis.static.status === 'running' ? 'Analyzing...' : 'Static Analysis'}
+                             </button>
+                             <button 
+                               onClick={runDynamicTracing}
+                               disabled={debugAnalysis.tracing.status === 'running'}
+                               className="px-4 md:px-6 py-2.5 md:py-3 bg-red-700 text-white rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-widest shadow-lg hover:bg-red-600 transition-all disabled:opacity-50"
+                             >
+                               {debugAnalysis.tracing.status === 'running' ? 'Tracing...' : 'Dynamic Trace'}
+                             </button>
+                          </div>
+                       </div>
+
+                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+                          {/* Static Analysis Results */}
+                          <div className="bg-red-950/5 border border-red-900/20 rounded-[30px] md:rounded-[40px] p-6 md:p-8 space-y-6">
+                             <div className="flex items-center justify-between">
+                                <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
+                                   <FileSearch className="w-4 h-4" /> Static Analysis
+                                </h4>
+                                {debugAnalysis.static.status === 'done' && (
+                                  <span className="text-[9px] font-black text-red-900 uppercase tracking-widest">{debugAnalysis.static.issues.length} Issues Found</span>
+                                )}
+                             </div>
+                             <div className="space-y-4 min-h-[200px]">
+                                {debugAnalysis.static.status === 'idle' && (
+                                  <div className="h-full flex flex-col items-center justify-center text-red-950 italic opacity-30 py-12">
+                                    <FileSearch className="w-12 h-12 mb-4" />
+                                    <p className="text-[10px] uppercase tracking-widest">Awaiting Analysis Directive</p>
+                                  </div>
+                                )}
+                                {debugAnalysis.static.status === 'running' && (
+                                  <div className="space-y-4">
+                                    {[1, 2, 3].map(i => (
+                                      <div key={i} className="h-12 bg-red-900/10 rounded-xl animate-pulse" />
+                                    ))}
+                                  </div>
+                                )}
+                                {debugAnalysis.static.status === 'done' && debugAnalysis.static.issues.map((issue, i) => (
+                                  <div key={i} className={`p-4 rounded-2xl border flex items-start gap-4 ${
+                                    issue.type === 'error' ? 'bg-red-950/20 border-red-600/30' : 
+                                    issue.type === 'warning' ? 'bg-orange-950/10 border-orange-900/20' : 
+                                    'bg-blue-950/10 border-blue-900/20'
+                                  }`}>
+                                    <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
+                                      issue.type === 'error' ? 'bg-red-500' : 
+                                      issue.type === 'warning' ? 'bg-orange-500' : 
+                                      'bg-blue-500'
+                                    }`} />
+                                    <div className="flex-1 space-y-1">
+                                      <p className="text-[12px] text-red-100 font-bold leading-tight">{issue.message}</p>
+                                      {issue.line && <p className="text-[9px] text-red-900 uppercase font-black tracking-widest">Line {issue.line}</p>}
+                                    </div>
+                                  </div>
+                                ))}
+                             </div>
+                          </div>
+
+                          {/* Dynamic Tracing Logs */}
+                          <div className="bg-red-950/5 border border-red-900/20 rounded-[30px] md:rounded-[40px] p-6 md:p-8 space-y-6 flex flex-col h-[400px] lg:h-auto">
+                             <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
+                                <Activity className="w-4 h-4" /> Dynamic Tracing
+                             </h4>
+                             <div className="flex-1 bg-black/40 rounded-2xl p-4 font-mono text-[11px] overflow-y-auto custom-scrollbar space-y-2">
+                                {debugAnalysis.tracing.logs.length === 0 && debugAnalysis.tracing.status === 'idle' && (
+                                  <div className="h-full flex flex-col items-center justify-center text-red-900 opacity-20 italic">
+                                    <p>SYSTEM_IDLE: NO_ACTIVE_TRACE</p>
+                                  </div>
+                                )}
+                                {debugAnalysis.tracing.logs.map((log, i) => (
+                                  <div key={i} className={log.includes('exception') ? 'text-red-500 font-bold' : 'text-red-100/60'}>
+                                    {log}
+                                  </div>
+                                ))}
+                                {debugAnalysis.tracing.status === 'running' && (
+                                  <div className="text-red-600 animate-pulse">_</div>
+                                )}
+                             </div>
+                          </div>
+                       </div>
+
+                       {/* Refactoring Suggestions */}
+                       <div className="bg-[#0d0404] rounded-[30px] md:rounded-[40px] border border-red-900/30 p-8 md:p-12 space-y-8 shadow-2xl relative overflow-hidden">
+                          <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 blur-[100px] rounded-full -mr-32 -mt-32" />
+                          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+                             <div className="space-y-2">
+                                <h4 className="text-xl md:text-2xl font-black text-red-100 uppercase tracking-tighter flex items-center gap-4">
+                                   <Sparkles className="w-6 h-6 text-red-600" /> Neural Refactoring
+                                </h4>
+                                <p className="text-xs md:text-sm text-red-900 font-bold tracking-widest uppercase">Automated suggestions from the {activePersonality.name} personality.</p>
+                             </div>
+                             <button 
+                               onClick={getRefactoringSuggestions}
+                               disabled={debugAnalysis.refactoring.status === 'running'}
+                               className="w-full md:w-auto px-8 py-4 bg-red-800/10 border border-red-700/30 rounded-2xl text-red-500 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-red-800/20 transition-all disabled:opacity-50"
+                             >
+                               {debugAnalysis.refactoring.status === 'running' ? 'Synthesizing...' : 'Generate Suggestions'}
+                             </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+                             {debugAnalysis.refactoring.status === 'idle' && [1, 2, 3].map(i => (
+                               <div key={i} className="p-6 bg-red-950/5 border border-red-900/10 rounded-3xl h-32 flex items-center justify-center opacity-20">
+                                 <div className="w-full h-2 bg-red-900/20 rounded-full" />
+                               </div>
+                             ))}
+                             {debugAnalysis.refactoring.status === 'running' && [1, 2, 3].map(i => (
+                               <div key={i} className="p-6 bg-red-950/5 border border-red-900/10 rounded-3xl h-32 animate-pulse" />
+                             ))}
+                             {debugAnalysis.refactoring.status === 'done' && debugAnalysis.refactoring.suggestions.map((s, i) => (
+                               <div key={i} className="p-6 bg-red-950/10 border border-red-900/20 rounded-3xl hover:border-red-600/40 transition-all group">
+                                 <div className="w-8 h-8 bg-red-900/20 rounded-lg flex items-center justify-center text-red-500 font-black text-xs mb-4 group-hover:bg-red-700 group-hover:text-white transition-all">
+                                   0{i+1}
+                                 </div>
+                                 <p className="text-[13px] text-red-100/80 leading-relaxed italic">"{s}"</p>
+                               </div>
+                             ))}
+                          </div>
+                       </div>
+                    </div>
+                  )}
+
                   {tnModule === 'help' && (
                     <div className="flex-1 p-12 space-y-12 overflow-y-auto custom-scrollbar">
                        <div className="space-y-4">
@@ -1916,9 +2743,9 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
 
           {/* TERMINAL */}
           {activeTab === 'terminal' && (
-            <div className="h-full flex flex-col p-8 animate-in fade-in zoom-in-95 duration-500">
-              <div className="flex-1 bg-[#0d0404]/80 rounded-[40px] border border-red-900/30 flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.8)] overflow-hidden group relative">
-                <div className="flex-1 p-8 font-mono text-[14px] overflow-y-auto custom-scrollbar bg-[linear-gradient(rgba(13,4,4,1),rgba(8,1,1,1))]">
+            <div className="h-full flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500">
+              <div className="flex-1 bg-[#0d0404]/80 rounded-[30px] md:rounded-[40px] border border-red-900/30 flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.8)] overflow-hidden group relative">
+                <div className="flex-1 p-6 md:p-8 font-mono text-[12px] md:text-[14px] overflow-y-auto custom-scrollbar bg-[linear-gradient(rgba(13,4,4,1),rgba(8,1,1,1))]">
                   {terminalOutput.map((line, i) => (
                     <div key={i} className={`mb-3 leading-relaxed whitespace-pre-wrap ${
                       line.includes('$') ? 'text-red-400 font-black' : 
@@ -1946,7 +2773,7 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                       <span className="text-[9px] font-black text-red-900 uppercase tracking-[0.3em]">Neural Suggestions</span>
                       <span className="text-[9px] font-black text-red-950 uppercase tracking-[0.3em]">Press [Tab] to Cycle</span>
                     </div>
-                    <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap md:flex-nowrap md:overflow-x-auto no-scrollbar gap-2 md:gap-3 pb-2 md:pb-0">
                       {termSuggestions.map((suggestion, idx) => {
                         const isPersonalityMatch = activePersonality.suggestions?.includes(suggestion);
                         return (
@@ -1958,7 +2785,7 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                               setTermSuggestions([]);
                               setTermSuggestion('');
                             }}
-                            className={`px-4 py-2 rounded-xl font-mono text-[11px] transition-all flex items-center gap-2 ${
+                            className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl font-mono text-[10px] md:text-[11px] transition-all flex items-center gap-2 whitespace-nowrap ${
                               selectedSuggestionIndex === idx 
                                 ? 'bg-red-700 text-white shadow-[0_0_20px_rgba(185,28,28,0.4)] scale-105 border-red-500' 
                                 : 'bg-red-950/10 text-red-900 border border-red-900/20 hover:text-red-500 hover:border-red-500/30'
@@ -2000,131 +2827,174 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
 
           {/* NEURAL EDITOR */}
           {activeTab === 'editor' && (
-            <div className="h-full flex flex-col p-8 animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
-              <div className="flex-1 flex flex-col lg:flex-row gap-8 min-h-0">
-                {/* File Tree Sidebar */}
-                <div className="w-full lg:w-64 flex flex-col bg-[#0d0404]/80 rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden">
-                  <div className="h-16 border-b border-red-900/20 flex items-center px-8 bg-black/40">
-                    <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
+            <div className="h-full flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+              <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-8 min-h-0">
+                {/* File Tree Sidebar - Collapsible on mobile */}
+                <div className={`w-full lg:w-64 flex flex-col bg-[#0d0404]/80 rounded-[30px] md:rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden transition-all duration-300 ${isMobileFileTreeOpen ? 'h-[400px] lg:h-full' : 'h-16 lg:h-full'}`}>
+                  <div className="h-16 border-b border-red-900/20 flex items-center justify-between px-6 md:px-8 bg-black/40 shrink-0">
+                    <h4 className="text-[10px] md:text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
                       <FolderOpen className="w-4 h-4" /> Project Files
                     </h4>
-                  </div>
-                    <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
-                      <div className="flex gap-2 mb-4">
-                        <button 
-                          onClick={() => setIsTemplateModalOpen(true)}
-                          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-100 bg-red-900/40 border border-red-500/30 hover:bg-red-800/60 transition-all shadow-[0_0_20px_rgba(239,68,68,0.1)]"
-                        >
-                          <LayoutTemplate className="w-4 h-4" />
-                          Template
-                        </button>
-                        <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-950/40 border border-red-900/30 hover:bg-red-900/20 transition-all cursor-pointer">
-                          <Upload className="w-4 h-4" />
-                          Upload
-                          <input type="file" className="hidden" onChange={handleFileUpload} />
-                        </label>
-                      </div>
-                      {renderTree(null)}
                     <button 
-                      onClick={() => createFile('root')}
-                      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest text-red-900/40 border border-dashed border-red-900/20 hover:border-red-500/40 hover:text-red-500 transition-all mt-4"
+                      onClick={() => setIsMobileFileTreeOpen(!isMobileFileTreeOpen)}
+                      className="lg:hidden p-2 text-red-500 hover:bg-red-900/20 rounded-xl transition-all"
                     >
-                      <Plus className="w-4 h-4" />
-                      New Neural Node
+                      {isMobileFileTreeOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
                     </button>
+                  </div>
+                  <div className={`flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar ${isMobileFileTreeOpen ? 'block' : 'hidden lg:block'}`}>
+                    <div className="flex gap-2 mb-4">
+                      <button 
+                        onClick={() => setIsTemplateModalOpen(true)}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-100 bg-red-900/40 border border-red-500/30 hover:bg-red-800/60 transition-all shadow-[0_0_20px_rgba(239,68,68,0.1)]"
+                      >
+                        <LayoutTemplate className="w-4 h-4 shrink-0" />
+                        <span className="truncate">Template</span>
+                      </button>
+                      <label className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-950/40 border border-red-900/30 hover:bg-red-900/20 transition-all cursor-pointer">
+                        <Upload className="w-4 h-4 shrink-0" />
+                        <span className="truncate">File</span>
+                        <input type="file" className="hidden" multiple onChange={handleFileUpload} />
+                      </label>
+                      <label className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-950/40 border border-red-900/30 hover:bg-red-900/20 transition-all cursor-pointer">
+                        <Folder className="w-4 h-4 shrink-0" />
+                        <span className="truncate">Folder</span>
+                        <input type="file" className="hidden" {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={handleFileUpload} />
+                      </label>
+                    </div>
+                    {renderTree(null)}
+                    <div className="flex gap-2 mt-4">
+                      <button 
+                        onClick={() => createFile('root')}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-900/40 border border-dashed border-red-900/20 hover:border-red-500/40 hover:text-red-500 transition-all"
+                      >
+                        <Plus className="w-4 h-4" />
+                        New Node
+                      </button>
+                      <button 
+                        onClick={() => createFolder('root')}
+                        className="flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-900/40 border border-dashed border-red-900/20 hover:border-red-500/40 hover:text-red-500 transition-all"
+                      >
+                        <Folder className="w-4 h-4" />
+                        New Core
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Editor Section */}
-                <div className="flex-1 flex flex-col bg-[#0d0404]/80 rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden">
-                  <div className="h-16 border-b border-red-900/20 flex items-center justify-between px-8 bg-black/40">
-                    <div className="flex items-center gap-6">
-                      <div className="flex bg-red-950/20 p-1 rounded-xl border border-red-900/20">
+                <div className="flex-1 flex flex-col bg-[#0d0404]/80 rounded-[30px] md:rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden min-h-[400px]">
+                  <div className="h-auto min-h-16 border-b border-red-900/20 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 bg-black/40 py-2 md:py-0 gap-4">
+                    <div className="w-full md:w-auto flex items-center justify-between md:justify-start gap-4 md:gap-6 overflow-x-auto no-scrollbar">
+                      <div className="flex bg-red-950/20 p-1 rounded-xl border border-red-900/20 shrink-0">
                         {['python', 'cpp', 'rust', 'java', 'html'].map(lang => (
                           <button 
                             key={lang} 
                             onClick={() => setEditorLanguage(lang)}
-                            className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${editorLanguage === lang ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
+                            className={`px-3 md:px-4 py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${editorLanguage === lang ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
                           >
                             {lang}
                           </button>
                         ))}
                       </div>
                       {lastSavedTime && (
-                        <div className="flex items-center gap-2 text-[9px] font-black text-red-900 uppercase tracking-widest animate-in fade-in duration-500">
+                        <div className="flex items-center gap-2 text-[8px] md:text-[9px] font-black text-red-900 uppercase tracking-widest animate-in fade-in duration-500 shrink-0">
                           <ShieldCheck className="w-3 h-3" />
-                          Autosaved at {lastSavedTime}
+                          <span className="hidden sm:inline">Autosaved at</span> {lastSavedTime}
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="w-full md:w-auto flex items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-2 md:pb-0">
                       <button 
                         onClick={() => setIsEditorAssistantOpen(!isEditorAssistantOpen)}
-                        className={`p-2.5 border rounded-xl transition-all group ${isEditorAssistantOpen ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
+                        className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isEditorAssistantOpen ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
                         title="Neural Assistant"
                       >
-                        <MessageSquare className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <MessageSquare className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                       </button>
                       <button 
                         onClick={handleToggleCurrentLineBreakpoint}
-                        className="p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group"
+                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group shrink-0"
                         title="Toggle Breakpoint"
                       >
-                        <Circle className={`w-5 h-5 group-hover:scale-110 transition-transform ${breakpoints.includes(cursorLine) ? 'fill-red-500 text-red-500' : ''}`} />
+                        <Circle className={`w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform ${breakpoints.includes(cursorLine) ? 'fill-red-500 text-red-500' : ''}`} />
                       </button>
                       <button 
                         onClick={handleExplainCode}
                         disabled={isAiProcessing}
-                        className="p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50"
+                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
                         title="AI Analysis"
                       >
-                        <Brain className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <Brain className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                       </button>
                       <button 
                         onClick={handleFullProjectAnalysis}
                         disabled={isAiProcessing}
-                        className="p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50"
+                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
                         title="Full Project Analysis"
                       >
-                        <Network className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <Network className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
+                      </button>
+                      <button 
+                        onClick={handleDeepProjectAudit}
+                        disabled={isAiProcessing}
+                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
+                        title="Deep Project Audit"
+                      >
+                        <ShieldAlert className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                       </button>
                       <button 
                         onClick={handleGenerateDocs}
                         disabled={isAiProcessing}
-                        className="p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50"
+                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
                         title="Generate Documentation"
                       >
-                        <FileText className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <FileText className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                       </button>
                       <button 
                         onClick={handleRefactorCode}
                         disabled={isAiProcessing}
-                        className="p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50"
+                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
                         title="AI Refactor"
                       >
-                        <Wand2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <Wand2 className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
+                      </button>
+                      <button 
+                        onClick={handleGenerateCode}
+                        disabled={isAiProcessing}
+                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
+                        title="Neural Forge (Generate Code)"
+                      >
+                        <Zap className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
+                      </button>
+                      <button 
+                        onClick={() => setIsPairProgrammerActive(!isPairProgrammerActive)}
+                        className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isPairProgrammerActive ? 'bg-emerald-700 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
+                        title="AI Pair Programmer Mode"
+                      >
+                        <Users className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                       </button>
                       <button 
                         onClick={handleStartDebug}
                         disabled={isRunningCode || debugState.isActive}
-                        className="p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group"
+                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group shrink-0"
                         title="Neural Debugger"
                       >
-                        <Bug className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <Bug className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                       </button>
                       <button 
                         onClick={() => setEditorMode('git')}
-                        className={`p-2.5 border rounded-xl transition-all group ${editorMode === 'git' ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
+                        className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${editorMode === 'git' ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
                         title="Neural Git"
                       >
-                        <GitBranch className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        <GitBranch className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                       </button>
                       <button 
                         onClick={handleRunCode}
                         disabled={isRunningCode}
-                        className="flex items-center gap-3 px-6 py-2.5 bg-red-700 hover:bg-red-600 text-white rounded-xl font-black text-[11px] uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-2.5 bg-red-700 hover:bg-red-600 text-white rounded-xl font-black text-[9px] md:text-[11px] uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all disabled:opacity-50 shrink-0"
                       >
-                        {isRunningCode ? <Zap className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                        {isRunningCode ? <Zap className="w-3 h-3 md:w-4 md:h-4 animate-spin" /> : <Play className="w-3 h-3 md:w-4 md:h-4" />}
                         Execute
                       </button>
                     </div>
@@ -2163,9 +3033,17 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                       <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
                         <Brain className="w-4 h-4" /> Neural Assistant
                       </h4>
-                      <button onClick={() => setIsEditorAssistantOpen(false)} className="text-red-900 hover:text-red-500 transition-colors">
-                        <X className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-4">
+                        {isPairProgrammerActive && (
+                          <div className="flex items-center gap-2 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-pulse">
+                            <Users className="w-3 h-3 text-emerald-500" />
+                            <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Pairing</span>
+                          </div>
+                        )}
+                        <button onClick={() => setIsEditorAssistantOpen(false)} className="text-red-900 hover:text-red-500 transition-colors">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                     <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-black/20">
                       {editorAssistantMessages.length === 0 && (
@@ -2182,13 +3060,13 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                               : 'bg-red-950/20 border border-red-900/20 text-red-100 rounded-tl-none'
                           }`}>
                             {msg.text}
-                            {msg.role === 'ai' && (msg.text.includes('CODE_ANALYSIS') || msg.text.includes('FULL_PROJECT_ANALYSIS')) && (
+                            {msg.role === 'ai' && (msg.text.includes('CODE_ANALYSIS') || msg.text.includes('FULL_PROJECT_ANALYSIS') || msg.text.includes('DEEP_PROJECT_AUDIT')) && (
                               <button 
                                 onClick={() => handleSaveAnalysis(msg.text)}
                                 className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-red-900/40 border border-red-500/30 rounded-lg text-[9px] font-black uppercase tracking-widest text-red-100 hover:bg-red-800/60 transition-all"
                               >
                                 <Save className="w-3 h-3" />
-                                Save Analysis
+                                Save Report
                               </button>
                             )}
                             {msg.role === 'ai' && msg.text.includes('DOCUMENTATION_GENERATED') && msg.metadata && (
@@ -2196,7 +3074,7 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                                 onClick={() => handleApplyDocumentation(msg.metadata.documentedCode, msg.metadata.isSelection, msg.metadata.selection)}
                                 className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-red-700 border border-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all"
                               >
-                                <Check className="w-3 h-3" />
+                                <FileText className="w-3 h-3" />
                                 Apply Documentation
                               </button>
                             )}
@@ -2207,6 +3085,15 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                               >
                                 <Check className="w-3 h-3" />
                                 Apply Refactor
+                              </button>
+                            )}
+                            {msg.role === 'ai' && msg.metadata?.generatedCode && (
+                              <button 
+                                onClick={() => handleApplyForge(msg.metadata.generatedCode)}
+                                className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-emerald-700 border border-emerald-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-emerald-600 transition-all"
+                              >
+                                <Zap className="w-3 h-3" />
+                                Integrate Code
                               </button>
                             )}
                           </div>
@@ -2295,11 +3182,261 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                       </div>
                     )}
                     {editorMode === 'preview' && (
-                      <div className="h-full overflow-y-auto custom-scrollbar p-6">
-                        <div 
-                          className="w-full min-h-full bg-black/40 rounded-2xl border border-red-900/20 overflow-hidden"
-                          dangerouslySetInnerHTML={{ __html: editorContent }}
-                        />
+                      <div className="h-full flex flex-col">
+                        {/* Preview Toolbar */}
+                        <div className="p-4 bg-red-950/20 border-b border-red-900/20 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <button 
+                              onClick={() => setIsInspectorActive(!isInspectorActive)}
+                              className={`p-2 rounded-lg transition-all ${isInspectorActive ? 'bg-red-700 text-white shadow-lg' : 'bg-red-950/40 border border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
+                              title="Toggle Component Inspector"
+                            >
+                              <MousePointer2 className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => setEditorContent(editorContent)}
+                              className="p-2 bg-red-950/40 border border-red-900/30 text-red-500 rounded-lg hover:bg-red-900/20 transition-all"
+                              title="Refresh Preview"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Live UI Preview</span>
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              <span className="text-[9px] font-mono text-emerald-500/60 uppercase">Synchronized</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex-1 flex min-h-0">
+                          <div 
+                            ref={previewContainerRef}
+                            className="flex-1 overflow-y-auto custom-scrollbar p-6 relative"
+                            onMouseMove={handleInspectMouseMove}
+                            onClick={handleInspectClick}
+                          >
+                            <div 
+                              className="w-full min-h-full bg-black/40 rounded-2xl border border-red-900/20 overflow-hidden relative"
+                              dangerouslySetInnerHTML={{ __html: editorContent }}
+                            />
+
+                            {/* Inspector Highlight Overlay */}
+                            {inspectedElement && inspectedElement.rect && (
+                              <div 
+                                className="absolute pointer-events-none border-2 border-red-500 bg-red-500/10 z-50 transition-all duration-75"
+                                style={{
+                                  top: inspectedElement.rect.top + 24,
+                                  left: inspectedElement.rect.left + 24,
+                                  width: inspectedElement.rect.width,
+                                  height: inspectedElement.rect.height
+                                }}
+                              >
+                                <div className="absolute -top-6 left-0 bg-red-700 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest whitespace-nowrap">
+                                  {inspectedElement.tagName} {inspectedElement.id && `#${inspectedElement.id}`}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Inspector Details Panel */}
+                          {inspectedElement && (
+                            <div className="w-80 bg-[#080101] border-l border-red-900/30 p-6 overflow-y-auto custom-scrollbar animate-in slide-in-from-right duration-300 relative">
+                              <button 
+                                onClick={() => {
+                                  // Clean up tracking attribute
+                                  if (previewContainerRef.current) {
+                                    previewContainerRef.current.querySelectorAll('[data-neural-inspect]').forEach(el => {
+                                      el.removeAttribute('data-neural-inspect');
+                                    });
+                                    // Sync back one last time without the attribute
+                                    const contentWrapper = previewContainerRef.current.querySelector('.bg-black\\/40');
+                                    if (contentWrapper) {
+                                      setEditorContent(contentWrapper.innerHTML);
+                                    }
+                                  }
+                                  setInspectedElement(null);
+                                  setIsInspectorActive(false);
+                                  inspectedElementRef.current = null;
+                                }}
+                                className="absolute top-4 right-4 p-2 text-red-900 hover:text-red-500 transition-colors"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                              <div className="space-y-8">
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <h5 className="text-[11px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
+                                      <Info className="w-4 h-4" /> Component Info
+                                    </h5>
+                                    <div className="flex items-center gap-1">
+                                      <button 
+                                        onClick={() => {
+                                          if (inspectedElementRef.current) {
+                                            navigator.clipboard.writeText(inspectedElementRef.current.outerHTML);
+                                            setEditorOutput(prev => prev + "[SYSTEM] Element HTML copied to clipboard.\n");
+                                          }
+                                        }}
+                                        className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
+                                        title="Copy HTML"
+                                      >
+                                        <Code2 className="w-3 h-3" />
+                                      </button>
+                                      <button 
+                                        onClick={() => {
+                                          if (inspectedElementRef.current && confirm('Are you sure you want to delete this element?')) {
+                                            inspectedElementRef.current.remove();
+                                            setInspectedElement(null);
+                                            const contentWrapper = previewContainerRef.current?.querySelector('.bg-black\\/40');
+                                            if (contentWrapper) {
+                                              setEditorContent(contentWrapper.innerHTML);
+                                            }
+                                          }
+                                        }}
+                                        className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
+                                        title="Delete Element"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="p-4 bg-red-950/10 border border-red-900/20 rounded-2xl space-y-3">
+                                    <div className="flex justify-between items-center">
+                                      <span className="text-[10px] text-red-900 uppercase font-black">Tag</span>
+                                      <span className="text-[11px] font-mono text-red-100 uppercase">{inspectedElement.tagName}</span>
+                                    </div>
+                                    {inspectedElement.id && (
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-[10px] text-red-900 uppercase font-black">ID</span>
+                                        <span className="text-[11px] font-mono text-red-100">{inspectedElement.id}</span>
+                                      </div>
+                                    )}
+                                    <div className="space-y-1">
+                                      <span className="text-[10px] text-red-900 uppercase font-black">Classes</span>
+                                      <div className="text-[10px] font-mono text-red-100/60 break-all leading-relaxed">
+                                        {inspectedElement.className || 'None'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                  <div className="flex items-center justify-between">
+                                    <h5 className="text-[11px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
+                                      <Edit2 className="w-4 h-4" /> Style Editor
+                                    </h5>
+                                    <div className="flex items-center gap-1">
+                                      <button 
+                                        onClick={() => {
+                                          const styleStr = Object.entries(inspectedElement.styles)
+                                            .map(([k, v]) => `${k.replace(/[A-Z]/g, m => "-" + m.toLowerCase())}: ${v};`)
+                                            .join(' ');
+                                          navigator.clipboard.writeText(styleStr);
+                                          setEditorOutput(prev => prev + "[SYSTEM] Styles copied to clipboard.\n");
+                                        }}
+                                        className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
+                                        title="Copy Styles"
+                                      >
+                                        <Copy className="w-3 h-3" />
+                                      </button>
+                                      <button 
+                                        onClick={() => {
+                                          const prop = prompt('Enter CSS property name (e.g., border-radius):');
+                                          if (prop) {
+                                            const camelProp = prop.replace(/-([a-z])/g, g => g[1].toUpperCase());
+                                            handleStyleChange(camelProp, '');
+                                          }
+                                        }}
+                                        className="p-1.5 bg-red-900/20 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/40 transition-all"
+                                        title="Add Property"
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                      </button>
+                                      <button 
+                                        onClick={() => {
+                                          if (inspectedElementRef.current) {
+                                            inspectedElementRef.current.style.cssText = '';
+                                            // Re-fetch styles
+                                            const styles = window.getComputedStyle(inspectedElementRef.current);
+                                            setInspectedElement(prev => {
+                                              if (!prev) return null;
+                                              const newStyles: Record<string, string> = {};
+                                              Object.keys(prev.styles).forEach(key => {
+                                                newStyles[key] = (styles as any)[key];
+                                              });
+                                              return { ...prev, styles: newStyles };
+                                            });
+                                            // Sync back
+                                            const contentWrapper = previewContainerRef.current?.querySelector('.bg-black\\/40');
+                                            if (contentWrapper) {
+                                              setEditorContent(contentWrapper.innerHTML);
+                                            }
+                                          }
+                                        }}
+                                        className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
+                                        title="Reset Styles"
+                                      >
+                                        <RefreshCw className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-1 gap-2">
+                                    {Object.entries(inspectedElement.styles).map(([key, value]) => (
+                                      <div key={key} className="flex flex-col gap-1 p-3 bg-red-950/5 border border-red-900/10 rounded-xl group/style">
+                                        <div className="flex items-center justify-between">
+                                          <span className="text-[8px] text-red-900 uppercase font-black">{key}</span>
+                                          <button 
+                                            onClick={() => {
+                                              if (inspectedElementRef.current) {
+                                                inspectedElementRef.current.style.removeProperty(key.replace(/[A-Z]/g, m => "-" + m.toLowerCase()));
+                                                setInspectedElement(prev => {
+                                                  if (!prev) return null;
+                                                  const newStyles = { ...prev.styles };
+                                                  delete newStyles[key];
+                                                  return { ...prev, styles: newStyles };
+                                                });
+                                                const contentWrapper = previewContainerRef.current?.querySelector('.bg-black\\/40');
+                                                if (contentWrapper) {
+                                                  setEditorContent(contentWrapper.innerHTML);
+                                                }
+                                              }
+                                            }}
+                                            className="opacity-0 group-hover/style:opacity-100 text-red-900 hover:text-red-500 transition-all"
+                                          >
+                                            <Trash2 className="w-2.5 h-2.5" />
+                                          </button>
+                                        </div>
+                                        <input 
+                                          type="text"
+                                          value={value}
+                                          onChange={(e) => handleStyleChange(key, e.target.value)}
+                                          className="bg-transparent border-none outline-none text-[10px] font-mono text-red-100 w-full focus:text-red-500 transition-colors"
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                  <h5 className="text-[11px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
+                                    <Layout className="w-4 h-4" /> Geometry
+                                  </h5>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div className="p-3 bg-red-950/5 border border-red-900/10 rounded-xl">
+                                      <span className="block text-[8px] text-red-900 uppercase font-black mb-1">Width</span>
+                                      <span className="text-[10px] font-mono text-red-100">{Math.round(inspectedElement.rect?.width || 0)}px</span>
+                                    </div>
+                                    <div className="p-3 bg-red-950/5 border border-red-900/10 rounded-xl">
+                                      <span className="block text-[8px] text-red-900 uppercase font-black mb-1">Height</span>
+                                      <span className="text-[10px] font-mono text-red-100">{Math.round(inspectedElement.rect?.height || 0)}px</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                     {editorMode === 'debug' && (
@@ -2523,9 +3660,14 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                             </label>
                             <input 
                               value={projectSettings.buildPath}
-                              onChange={(e) => setProjectSettings({...projectSettings, buildPath: e.target.value})}
-                              className="w-full bg-red-950/10 border border-red-900/20 rounded-xl px-4 py-3 text-[11px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all"
+                              onChange={(e) => {
+                                const newSettings = {...projectSettings, buildPath: e.target.value};
+                                setProjectSettings(newSettings);
+                                validateProjectSettings(newSettings);
+                              }}
+                              className={`w-full bg-red-950/10 border ${validationErrors.buildPath ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
                             />
+                            {validationErrors.buildPath && <p className="text-[9px] text-red-500 font-black uppercase tracking-widest">{validationErrors.buildPath}</p>}
                           </div>
 
                           {/* Compiler Flags */}
@@ -2535,9 +3677,51 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                             </label>
                             <input 
                               value={projectSettings.compilerFlags}
-                              onChange={(e) => setProjectSettings({...projectSettings, compilerFlags: e.target.value})}
-                              className="w-full bg-red-950/10 border border-red-900/20 rounded-xl px-4 py-3 text-[11px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all"
+                              onChange={(e) => {
+                                const newSettings = {...projectSettings, compilerFlags: e.target.value};
+                                setProjectSettings(newSettings);
+                                validateProjectSettings(newSettings);
+                              }}
+                              className={`w-full bg-red-950/10 border ${validationErrors.compilerFlags ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
                             />
+                            {validationErrors.compilerFlags && <p className="text-[9px] text-red-500 font-black uppercase tracking-widest">{validationErrors.compilerFlags}</p>}
+                          </div>
+
+                          {/* Ollama URL */}
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
+                                <Globe className="w-3 h-3" /> Ollama Node URL
+                              </label>
+                              <div className="flex items-center gap-2">
+                                <div className={`w-1.5 h-1.5 rounded-full ${
+                                  ollamaStatus === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' :
+                                  ollamaStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' :
+                                  ollamaStatus === 'error' ? 'bg-red-500' : 'bg-gray-500'
+                                }`} />
+                                <span className="text-[8px] font-mono uppercase tracking-tighter opacity-40">
+                                  {ollamaStatus}
+                                </span>
+                                <button 
+                                  onClick={() => refreshOllamaModels()}
+                                  className="p-1 hover:bg-red-500/10 rounded-md transition-colors"
+                                  title="Refresh Models"
+                                >
+                                  <Zap size={10} className="text-red-500/60" />
+                                </button>
+                              </div>
+                            </div>
+                            <input 
+                              value={projectSettings.ollamaUrl}
+                              onChange={(e) => {
+                                const newSettings = {...projectSettings, ollamaUrl: e.target.value};
+                                setProjectSettings(newSettings);
+                                validateProjectSettings(newSettings);
+                              }}
+                              className={`w-full bg-red-950/10 border ${validationErrors.ollamaUrl ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
+                              placeholder="http://localhost:11434"
+                            />
+                            {validationErrors.ollamaUrl && <p className="text-[9px] text-red-500 font-black uppercase tracking-widest">{validationErrors.ollamaUrl}</p>}
                           </div>
 
                           {/* Environment Variables */}
@@ -2558,36 +3742,50 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                             </div>
                             <div className="space-y-2">
                               {projectSettings.envVariables.map((env, idx) => (
-                                <div key={idx} className="flex gap-2">
-                                  <input 
-                                    placeholder="KEY"
-                                    value={env.key}
-                                    onChange={(e) => {
-                                      const newEnv = [...projectSettings.envVariables];
-                                      newEnv[idx].key = e.target.value;
-                                      setProjectSettings({...projectSettings, envVariables: newEnv});
-                                    }}
-                                    className="flex-1 bg-red-950/10 border border-red-900/20 rounded-xl px-4 py-2 text-[10px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all"
-                                  />
-                                  <input 
-                                    placeholder="VALUE"
-                                    value={env.value}
-                                    onChange={(e) => {
-                                      const newEnv = [...projectSettings.envVariables];
-                                      newEnv[idx].value = e.target.value;
-                                      setProjectSettings({...projectSettings, envVariables: newEnv});
-                                    }}
-                                    className="flex-2 bg-red-950/10 border border-red-900/20 rounded-xl px-4 py-2 text-[10px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all"
-                                  />
-                                  <button 
-                                    onClick={() => {
-                                      const newEnv = projectSettings.envVariables.filter((_, i) => i !== idx);
-                                      setProjectSettings({...projectSettings, envVariables: newEnv});
-                                    }}
-                                    className="p-2 text-red-900 hover:text-red-500 transition-colors"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
+                                <div key={idx} className="space-y-1">
+                                  <div className="flex gap-2">
+                                    <input 
+                                      placeholder="KEY"
+                                      value={env.key}
+                                      onChange={(e) => {
+                                        const newEnv = [...projectSettings.envVariables];
+                                        newEnv[idx].key = e.target.value;
+                                        const newSettings = {...projectSettings, envVariables: newEnv};
+                                        setProjectSettings(newSettings);
+                                        validateProjectSettings(newSettings);
+                                      }}
+                                      className={`flex-1 bg-red-950/10 border ${validationErrors[`env_key_${idx}`] ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-2 text-[10px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
+                                    />
+                                    <input 
+                                      placeholder="VALUE"
+                                      value={env.value}
+                                      onChange={(e) => {
+                                        const newEnv = [...projectSettings.envVariables];
+                                        newEnv[idx].value = e.target.value;
+                                        const newSettings = {...projectSettings, envVariables: newEnv};
+                                        setProjectSettings(newSettings);
+                                        validateProjectSettings(newSettings);
+                                      }}
+                                      className={`flex-2 bg-red-950/10 border ${validationErrors[`env_value_${idx}`] ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-2 text-[10px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
+                                    />
+                                    <button 
+                                      onClick={() => {
+                                        const newEnv = projectSettings.envVariables.filter((_, i) => i !== idx);
+                                        const newSettings = {...projectSettings, envVariables: newEnv};
+                                        setProjectSettings(newSettings);
+                                        validateProjectSettings(newSettings);
+                                      }}
+                                      className="p-2 text-red-900 hover:text-red-500 transition-colors"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  {(validationErrors[`env_key_${idx}`] || validationErrors[`env_value_${idx}`]) && (
+                                    <div className="flex flex-col gap-0.5 px-1">
+                                      {validationErrors[`env_key_${idx}`] && <p className="text-[8px] text-red-500 font-black uppercase tracking-widest">{validationErrors[`env_key_${idx}`]}</p>}
+                                      {validationErrors[`env_value_${idx}`] && <p className="text-[8px] text-red-500 font-black uppercase tracking-widest">{validationErrors[`env_value_${idx}`]}</p>}
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -2605,20 +3803,20 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
           {activeTab === 'studio' && (
             <div className="h-full flex flex-col lg:flex-row overflow-hidden animate-in fade-in duration-500">
               <div className="flex-1 flex flex-col min-w-0 bg-[#020204]">
-                <div className="flex-1 overflow-y-auto p-8 space-y-12 custom-scrollbar bg-[radial-gradient(circle_at_50%_0%,rgba(153,27,27,0.05),transparent)]">
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 md:space-y-12 custom-scrollbar bg-[radial-gradient(circle_at_50%_0%,rgba(153,27,27,0.05),transparent)]">
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-3 duration-400`}>
-                      <div className={`max-w-[85%] rounded-[32px] p-8 text-[14px] relative group ${
+                      <div className={`max-w-[90%] md:max-w-[85%] rounded-[24px] md:rounded-[32px] p-6 md:p-8 text-[12px] md:text-[14px] relative group ${
                         msg.role === 'user' 
                           ? 'bg-red-800 text-white rounded-tr-none shadow-[0_15px_40px_rgba(153,27,27,0.3)]' 
                           : 'bg-[#0f0404] border border-red-900/20 text-red-100 rounded-tl-none backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)]'
                       }`}>
                         {msg.type === 'image' ? (
-                          <div className="space-y-6">
-                            <img src={msg.url} className="rounded-2xl w-full border border-red-900/40 shadow-[0_0_30px_rgba(239,68,68,0.1)] bg-black/60" />
-                            <div className="flex justify-between items-center px-2">
-                               <button className="text-[11px] text-red-500 font-black hover:text-red-400 transition-colors uppercase tracking-[0.2em] flex items-center gap-2 drop-shadow-[0_0_5px_rgba(239,68,68,0.3)]"><Download className="w-4 h-4" /> Download Manifest</button>
-                               <span className="text-[10px] text-red-950 font-black tracking-widest">ARTIFACT_77B</span>
+                          <div className="space-y-4 md:space-y-6">
+                            <img src={msg.url} className="rounded-xl md:rounded-2xl w-full border border-red-900/40 shadow-[0_0_30px_rgba(239,68,68,0.1)] bg-black/60" />
+                            <div className="flex justify-between items-center px-1 md:px-2">
+                               <button className="text-[9px] md:text-[11px] text-red-500 font-black hover:text-red-400 transition-colors uppercase tracking-[0.1em] md:tracking-[0.2em] flex items-center gap-2 drop-shadow-[0_0_5px_rgba(239,68,68,0.3)]"><Download className="w-3.5 h-3.5 md:w-4 md:h-4" /> Download Manifest</button>
+                               <span className="text-[8px] md:text-[10px] text-red-950 font-black tracking-widest">ARTIFACT_77B</span>
                             </div>
                           </div>
                         ) : (
@@ -2631,30 +3829,30 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                     </div>
                   ))}
                   {isAiProcessing && (
-                    <div className="flex items-center space-x-4 p-5 bg-red-950/10 rounded-[40px] border border-red-900/20 w-fit shadow-2xl">
-                      <div className="flex gap-2 px-1">
-                        <div className="w-2.5 h-2.5 bg-red-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                        <div className="w-2.5 h-2.5 bg-red-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                        <div className="w-2.5 h-2.5 bg-red-600 rounded-full animate-bounce"></div>
+                    <div className="flex items-center space-x-3 md:space-x-4 p-4 md:p-5 bg-red-950/10 rounded-[30px] md:rounded-[40px] border border-red-900/20 w-fit shadow-2xl">
+                      <div className="flex gap-1.5 md:gap-2 px-1">
+                        <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-red-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                        <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-red-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                        <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-red-600 rounded-full animate-bounce"></div>
                       </div>
-                      <span className="text-[11px] font-black text-red-700 uppercase tracking-[0.4em]">Rendering Reality</span>
+                      <span className="text-[9px] md:text-[11px] font-black text-red-700 uppercase tracking-[0.3em] md:tracking-[0.4em]">Rendering Reality</span>
                     </div>
                   )}
                   <div ref={chatEndRef} />
                 </div>
                 {/* Input Bar */}
-                <div className="p-8 bg-[#0a0202]/80 border-t border-red-900/20 backdrop-blur-md">
-                  <div className="max-w-4xl mx-auto space-y-6">
+                <div className="p-4 md:p-8 bg-[#0a0202]/80 border-t border-red-900/20 backdrop-blur-md shrink-0">
+                  <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
                     <div className="relative group">
-                      <input value={studioInput} onChange={(e) => setStudioInput(e.target.value)} placeholder="Enter generation prompt..." className="w-full bg-[#0d0404] border border-red-900/40 rounded-3xl px-8 py-6 text-sm text-red-100 focus:border-red-600/60 outline-none transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.8)]" />
-                      <button type="submit" onClick={handleStudioSubmit} disabled={isAiProcessing} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-red-600 rounded-2xl disabled:opacity-50 transition-all hover:scale-110 active:scale-95 shadow-[0_0_20px_rgba(220,38,38,0.5)]">
-                        <Send className="w-6 h-6 text-white" />
+                      <input value={studioInput} onChange={(e) => setStudioInput(e.target.value)} placeholder="Enter generation prompt..." className="w-full bg-[#0d0404] border border-red-900/40 rounded-2xl md:rounded-3xl px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm text-red-100 focus:border-red-600/60 outline-none transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.8)]" />
+                      <button type="submit" onClick={handleStudioSubmit} disabled={isAiProcessing} className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 p-2 md:p-3 bg-red-600 rounded-xl md:rounded-2xl disabled:opacity-50 transition-all hover:scale-110 active:scale-95 shadow-[0_0_20px_rgba(220,38,38,0.5)]">
+                        <Send className="w-5 h-5 md:w-6 md:h-6 text-white" />
                       </button>
                     </div>
-                    <div className="flex gap-6">
-                       <div className="flex-1 flex items-center bg-red-950/10 border border-red-900/20 rounded-2xl px-5 py-3 gap-3">
-                          <X className="w-4 h-4 text-red-800" />
-                          <input value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)} placeholder="Negative Parameters" className="flex-1 bg-transparent text-[11px] text-red-800 font-bold focus:text-red-600 outline-none uppercase tracking-widest" />
+                    <div className="flex gap-4 md:gap-6">
+                       <div className="flex-1 flex items-center bg-red-950/10 border border-red-900/20 rounded-xl md:rounded-2xl px-4 md:px-5 py-2.5 md:py-3 gap-3">
+                          <X className="w-3.5 h-3.5 md:w-4 md:h-4 text-red-800" />
+                          <input value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)} placeholder="Negative Parameters" className="flex-1 bg-transparent text-[9px] md:text-[11px] text-red-800 font-bold focus:text-red-600 outline-none uppercase tracking-widest" />
                        </div>
                     </div>
                   </div>
@@ -2662,10 +3860,10 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
               </div>
               
               {/* SD Controls Sidebar */}
-              <div className="w-full lg:w-96 bg-[#080101] border-l border-red-900/30 p-10 space-y-12 overflow-y-auto custom-scrollbar shadow-[-20px_0_60px_rgba(0,0,0,0.4)]">
+              <div className="w-full lg:w-96 bg-[#080101] border-l border-red-900/30 p-6 md:p-10 space-y-8 md:space-y-12 overflow-y-auto custom-scrollbar shadow-[-20px_0_60px_rgba(0,0,0,0.4)] shrink-0">
                  <div className="flex items-center justify-between">
-                    <h4 className="text-[12px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3 drop-shadow-[0_0_8px_rgba(239,68,68,0.3)]"><Sliders className="w-5 h-5" /> Config Matrix</h4>
-                    <span className="text-[10px] font-mono text-red-900 font-black">V4.1_EX</span>
+                    <h4 className="text-[11px] md:text-[12px] font-black text-red-500 uppercase tracking-[0.3em] md:tracking-[0.4em] flex items-center gap-3 drop-shadow-[0_0_8px_rgba(239,68,68,0.3)]"><Sliders className="w-4 h-4 md:w-5 md:h-5" /> Config Matrix</h4>
+                    <span className="text-[9px] md:text-[10px] font-mono text-red-900 font-black">V4.1_EX</span>
                  </div>
 
                  {/* Checkpoint Selector */}
@@ -2743,64 +3941,64 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
 
           {/* NODE BRIDGE */}
           {activeTab === 'termux' && (
-            <div className="h-full p-10 flex flex-col gap-10 animate-in zoom-in-95 duration-500">
-               <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-10">
-                  <div className="lg:col-span-1 flex flex-col gap-10">
-                     <div className="bg-[#0d0404] rounded-[40px] border border-red-900/30 p-10 flex flex-col justify-center space-y-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+            <div className="h-full p-4 md:p-10 flex flex-col gap-6 md:gap-10 animate-in zoom-in-95 duration-500 overflow-y-auto custom-scrollbar">
+               <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-10">
+                  <div className="lg:col-span-1 flex flex-col gap-6 md:gap-10">
+                     <div className="bg-[#0d0404] rounded-[30px] md:rounded-[40px] border border-red-900/30 p-8 md:p-10 flex flex-col justify-center space-y-6 md:space-y-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden group shrink-0">
                         <div className="absolute -bottom-16 -right-16 opacity-[0.05] group-hover:opacity-[0.15] transition-opacity duration-700">
-                           <Smartphone className="w-64 h-64 text-red-600" />
+                           <Smartphone className="w-48 md:w-64 h-48 md:h-64 text-red-600" />
                         </div>
-                        <div className="space-y-4 relative">
-                           <h2 className="text-3xl font-black text-red-100 tracking-tighter uppercase leading-none">Crimson Bridge</h2>
-                           <p className="text-[13px] text-red-900 leading-relaxed font-bold tracking-tight">Sync mobile hardware with node clusters for low-latency neural inference.</p>
+                        <div className="space-y-3 md:space-y-4 relative">
+                           <h2 className="text-2xl md:text-3xl font-black text-red-100 tracking-tighter uppercase leading-none">Crimson Bridge</h2>
+                           <p className="text-[12px] md:text-[13px] text-red-900 leading-relaxed font-bold tracking-tight">Sync mobile hardware with node clusters for low-latency neural inference.</p>
                         </div>
-                        <button onClick={() => { setTermuxStatus('connecting'); setTimeout(() => setTermuxStatus('connected'), 1200); }} className="w-full py-6 bg-red-700 hover:bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-[0_10px_30px_rgba(185,28,28,0.3)] active:scale-95 transition-all">Connect Hub</button>
+                        <button onClick={() => { setTermuxStatus('connecting'); setTimeout(() => setTermuxStatus('connected'), 1200); }} className="w-full py-4 md:py-6 bg-red-700 hover:bg-red-600 text-white rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] shadow-[0_10px_30px_rgba(185,28,28,0.3)] active:scale-95 transition-all">Connect Hub</button>
                      </div>
-                     <div className="bg-[#0d0404] rounded-[40px] border border-red-900/30 p-10 space-y-6 shadow-xl">
-                        <h4 className="text-[12px] font-black text-red-800 uppercase tracking-[0.3em] flex items-center gap-3"><Activity className="w-5 h-5 text-red-600" /> Node Vitals</h4>
-                        <div className="space-y-6">
-                           <div className="flex justify-between text-[11px] font-mono"><span className="text-red-900 font-black">MEM_LOAD:</span><span className="text-red-500 font-black">72%</span></div>
-                           <div className="w-full h-2.5 bg-red-950/20 rounded-full overflow-hidden border border-red-900/10"><div className="w-[72%] h-full bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]" /></div>
-                           <div className="flex justify-between text-[11px] font-mono"><span className="text-red-900 font-black">THERMALS:</span><span className="text-red-500 font-black">42°C</span></div>
+                     <div className="bg-[#0d0404] rounded-[30px] md:rounded-[40px] border border-red-900/30 p-8 md:p-10 space-y-4 md:space-y-6 shadow-xl shrink-0">
+                        <h4 className="text-[11px] md:text-[12px] font-black text-red-800 uppercase tracking-[0.2em] md:tracking-[0.3em] flex items-center gap-3"><Activity className="w-4 h-4 md:w-5 md:h-5 text-red-600" /> Node Vitals</h4>
+                        <div className="space-y-4 md:space-y-6">
+                           <div className="flex justify-between text-[10px] md:text-[11px] font-mono"><span className="text-red-900 font-black">MEM_LOAD:</span><span className="text-red-500 font-black">72%</span></div>
+                           <div className="w-full h-2 md:h-2.5 bg-red-950/20 rounded-full overflow-hidden border border-red-900/10"><div className="w-[72%] h-full bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]" /></div>
+                           <div className="flex justify-between text-[10px] md:text-[11px] font-mono"><span className="text-red-900 font-black">THERMALS:</span><span className="text-red-500 font-black">42°C</span></div>
                         </div>
                      </div>
                   </div>
                   
-                  <div className="lg:col-span-3 bg-[#0d0404] rounded-[40px] border border-red-900/30 p-12 flex flex-col space-y-10 shadow-2xl relative">
-                     <div className="flex items-center justify-between border-b border-red-900/20 pb-8">
+                  <div className="lg:col-span-3 bg-[#0d0404] rounded-[30px] md:rounded-[40px] border border-red-900/30 p-6 md:p-12 flex flex-col space-y-8 md:space-y-10 shadow-2xl relative">
+                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-red-900/20 pb-6 md:pb-8 gap-6">
                         <div className="space-y-2">
-                           <h3 className="text-2xl font-black text-red-100 flex items-center gap-4 uppercase tracking-tighter"><Network className="w-7 h-7 text-red-600" /> Mobile Model Stash</h3>
-                           <p className="text-sm text-red-900 font-bold tracking-widest">Safetensors and LoRA cluster synchronization.</p>
+                           <h3 className="text-xl md:text-2xl font-black text-red-100 flex items-center gap-3 md:gap-4 uppercase tracking-tighter"><Network className="w-6 h-6 md:w-7 md:h-7 text-red-600" /> Mobile Model Stash</h3>
+                           <p className="text-xs md:text-sm text-red-900 font-bold tracking-widest">Safetensors and LoRA cluster synchronization.</p>
                         </div>
-                        <label className="px-6 py-4 bg-red-800/10 border border-red-700/30 rounded-2xl cursor-pointer hover:bg-red-800/20 transition-all text-red-500 flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.2em] shadow-lg">
-                           <Plus className="w-5 h-5" /> <span>Sync Model</span>
+                        <label className="w-full md:w-auto px-5 md:px-6 py-3 md:py-4 bg-red-800/10 border border-red-700/30 rounded-xl md:rounded-2xl cursor-pointer hover:bg-red-800/20 transition-all text-red-500 flex items-center justify-center gap-3 text-[10px] md:text-[11px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] shadow-lg">
+                           <Plus className="w-4 h-4 md:w-5 md:h-5" /> <span>Sync Model</span>
                            <input type="file" className="hidden" multiple onChange={handleTermuxFileUpload} />
                         </label>
                      </div>
                      
-                     <div className="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         {termuxFiles.length === 0 ? (
-                          <div className="col-span-2 h-full flex flex-col items-center justify-center text-red-950 italic gap-6 opacity-30">
-                             <Database className="w-24 h-24" />
-                             <p className="uppercase font-black tracking-[0.4em] text-sm">Cluster Stash Empty</p>
+                          <div className="col-span-1 md:col-span-2 h-full flex flex-col items-center justify-center text-red-950 italic gap-4 md:gap-6 opacity-30 py-12">
+                             <Database className="w-16 h-16 md:w-24 md:h-24" />
+                             <p className="uppercase font-black tracking-[0.3em] md:tracking-[0.4em] text-xs md:text-sm">Cluster Stash Empty</p>
                           </div>
                         ) : (
                           termuxFiles.map((f, i) => (
-                            <div key={i} className="flex flex-col p-8 bg-red-950/5 border border-red-900/20 rounded-[32px] group hover:bg-red-900/10 hover:border-red-600/40 transition-all relative overflow-hidden shadow-inner">
-                               <div className="flex items-center gap-6 mb-6 relative z-10">
-                                  <div className="p-4 bg-red-900/20 rounded-2xl shadow-xl">
-                                     {f.category === 'model' ? <HardDrive className="w-6 h-6 text-red-500" /> : <FileCode className="w-6 h-6 text-red-800" />}
+                            <div key={i} className="flex flex-col p-6 md:p-8 bg-red-950/5 border border-red-900/20 rounded-[24px] md:rounded-[32px] group hover:bg-red-900/10 hover:border-red-600/40 transition-all relative overflow-hidden shadow-inner">
+                               <div className="flex items-center gap-4 md:gap-6 mb-4 md:mb-6 relative z-10">
+                                  <div className="p-3 md:p-4 bg-red-900/20 rounded-xl md:rounded-2xl shadow-xl">
+                                     {f.category === 'model' ? <HardDrive className="w-5 h-5 md:w-6 md:h-6 text-red-500" /> : <FileCode className="w-5 h-5 md:w-6 md:h-6 text-red-800" />}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                     <p className="text-[15px] font-black text-red-100 truncate uppercase tracking-tight leading-none">{f.name}</p>
-                                     <p className="text-[10px] uppercase tracking-[0.3em] text-red-800 font-black mt-2">{f.size} • {f.category}</p>
+                                     <p className="text-[13px] md:text-[15px] font-black text-red-100 truncate uppercase tracking-tight leading-none">{f.name}</p>
+                                     <p className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] text-red-800 font-black mt-2">{f.size} • {f.category}</p>
                                   </div>
                                </div>
-                               <div className="flex items-center gap-3 relative z-10">
-                                  <button className="flex-1 py-3 bg-red-900/20 hover:bg-red-700 text-[11px] font-black uppercase text-red-700 hover:text-white rounded-xl transition-all tracking-widest">Initialize</button>
-                                  <button onClick={() => setTermuxFiles(prev => prev.filter((_, idx) => idx !== i))} className="p-3 text-red-900 hover:text-red-500 transition-all"><Trash2 className="w-5 h-5" /></button>
+                               <div className="flex items-center gap-2 md:gap-3 relative z-10">
+                                  <button className="flex-1 py-2.5 md:py-3 bg-red-900/20 hover:bg-red-700 text-[10px] md:text-[11px] font-black uppercase text-red-700 hover:text-white rounded-lg md:rounded-xl transition-all tracking-widest">Initialize</button>
+                                  <button onClick={() => setTermuxFiles(prev => prev.filter((_, idx) => idx !== i))} className="p-2.5 md:p-3 text-red-900 hover:text-red-500 transition-all"><Trash2 className="w-4 h-4 md:w-5 md:h-5" /></button>
                                </div>
-                               <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/[0.03] blur-[50px] rounded-full" />
+                               <div className="absolute top-0 right-0 w-24 md:w-32 h-24 md:h-32 bg-red-600/[0.03] blur-[40px] md:blur-[50px] rounded-full" />
                             </div>
                           ))
                         )}
@@ -2812,8 +4010,8 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
 
           {/* DATA CORE / STORAGE */}
           {activeTab === 'storage' && (
-            <div className="h-full p-10 flex flex-col gap-10 animate-in zoom-in-95 duration-500">
-               <div className="flex-1 bg-[#0d0404] rounded-[50px] border border-red-900/30 p-12 flex flex-col space-y-10 shadow-2xl relative overflow-hidden">
+            <div className="h-full p-4 md:p-10 flex flex-col gap-6 md:gap-10 animate-in zoom-in-95 duration-500 overflow-y-auto custom-scrollbar">
+               <div className="flex-1 bg-[#0d0404] rounded-[30px] md:rounded-[50px] border border-red-900/30 p-6 md:p-12 flex flex-col space-y-6 md:space-y-10 shadow-2xl relative overflow-hidden shrink-0">
                   <div className="absolute -top-24 -right-24 w-96 h-96 bg-red-600/5 blur-[100px] rounded-full pointer-events-none" />
                   
                   <div className="flex items-center justify-between border-b border-red-900/20 pb-8 relative z-10">
@@ -2874,7 +4072,7 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
 
           {/* SETTINGS */}
           {activeTab === 'settings' && (
-            <div className="h-full p-12 overflow-y-auto custom-scrollbar animate-in fade-in duration-500 bg-[#020204]">
+            <div className="h-full p-4 md:p-12 overflow-y-auto custom-scrollbar animate-in fade-in duration-500 bg-[#020204]">
               <div className="max-w-4xl mx-auto space-y-16 pb-20">
                 <header className="space-y-4 border-b border-red-900/30 pb-12 flex items-end justify-between">
                    <div className="space-y-2">
@@ -2903,6 +4101,24 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                            {p.active && <div className="absolute -top-16 -right-16 w-48 h-48 bg-red-600/10 blur-[80px] rounded-full pointer-events-none" />}
                         </div>
                       ))}
+                   </div>
+                </section>
+
+                {/* AI Provider Settings */}
+                <section className="space-y-10">
+                   <h3 className="text-[12px] font-black text-red-900 uppercase tracking-[0.5em] flex items-center gap-4"><Network className="w-6 h-6 text-red-600" /> Neural Provider Configuration</h3>
+                   <div className="bg-[#0a0202] rounded-[40px] border border-red-900/30 p-10 space-y-8 shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative overflow-hidden">
+                      <div className="space-y-4 relative z-10">
+                         <h4 className="text-xl font-black text-red-100 tracking-tighter uppercase leading-none">Grok API Key</h4>
+                         <p className="text-xs text-red-900 font-bold tracking-[0.1em]">Required for xAI Grok integration. Stored locally.</p>
+                         <input 
+                            type="password"
+                            value={grokApiKey}
+                            onChange={(e) => setGrokApiKey(e.target.value)}
+                            placeholder="xai-..."
+                            className="w-full bg-black/60 border border-red-950 rounded-[20px] p-4 text-sm text-red-100 font-mono outline-none focus:border-red-600/50 transition-all shadow-inner"
+                         />
+                      </div>
                    </div>
                 </section>
 
@@ -2968,12 +4184,12 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                               setIsAiProcessing(true);
                               setTerminalOutput(prev => [...prev, `[KERNEL] Initializing crimson neural fabric...`]);
                               try {
-                                const response = await ai.models.generateContent({
-                                  model: 'gemini-3-pro-preview',
-                                  contents: `Logic: ${brainConfig.logic}\n\nTask: Output a futuristic crimson directory tree for this logic and 3 setup commands.`,
-                                  config: { systemInstruction: activePersonality.instruction }
-                                });
-                                setTerminalOutput(prev => [...prev, `[CORE] Matrix Synchronized:`, response.text || 'Process Ready.', `[SYSTEM] Crimson Node Online.`]);
+                                const response = await generateAIResponse(
+                                  `Logic: ${brainConfig.logic}\n\nTask: Output a futuristic crimson directory tree for this logic and 3 setup commands.`,
+                                  activePersonality.instruction,
+                                  { modelType: 'smart' }
+                                );
+                                setTerminalOutput(prev => [...prev, `[CORE] Matrix Synchronized:`, response || 'Process Ready.', `[SYSTEM] Crimson Node Online.`]);
                                 setActiveTab('terminal');
                               } catch(e) {} finally { setIsAiProcessing(false); }
                             }}
@@ -2998,33 +4214,33 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
 
       {/* Template Selection Modal */}
       {isTemplateModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-8 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
-          <div className="w-full max-w-4xl bg-[#0d0404] border border-red-900/30 rounded-[60px] shadow-[0_0_100px_rgba(185,28,28,0.2)] overflow-hidden flex flex-col max-h-[80vh]">
-            <div className="p-12 border-b border-red-900/20 bg-black/40 flex items-center justify-between">
-              <div className="space-y-2">
-                <h3 className="text-3xl font-black text-red-100 uppercase tracking-tighter">Initialize Neural Project</h3>
-                <p className="text-sm text-red-900 font-bold tracking-widest uppercase">Select a predefined template to begin your development cycle</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="w-full max-w-4xl bg-[#0d0404] border border-red-900/30 rounded-[30px] md:rounded-[60px] shadow-[0_0_100px_rgba(185,28,28,0.2)] overflow-hidden flex flex-col max-h-[90vh] md:max-h-[80vh]">
+            <div className="p-6 md:p-12 border-b border-red-900/20 bg-black/40 flex items-center justify-between shrink-0">
+              <div className="space-y-1 md:space-y-2">
+                <h3 className="text-xl md:text-3xl font-black text-red-100 uppercase tracking-tighter">Initialize Neural Project</h3>
+                <p className="text-[10px] md:text-sm text-red-900 font-bold tracking-widest uppercase">Select a predefined template to begin your development cycle</p>
               </div>
-              <button onClick={() => setIsTemplateModalOpen(false)} className="p-4 bg-red-950/20 border border-red-900/20 rounded-full text-red-500 hover:bg-red-900/40 transition-all">
-                <X className="w-8 h-8" />
+              <button onClick={() => setIsTemplateModalOpen(false)} className="p-3 md:p-4 bg-red-950/20 border border-red-900/20 rounded-full text-red-500 hover:bg-red-900/40 transition-all shrink-0 ml-4">
+                <X className="w-6 h-6 md:w-8 md:h-8" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex-1 overflow-y-auto p-6 md:p-12 custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                 {(Object.keys(PROJECT_TEMPLATES) as Array<keyof typeof PROJECT_TEMPLATES>).map(key => (
                   <button 
                     key={key}
                     onClick={() => handleLoadTemplate(key)}
-                    className="group p-8 bg-red-950/5 border border-red-900/20 rounded-[40px] text-left space-y-6 hover:bg-red-900/10 hover:border-red-500/40 transition-all active:scale-95"
+                    className="group p-6 md:p-8 bg-red-950/5 border border-red-900/20 rounded-[30px] md:rounded-[40px] text-left space-y-4 md:space-y-6 hover:bg-red-900/10 hover:border-red-500/40 transition-all active:scale-95"
                   >
-                    <div className="w-16 h-16 bg-red-900/20 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
-                      {key === 'python-web' && <Network className="w-8 h-8" />}
-                      {key === 'rust-cli' && <TerminalIcon className="w-8 h-8" />}
-                      {key === 'neural-module' && <Brain className="w-8 h-8" />}
+                    <div className="w-12 h-12 md:w-16 md:h-16 bg-red-900/20 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+                      {key === 'python-web' && <Network className="w-6 h-6 md:w-8 md:h-8" />}
+                      {key === 'rust-cli' && <TerminalIcon className="w-6 h-6 md:w-8 md:h-8" />}
+                      {key === 'neural-module' && <Brain className="w-6 h-6 md:w-8 md:h-8" />}
                     </div>
                     <div className="space-y-2">
-                      <h4 className="text-xl font-black text-red-100 uppercase tracking-tight">{PROJECT_TEMPLATES[key].name}</h4>
-                      <p className="text-[11px] text-red-900 font-bold uppercase tracking-widest leading-relaxed">
+                      <h4 className="text-lg md:text-xl font-black text-red-100 uppercase tracking-tight">{PROJECT_TEMPLATES[key].name}</h4>
+                      <p className="text-[10px] md:text-[11px] text-red-900 font-bold uppercase tracking-widest leading-relaxed">
                         {key === 'python-web' ? 'Full-stack Flask environment with HTML/CSS integration.' : 
                          key === 'rust-cli' ? 'High-performance CLI tool architecture with Cargo config.' : 
                          'Modular neural logic with JSON configuration.'}
@@ -3037,8 +4253,8 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                 ))}
               </div>
             </div>
-            <div className="p-12 bg-black/40 border-t border-red-900/20 text-center">
-              <p className="text-[10px] text-red-900 font-black uppercase tracking-[0.4em]">Crimson OS Neural Development Environment v4.1.0_EX</p>
+            <div className="p-6 md:p-12 bg-black/40 border-t border-red-900/20 text-center shrink-0">
+              <p className="text-[9px] md:text-[10px] text-red-900 font-black uppercase tracking-[0.4em]">Crimson OS Neural Development Environment v4.1.0_EX</p>
             </div>
           </div>
         </div>
@@ -3060,6 +4276,8 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
           100% { background-position: 200% 0; }
         }
         .animate-shimmer { animation: shimmer 3s infinite linear; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         input[type=range] {
            -webkit-appearance: none;
@@ -3098,6 +4316,18 @@ const SidebarIcon: React.FC<{ icon: React.ReactNode; active: boolean; onClick: (
 
 const container = document.getElementById('root');
 if (container) {
-  const root = createRoot(container);
+  const root = (container as any)._reactRoot || createRoot(container);
+  (container as any)._reactRoot = root;
   root.render(<App />);
+
+  // Register Service Worker for PWA
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then(registration => {
+        console.log('SW registered: ', registration);
+      }).catch(registrationError => {
+        console.log('SW registration failed: ', registrationError);
+      });
+    });
+  }
 }
