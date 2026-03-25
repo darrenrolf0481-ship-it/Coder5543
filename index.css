@@ -7,7 +7,9 @@
 
 @layer base {
   body {
-    @apply bg-[#0a0a0c] text-white;
+    background-color: #0a0a0c;
+    color: white;
+    overscroll-behavior-y: contain;
   }
 }
 
