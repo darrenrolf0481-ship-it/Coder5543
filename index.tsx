@@ -1,4 +1,5 @@
 
+/// <reference types="vite/client" />
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './index.css';
 import { createRoot } from 'react-dom/client';
@@ -80,12 +81,11 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type } from "@google/genai";
 import Editor from '@monaco-editor/react';
 
 // Initialize AI
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.GEMINI_API_KEY });
 
 // LocalStorage Key
 const STORAGE_KEY = 'crimson_os_prefs';
@@ -697,39 +697,6 @@ const App: React.FC = () => {
   }, [editorContent, activeFileId]);
 
   useEffect(() => {
-    if (editorRef.current) {
-      // @ts-ignore
-      const monaco = window.monaco;
-      if (!monaco) return;
-
-      const newDecorations: any[] = [];
-      
-      breakpoints.forEach(line => {
-        newDecorations.push({
-          range: new monaco.Range(line, 1, line, 1),
-          options: {
-            isWholeLine: false,
-            glyphMarginClassName: 'bg-red-600 rounded-full'
-          }
-        });
-      });
-
-      if (debugState.isActive && debugState.currentLine > 0) {
-        newDecorations.push({
-          range: new monaco.Range(debugState.currentLine, 1, debugState.currentLine, 1),
-          options: {
-            isWholeLine: true,
-            className: 'bg-red-500/10 border-l-2 border-red-500',
-            glyphMarginClassName: 'bg-yellow-500'
-          }
-        });
-      }
-
-      decorationsRef.current = editorRef.current.deltaDecorations(decorationsRef.current, newDecorations);
-    }
-  }, [breakpoints, debugState.currentLine, debugState.isActive]);
-
-  useEffect(() => {
     if (gitRepo.initialized && activeFileId) {
       const file = projectFiles.find(f => f.id === activeFileId);
       if (file && file.content !== editorContent) {
@@ -844,18 +811,9 @@ const App: React.FC = () => {
   };
 
   const handleRefactorCode = async () => {
-    if (!editorRef.current) return;
-    
-    const selection = editorRef.current.getSelection();
-    const model = editorRef.current.getModel();
     let codeToRefactor = editorContent;
     let isSelection = false;
     
-    if (selection && !selection.isEmpty()) {
-      codeToRefactor = model.getValueInRange(selection);
-      isSelection = true;
-    }
-
     setIsAiProcessing(true);
     try {
       const response = await generateAIResponse(
@@ -883,7 +841,7 @@ const App: React.FC = () => {
         metadata: {
           refactoredCode: result.refactoredCode,
           isSelection,
-          selection: isSelection ? selection : null
+          selection: null
         }
       }]);
       setIsEditorAssistantOpen(true);
@@ -895,33 +853,14 @@ const App: React.FC = () => {
   };
 
   const handleApplyRefactor = (refactoredCode: string, isSelection: boolean, selection: any) => {
-    if (!editorRef.current) return;
-
-    if (isSelection && selection) {
-      editorRef.current.executeEdits('refactor', [{
-        range: selection,
-        text: refactoredCode,
-        forceMoveMarkers: true
-      }]);
-    } else {
-      setEditorContent(refactoredCode);
-    }
+    setEditorContent(refactoredCode);
     setEditorOutput(prev => prev + `[SYSTEM] Refactoring applied successfully.\n`);
   };
 
   const handleGenerateDocs = async () => {
-    if (!editorRef.current) return;
-    
-    const selection = editorRef.current.getSelection();
-    const model = editorRef.current.getModel();
     let codeToDocument = editorContent;
     let isSelection = false;
     
-    if (selection && !selection.isEmpty()) {
-      codeToDocument = model.getValueInRange(selection);
-      isSelection = true;
-    }
-
     setIsAiProcessing(true);
     try {
       const response = await generateAIResponse(
@@ -949,7 +888,7 @@ const App: React.FC = () => {
         metadata: {
           documentedCode: result.documentedCode,
           isSelection,
-          selection: isSelection ? selection : null
+          selection: null
         }
       }]);
       setIsEditorAssistantOpen(true);
@@ -961,17 +900,7 @@ const App: React.FC = () => {
   };
 
   const handleApplyDocumentation = (documentedCode: string, isSelection: boolean, selection: any) => {
-    if (!editorRef.current) return;
-
-    if (isSelection && selection) {
-      editorRef.current.executeEdits('documentation', [{
-        range: selection,
-        text: documentedCode,
-        forceMoveMarkers: true
-      }]);
-    } else {
-      setEditorContent(documentedCode);
-    }
+    setEditorContent(documentedCode);
     setEditorOutput(prev => prev + `[SYSTEM] Documentation applied successfully.\n`);
   };
 
@@ -1146,14 +1075,7 @@ const App: React.FC = () => {
   };
 
   const handleApplyForge = (code: string) => {
-    if (!editorRef.current) return;
-    const selection = editorRef.current.getSelection();
-    
-    editorRef.current.executeEdits('forge', [{
-      range: selection,
-      text: code,
-      forceMoveMarkers: true
-    }]);
+    setEditorContent(code);
     setEditorOutput(prev => prev + "[SYSTEM] Neural Forge code integrated.\n");
   };
 
@@ -1205,12 +1127,7 @@ const App: React.FC = () => {
   };
 
   const handleToggleCurrentLineBreakpoint = () => {
-    if (editorRef.current) {
-      const position = editorRef.current.getPosition();
-      if (position) {
-        handleToggleBreakpoint(position.lineNumber);
-      }
-    }
+    // Not supported in simple textarea
   };
 
   const handleStartDebug = async () => {
@@ -1482,18 +1399,9 @@ const App: React.FC = () => {
 
   // Git Functions
   const handleDebugRefactor = async () => {
-    if (!editorRef.current || !debugState.isActive) return;
+    if (!debugState.isActive) return;
 
-    const selection = editorRef.current.getSelection();
-    const model = editorRef.current.getModel();
-    let codeToRefactor = "";
-
-    if (selection && !selection.isEmpty()) {
-      codeToRefactor = model.getValueInRange(selection);
-    } else {
-      const lineContent = model.getLineContent(debugState.currentLine);
-      codeToRefactor = lineContent;
-    }
+    let codeToRefactor = editorContent;
 
     setIsAiProcessing(true);
     try {
@@ -1534,31 +1442,9 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
   };
 
   const handleApplyDebugRefactor = () => {
-    if (!editorRef.current || !debugRefactorResult) return;
+    if (!debugRefactorResult) return;
     
-    const selection = editorRef.current.getSelection();
-    const model = editorRef.current.getModel();
-    
-    if (selection && !selection.isEmpty()) {
-      editorRef.current.executeEdits('refactor', [{
-        range: selection,
-        text: debugRefactorResult.refactoredCode,
-        forceMoveMarkers: true
-      }]);
-    } else {
-      const line = debugState.currentLine;
-      const range = {
-        startLineNumber: line,
-        startColumn: 1,
-        endLineNumber: line,
-        endColumn: model.getLineMaxColumn(line)
-      };
-      editorRef.current.executeEdits('refactor', [{
-        range: range,
-        text: debugRefactorResult.refactoredCode,
-        forceMoveMarkers: true
-      }]);
-    }
+    setEditorContent(debugRefactorResult.refactoredCode);
     setDebugRefactorResult(null);
     setEditorOutput(prev => prev + "\n[SYSTEM] AI Refactor applied successfully.");
   };
@@ -2262,25 +2148,18 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
 
                   {tnModule === 'vault' && (
                     <div className="flex-1 flex flex-col h-full overflow-hidden">
-                      <AnimatePresence mode="wait">
                         {!isVaultUnlocked ? (
-                          <motion.div 
+                          <div 
                             key="locked"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="flex-1 flex flex-col items-center justify-center p-12 space-y-12 text-center"
+                            className="flex-1 flex flex-col items-center justify-center p-12 space-y-12 text-center transition-all"
                           >
                             <div className="relative">
                               <div className="p-12 bg-red-900/10 rounded-full border border-red-600/20 shadow-[0_0_80px_rgba(185,28,28,0.15)] relative z-10">
                                 <ShieldCheck className="w-24 h-24 text-red-600" />
                               </div>
                               {isBiometricVerifying && (
-                                <motion.div 
-                                  initial={{ top: '0%' }}
-                                  animate={{ top: '100%' }}
-                                  transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                                  className="absolute left-0 right-0 h-1 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,1)] z-20"
+                                <div 
+                                  className="absolute left-0 right-0 h-1 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,1)] z-20 animate-[pulse_1.5s_ease-in-out_infinite]"
                                 />
                               )}
                             </div>
@@ -2347,13 +2226,11 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                                 </button>
                               </div>
                             )}
-                          </motion.div>
+                          </div>
                         ) : (
-                          <motion.div 
+                          <div 
                             key="unlocked"
-                            initial={{ opacity: 0, scale: 1.05 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="flex-1 flex flex-col p-12 space-y-12 overflow-y-auto custom-scrollbar"
+                            className="flex-1 flex flex-col p-12 space-y-12 overflow-y-auto custom-scrollbar transition-all"
                           >
                             <div className="flex items-center justify-between">
                               <div className="space-y-2">
@@ -2378,12 +2255,10 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                                 { title: 'Hardware Keys', desc: 'Master recovery keys for crimson-node-01.', size: '2KB', date: '2024-01-15' },
                                 { title: 'Vision Assets', desc: 'High-fidelity textures for UI generation.', size: '850MB', date: '2024-03-23' }
                               ].map((item, i) => (
-                                <motion.div 
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: i * 0.1 }}
+                                <div 
                                   key={i} 
-                                  className="p-8 bg-red-950/5 border border-red-900/20 rounded-[40px] space-y-4 group hover:border-red-600/30 transition-all cursor-pointer"
+                                  className="p-8 bg-red-950/5 border border-red-900/20 rounded-[40px] space-y-4 group hover:border-red-600/30 transition-all cursor-pointer animate-in fade-in slide-in-from-left-4"
+                                  style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
                                 >
                                   <div className="flex items-center justify-between">
                                     <div className="p-3 bg-red-900/10 rounded-2xl border border-red-900/20 text-red-500 group-hover:scale-110 transition-transform">
@@ -2399,12 +2274,11 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                                     <span className="text-[9px] font-black text-red-950 uppercase tracking-widest">{item.date}</span>
                                     <Download className="w-4 h-4 text-red-900 hover:text-red-500 transition-colors" />
                                   </div>
-                                </motion.div>
+                                </div>
                               ))}
                             </div>
-                          </motion.div>
+                          </div>
                         )}
-                      </AnimatePresence>
                     </div>
                   )}
 
@@ -2457,14 +2331,12 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                                      const x = Math.cos(angle) * 160;
                                      const y = Math.sin(angle) * 160;
                                      return (
-                                       <motion.div
+                                       <div
                                          key={agent.id}
-                                         animate={{ 
-                                           x: x + (agent.status === 'active' ? Math.random() * 10 - 5 : 0),
-                                           y: y + (agent.status === 'active' ? Math.random() * 10 - 5 : 0),
-                                           scale: agent.status === 'active' ? 1.1 : 1
+                                         style={{ 
+                                           transform: `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${agent.status === 'active' ? 1.1 : 1})`
                                          }}
-                                         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-3"
+                                         className="absolute left-1/2 top-1/2 flex flex-col items-center gap-3 transition-all duration-500"
                                        >
                                           <div className={`w-16 h-16 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
                                             agent.status === 'active' 
@@ -2477,7 +2349,7 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                                              <p className="text-[10px] font-black text-red-100 uppercase tracking-tighter">{agent.name}</p>
                                              <p className="text-[8px] font-black text-red-900 uppercase tracking-widest mt-1">{agent.expertise}</p>
                                           </div>
-                                       </motion.div>
+                                       </div>
                                      );
                                    })}
                                    {/* Center Core */}
@@ -3000,28 +2872,12 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                     </div>
                   </div>
                   <div className="flex-1 relative">
-                    <Editor
-                      height="100%"
-                      onMount={(editor) => {
-                        editorRef.current = editor;
-                        editor.onDidChangeCursorPosition((e: any) => {
-                          setCursorLine(e.position.lineNumber);
-                        });
-                      }}
-                      language={editorLanguage === 'cpp' ? 'cpp' : editorLanguage}
-                      theme="vs-dark"
+                    <textarea
+                      ref={editorRef}
+                      className="w-full h-full bg-[#0d0404] text-red-100 p-4 font-mono text-sm resize-none focus:outline-none focus:ring-1 focus:ring-red-900/50 custom-scrollbar"
                       value={editorContent}
-                      onChange={(value) => setEditorContent(value || '')}
-                      options={{
-                        fontSize: 14,
-                        fontFamily: 'JetBrains Mono',
-                        minimap: { enabled: false },
-                        scrollBeyondLastLine: false,
-                        padding: { top: 20 },
-                        backgroundColor: '#0d0404',
-                        glyphMargin: true,
-                        lineNumbersMinChars: 3
-                      }}
+                      onChange={(e) => setEditorContent(e.target.value)}
+                      spellCheck={false}
                     />
                   </div>
                 </div>
@@ -4037,12 +3893,10 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                        </div>
                      ) : (
                        storageFiles.map((f, i) => (
-                         <motion.div 
-                           initial={{ opacity: 0, y: 20 }}
-                           animate={{ opacity: 1, y: 0 }}
-                           transition={{ delay: i * 0.05 }}
+                         <div 
                            key={f.id} 
-                           className="flex flex-col p-8 bg-red-950/5 border border-red-900/20 rounded-[40px] group hover:bg-red-900/10 hover:border-red-600/40 transition-all relative overflow-hidden shadow-inner"
+                           className="flex flex-col p-8 bg-red-950/5 border border-red-900/20 rounded-[40px] group hover:bg-red-900/10 hover:border-red-600/40 transition-all relative overflow-hidden shadow-inner animate-in fade-in slide-in-from-bottom-4"
+                           style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'both' }}
                          >
                             <div className="flex items-center justify-between mb-8 relative z-10">
                                <div className="p-4 bg-red-900/20 rounded-2xl shadow-xl text-red-500 group-hover:scale-110 transition-transform">
@@ -4062,7 +3916,7 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                                <button onClick={() => setStorageFiles(prev => prev.filter(file => file.id !== f.id))} className="p-4 text-red-900 hover:text-red-500 transition-all bg-red-950/20 rounded-2xl"><Trash2 className="w-5 h-5" /></button>
                             </div>
                             <div className="absolute bottom-0 right-0 w-32 h-32 bg-red-600/[0.02] blur-[40px] rounded-full pointer-events-none" />
-                         </motion.div>
+                         </div>
                        ))
                      )}
                   </div>
