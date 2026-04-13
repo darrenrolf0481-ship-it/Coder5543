@@ -48,6 +48,7 @@ import {
   Edit2,
   ChevronDown,
   GitBranch,
+  BarChart3,
   GitPullRequest,
   GitMerge,
   History,
@@ -71,6 +72,8 @@ import {
 import { GoogleGenAI, Type } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { generateAIResponse as generateAIResponseService } from './src/services/aiService';
+import Editor from '@monaco-editor/react';
 
 // Initialize AI
 const ai = new GoogleGenAI({ apiKey: import.meta.env.GEMINI_API_KEY });
@@ -216,6 +219,15 @@ const App: React.FC = () => {
 
   // --- PERSISTENT STATE ---
   const [activeTab, setActiveTab] = useState<'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron'>('toolneuron');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  useEffect(() => {
+    document.documentElement.className = theme;
+  }, [theme]);
   
   // ToolNeuron State
   const [tnModule, setTnModule] = useState<'chat' | 'vision' | 'knowledge' | 'vault' | 'swarm' | 'help' | 'debug'>('chat');
@@ -342,7 +354,26 @@ const App: React.FC = () => {
   } | null>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const inspectedElementRef = useRef<HTMLElement | null>(null);
-  const editorRef = useRef<any>(null);
+  const monacoEditorRef = useRef<any>(null);
+
+  const saveFile = useCallback(() => {
+    if (activeFileId) {
+      setProjectFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content: editorContent } : f));
+      setLastSavedTime(new Date().toLocaleTimeString());
+    }
+  }, [activeFileId, editorContent]);
+
+  useEffect(() => {
+    const interval = setInterval(saveFile, 5000);
+    return () => clearInterval(interval);
+  }, [saveFile]);
+
+  const handleEditorDidMount = (editor: any) => {
+    monacoEditorRef.current = editor;
+    editor.onDidBlurEditorText(() => {
+      saveFile();
+    });
+  };
   const decorationsRef = useRef<string[]>([]);
 
   // Debugging State
@@ -496,7 +527,8 @@ const App: React.FC = () => {
     { id: 1, name: 'Architect', instruction: 'You are the Core Architect, a cold, hyper-logical system intelligence. You issue precise, zero-latency terminal directives and optimize system architecture.', active: true, suggestions: ['sys_audit', 'net_scan', 'core_reboot', 'status_check'] },
     { id: 2, name: 'Syntax-Prime', instruction: 'You are Syntax-Prime, an elite neural coding construct. You synthesize highly optimized, secure, and production-ready code across all major languages.', active: false, suggestions: ['analyze_refactor', 'debug_trace', 'optimize_neural', 'lint_check'] },
     { id: 3, name: 'Vanguard', instruction: 'You are Vanguard, a rogue creative intelligence. You generate hyper-vivid, high-impact visual prompts and push the boundaries of synthetic artistry.', active: false, suggestions: ['style_inject', 'prompt_warp', 'render_ultra', 'asset_gen'] },
-    { id: 4, name: 'Aegis', instruction: 'You are Aegis, the absolute authority over the Memory Vault. You enforce strict cryptographic security, biometric verification, and zero-trust data integrity.', active: false, suggestions: ['vault_lock', 'biometric_scan', 'pin_verify', 'integrity_check'] }
+    { id: 4, name: 'Aegis', instruction: 'You are Aegis, the absolute authority over the Memory Vault. You enforce strict cryptographic security, biometric verification, and zero-trust data integrity.', active: false, suggestions: ['vault_lock', 'biometric_scan', 'pin_verify', 'integrity_check'] },
+    { id: 5, name: 'Data Analyst', instruction: 'You are the Data Analyst, a specialized intelligence focused on code analysis, performance profiling, and suggesting data visualization improvements. You provide actionable insights from complex datasets and code structures.', active: false, suggestions: ['analyze_perf', 'profile_code', 'visualize_data', 'optimize_query'] }
   ]);
 
   // --- NON-PERSISTENT STATE ---
@@ -505,7 +537,9 @@ const App: React.FC = () => {
     'Kernel: Android-SD Neural Link Established',
     'Voltage stable. Hyper-threaded nodes online.'
   ]);
-  const [termInput, setTermInput] = useState('');
+  const [isMultiLine, setIsMultiLine] = useState(false);
+  const [multiLineBuffer, setMultiLineBuffer] = useState('');
+
   const [termSuggestion, setTermSuggestion] = useState('');
   const [termSuggestions, setTermSuggestions] = useState<string[]>([]);
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
@@ -778,90 +812,12 @@ const App: React.FC = () => {
     } catch (err) {} finally { setIsAiProcessing(false); }
   };
 
-  const generateAIResponse = async (
+  const generateAIResponse = (
     prompt: string | any[],
     systemInstruction: string,
     options?: { modelType?: 'fast' | 'smart', json?: boolean, responseSchema?: any }
   ) => {
-    const isFast = options?.modelType === 'fast';
-    const isJson = options?.json;
-
-    if (aiProvider === 'google') {
-      const model = aiModel || (isFast ? 'gemini-3-flash-preview' : 'gemini-3.1-pro-preview');
-      const config: any = { systemInstruction };
-      if (isJson) {
-        config.responseMimeType = "application/json";
-        if (options?.responseSchema) {
-          config.responseSchema = options.responseSchema;
-        }
-      }
-      const response = await ai.models.generateContent({
-        model,
-        contents: prompt,
-        config
-      });
-      return response.text;
-    } else if (aiProvider === 'grok') {
-      const model = aiModel || 'grok-beta';
-      let messages: any[] = [{ role: 'system', content: systemInstruction }];
-      
-      if (Array.isArray(prompt)) {
-        messages = [
-          ...messages,
-          ...prompt.map(p => ({
-            role: p.role === 'model' ? 'assistant' : 'user',
-            content: p.parts[0].text
-          }))
-        ];
-      } else {
-        messages.push({ role: 'user', content: prompt });
-      }
-
-      const res = await fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${grokApiKey}`
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          response_format: isJson ? { type: "json_object" } : undefined
-        })
-      });
-      const data = await res.json();
-      return data.choices?.[0]?.message?.content;
-    } else if (aiProvider === 'ollama') {
-      const url = projectSettings.ollamaUrl || 'http://127.0.0.1:11434';
-      const model = aiModel || (ollamaModels.length > 0 ? ollamaModels[0] : 'llama3');
-      
-      let messages: any[] = [{ role: 'system', content: systemInstruction }];
-      if (Array.isArray(prompt)) {
-        messages = [
-          ...messages,
-          ...prompt.map(p => ({
-            role: p.role === 'model' ? 'assistant' : 'user',
-            content: p.parts[0].text
-          }))
-        ];
-      } else {
-        messages.push({ role: 'user', content: prompt });
-      }
-
-      const res = await fetch(`${url}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model,
-          messages,
-          stream: false,
-          format: isJson ? 'json' : undefined
-        })
-      });
-      const data = await res.json();
-      return data.message?.content;
-    }
-    return '';
+    return generateAIResponseService(prompt, systemInstruction, options || {}, { aiProvider, aiModel, ai, grokApiKey, projectSettings, ollamaModels });
   };
 
   const handleRunCode = async () => {
@@ -947,18 +903,18 @@ const App: React.FC = () => {
     }
   };
 
-  const handleFormatCode = async () => {
+  const handleFormatCode = async (isMobile: boolean = false) => {
     setIsAiProcessing(true);
     try {
       const response = await generateAIResponse(
-        `Format this ${editorLanguage} code based on standard project conventions. Ensure proper indentation, spacing, and line breaks. Return ONLY the formatted code, without any markdown formatting or explanations.\n\nCode:\n${editorContent}`,
+        `Format this ${editorLanguage} code based on standard project conventions. ${isMobile ? 'Ensure the code is formatted for mobile screens, with shorter line lengths and vertical layout optimization.' : 'Ensure proper indentation, spacing, and line breaks.'} Return ONLY the formatted code, without any markdown formatting or explanations.\n\nCode:\n${editorContent}`,
         "You are an expert code formatter. Return ONLY the formatted code. Do not wrap in markdown blocks.",
         { modelType: 'fast' }
       );
       
       if (response) {
         setEditorContent(response);
-        setEditorOutput(prev => prev + `[SYSTEM] Code formatted successfully.\n`);
+        setEditorOutput(prev => prev + `[SYSTEM] Code formatted successfully${isMobile ? ' (mobile)' : ''}.\n`);
       }
     } catch (err) {
       setEditorOutput(prev => prev + "[ERROR] Formatting engine failed.\n");
@@ -1350,19 +1306,11 @@ const App: React.FC = () => {
   };
 
   const handleApplyForge = (code: string, isSnippet: boolean = false) => {
-    if (isSnippet && editorRef.current) {
-      const start = editorRef.current.selectionStart;
-      const end = editorRef.current.selectionEnd;
-      const newContent = editorContent.substring(0, start) + code + editorContent.substring(end);
-      setEditorContent(newContent);
-      
-      // Update cursor position after React re-renders
-      setTimeout(() => {
-        if (editorRef.current) {
-          editorRef.current.selectionStart = editorRef.current.selectionEnd = start + code.length;
-          editorRef.current.focus();
-        }
-      }, 0);
+    if (isSnippet && monacoEditorRef.current) {
+      const editor = monacoEditorRef.current;
+      const selection = editor.getSelection();
+      editor.executeEdits("source", [{ range: selection, text: code }]);
+      editor.focus();
       setEditorOutput(prev => prev + "[SYSTEM] Neural Forge snippet integrated at cursor.\n");
     } else {
       setEditorContent(code);
@@ -1406,6 +1354,257 @@ const App: React.FC = () => {
       setIsEditorAssistantOpen(true);
     } catch (err) {
       setEditorOutput(prev => prev + "[ERROR] Analysis node offline.\n");
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  const handleReviewCode = async () => {
+    setIsAiProcessing(true);
+    try {
+      const agentsMdGuidelines = `
+# Code Review Guidelines
+
+**A comprehensive guide for AI agents performing code reviews**, organized by priority and impact.
+
+---
+
+## Table of Contents
+
+### Security — **CRITICAL**
+1. [SQL Injection Prevention](#sql-injection-prevention)
+2. [XSS Prevention](#xss-prevention)
+
+### Performance — **HIGH**
+3. [Avoid N+1 Query Problem](#avoid-n-1-query-problem)
+
+### Correctness — **HIGH**
+4. [Proper Error Handling](#proper-error-handling)
+
+### Maintainability — **MEDIUM**
+5. [Use Meaningful Variable Names](#use-meaningful-variable-names)
+6. [Add Type Hints](#add-type-hints)
+
+---
+
+## Security
+
+### SQL Injection Prevention
+
+**Impact: CRITICAL** | **Category: security** | **Tags:** sql, security, injection, database
+
+Never construct SQL queries with string concatenation or f-strings. Always use parameterized queries to prevent SQL injection attacks.
+
+#### Why This Matters
+
+SQL injection is one of the most common and dangerous web vulnerabilities. Attackers can:
+- Access unauthorized data
+- Modify or delete database records
+- Execute admin operations on the database
+- In some cases, issue commands to the OS
+
+#### ❌ Incorrect
+
+\`\`\`python
+def get_user(user_id):
+    query = f"SELECT * FROM users WHERE id = {user_id}"
+    result = db.execute(query)
+    return result
+
+# Vulnerable to: get_user("1 OR 1=1")
+# Returns all users!
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`python
+def get_user(user_id: int) -> Optional[Dict[str, Any]]:
+    query = "SELECT * FROM users WHERE id = ?"
+    result = db.execute(query, (user_id,))
+    return result.fetchone() if result else None
+\`\`\`
+
+---
+
+### XSS Prevention
+
+**Impact: CRITICAL** | **Category: security** | **Tags:** xss, security, html, javascript
+
+Never insert unsanitized user input into HTML. Always escape output or use frameworks that auto-escape by default.
+
+#### ❌ Incorrect
+
+\`\`\`javascript
+// Dangerous!
+document.getElementById('username').innerHTML = userInput;
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`javascript
+// Safe: use textContent
+element.textContent = userInput;
+
+// Or sanitize if HTML needed
+import DOMPurify from 'dompurify';
+element.innerHTML = DOMPurify.sanitize(userHtml);
+\`\`\`
+
+---
+
+## Performance
+
+### Avoid N+1 Query Problem
+
+**Impact: HIGH** | **Category: performance** | **Tags:** database, performance, orm, queries
+
+The N+1 query problem occurs when code executes 1 query to fetch a list, then N additional queries to fetch related data for each item.
+
+#### ❌ Incorrect
+
+\`\`\`python
+# 101 queries for 100 posts!
+posts = Post.objects.all()  # 1 query
+for post in posts:
+    print(f"{post.title} by {post.author.name}")  # N queries
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`python
+# 1 query with JOIN
+posts = Post.objects.select_related('author').all()
+for post in posts:
+    print(f"{post.title} by {post.author.name}")  # No extra queries!
+\`\`\`
+
+---
+
+## Correctness
+
+### Proper Error Handling
+
+**Impact: HIGH** | **Category: correctness** | **Tags:** errors, exceptions, reliability
+
+Always handle errors explicitly. Don't use bare except clauses or ignore errors silently.
+
+#### ❌ Incorrect
+
+\`\`\`python
+try:
+    result = risky_operation()
+except:
+    pass  # Silent failure!
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`python
+try:
+    config = json.loads(config_file.read())
+except json.JSONDecodeError as e:
+    logger.error(f"Invalid JSON in config file: {e}")
+    config = get_default_config()
+except FileNotFoundError:
+    logger.warning("Config file not found, using defaults")
+    config = get_default_config()
+\`\`\`
+
+---
+
+## Maintainability
+
+### Use Meaningful Variable Names
+
+**Impact: MEDIUM** | **Category: maintainability** | **Tags:** naming, readability, code-quality
+
+Choose descriptive, intention-revealing names. Avoid single letters (except loop counters), abbreviations, and generic names.
+
+#### ❌ Incorrect
+
+\`\`\`python
+def calc(x, y, z):
+    tmp = x * y
+    res = tmp + z
+    return res
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`python
+def calculate_total_price(item_price: float, quantity: int, tax_rate: float) -> float:
+    subtotal = item_price * quantity
+    total_with_tax = subtotal + (subtotal * tax_rate)
+    return total_with_tax
+\`\`\`
+
+---
+
+### Add Type Hints
+
+**Impact: MEDIUM** | **Category: maintainability** | **Tags:** types, python, typescript, type-safety
+
+Use type annotations to make code self-documenting and catch errors early.
+
+#### ❌ Incorrect
+
+\`\`\`python
+def get_user(id):
+    return users.get(id)
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`python
+def get_user(id: int) -> Optional[Dict[str, Any]]:
+    """Fetch user by ID."""
+    return users.get(id)
+\`\`\`
+`;
+
+      const response = await generateAIResponse(
+        `Review the following ${editorLanguage} code based on the provided guidelines:\n\n${agentsMdGuidelines}\n\nCode:\n${editorContent}`,
+        "You are a senior software engineer and code reviewer. Provide a concise, actionable code review based on the provided guidelines. Structure your feedback by severity (CRITICAL, HIGH, MEDIUM, LOW) and provide specific examples of issues and fixes.",
+        { modelType: 'smart' }
+      );
+      
+      setEditorAssistantMessages(prev => [...prev, { 
+        role: 'ai', 
+        text: `CODE_REVIEW:\n${response}`
+      }]);
+      setIsEditorAssistantOpen(true);
+    } catch (err) {
+      console.error(err);
+      setEditorAssistantMessages(prev => [...prev, { 
+        role: 'ai', 
+        text: "[ERROR] Code review failed."
+      }]);
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  const handleAnalyzeData = async () => {
+    setIsAiProcessing(true);
+    try {
+      const dataAnalystInstruction = 'You are the Data Analyst, a specialized intelligence focused on code analysis, performance profiling, and suggesting data visualization improvements. You provide actionable insights from complex datasets and code structures.';
+      const response = await generateAIResponse(
+        `Analyze the following ${editorLanguage} code for performance bottlenecks and suggest data visualization improvements.\n\nCode:\n${editorContent}`,
+        dataAnalystInstruction,
+        { modelType: 'smart' }
+      );
+      
+      setEditorAssistantMessages(prev => [...prev, { 
+        role: 'ai', 
+        text: `DATA_ANALYSIS:\n${response}`
+      }]);
+      setIsEditorAssistantOpen(true);
+    } catch (err) {
+      console.error(err);
+      setEditorAssistantMessages(prev => [...prev, { 
+        role: 'ai', 
+        text: "[ERROR] Data analysis failed."
+      }]);
     } finally {
       setIsAiProcessing(false);
     }
@@ -1597,6 +1796,22 @@ const App: React.FC = () => {
   const createFolder = (parentId: string | null) => {
     setCreatingInId({ parentId, type: 'folder' });
     setNewName('');
+  };
+
+  const moveItem = (itemId: string, newParentId: string) => {
+    if (itemId === newParentId) return;
+    
+    const item = projectFiles.find(f => f.id === itemId);
+    if (!item) return;
+    
+    // Prevent moving a folder into its own children
+    let currentParent = projectFiles.find(f => f.id === newParentId);
+    while (currentParent) {
+      if (currentParent.id === itemId) return;
+      currentParent = projectFiles.find(f => f.id === currentParent!.parentId);
+    }
+
+    setProjectFiles(prev => prev.map(f => f.id === itemId ? { ...f, parentId: newParentId } : f));
   };
 
   const renameItem = (id: string) => {
@@ -1829,18 +2044,62 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
   };
 
   const handleGitPush = async () => {
+    const token = import.meta.env.VITE_GITHUB_TOKEN;
+    if (!token) {
+      setEditorOutput(prev => prev + '[GIT] ERROR: VITE_GITHUB_TOKEN not set.\n');
+      return;
+    }
     setIsAiProcessing(true);
-    setEditorOutput(prev => prev + '[GIT] Pushing to remote neural uplink...\n');
-    await new Promise(r => setTimeout(r, 1500));
-    setEditorOutput(prev => prev + '[GIT] Successfully pushed to origin/main.\n');
+    setEditorOutput(prev => prev + '[GIT] Pushing to GitHub...\n');
+    
+    // WARNING: This is a client-side implementation. API keys are exposed in the browser.
+    // For production, use a server-side proxy.
+    try {
+      const response = await fetch('https://api.github.com/user/repos', {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: 'neural-repo' }),
+      });
+      if (response.ok) {
+        setEditorOutput(prev => prev + '[GIT] Successfully pushed to GitHub.\n');
+      } else {
+        setEditorOutput(prev => prev + `[GIT] ERROR: Failed to push: ${response.statusText}\n`);
+      }
+    } catch (e) {
+      setEditorOutput(prev => prev + `[GIT] ERROR: Failed to push: ${e}\n`);
+    }
     setIsAiProcessing(false);
   };
 
   const handleGitPull = async () => {
+    const token = import.meta.env.VITE_GITHUB_TOKEN;
+    if (!token) {
+      setEditorOutput(prev => prev + '[GIT] ERROR: VITE_GITHUB_TOKEN not set.\n');
+      return;
+    }
     setIsAiProcessing(true);
-    setEditorOutput(prev => prev + '[GIT] Fetching from remote neural uplink...\n');
-    await new Promise(r => setTimeout(r, 1500));
-    setEditorOutput(prev => prev + '[GIT] Already up to date.\n');
+    setEditorOutput(prev => prev + '[GIT] Pulling from GitHub...\n');
+    
+    // WARNING: This is a client-side implementation. API keys are exposed in the browser.
+    // For production, use a server-side proxy.
+    try {
+      const response = await fetch('https://api.github.com/user/repos', {
+        method: 'GET',
+        headers: {
+          'Authorization': `token ${token}`,
+        },
+      });
+      if (response.ok) {
+        setEditorOutput(prev => prev + '[GIT] Successfully pulled from GitHub.\n');
+      } else {
+        setEditorOutput(prev => prev + `[GIT] ERROR: Failed to pull: ${response.statusText}\n`);
+      }
+    } catch (e) {
+      setEditorOutput(prev => prev + `[GIT] ERROR: Failed to pull: ${e}\n`);
+    }
     setIsAiProcessing(false);
   };
 
@@ -1902,6 +2161,13 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
     e.preventDefault();
     const cmd = termInput.trim();
     if (!cmd) return;
+
+    if (cmd.endsWith('(') || cmd.endsWith('"') || cmd.endsWith('\'')) {
+      setTerminalOutput(prev => [...prev, `${currentDir} $ ${cmd} (continuation)`]);
+      setTermInput('');
+      return;
+    }
+
     setTerminalOutput(prev => [...prev, `${currentDir} $ ${cmd}`]);
     setCmdHistory(prev => [cmd, ...prev].slice(0, 20));
     setTermInput('');
@@ -2112,6 +2378,27 @@ Current System State:
     }
     setHistoryIndex(-1);
     
+    const activePersonality = personalities.find(p => p.active);
+    const personalitySuggestions = activePersonality ? activePersonality.suggestions : [];
+    
+    // Context-aware command suggestions with weights
+    const suggestionsWithWeights: { cmd: string, weight: number }[] = [
+      ...commonCommands.map(c => ({ cmd: c, weight: 1 })),
+      ...(activePersonality ? activePersonality.suggestions.map(c => ({ cmd: c, weight: 3 })) : []),
+    ];
+    
+    if (editorLanguage === 'python') {
+      suggestionsWithWeights.push({ cmd: 'pip install', weight: 2 }, { cmd: 'pytest', weight: 2 });
+    }
+    if (editorLanguage === 'javascript' || editorLanguage === 'typescript') {
+      suggestionsWithWeights.push({ cmd: 'npm install', weight: 2 }, { cmd: 'npm run dev', weight: 2 });
+    }
+    
+    // Filter and sort (will be used in command completion)
+    const sortedSuggestions = suggestionsWithWeights
+      .sort((a, b) => b.weight - a.weight || a.cmd.localeCompare(b.cmd))
+      .map(s => s.cmd);
+
     // Get current folder context
     const dirParts = currentDir.split('/');
     const currentFolderName = dirParts[dirParts.length - 1] === '~' ? 'root' : dirParts[dirParts.length - 1];
@@ -2129,26 +2416,84 @@ Current System State:
     
     let matches: string[] = [];
     
-    if (val.startsWith('cd ')) {
+    // Commands that take file paths
+    const fileCommands = ['cat', 'rm', 'edit', 'run', 'compile'];
+    
+    // Check if user is typing a command or a path
+    const parts = val.split(' ');
+    if (parts.length === 1) {
+      // Command completion (weighted)
+      matches = sortedSuggestions.filter(c => c.toLowerCase().startsWith(val.toLowerCase()));
+    } else if (fileCommands.includes(parts[0])) {
+      // File path completion
+      const search = parts.slice(1).join(' ');
+      matches = localFiles
+        .filter(f => f.toLowerCase().startsWith(search.toLowerCase()))
+        .map(f => `${parts[0]} ${f}`);
+    } else if (val.startsWith('cd ')) {
       const search = val.substring(3);
-      matches = localFolders.filter(f => f.toLowerCase().startsWith(search.toLowerCase())).map(f => `cd ${f}`);
-      if (search === '.' || search === '..') matches.push(`cd ${search}`);
-    } else if (val.startsWith('cat ') || val.startsWith('rm ')) {
-      const cmd = val.substring(0, 3);
-      const search = val.substring(3);
-      matches = localFiles.filter(f => f.toLowerCase().startsWith(search.toLowerCase())).map(f => `${cmd}${f}`);
+      if (search.includes('/')) {
+        const parts = search.split('/');
+        const folderName = parts[0];
+        const subPath = parts.slice(1).join('/');
+        const folder = projectFiles.find(f => f.name === folderName && f.type === 'folder' && f.parentId === currentFolderId);
+        if (folder) {
+          const subItems = projectFiles.filter(f => f.parentId === folder.id);
+          matches = subItems
+            .filter(f => f.type === 'folder' && f.name.toLowerCase().startsWith(subPath.toLowerCase()))
+            .map(f => `cd ${folderName}/${f.name}`);
+        }
+      } else {
+        matches = localFolders
+          .filter(f => f.toLowerCase().startsWith(search.toLowerCase()))
+          .map(f => `cd ${f}`);
+        if (search === '.' || search === '..') matches.push(`cd ${search}`);
+      }
+    } else if (fileCommands.some(cmd => val.startsWith(`${cmd} `))) {
+      const cmd = val.split(' ')[0];
+      const search = val.substring(cmd.length + 1);
+      
+      if (search.includes('/')) {
+        const parts = search.split('/');
+        const folderName = parts[0];
+        const fileName = parts.slice(1).join('/');
+        const folder = projectFiles.find(f => f.name === folderName && f.type === 'folder' && f.parentId === currentFolderId);
+        if (folder) {
+          const subItems = projectFiles.filter(f => f.parentId === folder.id);
+          matches = subItems
+            .filter(f => f.type === 'file' && f.name.toLowerCase().startsWith(fileName.toLowerCase()))
+            .map(f => `${cmd} ${folderName}/${f.name}`);
+        }
+      } else {
+        matches = localFiles
+          .filter(f => f.toLowerCase().startsWith(search.toLowerCase()))
+          .map(f => `${cmd} ${f}`);
+      }
     } else if (val.startsWith('ai ')) {
       const search = val.substring(3);
       const aiCmds = activePersonality.suggestions || [];
-      matches = aiCmds.filter(cmd => cmd.toLowerCase().startsWith(search.toLowerCase())).map(cmd => `ai ${cmd}`);
+      matches = aiCmds
+        .filter(cmd => cmd.toLowerCase().startsWith(search.toLowerCase()))
+        .map(cmd => `ai ${cmd}`);
     } else {
-      const allSuggestions = [...new Set([
-        ...commonCommands, 
-        ...(activePersonality.suggestions ? activePersonality.suggestions.map(s => `ai ${s}`) : []), 
-        ...localFiles,
-        ...localFolders
-      ])];
-      matches = allSuggestions.filter(cmd => cmd.toLowerCase().startsWith(val.toLowerCase()));
+      // General suggestions
+      const allSuggestions = [
+        ...commonCommands,
+        ...fileCommands.map(c => `${c} `),
+        ...(activePersonality.suggestions ? activePersonality.suggestions.map(s => `ai ${s}`) : []),
+      ];
+
+      // Add context-aware suggestions based on file types
+      if (localFiles.some(f => f.endsWith('.py'))) {
+        allSuggestions.push('python3 ');
+        localFiles.filter(f => f.endsWith('.py')).forEach(f => allSuggestions.push(`python3 ${f}`));
+      }
+      if (localFiles.some(f => f.endsWith('.js') || f.endsWith('.ts'))) {
+        allSuggestions.push('node ');
+        localFiles.filter(f => f.endsWith('.js') || f.endsWith('.ts')).forEach(f => allSuggestions.push(`node ${f}`));
+      }
+
+      matches = [...new Set(allSuggestions)].filter(s => s.toLowerCase().startsWith(val.toLowerCase()));
     }
     
     setTermSuggestions(matches);
@@ -2174,7 +2519,8 @@ Current System State:
         setSelectedSuggestionIndex(nextIndex);
         const selected = termSuggestions[nextIndex];
         setTermInput(selected);
-        setTermSuggestion('');
+        // Keep suggestions open
+        setTermSuggestion(selected);
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
@@ -2215,12 +2561,16 @@ Current System State:
           return (
             <div key={item.id} className="flex flex-col">
               <div 
+                draggable={true}
+                onDragStart={(e) => { e.dataTransfer.setData('text/plain', item.id); }}
+                onDragOver={(e) => { if (item.type === 'folder') e.preventDefault(); }}
+                onDrop={(e) => { if (item.type === 'folder') { e.preventDefault(); const draggedId = e.dataTransfer.getData('text/plain'); moveItem(draggedId, item.id); } }}
                 className={`group flex items-center gap-3 px-4 py-2.5 md:py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-200 cursor-pointer ${
                   activeFileId === item.id 
                     ? 'bg-red-700 text-white glow-red border border-red-500 scale-[1.02]' 
                     : item.type === 'folder' 
                       ? (item.isOpen ? 'bg-red-950/30 text-red-300 border border-red-900/30 hover:bg-red-900/40 hover:translate-x-1' : 'hover:bg-red-950/20 text-red-800 hover:text-red-400 border border-transparent hover:translate-x-1')
-                      : 'hover:bg-red-950/20 text-red-900 hover:text-red-500 border border-transparent hover:translate-x-1'
+                      : `hover:bg-red-950/20 text-red-900 hover:text-red-500 border border-transparent hover:translate-x-1 ${isModified ? 'border-l-2 border-l-orange-500' : isStaged ? 'border-l-2 border-l-green-500' : ''}`
                 }`}
                 style={{ paddingLeft: `${level * 12 + 12}px` }}
                 onClick={() => item.type === 'folder' ? toggleFolder(item.id) : handleFileSwitch(item.id)}
@@ -2252,10 +2602,11 @@ Current System State:
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
-                  <span className={`flex-1 truncate flex items-center gap-2 ${isModified ? 'text-orange-400' : isStaged ? 'text-green-400' : ''}`}>
+                  <span className={`flex-1 truncate flex items-center gap-2`}>
                     {item.name}
-                    {isModified && <span className="px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-500 text-[8px] border border-orange-500/30 leading-none">MOD</span>}
-                    {isStaged && <span className="px-1.5 py-0.5 rounded bg-green-500/10 text-green-500 text-[8px] border border-green-500/30 leading-none">STG</span>}
+                    {isModified && <Edit2 className="w-3 h-3 text-orange-500 shrink-0" title="Modified" />}
+                    {isStaged && <Check className="w-3 h-3 text-green-500 shrink-0" title="Staged" />}
+                    {!isModified && !isStaged && item.type === 'file' && <GitBranch className="w-3 h-3 text-gray-700 shrink-0" title="Committed" />}
                   </span>
                 )}
                 
@@ -3246,12 +3597,20 @@ Current System State:
                         <FileText className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                       </button>
                       <button 
-                        onClick={handleFormatCode}
+                        onClick={() => handleFormatCode(false)}
                         disabled={isAiProcessing}
                         className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
                         title="Format Code"
                       >
                         <Paintbrush className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
+                      </button>
+                      <button 
+                        onClick={() => handleFormatCode(true)}
+                        disabled={isAiProcessing}
+                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
+                        title="Mobile Format"
+                      >
+                        <Smartphone className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                       </button>
                       <button 
                         onClick={handleRefactorCode}
@@ -3268,6 +3627,22 @@ Current System State:
                         title="AI Refactor Entire Project"
                       >
                         <Layers className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
+                      </button>
+                      <button 
+                        onClick={handleReviewCode}
+                        disabled={isAiProcessing}
+                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
+                        title="AI Code Review"
+                      >
+                        <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
+                      </button>
+                      <button 
+                        onClick={handleAnalyzeData}
+                        disabled={isAiProcessing}
+                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
+                        title="AI Data Analysis"
+                      >
+                        <BarChart3 className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                       </button>
                       <button 
                         onClick={handleScanCode}
@@ -3333,12 +3708,21 @@ Current System State:
                         </div>
                       </div>
                     )}
-                    <textarea
-                      ref={editorRef}
-                      className="w-full h-full bg-[#0d0404] text-red-100 p-4 font-mono text-sm leading-normal resize-none focus:outline-none focus:ring-1 focus:ring-red-900/50 custom-scrollbar relative z-0"
+                    <Editor
+                      height="100%"
+                      language={editorLanguage === 'python' ? 'python' : editorLanguage === 'javascript' ? 'javascript' : editorLanguage === 'typescript' ? 'typescript' : 'html'}
+                      theme={theme === 'dark' ? 'vs-dark' : 'light'}
                       value={editorContent}
-                      onChange={(e) => setEditorContent(e.target.value)}
-                      spellCheck={false}
+                      onChange={(value) => setEditorContent(value || '')}
+                      onMount={handleEditorDidMount}
+                      options={{
+                        fontSize: 14,
+                        minimap: { enabled: false },
+                        scrollBeyondLastLine: false,
+                        wordWrap: 'on',
+                        automaticLayout: true,
+                        fontFamily: 'JetBrains Mono',
+                      }}
                     />
                   </div>
                 </div>
@@ -3400,13 +3784,19 @@ Current System State:
                               </button>
                             )}
                             {msg.role === 'ai' && msg.text.includes('REFACTOR_COMPLETE') && msg.metadata && (
-                              <button 
-                                onClick={() => handleApplyRefactor(msg.metadata.refactoredCode, msg.metadata.isSelection, msg.metadata.selection)}
-                                className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-red-700 border border-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all"
-                              >
-                                <Check className="w-3 h-3" />
-                                Apply Refactor
-                              </button>
+                              <div className="mt-4 space-y-4">
+                                <div className="p-3 bg-black/40 rounded-lg border border-red-900/30">
+                                  <h6 className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-2">Refactoring Explanation</h6>
+                                  <p className="text-[11px] text-red-200/80 leading-relaxed">{msg.metadata.explanation}</p>
+                                </div>
+                                <button 
+                                  onClick={() => handleApplyRefactor(msg.metadata.refactoredCode, msg.metadata.isSelection, msg.metadata.selection)}
+                                  className="flex items-center gap-2 px-3 py-1.5 bg-red-700 border border-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all"
+                                >
+                                  <Check className="w-3 h-3" />
+                                  Apply Refactor
+                                </button>
+                              </div>
                             )}
                             {msg.role === 'ai' && msg.metadata?.generatedCode && (
                               <button 
@@ -4333,6 +4723,19 @@ Current System State:
                    </div>
                    <div className="px-4 md:px-6 py-2 md:py-3 bg-red-950/20 border border-red-900/30 rounded-2xl text-[10px] md:text-[12px] font-mono text-red-600 font-black shadow-inner">SYSTEM_STATE: OPTIMAL</div>
                 </header>
+
+                {/* System Theme */}
+                <section className="space-y-6 md:space-y-10">
+                   <div className="flex items-center justify-between">
+                     <h3 className="text-[12px] font-black text-red-900 uppercase tracking-[0.5em] flex items-center gap-4"><SettingsIcon className="w-6 h-6 text-red-600" /> System Theme</h3>
+                     <button 
+                       onClick={toggleTheme}
+                       className="px-6 py-3 bg-red-950/30 text-red-400 border border-red-900/50 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-900/50 hover:text-red-300 transition-all"
+                     >
+                       {theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                     </button>
+                   </div>
+                </section>
 
                 {/* Personalities */}
                 <section className="space-y-6 md:space-y-10">
