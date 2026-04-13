@@ -10,7 +10,16 @@
     background-color: #0a0a0c;
     color: white;
     overscroll-behavior-y: contain;
+    transition: filter 0.3s ease;
   }
+}
+
+.light {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.light img, .light video {
+  filter: invert(1) hue-rotate(180deg);
 }
 
 .code-editor-bg {
@@ -22,9 +31,15 @@
   transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.glow-red {
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+.glow-input {
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  transition: box-shadow 0.3s ease;
 }
+.glow-input:focus {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+}
+
 
 @keyframes scan {
   0% { top: 0; opacity: 0; }
