@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './index.css';
 import { createRoot } from 'react-dom/client';
+import DOMPurify from 'dompurify';
 import { 
   Terminal as TerminalIcon, 
   Upload, 
@@ -72,7 +73,7 @@ import {
 import { GoogleGenAI, Type } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { generateAIResponse as generateAIResponseService } from './src/services/aiService';
+import { generateAIResponse as generateAIResponseService, fetchOllamaModels } from './src/services/aiService';
 import Editor from '@monaco-editor/react';
 
 // Initialize AI
@@ -328,10 +329,18 @@ const App: React.FC = () => {
   ]);
   const [activeFileId, setActiveFileId] = useState('brain.py');
   const [editorContent, setEditorContent] = useState(projectFiles[0].content);
+  const [debouncedEditorContent, setDebouncedEditorContent] = useState(projectFiles[0].content);
   const [editorOutput, setEditorOutput] = useState('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedEditorContent(editorContent);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [editorContent]);
   const [editorMode, setEditorMode] = useState<'code' | 'preview' | 'debug' | 'git' | 'settings'>('code');
   const [isRunningCode, setIsRunningCode] = useState(false);
-  const [isEditorAssistantOpen, setIsEditorAssistantOpen] = useState(false);
+  const [isLivePreviewEnabled, setIsLivePreviewEnabled] = useState(true);
   const [isPairProgrammerActive, setIsPairProgrammerActive] = useState(false);
   const [isMobileFileTreeOpen, setIsMobileFileTreeOpen] = useState(false);
   const [isScanningCode, setIsScanningCode] = useState(false);
@@ -477,22 +486,11 @@ const App: React.FC = () => {
     const url = projectSettings.ollamaUrl || 'http://127.0.0.1:11434';
     
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const res = await fetch(`${url}/api/tags`, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
-      
-      if (data.models) {
-        const models = data.models.map((m: any) => m.name);
-        setOllamaModels(models);
-        setOllamaStatus('connected');
-        if (models.length > 0 && !models.includes(aiModel)) {
-          setAiModel(models[0]);
-        }
+      const models = await fetchOllamaModels(url);
+      setOllamaModels(models);
+      setOllamaStatus('connected');
+      if (models.length > 0 && !models.includes(aiModel)) {
+        setAiModel(models[0]);
       }
     } catch (err) {
       console.warn("Ollama is not reachable. Please ensure it is running and OLLAMA_ORIGINS='*' is set.");
@@ -2157,27 +2155,70 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
     }
   };
 
+  const handleCodeReview = async () => {
+    setIsAiProcessing(true);
+    setEditorAssistantMessages(prev => [...prev, { role: 'user', text: 'Perform a code review on the current file.' }]);
+    
+    try {
+      const response = await generateAIResponse(
+        `Review the following code for security, performance, and maintainability best practices. Provide a structured review report.\n\nCode:\n${editorContent}`,
+        "You are an expert code reviewer. Provide a structured review report covering security, performance, and maintainability. Use markdown for the report.",
+        { modelType: 'smart' }
+      );
+      
+      setEditorAssistantMessages(prev => [...prev, { role: 'ai', text: response || 'Code review complete.' }]);
+    } catch (err) {
+      setEditorAssistantMessages(prev => [...prev, { role: 'ai', text: 'CRITICAL ERROR: Code review failed.' }]);
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
   const handleTerminalCommand = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cmd = termInput.trim();
+    let cmd = termInput.trim();
     if (!cmd) return;
 
-    if (cmd.endsWith('(') || cmd.endsWith('"') || cmd.endsWith('\'')) {
+    let finalCmd = cmd;
+    if (isMultiLine) {
+      finalCmd = multiLineBuffer + ' ' + cmd.replace(/\\$/, '');
+    }
+
+    if (cmd.endsWith('\\') || cmd.endsWith('(') || cmd.endsWith('"') || cmd.endsWith('\'')) {
+      setMultiLineBuffer(isMultiLine ? multiLineBuffer + ' ' + cmd.replace(/\\$/, '') : cmd.replace(/\\$/, ''));
+      setIsMultiLine(true);
       setTerminalOutput(prev => [...prev, `${currentDir} $ ${cmd} (continuation)`]);
       setTermInput('');
       return;
     }
 
-    setTerminalOutput(prev => [...prev, `${currentDir} $ ${cmd}`]);
-    setCmdHistory(prev => [cmd, ...prev].slice(0, 20));
+    setTerminalOutput(prev => [...prev, `${currentDir} $ ${finalCmd}`]);
+    setCmdHistory(prev => [finalCmd, ...prev].slice(0, 20));
     setTermInput('');
     setTermSuggestion('');
     setTermSuggestions([]);
     setSelectedSuggestionIndex(-1);
     setHistoryIndex(-1);
-    if (cmd === 'clear') setTerminalOutput(['Buffer flushed.']);
-    else if (cmd.startsWith('cd ')) {
-      const newDir = cmd.substring(3).trim();
+    setIsMultiLine(false);
+    setMultiLineBuffer('');
+
+    if (finalCmd === 'clear') {
+      setTerminalOutput(['Buffer flushed.']);
+      return;
+    }
+    else if (finalCmd === 'help') {
+      setTerminalOutput(prev => [...prev, 
+        'Available commands:',
+        '  clear            - Clear the terminal buffer',
+        '  cd <dir>         - Change directory',
+        '  ai               - Get AI assistance',
+        '  ai <prompt>      - Get AI assistance with a prompt',
+        '  gh repo clone <repo> - Clone a repository'
+      ]);
+      return;
+    }
+    else if (finalCmd.startsWith('cd ')) {
+      const newDir = finalCmd.substring(3).trim();
       if (newDir === '..') {
         const parts = currentDir.split('/');
         if (parts.length > 1) {
@@ -2188,10 +2229,10 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
       }
       setTerminalOutput(prev => [...prev, `[SYSTEM] Directory shifted to ${newDir}.`]);
     }
-    else if (cmd === 'ai') await getAiTerminalAssistance('Analyze current system state and suggest relevant commands or actions.');
-    else if (cmd.startsWith('ai ')) await getAiTerminalAssistance(cmd.substring(3));
-    else if (cmd.startsWith('gh repo clone ')) {
-      const repo = cmd.replace('gh repo clone ', '');
+    else if (finalCmd === 'ai') await getAiTerminalAssistance('Analyze current system state and suggest relevant commands or actions.');
+    else if (finalCmd.startsWith('ai ')) await getAiTerminalAssistance(finalCmd.substring(3));
+    else if (finalCmd.startsWith('gh repo clone ')) {
+      const repo = finalCmd.replace('gh repo clone ', '');
       if (repo.includes('ToolNeuron')) {
         setTerminalOutput(prev => [...prev, 
           `Cloning into 'ToolNeuron'...`, 
@@ -2294,7 +2335,7 @@ Current System State:
 
       const response = await generateAIResponse(
         `${systemState}\n\nUser Request: ${prompt}`,
-        `Futuristic crimson terminal specialist. ${activePersonality.instruction}. Provide concise, terminal-style responses. If the user asks for general help or just types 'ai', suggest relevant commands based on the current system state.`,
+        `Futuristic crimson terminal specialist. ${activePersonality.instruction}. Provide concise, terminal-style responses in simple, easy-to-understand English so that non-experts can easily follow. If the user asks for general help or just types 'ai', suggest relevant commands based on the current system state.`,
         { modelType: 'fast' }
       );
       setTerminalOutput(prev => [...prev, `CORE (${activePersonality.name.toUpperCase()}): ${response}`]);
@@ -2700,6 +2741,12 @@ Current System State:
       <main className="flex-1 flex flex-col min-w-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] bg-repeat pb-16 md:pb-0 overflow-hidden">
         <header className="h-14 md:h-16 border-b border-red-900/30 flex items-center justify-between px-4 md:px-8 bg-[#0a0202]/95 backdrop-blur-xl z-20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
           <div className="flex items-center space-x-3 md:space-x-6">
+            <button 
+              onClick={() => setIsMobileFileTreeOpen(true)}
+              className="lg:hidden p-2 text-red-500 hover:bg-red-900/20 rounded-xl transition-all"
+            >
+              <FolderOpen className="w-5 h-5" />
+            </button>
             <h1 className="text-[10px] md:text-sm font-black tracking-[0.2em] md:tracking-[0.4em] text-red-500 uppercase drop-shadow-[0_0_10px_rgba(239,68,68,0.5)] truncate max-w-[80px] md:max-w-none">{activeTab} node</h1>
             
             {/* Model Selector */}
@@ -3488,14 +3535,21 @@ Current System State:
                     </button>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
-                    <div className="flex gap-2 mb-4">
                       <button 
-                        onClick={() => setIsTemplateModalOpen(true)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-100 bg-red-900/40 border border-red-500/30 hover:bg-red-800/60 transition-all shadow-[0_0_20px_rgba(239,68,68,0.1)]"
+                        onClick={() => setIsGenerateModalOpen(true)}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-950/40 border border-red-500/30 hover:bg-red-900/40 transition-all shadow-[0_0_20px_rgba(239,68,68,0.1)] mb-4"
                       >
-                        <LayoutTemplate className="w-4 h-4 shrink-0" />
-                        <span className="truncate">Template</span>
+                        <Brain className="w-4 h-4 shrink-0" />
+                        <span className="truncate">AI Generate</span>
                       </button>
+                      <div className="flex gap-2 mb-4">
+                        <button 
+                          onClick={() => setIsTemplateModalOpen(true)}
+                          className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-100 bg-red-900/40 border border-red-500/30 hover:bg-red-800/60 transition-all shadow-[0_0_20px_rgba(239,68,68,0.1)]"
+                        >
+                          <LayoutTemplate className="w-4 h-4 shrink-0" />
+                          <span className="truncate">Template</span>
+                        </button>
                       <label className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-950/40 border border-red-900/30 hover:bg-red-900/20 transition-all cursor-pointer">
                         <Upload className="w-4 h-4 shrink-0" />
                         <span className="truncate">File</span>
@@ -3550,6 +3604,13 @@ Current System State:
                       )}
                     </div>
                     <div className="w-full md:w-auto flex items-center gap-2 md:gap-4 overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+                      <button 
+                        onClick={() => setIsLivePreviewEnabled(!isLivePreviewEnabled)}
+                        className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isLivePreviewEnabled ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
+                        title="Live Preview"
+                      >
+                        <Globe className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
+                      </button>
                       <button 
                         onClick={() => setIsEditorAssistantOpen(!isEditorAssistantOpen)}
                         className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isEditorAssistantOpen ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
@@ -3734,7 +3795,15 @@ Current System State:
                       <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
                         <Brain className="w-4 h-4" /> Neural Assistant
                       </h4>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={handleCodeReview}
+                          disabled={isAiProcessing}
+                          className="p-2 text-red-900 hover:text-red-500 transition-colors"
+                          title="Perform Code Review"
+                        >
+                          <Search className="w-4 h-4" />
+                        </button>
                         {isPairProgrammerActive && (
                           <div className="flex items-center gap-2 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-pulse">
                             <Users className="w-3 h-3 text-emerald-500" />
@@ -3930,7 +3999,7 @@ Current System State:
                           >
                             <div 
                               className="w-full min-h-full bg-black/40 rounded-2xl border border-red-900/20 overflow-hidden relative"
-                              dangerouslySetInnerHTML={{ __html: editorContent }}
+                              dangerouslySetInnerHTML={{ __html: isLivePreviewEnabled ? DOMPurify.sanitize(debouncedEditorContent) : '' }}
                             />
 
                             {/* Inspector Highlight Overlay */}
