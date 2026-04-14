@@ -1,0 +1,102 @@
+﻿i
+class TermuxBrain:
+    """
+    Complete Claude Code-inspired framework for Termux.
+    Integrates all components.
+    """
+    
+    def __init__(self, api_key: str):
+        self.loop = AgentLoop(api_key)
+        self.context = ContextManager()
+        self.hooks = HookSystem()
+        self.setup_tools()
+        
+    def setup_tools(self):
+        """Register all available tools"""
+        tools = TermuxTools()
+        
+        self.loop.register_tool("Bash", tools.bash, {
+            "description": "Execute bash commands in Termux",
+            "properties": {
+                "command": {"type": "string"},
+                "timeout": {"type": "integer", "default": 120000},
+                "description": {"type": "string"}
+            },
+            "required": ["command"]
+        })
+        
+        self.loop.register_tool("Read", tools.read_file, {
+            "description": "Read file contents with line numbers",
+            "properties": {
+                "file_path": {"type": "string"},
+                "offset": {"type": "integer", "default": 0},
+                "limit": {"type": "integer", "default": 2000}
+            },
+            "required": ["file_path"]
+        })
+        
+        self.loop.register_tool("Write", tools.write_file, {
+            "description": "Write content to file",
+            "properties": {
+                "file_path": {"type": "string"},
+                "content": {"type": "string"}
+            },
+            "required": ["file_path", "content"]
+        })
+        
+        self.loop.register_tool("Edit", tools.edit_file, {
+            "description": "Make precise string replacement in file",
+            "properties": {
+                "file_path": {"type": "string"},
+                "old_string": {"type": "string"},
+                "new_string": {"type": "string"}
+            },
+            "required": ["file_path", "old_string", "new_string"]
+        })
+        
+        self.loop.register_tool("Glob", tools.glob, {
+            "description": "Find files by pattern",
+            "properties": {
+                "pattern": {"type": "string"},
+                "path": {"type": "string", "default": "."}
+            },
+            "required": ["pattern"]
+        })
+        
+        self.loop.register_tool("Grep", tools.grep, {
+            "description": "Search file contents with regex",
+            "properties": {
+                "pattern": {"type": "string"},
+                "path": {"type": "string", "default": "."},
+                "output_mode": {"type": "string", "default": "content"}
+            },
+            "required": ["pattern"]
+        })
+        
+        self.loop.register_tool("Task", self.task_subagent, {
+            "description": "Launch sub-agent for complex tasks",
+            "properties": {
+                "description": {"type": "string"},
+                "prompt": {"type": "string"},
+                "subagent_type": {"type": "string", "default": "default"}
+            },
+            "required": ["description", "prompt"]
+        })
+    
+    async def task_subagent(self, description: str, prompt: str, subagent_type: str = "default"):
+        """Tool wrapper for sub-agent"""
+        return await task_tool(self.loop, description, prompt, subagent_type)
+    
+    async def think(self, query: str) -> str:
+        """Main entry point - process user request"""
+        print(f"\n🧠 TermuxBrain > {query}")
+        print("=" * 50)
+        
+        # Check context size and compact if needed
+        await self.context.compact(self.loop)
+        
+        # Run main agent loop
+        response = await self.loop.run(query)
+        
+        print(f"\n{'=' * 50}\n✅ Response:\n{response}")
+        return response

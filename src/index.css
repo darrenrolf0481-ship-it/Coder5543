@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  :root {
+    --bg-main: #020204;
+    --bg-header: #0a0202;
+    --bg-card: #0d0404;
+    --bg-sidebar: #080101;
+    --text-primary: #fecaca;
+    --text-secondary: #ef4444;
+    --border-color: rgba(153, 27, 27, 0.3);
+    --input-bg: #0d0404;
+    --scrollbar-thumb: rgba(185, 28, 28, 0.2);
+  }
+
+  :root.bright-mode {
+    --bg-main: #f9fafb;
+    --bg-header: #ffffff;
+    --bg-card: #ffffff;
+    --bg-sidebar: #f3f4f6;
+    --text-primary: #1f2937;
+    --text-secondary: #dc2626;
+    --border-color: rgba(220, 38, 38, 0.2);
+    --input-bg: #f9fafb;
+    --scrollbar-thumb: rgba(220, 38, 38, 0.1);
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    overscroll-behavior-y: contain;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+.code-editor-bg {
+  background: linear-gradient(145deg, rgba(13, 4, 4, 0.95), rgba(8, 1, 1, 0.98));
+  box-shadow: inset 0 0 20px rgba(185, 28, 28, 0.05);
+}
+
+.benchmark-bar {
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glow-red {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(185, 28, 28, 0.2);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(185, 28, 28, 0.4);
+}

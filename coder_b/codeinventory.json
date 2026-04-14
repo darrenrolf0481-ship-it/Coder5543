@@ -1,0 +1,52 @@
+[
+  {
+    "name": "Video Frame Analyzer",
+    "description": "Software that automates the quality control process for digitized video files and provides analysis for video frame level metadata.",
+    "license": "https://github.com/usnationalarchives/Video-Frame-Analyzer/commit/4aa1ec3a08d5847015d669616f70dd8d5dccc9ab",
+    "openSourceProject": 1,
+    "governmentWideReuseProject": 1,
+    "tags": [
+      "NARA",
+      "video",
+      "metadata",
+      "java"
+    ],
+    "contact": {
+      "email": "leslie.johnston@nara.gov"
+    }
+  },
+  {
+    "name": "BioReason",
+    "description": "Incentivizing Multimodal Biological Reasoning within a DNA-LLM Model. Integrates DNA foundation models with LLMs for deep biological reasoning.",
+    "url": "https://github.com/bowang-lab/BioReason",
+    "tags": [
+      "DNA",
+      "LLM",
+      "Biological Reasoning",
+      "Multimodal",
+      "PyTorch"
+    ],
+    "architectures": [
+      "DNA Foundation Models (NT, Evo2)",
+      "LLMs (Qwen3)",
+      "GRPO Reinforcement Learning"
+    ]
+  },
+  {
+    "name": "llm-context-optimizer (CodeSnippetBank)",
+    "description": "Revolutionary Edge AI Development Platform with 1,029+ production-ready snippets. Focuses on 95% token reduction and biological code organization.",
+    "url": "https://github.com/umitkacar/llm-context-optimizer",
+    "tags": [
+      "Edge AI",
+      "Token Optimization",
+      "Code Snippets",
+      "Biological Organization",
+      "Offline Ready"
+    ],
+    "concepts": [
+      "Cells (Functions)",
+      "Tissues (Snippets)",
+      "Systems (Composed Code)"
+    ]
+  }
+]

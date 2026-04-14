@@ -1,0 +1,8 @@
+{
+  "description": "ToolNeuron Hub: A high-fidelity Neural IDE and offline AI ecosystem. Features automatic file trees, real-time UI previewing, AI-driven documentation generation, and full project neural analysis.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "name": "ToolNeuron Hub"
+}

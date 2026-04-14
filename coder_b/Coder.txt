@@ -1,0 +1,806 @@
+﻿# MatFormer: https://arxiv.org/pdf/2310.07707        
+# AltUp Layers: https://arxiv.org/pdf/2301.13310        
+# Laurel Blocks: https://arxiv.org/pdf/2411.07501        
+
+
+import torch        
+import torch.nn as nn        
+import torch.nn.functional as F        
+import math        
+from typing import Optional, Tuple        
+
+
+class LayerNorm(nn.Module):        
+    """Layer normalization matching the STABLEHLO_COMPOSITE operations"""        
+    def __init__(self, dim, eps=1e-6):        
+        super().__init__()        
+        self.weight = nn.Parameter(torch.ones(dim))        
+        self.eps = eps        
+
+
+    def forward(self, x):        
+        # Compute x^2, mean, and normalize        
+        x_squared = x * x        
+        mean_squared = x_squared.mean(dim=-1, keepdim=True)        
+        rms = torch.pow(mean_squared, 0.5)        
+        rms = torch.maximum(rms, torch.tensor(self.eps))        
+        return (x / rms) * self.weight        
+
+
+class RotaryPositionEmbedding(nn.Module):        
+    """RoPE implementation based on the sin/cos operations in the model"""        
+    def __init__(self, dim, max_seq_len=4096):        
+        super().__init__()        
+        self.dim = dim        
+
+
+        # Precompute sin/cos embeddings        
+        inv_freq = 1.0 / (10000 ** (torch.arange(0, dim, 2).float() / dim))        
+        position = torch.arange(max_seq_len).float()        
+        sincos = torch.einsum('i,j->ij', position, inv_freq)        
+        self.register_buffer('sin', sincos.sin())        
+        self.register_buffer('cos', sincos.cos())        
+
+
+    def forward(self, x, position_ids):        
+        # x shape: [batch, seq_len, num_heads, head_dim]        
+        batch, seq_len, num_heads, head_dim = x.shape        
+
+
+        # Split into two halves for rotation        
+        x1, x2 = x[..., :head_dim//2], x[..., head_dim//2:]        
+
+
+        # Get sin/cos for the positions        
+        cos = self.cos[position_ids].unsqueeze(1).unsqueeze(2)        
+        sin = self.sin[position_ids].unsqueeze(1).unsqueeze(2)        
+
+
+        # Apply rotation        
+        rx1 = x1 * cos - x2 * sin        
+        rx2 = x2 * cos + x1 * sin        
+
+
+        return torch.cat([rx1, rx2], dim=-1)        
+
+
+class Attention(nn.Module):        
+    """Multi-head attention with RoPE"""        
+    def __init__(self, dim, num_heads=8, head_dim=256):        
+        super().__init__()        
+        self.num_heads = num_heads        
+        self.head_dim = head_dim        
+        self.scale = 0.0625  # 1/16, matching the model's scaling        
+
+
+        # Q, K, V projections (quantized in the model)        
+        self.q_proj = nn.Linear(dim, num_heads * head_dim, bias=False)        
+        self.k_proj = nn.Linear(dim, num_heads * head_dim, bias=False)         
+        self.v_proj = nn.Linear(dim, num_heads * head_dim, bias=False)        
+        self.o_proj = nn.Linear(num_heads * head_dim, dim, bias=False)        
+
+
+        # Norms        
+        self.q_norm = LayerNorm(head_dim)        
+        self.k_norm = LayerNorm(head_dim)        
+
+
+        # RoPE        
+        self.rope = RotaryPositionEmbedding(head_dim)        
+
+
+    def forward(self, x, position_ids, kv_cache=None):        
+        batch, seq_len, _ = x.shape        
+
+
+        # Project to Q, K, V        
+        q = self.q_proj(x).view(batch, seq_len, self.num_heads, self.head_dim)        
+        k = self.k_proj(x).view(batch, seq_len, self.num_heads, self.head_dim)        
+        v = self.v_proj(x).view(batch, seq_len, self.num_heads, self.head_dim)        
+
+
+        # Apply norms        
+        q = self.q_norm(q)        
+        k = self.k_norm(k)        
+
+
+        # Apply RoPE        
+        q = self.rope(q, position_ids)        
+        k = self.rope(k, position_ids)        
+
+
+        # Scale query        
+        q = q * self.scale * 0.88388  # Additional scaling seen in model        
+
+
+        # Reshape for attention        
+        q = q.reshape(batch, 2, seq_len//2, self.head_dim)        
+        k = k.reshape(batch, 2, seq_len//2, self.head_dim)        
+        v = v.reshape(batch, 2, seq_len//2, self.head_dim).transpose(-2, -1)        
+
+
+        # Compute attention        
+        scores = torch.matmul(q, k.transpose(-2, -1))        
+
+
+        # Add causal mask if needed        
+        if kv_cache is None:  # Only for prefill        
+            mask = torch.triu(torch.full((seq_len, seq_len), float('-inf')), diagonal=1)        
+            scores = scores + mask.to(scores.device)        
+
+
+        # Softmax and apply to values        
+        attn_weights = F.softmax(scores, dim=-1)        
+        attn_output = torch.matmul(attn_weights, v.transpose(-2, -1))        
+
+
+        # Reshape and project        
+        attn_output = attn_output.reshape(batch, seq_len, self.num_heads * self.head_dim)        
+        return self.o_proj(attn_output)        
+
+
+class MLP(nn.Module):        
+    """Feed-forward network with GELU activation"""        
+    def __init__(self, dim, hidden_dim=8192):        
+        super().__init__()        
+        self.gate_proj = nn.Linear(dim, hidden_dim, bias=False)        
+        self.up_proj = nn.Linear(dim, hidden_dim, bias=False)        
+        self.down_proj = nn.Linear(hidden_dim, dim, bias=False)        
+
+
+    def forward(self, x):        
+        gate = F.gelu(self.gate_proj(x))        
+        up = self.up_proj(x)        
+        return self.down_proj(gate * up)        
+
+
+class LaurelBlock(nn.Module):        
+    """Laurel residual connection block"""        
+    def __init__(self, dim, bottleneck_dim=64):        
+        super().__init__()        
+        self.down_proj = nn.Linear(dim, bottleneck_dim, bias=False)        
+        self.up_proj = nn.Linear(bottleneck_dim, dim, bias=False)        
+        self.norm = LayerNorm(dim)        
+
+
+    def forward(self, x):        
+        residual = x        
+        x = self.down_proj(x)        
+        x = self.up_proj(x)        
+        x = self.norm(x)        
+        return residual + x        
+
+
+class AltupRouter(nn.Module):        
+    """ALTUP routing mechanism"""        
+    def __init__(self, dim, num_experts=4):        
+        super().__init__()        
+        self.norm = LayerNorm(dim)        
+        self.router = nn.Linear(dim, num_experts, bias=False)        
+        self.scale = 3.0  # Scaling factor seen in model        
+
+
+    def forward(self, x):        
+        x = self.norm(x)        
+        logits = self.router(x)        
+        logits = logits * self.scale        
+        return torch.tanh(logits)
+    
+class TransformerLayer(nn.Module):
+    """Single transformer layer with ALTUP"""
+    def __init__(self, dim, layer_idx):
+        super().__init__()
+        self.layer_idx = layer_idx
+        
+        # Pre-attention
+        self.pre_attn_norm = LayerNorm(dim)
+        self.attention = Attention(dim)
+        self.post_attn_norm = LayerNorm(dim)
+        
+        # Laurel block
+        self.laurel = LaurelBlock(dim)
+        
+        # MLP
+        self.pre_mlp_norm = LayerNorm(dim)
+        self.mlp = MLP(dim)
+        self.post_mlp_norm = LayerNorm(dim)
+        
+        # ALTUP routers
+        self.altup_router_predict = AltupRouter(dim)
+        self.altup_router_correct = AltupRouter(dim)
+        
+        # ALTUP projections
+        self.altup_proj = nn.ModuleList([
+            nn.Linear(dim, dim, bias=False) for _ in range(3)
+        ])
+        self.altup_unproj = nn.ModuleList([
+            nn.Linear(dim, dim, bias=False) for _ in range(3)
+        ])
+        
+        # Per-layer embeddings
+        self.per_layer_gate = nn.Linear(dim, 256, bias=False)
+        self.per_layer_proj = nn.Linear(256, dim, bias=False)
+        self.per_layer_norm = LayerNorm(dim)
+        
+        # Scaling factors
+        self.residual_scale = 0.57735  # sqrt(1/3)
+        
+    def altup_predict(self, x, per_layer_emb):
+        """ALTUP prediction step"""
+        # Get routing weights
+        router_weights = self.altup_router_predict(x)
+        router_probs = F.softmax(router_weights, dim=-1)
+        
+        # Apply ALTUP projections
+        experts = []
+        for i in range(3):
+            expert = self.altup_proj[i](x if i == 0 else experts[i-1])
+            expert = torch.clamp(expert, -10, 10)  # Clipping seen in model
+            experts.append(expert)
+            
+        # Stack and mix experts
+        experts_stack = torch.stack([x] + experts, dim=2)  # [B, T, 4, D]
+        mixed = torch.matmul(router_probs.unsqueeze(2), experts_stack).squeeze(2)
+        
+        return mixed
+        
+    def altup_correct(self, predicted, actual):
+        """ALTUP correction step"""
+        # Compute error
+        error = actual - predicted
+        
+        # Get routing weights for correction
+        router_weights = self.altup_router_correct(actual)
+        router_probs = F.softmax(router_weights + 0.5, dim=-1)  # Bias seen in model
+        
+        # Apply correction
+        correction = router_probs.unsqueeze(-1) * error.unsqueeze(2)
+        corrected = predicted.unsqueeze(2) + correction
+        
+        # Unproject through ALTUP
+        outputs = []
+        for i in range(3):
+            output = self.altup_unproj[i](corrected[:, :, i+1])
+            output = torch.clamp(output, -10, 10)
+            outputs.append(output)
+            
+        # Mix outputs
+        final = torch.stack([corrected[:, :, 0]] + outputs, dim=0).mean(dim=0)
+        
+        return final
+    
+    def forward(self, x, position_ids, per_layer_emb):
+        # ALTUP predict
+        predicted = self.altup_predict(x, per_layer_emb)
+        
+        # Attention block
+        h = self.pre_attn_norm(predicted)
+        h = self.attention(h, position_ids)
+        h = self.post_attn_norm(h)
+        h = predicted + h
+        
+        # Laurel residual
+        h = self.laurel(h)
+        h = h * self.residual_scale
+        
+        # MLP block  
+        h_norm = self.pre_mlp_norm(h)
+        mlp_out = self.mlp(h_norm)
+        mlp_out = self.post_mlp_norm(mlp_out)
+        h = h + mlp_out
+        
+        # ALTUP correct
+        corrected = self.altup_correct(predicted, h)
+        
+        
+        # Add per-layer embeddings
+        gate = F.gelu(self.per_layer_gate(corrected))
+        per_layer_out = self.per_layer_proj(gate * per_layer_emb[:, :, self.layer_idx])
+        per_layer_out = self.per_layer_norm(per_layer_out)
+        
+        return corrected + per_layer_out
+    
+
+
+class GeminiModel(nn.Module):        
+    """Complete Gemini model"""        
+    def __init__(self, vocab_size=262144, dim=2048, num_layers=30):        
+        super().__init__()        
+        self.vocab_size = vocab_size        
+        self.dim = dim        
+        self.num_layers = num_layers        
+
+
+        # Per-layer embedding projection        
+        self.per_layer_proj = nn.Linear(30 * 256, 30 * 256, bias=False)        
+        self.per_layer_norm = LayerNorm(256)        
+
+
+        # Transformer layers        
+        self.layers = nn.ModuleList([        
+            TransformerLayer(dim, i) for i in range(num_layers)        
+        ])        
+
+
+        # Final norm and output        
+        self.final_norm = LayerNorm(dim)        
+        self.lm_head = nn.Linear(dim, vocab_size, bias=False)        
+
+
+        # Output scaling        
+        self.output_scale = 30.0        
+
+
+
+
+    def forward(self, embeddings, per_layer_embeddings, position_ids):        
+        # Process per-layer embeddings        
+        B, T, num_layers, emb_dim = per_layer_embeddings.shape        
+        per_layer_emb = per_layer_embeddings.view(B, T, -1)        
+        per_layer_emb = self.per_layer_proj(per_layer_emb)        
+        per_layer_emb = per_layer_emb.view(B, T, num_layers, emb_dim)        
+        per_layer_emb = self.per_layer_norm(per_layer_emb)        
+        per_layer_emb = per_layer_emb + per_layer_embeddings        
+        per_layer_emb = per_layer_emb * 0.167  # Scaling factor        
+
+
+
+
+        # Add per-layer embeddings
+        h = embeddings                
+        
+        for layer in self.layers:                
+            h = layer(h, position_ids, per_layer_emb)
+
+
+        # Final output        
+        h = self.final_norm(h)        
+        logits = self.lm_head(h)        
+        logits = logits / self.output_scale        
+        logits = torch.tanh(logits) * self.output_scale        
+
+
+        return logits        
+
+
+class PerLayerEmbedder(nn.Module):        
+    """Per-layer embedding lookup matching TF_LITE_PER_LAYER_EMBEDDER"""        
+    def __init__(self, vocab_size=262144, embedding_dim=256, num_layers=30):        
+        super().__init__()        
+        self.num_layers = num_layers        
+        self.embeddings = nn.ModuleList([        
+            nn.Embedding(vocab_size, embedding_dim) for _ in range(num_layers)        
+        ])        
+
+
+    def forward(self, token_ids):        
+        # Clamp token ids to valid range        
+        token_ids = torch.clamp(token_ids, 0, 262143)        
+
+
+
+
+        # Get embeddings for each layer                return corrected + per_layer_out
+        layer_embeddings = []        
+        for emb in self.embeddings:        
+            layer_embeddings.append(emb(token_ids))        
+
+
+        # Stack to [batch, seq_len, num_layers, embedding_dim]        
+        return torch.stack(layer_embeddings, dim=2)        
+
+
+# Example usage        
+if __name__ == "__main__":        
+    batch_size = 1        
+    seq_len = 1        
+
+
+    # Initialize models        
+    embedder = PerLayerEmbedder()        
+    model = GeminiModel()        
+
+
+    # Example inputs        
+    token_ids = torch.randint(0, 262144, (batch_size, seq_len))        
+    embeddings = torch.randn(batch_size, seq_len, 2048)        
+    position_ids = torch.arange(seq_len)        
+
+
+    # Get per-layer embeddings        
+    per_layer_emb = embedder(token_ids)        
+
+
+    # Run model        
+    logits = model(embeddings, per_layer_emb, position_ids)        
+    print(f"Output shape: {logits.shape}")        import numpy as np
+from tflite import Model
+model_path = 'TF_LITE_EMBEDDER'
+#
+# model_path = 'TF_LITE_PREFILL_DECODE'
+with open(model_path, 'rb') as f:
+    buf = f.read()
+# CORRECTED LINE:
+# Model is the class itself, so call GetRootAs directly on it.
+model_obj = Model.GetRootAs(buf, 0)
+
+
+subgraph = model_obj.Subgraphs(0)
+
+
+
+
+TENSOR_TYPE_NAMES = {
+    0: "FLOAT32", 1: "FLOAT16", 2: "INT32", 3: "UINT8", 4: "INT64",
+    5: "STRING", 6: "BOOL", 7: "INT16", 8: "COMPLEX64", 9: "INT8",
+    10: "FLOAT64", 11: "COMPLEX128", 12: "UINT64", 13: "RESOURCE",
+    14: "VARIANT", 15: "UINT32", 16: "UINT16", 17: "INT4"
+}
+
+
+def get_tensor_type_name(tensor_type_code):
+    return TENSOR_TYPE_NAMES.get(tensor_type_code, f"UNKNOWN_TYPE_CODE_{tensor_type_code}")
+
+
+
+
+for i in range(subgraph.TensorsLength()):
+    tensor = subgraph.Tensors(i)
+    tensor_name_bytes = tensor.Name()
+    tensor_name = tensor_name_bytes.decode('utf-8') if tensor_name_bytes else f"Tensor_{i}"
+
+
+    shape_list = [tensor.Shape(s_idx) for s_idx in range(tensor.ShapeLength())]
+    # print(tensor_name, shape_list)
+    #
+    # continue
+    # [240 254  16 ...  44  46  15] 30402893411
+    # [240 254  16 ...  44  46  15] 30402893411
+
+
+    if tensor_name == 'jit(wrapper)/jit(main)/jit(jax_fn)/embedder.lookup_embedding_table/composite' or tensor_name == 'jit(wrapper)/jit(main)/jit(jax_fn)/GeminiModel.decode_graph/GeminiModel.decode_softmax/transformer.decode_softmax/embedder.decode/composite':
+        print(f"  Type: {get_tensor_type_name(tensor.Type())} (Raw Code: {tensor.Type()})")
+        print(tensor_name, shape_list)
+        # Get tensor data as numpy array
+        buffer_index = tensor.Buffer()
+        buffer = model_obj.Buffers(buffer_index)
+        data = buffer.DataAsNumpy()
+        if data is not None:
+            print(data.shape)
+            print(data)
+            print(np.sum(data))
+            # Convert raw data to numpy array with proper type and reshape
+            # tensor_type = tensor.Type()
+            # dtype_map = {
+            #     0: np.float32, 1: np.float16, 2: np.int32,
+            #     3: np.uint8, 4: np.int64
+            # }
+            # numpy_dtype = dtype_map.get(tensor_type, np.float32)
+            # tensor_array = np.frombuffer(data, dtype=numpy_dtype)
+            # if shape_list:
+            #     tensor_array = tensor_array.reshape(shape_list)
+            # print(f"Tensor as numpy array:\n{tensor_array}")import os
+import sys
+
+
+# This dictionary is from the zhenhuaw-me/tflite/tflite-master/tflite/utils.py file you provided.
+BUILTIN_OPCODE2NAME = {
+    0: 'ADD', 1: 'AVERAGE_POOL_2D', 2: 'CONCATENATION', 3: 'CONV_2D', 4: 'DEPTHWISE_CONV_2D',
+    5: 'DEPTH_TO_SPACE', 6: 'DEQUANTIZE', 7: 'EMBEDDING_LOOKUP', 8: 'FLOOR', 9: 'FULLY_CONNECTED',
+    10: 'HASHTABLE_LOOKUP', 11: 'L2_NORMALIZATION', 12: 'L2_POOL_2D', 13: 'LOCAL_RESPONSE_NORMALIZATION',
+    14: 'LOGISTIC', 15: 'LSH_PROJECTION', 16: 'LSTM', 17: 'MAX_POOL_2D', 18: 'MUL', 19: 'RELU',
+    20: 'RELU_N1_TO_1', 21: 'RELU6', 22: 'RESHAPE', 23: 'RESIZE_BILINEAR', 24: 'RNN',
+    25: 'SOFTMAX', 26: 'SPACE_TO_DEPTH', 27: 'SVDF', 28: 'TANH', 29: 'CONCAT_EMBEDDINGS',
+    30: 'SKIP_GRAM', 31: 'CALL', 32: 'CUSTOM', 33: 'EMBEDDING_LOOKUP_SPARSE', 34: 'PAD',
+    35: 'UNIDIRECTIONAL_SEQUENCE_RNN', 36: 'GATHER', 37: 'BATCH_TO_SPACE_ND', 38: 'SPACE_TO_BATCH_ND',
+    39: 'TRANSPOSE', 40: 'MEAN', 41: 'SUB', 42: 'DIV', 43: 'SQUEEZE', 44: 'UNIDIRECTIONAL_SEQUENCE_LSTM',
+    45: 'STRIDED_SLICE', 46: 'BIDIRECTIONAL_SEQUENCE_RNN', 47: 'EXP', 48: 'TOPK_V2', 49: 'SPLIT',
+    50: 'LOG_SOFTMAX', 51: 'DELEGATE', 52: 'BIDIRECTIONAL_SEQUENCE_LSTM', 53: 'CAST', 54: 'PRELU',
+    55: 'MAXIMUM', 56: 'ARG_MAX', 57: 'MINIMUM', 58: 'LESS', 59: 'NEG', 60: 'PADV2',
+    61: 'GREATER', 62: 'GREATER_EQUAL', 63: 'LESS_EQUAL', 64: 'SELECT', 65: 'SLICE',
+    66: 'SIN', 67: 'TRANSPOSE_CONV', 68: 'SPARSE_TO_DENSE', 69: 'TILE', 70: 'EXPAND_DIMS',
+    71: 'EQUAL', 72: 'NOT_EQUAL', 73: 'LOG', 74: 'SUM', 75: 'SQRT', 76: 'RSQRT',
+    77: 'SHAPE', 78: 'POW', 79: 'ARG_MIN', 80: 'FAKE_QUANT', 81: 'REDUCE_PROD',
+    82: 'REDUCE_MAX', 83: 'PACK', 84: 'LOGICAL_OR', 85: 'ONE_HOT', 86: 'LOGICAL_AND',
+    87: 'LOGICAL_NOT', 88: 'UNPACK', 89: 'REDUCE_MIN', 90: 'FLOOR_DIV', 91: 'REDUCE_ANY',
+    92: 'SQUARE', 93: 'ZEROS_LIKE', 94: 'FILL', 95: 'FLOOR_MOD', 96: 'RANGE',
+    97: 'RESIZE_NEAREST_NEIGHBOR', 98: 'LEAKY_RELU', 99: 'SQUARED_DIFFERENCE', 100: 'MIRROR_PAD',
+    101: 'ABS', 102: 'SPLIT_V', 103: 'UNIQUE', 104: 'CEIL', 105: 'REVERSE_V2', 106: 'ADD_N',
+    107: 'GATHER_ND', 108: 'COS', 109: 'WHERE', 110: 'RANK', 111: 'ELU', 112: 'REVERSE_SEQUENCE',
+    113: 'MATRIX_DIAG', 114: 'QUANTIZE', 115: 'MATRIX_SET_DIAG', 116: 'ROUND', 117: 'HARD_SWISH',
+    118: 'IF', 119: 'WHILE', 120: 'NON_MAX_SUPPRESSION_V4', 121: 'NON_MAX_SUPPRESSION_V5',
+    122: 'SCATTER_ND', 123: 'SELECT_V2', 124: 'DENSIFY', 125: 'SEGMENT_SUM', 126: 'BATCH_MATMUL',
+    127: 'PLACEHOLDER_FOR_GREATER_OP_CODES', 128: 'CUMSUM', 129: 'CALL_ONCE', 130: 'BROADCAST_TO',
+    131: 'RFFT2D', 132: 'CONV_3D', 133: 'IMAG', 134: 'REAL', 135: 'COMPLEX_ABS', 136: 'HASHTABLE',
+    137: 'HASHTABLE_FIND', 138: 'HASHTABLE_IMPORT', 139: 'HASHTABLE_SIZE', 140: 'REDUCE_ALL',
+    141: 'CONV_3D_TRANSPOSE', 142: 'VAR_HANDLE', 143: 'READ_VARIABLE', 144: 'ASSIGN_VARIABLE',
+    145: 'BROADCAST_ARGS', 146: 'RANDOM_STANDARD_NORMAL', 147: 'BUCKETIZE', 148: 'RANDOM_UNIFORM',
+    149: 'MULTINomial', 150: 'GELU', 151: 'DYNAMIC_UPDATE_SLICE', 152: 'RELU_0_TO_1',
+    153: 'UNSORTED_SEGMENT_PROD', 154: 'UNSORTED_SEGMENT_MAX', 155: 'UNSORTED_SEGMENT_SUM',
+    156: 'ATAN2', 157: 'UNSORTED_SEGMENT_MIN', 158: 'SIGN', 159: 'BITCAST', 160: 'BITWISE_XOR',
+    161: 'RIGHT_SHIFT',162: 'STABLEHLO_LOGISTIC', 163: 'STABLEHLO_ADD', 164: 'STABLEHLO_DIVIDE',
+    165: 'STABLEHLO_MULTIPLY', 166: 'STABLEHLO_MAXIMUM', 167: 'STABLEHLO_RESHAPE', 168: 'STABLEHLO_CLAMP',
+    169: 'STABLEHLO_CONCATENATE', 170: 'STABLEHLO_BROADCAST_IN_DIM', 171: 'STABLEHLO_CONVOLUTION',
+    172: 'STABLEHLO_SLICE', 173: 'STABLEHLO_CUSTOM_CALL', 174: 'STABLEHLO_REDUCE', 175: 'STABLEHLO_ABS',
+    176: 'STABLEHLO_AND', 177: 'STABLEHLO_COSINE', 178: 'STABLEHLO_EXPONENTIAL', 179: 'STABLEHLO_FLOOR',
+    180: 'STABLEHLO_LOG', 181: 'STABLEHLO_MINIMUM', 182: 'STABLEHLO_NEGATE', 183: 'STABLEHLO_OR',
+    184: 'STABLEHLO_POWER', 185: 'STABLEHLO_REMAINDER', 186: 'STABLEHLO_RSQRT', 187: 'STABLEHLO_SELECT',
+    188: 'STABLEHLO_SUBTRACT', 189: 'STABLEHLO_TANH', 190: 'STABLEHLO_SCATTER', 191: 'STABLEHLO_COMPARE',
+    192: 'STABLEHLO_CONVERT', 193: 'STABLEHLO_DYNAMIC_SLICE', 194: 'STABLEHLO_DYNAMIC_UPDATE_SLICE',
+    195: 'STABLEHLO_PAD', 196: 'STABLEHLO_IOTA', 197: 'STABLEHLO_DOT_GENERAL', 198: 'STABLEHLO_REDUCE_WINDOW',
+    199: 'STABLEHLO_SORT', 200: 'STABLEHLO_WHILE', 201: 'STABLEHLO_GATHER', 202: 'STABLEHLO_TRANSPOSE',
+    203: 'DILATE', 204: 'STABLEHLO_RNG_BIT_GENERATOR', 205: 'REDUCE_WINDOW', 206: 'STABLEHLO_COMPOSITE',
+    207: 'STABLEHLO_SHIFT_LEFT', 208: 'STABLEHLO_CBRT',
+}
+
+
+def opcode_to_name_func(opc):
+    if opc in BUILTIN_OPCODE2NAME:
+        return BUILTIN_OPCODE2NAME[opc]
+    else:
+        return f"UNKNOWN_OPCODE_{opc}"
+
+
+try:
+    # This imports the Model *class* directly, due to tflite/__init__.py
+    from tflite import Model
+except ImportError:
+    print("Critical Error: The 'tflite' Python package (from the 'zhenhuaw-me/tflite/tflite-master' directory) was not found.")
+    print("Please ensure that the 'tflite' directory is in your Python path (PYTHONPATH).")
+    print("Alternatively, place this script inside the 'tflite-master' directory and run it from there.")
+    print("Example: If your tflite-master is at '/path/to/tflite-master', add '/path/to/tflite-master' to PYTHONPATH.")
+    sys.exit(1)
+
+
+TENSOR_TYPE_NAMES = {
+    0: "FLOAT32", 1: "FLOAT16", 2: "INT32", 3: "UINT8", 4: "INT64",
+    5: "STRING", 6: "BOOL", 7: "INT16", 8: "COMPLEX64", 9: "INT8",
+    10: "FLOAT64", 11: "COMPLEX128", 12: "UINT64", 13: "RESOURCE",
+    14: "VARIANT", 15: "UINT32", 16: "UINT16", 17: "INT4"
+}
+
+
+def get_tensor_type_name(tensor_type_code):
+    return TENSOR_TYPE_NAMES.get(tensor_type_code, f"UNKNOWN_TYPE_CODE_{tensor_type_code}")
+
+
+def dump_tflite_graph_info(model_path):
+    print(f"🔍 Processing model: {model_path}\n")
+
+
+    try:
+        with open(model_path, 'rb') as f:
+            buf = f.read()
+        # CORRECTED LINE:
+        # Model is the class itself, so call GetRootAs directly on it.
+        model_obj = Model.GetRootAs(buf, 0)
+    except Exception as e:
+        print(f"❌ Error loading or parsing model {model_path}: {e}")
+        return
+
+
+    if model_obj.SubgraphsLength() == 0:
+        print("ℹ️ Model has no subgraphs.")
+        return
+
+
+    subgraph = model_obj.Subgraphs(0)
+    if not subgraph:
+        print("❌ Could not get the first subgraph.")
+        return
+
+
+    subgraph_name_bytes = subgraph.Name()
+    subgraph_name = subgraph_name_bytes.decode('utf-8') if subgraph_name_bytes else 'N/A'
+    print(f"📊 Subgraph Name: {subgraph_name}")
+    print(f"   Number of Tensors: {subgraph.TensorsLength()}")
+    print(f"   Number of Operators: {subgraph.OperatorsLength()}\n")
+
+
+    operator_codes_map = {}
+    for i in range(model_obj.OperatorCodesLength()):
+        operator_codes_map[i] = model_obj.OperatorCodes(i)
+
+
+    print("--- ⚙️ Operators ---")
+    for i in range(subgraph.OperatorsLength()):
+        op = subgraph.Operators(i)
+        if not op:
+            print(f"⚠️ Warning: Operator at index {i} is None.")
+            continue
+
+
+        op_code_idx = op.OpcodeIndex()
+        op_code_entry = operator_codes_map.get(op_code_idx)
+
+
+        op_name = f"UNKNOWN_OPCODE_IDX_{op_code_idx}"
+        builtin_code_val = "N/A"
+
+
+        if op_code_entry:
+            builtin_code_val = op_code_entry.BuiltinCode()
+            if builtin_code_val == 32:
+                custom_code_bytes = op_code_entry.CustomCode()
+                op_name = f"CUSTOM:{custom_code_bytes.decode('utf-8')}" if custom_code_bytes else "CUSTOM:(No custom code string)"
+            else:
+                op_name = opcode_to_name_func(builtin_code_val)
+
+
+        print(f"\n➡️ Operator {i}: {op_name} (Opcode Index: {op_code_idx}, Builtin Code Value: {builtin_code_val})")
+
+
+        print(f"  Inputs (Tensor Indices & Details):")
+        if op.InputsLength() > 0:
+            for k in range(op.InputsLength()):
+                tensor_idx = op.Inputs(k)
+                if tensor_idx < 0:
+                    print(f"    {k}: Index {tensor_idx} (Optional/Unused)")
+                    continue
+                if tensor_idx < subgraph.TensorsLength():
+                    tensor = subgraph.Tensors(tensor_idx)
+                    t_name_bytes = tensor.Name()
+                    t_name = t_name_bytes.decode('utf-8') if t_name_bytes else f"Tensor_{tensor_idx}"
+
+
+                    shape_str = "Shape: Not Specified"
+                    if tensor.ShapeSignatureLength() > 0:
+                        shape_list = [tensor.ShapeSignature(s) for s in range(tensor.ShapeSignatureLength())]
+                        shape_str = f"Shape Signature: {shape_list} (Dynamic)"
+                    elif tensor.ShapeLength() > 0:
+                        shape_list = [tensor.Shape(s) for s in range(tensor.ShapeLength())]
+                        shape_str = f"Shape: {shape_list}"
+
+
+                    print(f"    {k}: Index {tensor_idx} (Name: '{t_name}', {shape_str})")
+                else:
+                    print(f"    {k}: Index {tensor_idx} (Error: Tensor index out of bounds!)")
+        else:
+            print("    None")
+
+
+        print(f"  Outputs (Tensor Indices & Details):")
+        if op.OutputsLength() > 0:
+            for k in range(op.OutputsLength()):
+                tensor_idx = op.Outputs(k)
+                if tensor_idx < subgraph.TensorsLength():
+                    tensor = subgraph.Tensors(tensor_idx)
+                    t_name_bytes = tensor.Name()
+                    t_name = t_name_bytes.decode('utf-8') if t_name_bytes else f"Tensor_{tensor_idx}"
+
+
+                    shape_str = "Shape: Not Specified"
+                    if tensor.ShapeSignatureLength() > 0:
+                        shape_list = [tensor.ShapeSignature(s) for s in range(tensor.ShapeSignatureLength())]
+                        shape_str = f"Shape Signature: {shape_list} (Dynamic)"
+                    elif tensor.ShapeLength() > 0:
+                        shape_list = [tensor.Shape(s) for s in range(tensor.ShapeLength())]
+                        shape_str = f"Shape: {shape_list}"
+
+
+                    print(f"    {k}: Index {tensor_idx} (Name: '{t_name}', {shape_str})")
+                else:
+                     print(f"    {k}: Index {tensor_idx} (Error: Tensor index out of bounds!)")
+        else:
+            print("    None")
+        print("-" * 30)
+
+
+    print("\n--- 🧱 Tensors (including Weights) ---")
+    for i in range(subgraph.TensorsLength()):
+        tensor = subgraph.Tensors(i)
+        # continue
+        if not tensor:
+            print(f"⚠️ Warning: Tensor at index {i} is None.")
+            continue
+
+
+        tensor_name_bytes = tensor.Name()
+        tensor_name = tensor_name_bytes.decode('utf-8') if tensor_name_bytes else f"Tensor_{i}"
+
+
+        shape_description = "Shape: Not Specified or Empty"
+        if tensor.ShapeSignatureLength() > 0:
+            shape_list = [tensor.ShapeSignature(s_idx) for s_idx in range(tensor.ShapeSignatureLength())]
+            shape_description = f"Shape Signature (Dynamic): {shape_list}"
+        elif tensor.ShapeLength() > 0:
+            shape_list = [tensor.Shape(s_idx) for s_idx in range(tensor.ShapeLength())]
+            shape_description = f"Shape: {shape_list}"
+
+
+        buffer_idx = tensor.Buffer()
+        is_variable = tensor.IsVariable()
+
+
+        print(f"\nTensor {i}: '{tensor_name}'")
+        print(f"  {shape_description}")
+        print(f"  Type: {get_tensor_type_name(tensor.Type())} (Raw Code: {tensor.Type()})")
+        print(f"  Buffer Index: {buffer_idx}")
+        print(f"  Is Variable: {is_variable}")
+
+
+        is_weight_info = "Data: Not a typical weight tensor."
+        if is_variable:
+            is_weight_info = "Data: Marked as a variable (stateful, could be weights)."
+        elif buffer_idx > 0 and buffer_idx < model_obj.BuffersLength():
+            buffer_obj = model_obj.Buffers(buffer_idx)
+            if buffer_obj and buffer_obj.DataLength() > 0:
+                is_weight_info = f"Data: Buffer {buffer_idx} has {buffer_obj.DataLength()} bytes. Likely a weight/constant."
+            elif buffer_obj:
+                is_weight_info = f"Data: Buffer {buffer_idx} exists but is empty."
+            else:
+                 is_weight_info = f"Data: Buffer {buffer_idx} object is None (schema issue?)."
+        elif buffer_idx == 0:
+            is_weight_info = "Data: Uses Buffer 0 (typically for activations/inputs/outputs, not weights)."
+        else:
+            is_weight_info = f"Data: Buffer index {buffer_idx} invalid (Model Buffers: {model_obj.BuffersLength()})."
+        print(f"  {is_weight_info}")
+
+
+        quant_params = tensor.Quantization()
+        if quant_params:
+            details = []
+            if quant_params.ScaleLength() > 0:
+                scales = [quant_params.Scale(s) for s in range(quant_params.ScaleLength())][:10]
+                details.append(f"Scale: {scales} ({quant_params.ScaleLength()})")
+            if quant_params.ZeroPointLength() > 0:
+                zero_points = [quant_params.ZeroPoint(z) for z in range(quant_params.ZeroPointLength())][:10]
+                details.append(f"ZeroPoint: {zero_points} ({quant_params.ZeroPointLength()})")
+            if hasattr(quant_params, 'MinLength') and quant_params.MinLength() > 0:
+                mins = [quant_params.Min(m) for m in range(quant_params.MinLength())][:10]
+                details.append(f"Min: {mins} ({quant_params.MinLength()})")
+            if hasattr(quant_params, 'MaxLength') and quant_params.MaxLength() > 0:
+                maxs = [quant_params.Max(m) for m in range(quant_params.MaxLength())][:10]
+                details.append(f"Max: {maxs} ({quant_params.MaxLength()})")
+            if hasattr(quant_params, 'QuantizedDimension') and quant_params.QuantizedDimension() is not None:
+                 details.append(f"QuantizedDim: {quant_params.QuantizedDimension()}")
+
+
+            if details:
+                print(f"  Quantization: {'; '.join(details)}")
+        print("-" * 30)
+
+
+    print("\n" + "="*50 + "\n")
+
+
+
+
+if __name__ == "__main__":
+    tflite_model_files = [
+        "TF_LITE_EMBEDDER",
+        "TF_LITE_PER_LAYER_EMBEDDER",
+        "TF_LITE_PREFILL_DECODE",
+        "TF_LITE_VISION_ADAPTER",
+        "TF_LITE_VISION_ENCODER"
+    ]
+
+
+    model_directory = "."
+
+
+    print("🚀 TFLite Model Graph Information Dumper 🚀")
+    print("="*50)
+    print("Ensure the 'tflite' package from 'zhenhuaw-me/tflite/tflite-master' is accessible.")
+    print(f"Looking for model files in: {os.path.abspath(model_directory)}\n")
+
+
+    all_files_found = True
+    for file_name in tflite_model_files:
+        full_model_path = os.path.join(model_directory, file_name)
+        if not os.path.exists(full_model_path):
+            print(f"⚠️ File not found: {full_model_path}")
+            all_files_found = False
+
+
+    if not all_files_found:
+        print("\n❌ Some model files were not found. Please check paths and try again.")
+        sys.exit(1)
+
+
+    for file_name in tflite_model_files:
+        full_model_path = os.path.join(model_directory, file_name)
+        dump_tflite_graph_info(full_model_path)
+
+
+    print("✅ Script finished.")
