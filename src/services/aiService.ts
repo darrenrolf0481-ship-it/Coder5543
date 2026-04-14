@@ -1,7 +1,19 @@
 import { GoogleGenAI } from '@google/genai';
 
 export const fillTemplate = (template: string, data: Record<string, string>): string => {
-    return template.replace(/\{\{(\w+)\}\}/g, (_, key) => data[key] || `{{${key}}}`);
+    return template.replace(/\{\{(\w+)\}\}/g, (_: string, key: string) => data[key] || `{{${key}}}`);
+};
+
+export const fetchOllamaModels = async (ollamaUrl: string): Promise<string[]> => {
+  try {
+    const response = await fetch(`${ollamaUrl}/api/tags`);
+    if (!response.ok) throw new Error('Failed to fetch Ollama models');
+    const data = await response.json();
+    return data.models.map((m: any) => m.name);
+  } catch (error) {
+    console.error('Error fetching Ollama models:', error);
+    return [];
+  }
 };
 
 export const generateAIResponse = async (
