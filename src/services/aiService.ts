@@ -12,7 +12,7 @@ export const fetchOllamaModels = async (ollamaUrl: string): Promise<string[]> =>
     return data.models.map((m: any) => m.name);
   } catch (error) {
     console.error('Error fetching Ollama models:', error);
-    return [];
+    throw error; // Rethrow to handle in the caller
   }
 };
 

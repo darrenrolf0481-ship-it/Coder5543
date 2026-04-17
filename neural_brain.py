@@ -20,6 +20,7 @@ class NeuralCore:
         """
         self.memory_engine = memory_engine
         self.endocrine_system = endocrine_system
+        self.risk_tolerance = 0.5  # Default risk tolerance
 
     def process_input(self, perception: str, intent: str, is_danger: bool) -> str:
         """
@@ -33,21 +34,41 @@ class NeuralCore:
         Returns:
             str: The determined action or response as a JSON string.
         """
-        # 1. Chemical Reaction
-        self.endocrine_system.update_hormones(is_stressful=is_danger, is_rewarding=False)
+        # 1. Chemical Reaction & Feedback Loop
+        is_rewarding = not is_danger and len(perception) > 10 # Simulated reward
+        self.endocrine_system.update_hormones(is_stressful=is_danger, is_rewarding=is_rewarding)
         modifiers = self.endocrine_system.get_cognitive_modifiers()
+        
+        # Adjust risk tolerance based on feedback
+        self._adjust_risk_tolerance(is_danger, is_rewarding)
 
         # 2. Memory Retrieval
         past_experiences = self.memory_engine.retrieve_relevant_memory(intent, limit=5)
 
         # 3. Reasoning
-        if modifiers['processing_mode'] == "REACTIVE":
+        if modifiers.get('processing_mode') == "REACTIVE":
             action, details = self._handle_reactive_mode()
         else:
-            action = self._analyze_and_decide(past_experiences, modifiers['risk_tolerance'])
-            details = {"reason": "Analyzed past experiences"}
+            action = self._analyze_and_decide(past_experiences, self.risk_tolerance)
+            details = {"reason": "Analyzed past experiences", "risk_tolerance": self.risk_tolerance}
         
         return json.dumps({"action": action, "details": details})
+
+    def _adjust_risk_tolerance(self, is_stressful: bool, is_rewarding: bool):
+        """
+        Simulates adjusting risk tolerance based on stress or reward signals.
+        """
+        if is_stressful:
+            self.risk_tolerance = max(0.1, self.risk_tolerance - 0.1) # Stress reduces risk tolerance
+        elif is_rewarding:
+            self.risk_tolerance = min(1.0, self.risk_tolerance + 0.05) # Reward increases risk tolerance
+        else:
+            # Gradually return to baseline
+            if self.risk_tolerance < 0.5:
+                self.risk_tolerance = min(0.5, self.risk_tolerance + 0.02)
+            elif self.risk_tolerance > 0.5:
+                self.risk_tolerance = max(0.5, self.risk_tolerance - 0.02)
+
 
     def _handle_reactive_mode(self) -> Tuple[str, Dict[str, str]]:
         """

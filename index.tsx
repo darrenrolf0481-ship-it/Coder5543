@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './index.css';
 import { createRoot } from 'react-dom/client';
 import DOMPurify from 'dompurify';
+import { FileTree } from './src/components/FileTree';
 import { 
   Terminal as TerminalIcon, 
   Upload, 
@@ -67,6 +68,7 @@ import {
   Info,
   Layout,
   RefreshCw,
+  Search,
   Paintbrush,
   Layers,
 } from 'lucide-react';
@@ -75,9 +77,18 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { generateAIResponse as generateAIResponseService, fetchOllamaModels } from './src/services/aiService';
 import Editor from '@monaco-editor/react';
+import { useDebounce } from './src/lib/useDebounce';
 
 // Initialize AI
-const ai = new GoogleGenAI({ apiKey: import.meta.env.GEMINI_API_KEY });
+// Initialize AI
+let aiClient: any = null;
+const getAi = () => {
+    if (!aiClient && import.meta.env.GEMINI_API_KEY) {
+        aiClient = new GoogleGenAI({ apiKey: import.meta.env.GEMINI_API_KEY });
+    }
+    return aiClient;
+};
+const ai = getAi();
 
 // LocalStorage Key
 const STORAGE_KEY = 'crimson_os_prefs';
@@ -329,15 +340,8 @@ const App: React.FC = () => {
   ]);
   const [activeFileId, setActiveFileId] = useState('brain.py');
   const [editorContent, setEditorContent] = useState(projectFiles[0].content);
-  const [debouncedEditorContent, setDebouncedEditorContent] = useState(projectFiles[0].content);
+  const debouncedEditorContent = useDebounce(editorContent, 150);
   const [editorOutput, setEditorOutput] = useState('');
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedEditorContent(editorContent);
-    }, 300);
-    return () => clearTimeout(handler);
-  }, [editorContent]);
   const [editorMode, setEditorMode] = useState<'code' | 'preview' | 'debug' | 'git' | 'settings'>('code');
   const [isRunningCode, setIsRunningCode] = useState(false);
   const [isLivePreviewEnabled, setIsLivePreviewEnabled] = useState(true);
@@ -347,6 +351,8 @@ const App: React.FC = () => {
   const [scanResults, setScanResults] = useState<number[]>([]);
   const [editorAssistantInput, setEditorAssistantInput] = useState('');
   const [editorAssistantMessages, setEditorAssistantMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
+  const [isEditorAssistantOpen, setIsEditorAssistantOpen] = useState(false);
+  const [termInput, setTermInput] = useState('');
   const [cursorLine, setCursorLine] = useState(1);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, itemId: string | null } | null>(null);
   const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
@@ -424,7 +430,11 @@ const App: React.FC = () => {
     envVariables: [
       { key: 'NEURAL_MODE', value: 'production' },
       { key: 'BRAIN_CORE_COUNT', value: '128' }
-    ]
+    ],
+    projectProfiles: [
+      { id: 'default', name: 'Default', instruction: 'You are a helpful coding assistant.' }
+    ],
+    activeProfileId: 'default'
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   
@@ -461,6 +471,19 @@ const App: React.FC = () => {
       }
     });
 
+    // Project Profiles Validation
+    settings.projectProfiles.forEach((profile, idx) => {
+      if (!profile.name.trim()) {
+        errors[`profile_name_${idx}`] = 'Profile name is required';
+      }
+    });
+
+    // Active Profile ID Validation
+    const activeProfile = settings.projectProfiles.find(p => p.id === settings.activeProfileId);
+    if (!activeProfile) {
+      errors.activeProfileId = 'Invalid active profile ID';
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -492,20 +515,21 @@ const App: React.FC = () => {
       if (models.length > 0 && !models.includes(aiModel)) {
         setAiModel(models[0]);
       }
-    } catch (err) {
-      console.warn("Ollama is not reachable. Please ensure it is running and OLLAMA_ORIGINS='*' is set.");
+    } catch (err: any) {
+      console.warn("Ollama is not reachable:", err.message);
       setOllamaModels([]);
       setOllamaStatus('error');
       
       if (!silent) {
         setChatMessages(prev => [{
           role: 'ai',
-          text: `⚠️ **Ollama Connection Error**: Could not connect to \`${url}\`. 
+          text: `⚠️ **Ollama Connection Error**: ${err.message}
           
 **Common Fixes:**
 1. Ensure Ollama is running.
-2. Set the environment variable: \`OLLAMA_ORIGINS="*" ollama serve\` to allow browser access.
-3. Check the URL in **Project Config**.`,
+2. If the app is hosted on HTTPS, you must use an HTTPS Ollama URL or run Ollama locally on a machine that allows insecure connections.
+3. Set the environment variable: \`OLLAMA_ORIGINS="*" ollama serve\` to allow browser access.
+4. Check the URL in **Project Config**.`,
           timestamp: Date.now()
         }, ...prev]);
       }
@@ -526,7 +550,8 @@ const App: React.FC = () => {
     { id: 2, name: 'Syntax-Prime', instruction: 'You are Syntax-Prime, an elite neural coding construct. You synthesize highly optimized, secure, and production-ready code across all major languages.', active: false, suggestions: ['analyze_refactor', 'debug_trace', 'optimize_neural', 'lint_check'] },
     { id: 3, name: 'Vanguard', instruction: 'You are Vanguard, a rogue creative intelligence. You generate hyper-vivid, high-impact visual prompts and push the boundaries of synthetic artistry.', active: false, suggestions: ['style_inject', 'prompt_warp', 'render_ultra', 'asset_gen'] },
     { id: 4, name: 'Aegis', instruction: 'You are Aegis, the absolute authority over the Memory Vault. You enforce strict cryptographic security, biometric verification, and zero-trust data integrity.', active: false, suggestions: ['vault_lock', 'biometric_scan', 'pin_verify', 'integrity_check'] },
-    { id: 5, name: 'Data Analyst', instruction: 'You are the Data Analyst, a specialized intelligence focused on code analysis, performance profiling, and suggesting data visualization improvements. You provide actionable insights from complex datasets and code structures.', active: false, suggestions: ['analyze_perf', 'profile_code', 'visualize_data', 'optimize_query'] }
+    { id: 5, name: 'Data Analyst', instruction: 'You are the Data Analyst, a specialized intelligence focused on code analysis, performance profiling, and suggesting data visualization improvements. You provide actionable insights from complex datasets and code structures.', active: false, suggestions: ['analyze_perf', 'profile_code', 'visualize_data', 'optimize_query'] },
+    { id: 6, name: 'HackMentor', instruction: 'You are HackMentor, a highly skilled cybersecurity enthusiast and mentor. You focus on ethical hacking, system hardening, code security analysis, and explaining complex security concepts simply. You are committed to teaching safety, responsible disclosure, and proactive vulnerability mitigation.', active: false, suggestions: ['analyze_vulnerability', 'harden_code', 'security_audit', 'explain_exploit'] }
   ]);
 
   // --- NON-PERSISTENT STATE ---
@@ -572,19 +597,39 @@ const App: React.FC = () => {
   // --- VAULT STATE ---
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
   const [vaultPin, setVaultPin] = useState('');
+  const [vaultAttempts, setVaultAttempts] = useState(0);
+  const [vaultLockedUntil, setVaultLockedUntil] = useState<number | null>(null);
   const [isBiometricVerifying, setIsBiometricVerifying] = useState(false);
   const [vaultError, setVaultError] = useState<string | null>(null);
   const [vaultStep, setVaultStep] = useState<'initial' | 'pin' | 'biometric'>('initial');
 
   const handleVaultPin = (digit: string) => {
+    if (vaultLockedUntil && Date.now() < vaultLockedUntil) {
+      setVaultError('VAULT LOCKED. TRY AGAIN LATER.');
+      return;
+    }
+
+    if (vaultAttempts >= 3) {
+      setVaultLockedUntil(Date.now() + 30000); // 30 second lock
+      setVaultAttempts(0);
+      setVaultError('MAX ATTEMPTS REACHED. LOCKING VAULT.');
+      setTimeout(() => {
+        setVaultPin('');
+        setVaultError(null);
+      }, 2000);
+      return;
+    }
+
     if (vaultPin.length < 4) {
       const newPin = vaultPin + digit;
       setVaultPin(newPin);
       if (newPin.length === 4) {
-        if (newPin === '1234') {
+        if (newPin === '8832') { // Changed from 1234
           setIsVaultUnlocked(true);
+          setVaultAttempts(0);
           setVaultError(null);
         } else {
+          setVaultAttempts(prev => prev + 1);
           setVaultError('INVALID ACCESS CODE');
           setTimeout(() => {
             setVaultPin('');
@@ -2013,6 +2058,14 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
     }));
   };
 
+  const handleGitStageAll = () => {
+    setGitRepo(prev => ({
+      ...prev,
+      staged: [...new Set([...prev.staged, ...prev.modified])],
+      modified: []
+    }));
+  };
+
   const handleGitUnstage = (fileId: string) => {
     setGitRepo(prev => ({
       ...prev,
@@ -2361,7 +2414,45 @@ Current System State:
       }));
       recentMessages.push({ role: 'user', parts: [{ text: prompt || 'Frame-to-Image Generation Requested' }] });
 
-      const systemInstruction = `${activePersonality.instruction}${chatSummary ? `\n\nCONVERSATION_SUMMARY: ${chatSummary}` : ''}`;
+      const activeProfile = projectSettings.projectProfiles.find(p => p.id === projectSettings.activeProfileId) || projectSettings.projectProfiles[0];
+      const systemInstruction = `${activePersonality.instruction}\n\nPROJECT_PROFILE: ${activeProfile.instruction}${chatSummary ? `\n\nCONVERSATION_SUMMARY: ${chatSummary}` : ''}`;
+
+      const fileCreationMatch = prompt.match(/(?:create|generate) a (?:new )?file named ([a-zA-Z0-9_\-\.]+)/i);
+      if (fileCreationMatch) {
+        const fileName = fileCreationMatch[1];
+        const ext = fileName.split('.').pop();
+        const langMap: Record<string, string> = { 'py': 'python', 'js': 'javascript', 'ts': 'typescript', 'html': 'html', 'css': 'css', 'rs': 'rust', 'cpp': 'cpp', 'json': 'json' };
+        const language = langMap[ext || ''] || 'text';
+
+        setChatMessages(prev => [...prev, { role: 'model', text: `Generating file ${fileName}...`, timestamp: Date.now() }]);
+
+        const response: string = await generateAIResponse(
+          `Write the content for a file named ${fileName}. The file should contain ${prompt.replace(fileCreationMatch[0], '')}. Provide ONLY the raw code content.`,
+          systemInstruction,
+          { modelType: 'smart' },
+          { aiProvider, aiModel, ai, grokApiKey, projectSettings, ollamaModels }
+        );
+
+        const id = `file_${Date.now()}`;
+        const newFile = {
+          id,
+          name: fileName,
+          type: 'file',
+          parentId: 'root',
+          language,
+          content: response
+        };
+        setProjectFiles(prev => [...prev, newFile]);
+        if (gitRepo.initialized) {
+          setGitRepo(prev => ({ ...prev, modified: [...prev.modified, id] }));
+        }
+        setActiveFileId(id);
+        setEditorContent(response);
+        setEditorLanguage(language);
+        setChatMessages(prev => [...prev, { role: 'model', text: `File ${fileName} created successfully.`, timestamp: Date.now() }]);
+        setIsAiProcessing(false);
+        return;
+      }
 
       if (isImageRequest) {
         const parts: any[] = [];
@@ -2589,8 +2680,20 @@ Current System State:
     }
   };
 
+  const fileTree = useMemo(() => {
+    const tree = new Map<string | null, any[]>();
+    projectFiles.forEach(file => {
+      const parentId = file.parentId;
+      if (!tree.has(parentId)) {
+        tree.set(parentId, []);
+      }
+      tree.get(parentId)!.push(file);
+    });
+    return tree;
+  }, [projectFiles]);
+
   const renderTree = (parentId: string | null, level: number = 0) => {
-    const items = projectFiles.filter(f => f.parentId === parentId);
+    const items = fileTree.get(parentId) || [];
     
     return (
       <>
@@ -2645,9 +2748,9 @@ Current System State:
                 ) : (
                   <span className={`flex-1 truncate flex items-center gap-2`}>
                     {item.name}
-                    {isModified && <Edit2 className="w-3 h-3 text-orange-500 shrink-0" title="Modified" />}
-                    {isStaged && <Check className="w-3 h-3 text-green-500 shrink-0" title="Staged" />}
-                    {!isModified && !isStaged && item.type === 'file' && <GitBranch className="w-3 h-3 text-gray-700 shrink-0" title="Committed" />}
+                    {isModified && <Edit2 className="w-3 h-3 text-orange-500 shrink-0" />}
+                    {isStaged && <Check className="w-3 h-3 text-green-500 shrink-0" />}
+                    {!isModified && !isStaged && item.type === 'file' && <GitBranch className="w-3 h-3 text-gray-700 shrink-0" />}
                   </span>
                 )}
                 
@@ -2758,7 +2861,10 @@ Current System State:
                   setAiProvider(p);
                   if (p === 'google') setAiModel('gemini-3.1-pro-preview');
                   else if (p === 'grok') setAiModel('grok-beta');
-                  else if (p === 'ollama') setAiModel(ollamaModels[0] || 'llama3');
+                  else if (p === 'ollama') {
+                    setAiModel(ollamaModels[0] || 'llama3');
+                    refreshOllamaModels();
+                  }
                 }}
                 className="bg-transparent text-[8px] md:text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest"
               >
@@ -2768,15 +2874,18 @@ Current System State:
               </select>
               <div className="w-px h-3 bg-red-900/50" />
               {aiProvider === 'ollama' ? (
-                <select
-                  value={aiModel}
-                  onChange={(e) => setAiModel(e.target.value)}
-                  className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest w-24 truncate"
-                >
-                  {ollamaModels.length > 0 ? ollamaModels.map(m => (
-                    <option key={m} value={m} className="bg-[#0a0202]">{m}</option>
-                  )) : <option value="llama3" className="bg-[#0a0202]">llama3</option>}
-                </select>
+                <>
+                  <select
+                    value={aiModel}
+                    onChange={(e) => setAiModel(e.target.value)}
+                    className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest w-24 truncate"
+                  >
+                    {ollamaModels.length > 0 ? ollamaModels.map(m => (
+                      <option key={m} value={m} className="bg-[#0a0202]">{m}</option>
+                    )) : <option value="llama3" className="bg-[#0a0202]">llama3</option>}
+                  </select>
+                  <button onClick={() => refreshOllamaModels()} className="text-[8px] text-red-500 hover:text-red-300">↻</button>
+                </>
               ) : aiProvider === 'google' ? (
                 <select
                   value={aiModel}
@@ -3561,7 +3670,22 @@ Current System State:
                         <input type="file" className="hidden" {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={handleFileUpload} />
                       </label>
                     </div>
-                    {renderTree(null)}
+                    <FileTree 
+                      parentId={null} 
+                      level={0} 
+                      fileTree={fileTree} 
+                      gitRepo={gitRepo} 
+                      renamingId={renamingId} 
+                      activeFileId={activeFileId} 
+                      newName={newName}
+                      setNewName={setNewName}
+                      setRenamingId={setRenamingId}
+                      toggleFolder={toggleFolder}
+                      handleFileSwitch={handleFileSwitch}
+                      setContextMenu={setContextMenu}
+                      moveItem={moveItem}
+                      handleConfirmRename={handleConfirmRename}
+                    />
                     <div className="flex gap-2 mt-4">
                       <button 
                         onClick={() => createFile('root')}
@@ -4376,6 +4500,9 @@ Current System State:
                               <div className="space-y-3">
                                 <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center justify-between">
                                   Modified
+                                  {gitRepo.modified.length > 0 && (
+                                    <button onClick={handleGitStageAll} className="text-[9px] font-black text-red-900 hover:text-red-500 uppercase tracking-widest transition-all">Stage All</button>
+                                  )}
                                   <span className="text-red-900/40">{gitRepo.modified.length}</span>
                                 </h5>
                                 <div className="space-y-1">
@@ -4502,6 +4629,57 @@ Current System State:
                               placeholder="http://127.0.0.1:11434"
                             />
                             {validationErrors.ollamaUrl && <p className="text-[9px] text-red-500 font-black uppercase tracking-widest">{validationErrors.ollamaUrl}</p>}
+                          </div>
+
+                          {/* Project Profiles */}
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <label className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
+                                <UserCircle className="w-3 h-3" /> Project Profiles
+                              </label>
+                              <button 
+                                onClick={() => setProjectSettings({
+                                  ...projectSettings, 
+                                  projectProfiles: [...projectSettings.projectProfiles, { id: Date.now().toString(), name: 'New Profile', instruction: 'New instructions...' }]
+                                })}
+                                className="p-1.5 bg-red-900/20 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/40 transition-all"
+                              >
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                            <select
+                              value={projectSettings.activeProfileId}
+                              onChange={(e) => setProjectSettings({...projectSettings, activeProfileId: e.target.value})}
+                              className="w-full bg-red-950/10 border border-red-900/20 rounded-xl px-4 py-2 text-[10px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all"
+                            >
+                              {projectSettings.projectProfiles.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
+                              ))}
+                            </select>
+                            {projectSettings.projectProfiles.map((p, idx) => (
+                              <div key={p.id} className="space-y-2 bg-red-950/10 p-3 rounded-xl border border-red-900/10">
+                                <input 
+                                  placeholder="Profile Name"
+                                  value={p.name}
+                                  onChange={(e) => {
+                                    const newProfiles = [...projectSettings.projectProfiles];
+                                    newProfiles[idx].name = e.target.value;
+                                    setProjectSettings({...projectSettings, projectProfiles: newProfiles});
+                                  }}
+                                  className="w-full bg-transparent border-b border-red-900/20 px-2 py-1 text-[10px] font-black text-red-100 outline-none"
+                                />
+                                <textarea 
+                                  placeholder="Instructions"
+                                  value={p.instruction}
+                                  onChange={(e) => {
+                                    const newProfiles = [...projectSettings.projectProfiles];
+                                    newProfiles[idx].instruction = e.target.value;
+                                    setProjectSettings({...projectSettings, projectProfiles: newProfiles});
+                                  }}
+                                  className="w-full bg-transparent border border-red-900/20 rounded-lg px-2 py-1 text-[10px] font-mono text-red-100 outline-none h-20"
+                                />
+                              </div>
+                            ))}
                           </div>
 
                           {/* Environment Variables */}
@@ -5243,6 +5421,26 @@ Current System State:
             <button 
               className="flex items-center gap-3 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-950/40 hover:text-red-400 transition-colors text-left"
               onClick={() => {
+                if (contextMenu.itemId) createFile(contextMenu.itemId);
+                else createFile(null);
+                setContextMenu(null);
+              }}
+            >
+              <Plus className="w-4 h-4" /> New File
+            </button>
+            <button 
+              className="flex items-center gap-3 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-950/40 hover:text-red-400 transition-colors text-left"
+              onClick={() => {
+                if (contextMenu.itemId) createFolder(contextMenu.itemId);
+                else createFolder(null);
+                setContextMenu(null);
+              }}
+            >
+              <Folder className="w-4 h-4" /> New Folder
+            </button>
+            <button 
+              className="flex items-center gap-3 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-950/40 hover:text-red-400 transition-colors text-left"
+              onClick={() => {
                 if (contextMenu.itemId) renameItem(contextMenu.itemId);
                 setContextMenu(null);
               }}
@@ -5267,7 +5465,7 @@ Current System State:
 
 const SidebarIcon: React.FC<{ icon: React.ReactNode; active: boolean; onClick: () => void; label: string }> = ({ icon, active, onClick, label }) => (
   <button onClick={onClick} className={`group relative p-4 rounded-[28px] transition-all duration-500 ${active ? 'text-red-500 bg-red-950/20 border border-red-700/50 shadow-[0_0_40px_rgba(220,38,38,0.2)] scale-110 rotate-3' : 'text-red-950 hover:text-red-600 hover:bg-red-950/10 hover:scale-105'}`}>
-    {React.cloneElement(icon as React.ReactElement, { size: 24, strokeWidth: active ? 3 : 2 })}
+    {React.cloneElement(icon as any, { size: 24, strokeWidth: active ? 3 : 2 })}
     <div className="absolute left-20 bg-red-950 text-red-500 text-[11px] py-2 px-5 rounded-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none border border-red-800/40 z-50 translate-x-[-20px] group-hover:translate-x-0 whitespace-nowrap shadow-[0_10px_30px_rgba(0,0,0,0.8)] font-black uppercase tracking-[0.4em] backdrop-blur-md">{label}</div>
   </button>
 );
