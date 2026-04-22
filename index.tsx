@@ -1,6 +1,6 @@
 
 /// <reference types="vite/client" />
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import './index.css';
 import { createRoot } from 'react-dom/client';
 import DOMPurify from 'dompurify';
