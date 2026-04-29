@@ -3,9 +3,9 @@ import { ChevronDown, FolderOpen, Folder, FileCode, Edit2, Trash2 } from 'lucide
 import { useFileSystem } from '../hooks/useFileSystem';
 
 interface FileTreeProps {
-  parentId: string;
+  parentId: string | null;
   level?: number;
-  fileTree: Map<string, any[]>;
+  fileTree: Map<string | null, any[]>;
   activeFileId: string | null;
   refresh: () => void;
   onFileClick: (id: string) => void;
@@ -26,12 +26,9 @@ export const FileTree: React.FC<FileTreeProps> = ({
   const items = fileTree.get(parentId) || [];
   const { deleteItem } = useFileSystem();
   
-  const handleDelete = async (e: React.MouseEvent, path: string) => {
+  const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (confirm(`Delete ${path}?`)) {
-      await deleteItem(path);
-      refresh();
-    }
+    deleteItem(id);
   };
   
   return (
