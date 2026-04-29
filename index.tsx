@@ -200,34 +200,22 @@ const App: React.FC = () => {
   const [newPersonalitySuggestions, setNewPersonalitySuggestions] = useState('');
   const [fileSearch, setFileSearch] = useState('');
 
-  const handleLoadTemplate = (templateKey: keyof typeof PROJECT_TEMPLATES) => {
-    const template = PROJECT_TEMPLATES[templateKey];
-    if (!template) return;
+  const [newProjectName, setNewProjectName] = useState('');
 
-    if (!confirm(`Loading "${template.name}" will overwrite your current project. Proceed?`)) return;
-
-    setProjectFiles(template.files);
-    
-    // Find first file to activate
-    const firstFile = template.files.find(f => f.type === 'file');
-    if (firstFile) {
-      setActiveFileId(firstFile.id);
-      setEditorContent(firstFile.content || '');
-      setEditorLanguage(firstFile.language || 'text');
-      setEditorMode(firstFile.language === 'html' ? 'preview' : 'code');
+  const handleCreateProject = async (template: string) => {
+    if (!newProjectName.trim()) {
+      alert('Please enter a project name');
+      return;
     }
 
-    // Reset Git state
-    setGitRepo({
-      initialized: false,
-      branch: 'main',
-      commits: [],
-      staged: [],
-      modified: [],
-      stash: []
-    });
-
-    setIsTemplateModalOpen(false);
+    try {
+      const projectPath = await fileSystemService.createProject(template, newProjectName.trim());
+      setIsTemplateModalOpen(false);
+      setTerminalOutput(prev => [...prev, `[SYSTEM] Project "${newProjectName}" created at ${projectPath}.`]);
+      refreshFileTree();
+    } catch (err: any) {
+      alert(`Failed to create project: ${err.message}`);
+    }
   };
 
   // --- PERSISTENT STATE ---
@@ -5409,31 +5397,37 @@ Current System State:
             <div className="p-4 md:p-12 border-b border-red-900/20 bg-black/40 flex items-center justify-between shrink-0">
               <div className="space-y-1 md:space-y-2">
                 <h3 className="text-xl md:text-3xl font-black text-red-100 uppercase tracking-tighter">Initialize Neural Project</h3>
-                <p className="text-[10px] md:text-sm text-red-900 font-bold tracking-widest uppercase">Select a predefined template to begin your development cycle</p>
+                <p className="text-[10px] md:text-sm text-red-900 font-bold tracking-widest uppercase">Select a template and name your development matrix</p>
               </div>
               <button onClick={() => setIsTemplateModalOpen(false)} className="p-3 md:p-4 bg-red-950/20 border border-red-900/20 rounded-full text-red-500 hover:bg-red-900/40 transition-all shrink-0 ml-4">
                 <X className="w-6 h-6 md:w-8 md:h-8" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 md:p-12 custom-scrollbar">
+              <div className="mb-8 p-6 bg-red-950/10 border border-red-900/30 rounded-2xl">
+                <label className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-2 block">Project Matrix Name</label>
+                <input 
+                  type="text" 
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  placeholder="e.g., neural-interface-v1"
+                  className="w-full bg-black/40 border border-red-900/30 rounded-lg p-3 text-red-100 font-mono text-sm focus:border-red-500 transition-all outline-none"
+                />
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
-                {(Object.keys(PROJECT_TEMPLATES) as Array<keyof typeof PROJECT_TEMPLATES>).map(key => (
-                  <button 
-                    key={key}
-                    onClick={() => handleLoadTemplate(key)}
+                {availableTemplates.map(template => (
+                  <button
+                    key={template}
+                    onClick={() => handleCreateProject(template)}
                     className="group p-4 md:p-8 bg-red-950/5 border border-red-900/20 rounded-[20px] md:rounded-[40px] text-left space-y-4 md:space-y-6 hover:bg-red-900/10 hover:border-red-500/40 transition-all active:scale-95"
                   >
                     <div className="w-12 h-12 md:w-16 md:h-16 bg-red-900/20 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
-                      {key === 'python-web' && <Network className="w-6 h-6 md:w-8 md:h-8" />}
-                      {key === 'rust-cli' && <TerminalIcon className="w-6 h-6 md:w-8 md:h-8" />}
-                      {key === 'neural-module' && <Brain className="w-6 h-6 md:w-8 md:h-8" />}
+                      <Archive className="w-6 h-6 md:w-8 md:h-8" />
                     </div>
                     <div className="space-y-2">
-                      <h4 className="text-lg md:text-xl font-black text-red-100 uppercase tracking-tight">{PROJECT_TEMPLATES[key].name}</h4>
+                      <h4 className="text-lg md:text-xl font-black text-red-100 uppercase tracking-tight">{template.replace(/-/g, ' ')}</h4>
                       <p className="text-[10px] md:text-[11px] text-red-900 font-bold uppercase tracking-widest leading-relaxed">
-                        {key === 'python-web' ? 'Full-stack Flask environment with HTML/CSS integration.' : 
-                         key === 'rust-cli' ? 'High-performance CLI tool architecture with Cargo config.' : 
-                         'Modular neural logic with JSON configuration.'}
+                        Neural template optimized for high-performance synthesis.
                       </p>
                     </div>
                     <div className="pt-4 flex items-center gap-3 text-[10px] font-black text-red-500 uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity">
@@ -5443,6 +5437,7 @@ Current System State:
                 ))}
               </div>
             </div>
+
             <div className="p-6 md:p-12 bg-black/40 border-t border-red-900/20 text-center shrink-0">
               <p className="text-[9px] md:text-[10px] text-red-900 font-black uppercase tracking-[0.4em]">Crimson OS Neural Development Environment v4.1.0_EX</p>
             </div>
