@@ -6,6 +6,7 @@ import { createRoot } from 'react-dom/client';
 import DOMPurify from 'dompurify';
 import { FileTree } from './src/components/FileTree';
 import { FileSystemContext } from './src/context/FileSystemContext';
+import { EditorProvider, useEditor } from './src/context/EditorContext';
 import { 
   Terminal as TerminalIcon, 
   Upload, 
@@ -78,7 +79,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { generateAIResponse as generateAIResponseService, fetchOllamaModels } from './src/services/aiService';
 import Editor from '@monaco-editor/react';
-import { useDebounce } from './src/lib/useDebounce';
 
 // Initialize AI
 // Initialize AI
@@ -190,6 +190,41 @@ const renderTerminalLine = (line: string) => {
 };
 
 const App: React.FC = () => {
+  const {
+    editorLanguage, setEditorLanguage,
+    projectFiles, setProjectFiles,
+    activeFileId, setActiveFileId,
+    editorContent, setEditorContent,
+    debouncedEditorContent,
+    editorOutput, setEditorOutput,
+    editorMode, setEditorMode,
+    isRunningCode, setIsRunningCode,
+    isLivePreviewEnabled, setIsLivePreviewEnabled,
+    isPairProgrammerActive, setIsPairProgrammerActive,
+    isMobileFileTreeOpen, setIsMobileFileTreeOpen,
+    isScanningCode, setIsScanningCode,
+    scanResults, setScanResults,
+    editorAssistantInput, setEditorAssistantInput,
+    editorAssistantMessages, setEditorAssistantMessages,
+    isEditorAssistantOpen, setIsEditorAssistantOpen,
+    termInput, setTermInput,
+    cursorLine, setCursorLine,
+    contextMenu, setContextMenu,
+    lastSavedTime, setLastSavedTime,
+    renamingId, setRenamingId,
+    newName, setNewName,
+    creatingInId, setCreatingInId,
+    isInspectorActive, setIsInspectorActive,
+    inspectedElement, setInspectedElement,
+    monacoEditorRef,
+    decorationsRef,
+    previewContainerRef,
+    inspectedElementRef,
+    saveFile,
+    handleEditorDidMount,
+    handleFileSwitch,
+  } = useEditor();
+
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isCustomPersonalityModalOpen, setIsCustomPersonalityModalOpen] = useState(false);
   const [postCommitModalOpen, setPostCommitModalOpen] = useState(false);
@@ -319,68 +354,6 @@ const App: React.FC = () => {
     { id: 2, type: 'info', message: 'Pain Propagation Protocol Active.', time: '08:45:15' }
   ]);
   
-  // Editor State
-  const [editorLanguage, setEditorLanguage] = useState('python');
-  const [projectFiles, setProjectFiles] = useState<any[]>([
-    { id: 'root', name: 'Project', type: 'folder', parentId: null, isOpen: true },
-    { id: 'src', name: 'src', type: 'folder', parentId: 'root', isOpen: true },
-    { id: 'brain.py', name: 'neural_brain.py', type: 'file', parentId: 'src', language: 'python', content: '# AI Brain Logic\nclass NeuralCore:\n    def __init__(self):\n        self.synapses = 10**12\n\n    def process(self, input_data):\n        return f"Neural processing: {input_data}"\n\ncore = NeuralCore()\nprint(core.process("Initial stimulus"))' },
-    { id: 'ui.html', name: 'interface.html', type: 'file', parentId: 'src', language: 'html', content: '<div class="p-8 bg-red-900/20 rounded-3xl border border-red-500/30">\n  <h1 class="text-2xl font-black text-red-500 uppercase">Neural Interface</h1>\n  <p class="text-red-100/60 mt-4">Real-time UI component rendering via Crimson Engine.</p>\n  <button class="mt-8 px-6 py-3 bg-red-700 text-white rounded-xl uppercase font-black text-xs tracking-widest">Activate Core</button>\n</div>' },
-    { id: 'logic.rs', name: 'core_logic.rs', type: 'file', parentId: 'src', language: 'rust', content: 'fn main() {\n    let neural_load = 0.85;\n    println!("System load: {}%", neural_load * 100.0);\n}' }
-  ]);
-  const [activeFileId, setActiveFileId] = useState('brain.py');
-  const [editorContent, setEditorContent] = useState(projectFiles[0].content);
-  const debouncedEditorContent = useDebounce(editorContent, 150);
-  const [editorOutput, setEditorOutput] = useState('');
-  const [editorMode, setEditorMode] = useState<'code' | 'preview' | 'debug' | 'git' | 'settings'>('code');
-  const [isRunningCode, setIsRunningCode] = useState(false);
-  const [isLivePreviewEnabled, setIsLivePreviewEnabled] = useState(true);
-  const [isPairProgrammerActive, setIsPairProgrammerActive] = useState(false);
-  const [isMobileFileTreeOpen, setIsMobileFileTreeOpen] = useState(false);
-  const [isScanningCode, setIsScanningCode] = useState(false);
-  const [scanResults, setScanResults] = useState<number[]>([]);
-  const [editorAssistantInput, setEditorAssistantInput] = useState('');
-  const [editorAssistantMessages, setEditorAssistantMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
-  const [isEditorAssistantOpen, setIsEditorAssistantOpen] = useState(false);
-  const [termInput, setTermInput] = useState('');
-  const [cursorLine, setCursorLine] = useState(1);
-  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, itemId: string | null } | null>(null);
-  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [newName, setNewName] = useState('');
-  const [creatingInId, setCreatingInId] = useState<{ parentId: string | null, type: 'file' | 'folder' } | null>(null);
-  const [isInspectorActive, setIsInspectorActive] = useState(false);
-  const [inspectedElement, setInspectedElement] = useState<{
-    tagName: string;
-    className: string;
-    id: string;
-    rect: { top: number; left: number; width: number; height: number } | null;
-    styles: Record<string, string>;
-  } | null>(null);
-  const previewContainerRef = useRef<HTMLDivElement>(null);
-  const inspectedElementRef = useRef<HTMLElement | null>(null);
-  const monacoEditorRef = useRef<any>(null);
-
-  const saveFile = useCallback(() => {
-    if (activeFileId) {
-      setProjectFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content: editorContent } : f));
-      setLastSavedTime(new Date().toLocaleTimeString());
-    }
-  }, [activeFileId, editorContent]);
-
-  useEffect(() => {
-    const interval = setInterval(saveFile, 5000);
-    return () => clearInterval(interval);
-  }, [saveFile]);
-
-  const handleEditorDidMount = (editor: any) => {
-    monacoEditorRef.current = editor;
-    editor.onDidBlurEditorText(() => {
-      saveFile();
-    });
-  };
-  const decorationsRef = useRef<string[]>([]);
-
   // Debugging State
   const [breakpoints, setBreakpoints] = useState<number[]>([]);
   const [debugState, setDebugState] = useState<{
@@ -1717,20 +1690,6 @@ def get_user(id: int) -> Optional[Dict[str, Any]]:
       setEditorOutput(prev => prev + '[ERROR] Debugger synchronization failed.\n');
     } finally {
       setIsAiProcessing(false);
-    }
-  };
-
-  const handleFileSwitch = (fileId: string) => {
-    // Save current content to projectFiles
-    setProjectFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content: editorContent } : f));
-    
-    // Switch to new file
-    const file = projectFiles.find(f => f.id === fileId);
-    if (file && file.type === 'file') {
-      setActiveFileId(fileId);
-      setEditorContent(file.content || '');
-      setEditorLanguage(file.language || 'text');
-      setEditorMode(file.language === 'html' ? 'preview' : 'code');
     }
   };
 
@@ -5577,5 +5536,5 @@ const container = document.getElementById('root');
 if (container) {
   const root = (container as any)._reactRoot || createRoot(container);
   (container as any)._reactRoot = root;
-  root.render(<ErrorBoundary><App /></ErrorBoundary>);
+  root.render(<ErrorBoundary><EditorProvider><App /></EditorProvider></ErrorBoundary>);
 }
