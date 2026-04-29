@@ -82,41 +82,11 @@ class NeuralCore:
     def _analyze_and_decide(self, memories: List[Dict[str, Any]], risk_tolerance: float) -> str:
         """
         Analyzes past memories and risk tolerance to make a decision.
-
-        Args:
-            memories (List[Dict[str, Any]]): A list of past experiences.
-            risk_tolerance (float): The current risk tolerance level.
-
-        Returns:
-            str: The final decision string.
         """
         negative_memories = [m for m in memories if m.get('outcome_value', 0) < 0]
-        return self._evaluate_risk(negative_memories, risk_tolerance)
-
-    def _evaluate_risk(self, negative_memories: List[Dict[str, Any]], risk_tolerance: float) -> str:
-        """
-        Evaluates risk based on negative memories and tolerance.
-
-        Args:
-            negative_memories (List[Dict[str, Any]]): A list of negative experiences.
-            risk_tolerance (float): The current risk tolerance level.
-
-        Returns:
-            str: The decision string.
-        """
         if negative_memories and risk_tolerance < 0.3:
             return "CAUTIOUS_APPROACH"
         return "NORMAL_OPERATION"
-
-    def _trace_neural_path(self, path_identifier: str) -> None:
-        """
-        Simulates tracing neural activity by logging timestamps and a path identifier.
-
-        Args:
-            path_identifier (str): The identifier for the neural process being traced.
-        """
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        print(f"[{timestamp}] TRACE: {path_identifier}")
 
 class MemoryInterface:
     """
@@ -125,7 +95,8 @@ class MemoryInterface:
 
     def retrieve_relevant_memory(self, query: str, limit: int) -> List[Dict[str, Any]]:
         """
-        Simulates retrieving relevant memories based on a query.
+        Simulates retrieving relevant memories based on a query with memory decay.
+        Older memories have reduced relevance compared to newer, similar memories.
 
         Args:
             query (str): The search query or intent.
@@ -134,12 +105,26 @@ class MemoryInterface:
         Returns:
             List[Dict[str, Any]]: A list of simulated memory dictionaries.
         """
+        import math
+        current_time = time.time()
+        
         # Placeholder simulation with diverse memories
+        # Added base_relevance to simulate matching score before decay
         memories = [
-            {"id": 1, "intent": query, "outcome_value": 0.8, "context": "Successful task completion in low-stress environment.", "timestamp": time.time() - 100},
-            {"id": 2, "intent": query, "outcome_value": -0.6, "context": "Failed attempt due to resource constraints.", "timestamp": time.time() - 3600},
-            {"id": 3, "intent": query, "outcome_value": 0.2, "context": "Neutral outcome, minor efficiency gain.", "timestamp": time.time() - 7200},
-            {"id": 4, "intent": query, "outcome_value": -0.9, "context": "Critical failure, system instability detected.", "timestamp": time.time() - 86400},
-            {"id": 5, "intent": query, "outcome_value": 0.5, "context": "Moderate success, optimized path found.", "timestamp": time.time() - 172800}
+            {"id": 1, "intent": query, "outcome_value": 0.8, "context": "Successful task completion in low-stress environment.", "timestamp": current_time - 100, "base_relevance": 0.9},
+            {"id": 2, "intent": query, "outcome_value": -0.6, "context": "Failed attempt due to resource constraints.", "timestamp": current_time - 3600, "base_relevance": 0.85},
+            {"id": 3, "intent": query, "outcome_value": 0.2, "context": "Neutral outcome, minor efficiency gain.", "timestamp": current_time - 7200, "base_relevance": 0.7},
+            {"id": 4, "intent": query, "outcome_value": -0.9, "context": "Critical failure, system instability detected.", "timestamp": current_time - 86400, "base_relevance": 0.95},
+            {"id": 5, "intent": query, "outcome_value": 0.5, "context": "Moderate success, optimized path found.", "timestamp": current_time - 172800, "base_relevance": 0.8}
         ]
+        
+        # Apply exponential temporal decay
+        decay_rate = 0.00005
+        for mem in memories:
+            age_seconds = max(0, current_time - mem["timestamp"])
+            mem["relevance"] = mem["base_relevance"] * math.exp(-decay_rate * age_seconds)
+            
+        # Sort memories by the computed decayed relevance score
+        memories.sort(key=lambda x: x["relevance"], reverse=True)
+        
         return memories[:limit]
