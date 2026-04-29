@@ -5,6 +5,7 @@ import './index.css';
 import { createRoot } from 'react-dom/client';
 import DOMPurify from 'dompurify';
 import { FileTree } from './src/components/FileTree';
+import { FileSystemContext } from './src/context/FileSystemContext';
 import { 
   Terminal as TerminalIcon, 
   Upload, 
@@ -3731,23 +3732,18 @@ Current System State:
                       )}
                     </div>
 
-                    <FileTree 
-                      parentId={null} 
-                      level={0} 
-                      fileTree={fileTree} 
-                      gitRepo={gitRepo} 
-                      renamingId={renamingId} 
-                      activeFileId={activeFileId} 
-                      newName={newName}
-                      setNewName={setNewName}
-                      setRenamingId={setRenamingId}
-                      toggleFolder={toggleFolder}
-                      handleFileSwitch={handleFileSwitch}
-                      setContextMenu={setContextMenu}
-                      moveItem={moveItem}
-                      handleConfirmRename={handleConfirmRename}
-                      isSearching={!!fileSearch.trim()}
-                    />
+                    <FileSystemContext.Provider value={{ deleteItem }}>
+                      <FileTree
+                        parentId={null}
+                        level={0}
+                        fileTree={fileTree}
+                        activeFileId={activeFileId}
+                        refresh={() => {}}
+                        onFileClick={handleFileSwitch}
+                        onToggleFolder={toggleFolder}
+                        onRename={(item) => renameItem(item.id)}
+                      />
+                    </FileSystemContext.Provider>
                     <div className="flex gap-2 mt-4">
                       <button 
                         onClick={() => createFile('root')}
