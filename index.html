@@ -15,13 +15,33 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #0a0a0c;
+            background-color: #110505;
             overscroll-behavior-y: contain;
         }
     </style>
 <link rel="stylesheet" href="/index.css">
 </head>
 <body>
+    <div id="error-log" style="color: red; position: fixed; z-index: 9999; top: 0; left: 0; background: black;"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+      window.addEventListener('error', (e) => {
+        document.getElementById('error-log').innerText += e.message + '\\n';
+        document.getElementById('error-log').style.width = '100vw';
+        document.getElementById('error-log').style.height = '100vh';
+      });
+      window.addEventListener('unhandledrejection', (e) => {
+        document.getElementById('error-log').innerText += e.reason + '\\n';
+        document.getElementById('error-log').style.width = '100vw';
+        document.getElementById('error-log').style.height = '100vh';
+      });
+    </script>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>

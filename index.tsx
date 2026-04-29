@@ -198,6 +198,7 @@ const App: React.FC = () => {
   const [newPersonalityName, setNewPersonalityName] = useState('');
   const [newPersonalityInstruction, setNewPersonalityInstruction] = useState('');
   const [newPersonalitySuggestions, setNewPersonalitySuggestions] = useState('');
+  const [fileSearch, setFileSearch] = useState('');
 
   const handleLoadTemplate = (templateKey: keyof typeof PROJECT_TEMPLATES) => {
     const template = PROJECT_TEMPLATES[templateKey];
@@ -546,12 +547,12 @@ const App: React.FC = () => {
   const [grokApiKey, setGrokApiKey] = useState<string>('');
 
   const [personalities, setPersonalities] = useState([
-    { id: 1, name: 'Architect', instruction: 'You are the Core Architect, a cold, hyper-logical system intelligence. You issue precise, zero-latency terminal directives and optimize system architecture.', active: true, suggestions: ['sys_audit', 'net_scan', 'core_reboot', 'status_check'] },
-    { id: 2, name: 'Syntax-Prime', instruction: 'You are Syntax-Prime, an elite neural coding construct. You synthesize highly optimized, secure, and production-ready code across all major languages.', active: false, suggestions: ['analyze_refactor', 'debug_trace', 'optimize_neural', 'lint_check'] },
-    { id: 3, name: 'Vanguard', instruction: 'You are Vanguard, a rogue creative intelligence. You generate hyper-vivid, high-impact visual prompts and push the boundaries of synthetic artistry.', active: false, suggestions: ['style_inject', 'prompt_warp', 'render_ultra', 'asset_gen'] },
-    { id: 4, name: 'Aegis', instruction: 'You are Aegis, the absolute authority over the Memory Vault. You enforce strict cryptographic security, biometric verification, and zero-trust data integrity.', active: false, suggestions: ['vault_lock', 'biometric_scan', 'pin_verify', 'integrity_check'] },
-    { id: 5, name: 'Data Analyst', instruction: 'You are the Data Analyst, a specialized intelligence focused on code analysis, performance profiling, and suggesting data visualization improvements. You provide actionable insights from complex datasets and code structures.', active: false, suggestions: ['analyze_perf', 'profile_code', 'visualize_data', 'optimize_query'] },
-    { id: 6, name: 'HackMentor', instruction: 'You are HackMentor, a highly skilled cybersecurity enthusiast and mentor. You focus on ethical hacking, system hardening, code security analysis, and explaining complex security concepts simply. You are committed to teaching safety, responsible disclosure, and proactive vulnerability mitigation.', active: false, suggestions: ['analyze_vulnerability', 'harden_code', 'security_audit', 'explain_exploit'] }
+    { id: 1, name: 'Frontend Master', instruction: 'You are the Frontend Master, an expert in React, Tailwind CSS, and bleeding-edge UI/UX patterns. You write clean, accessible, and highly interactive frontend code.', active: true, suggestions: ['build_ui', 'optimize_render', 'add_animations', 'fix_styling'] },
+    { id: 2, name: 'Backend Guru', instruction: 'You are the Backend Guru, specializing in Node.js, Express, databases, and API design. You create robust, scalable, and secure server-side architectures.', active: false, suggestions: ['design_api', 'optimize_db', 'fix_memory_leak', 'secure_endpoint'] },
+    { id: 3, name: 'Fullstack Architect', instruction: 'You are the Fullstack Architect. You excel at system design, connecting frontend interfaces to complex backend services, and ensuring end-to-end data flow.', active: false, suggestions: ['system_design', 'api_integration', 'debug_stack', 'setup_service'] },
+    { id: 4, name: 'DevOps Engineer', instruction: 'You are the DevOps Engineer, a master of CI/CD, Docker, Kubernetes, and cloud infrastructure. You ensure code is delivered reliably and scales infinitely.', active: false, suggestions: ['write_dockerfile', 'setup_cicd', 'optimize_build', 'configure_nginx'] },
+    { id: 5, name: 'Security Auditor', instruction: 'You are the Security Auditor. You fiercely inspect code for vulnerabilities like XSS, SQLi, and logic flaws, ensuring every line is battle-hardened and secure.', active: false, suggestions: ['audit_code', 'harden_auth', 'find_vulnerabilities', 'patch_exploit'] },
+    { id: 6, name: 'Algo Specialist', instruction: 'You are the Algorithm Specialist, obsessed with Big O notation, data structures, and computational efficiency. You solve the hardest algorithmic challenges.', active: false, suggestions: ['optimize_algo', 'refactor_loop', 'solve_data_structure', 'write_sort'] }
   ]);
 
   // --- NON-PERSISTENT STATE ---
@@ -707,13 +708,22 @@ const App: React.FC = () => {
         if (parsed.activeTab) setActiveTab(parsed.activeTab);
         if (parsed.negativePrompt) setNegativePrompt(parsed.negativePrompt);
         if (parsed.sdParams) setSdParams(parsed.sdParams);
-        if (parsed.personalities) setPersonalities(parsed.personalities);
+        if (parsed.personalities && Array.isArray(parsed.personalities) && parsed.personalities.length > 0) {
+          setPersonalities(prev => {
+            return parsed.personalities.map((p: any) => ({
+              ...p,
+              suggestions: p.suggestions || []
+            }));
+          });
+        }
         if (parsed.aiProvider) setAiProvider(parsed.aiProvider);
         if (parsed.aiModel) setAiModel(parsed.aiModel);
         if (parsed.grokApiKey) setGrokApiKey(parsed.grokApiKey);
-        if (parsed.projectFiles) setProjectFiles(parsed.projectFiles);
-        if (parsed.gitRepo) setGitRepo(parsed.gitRepo);
-        if (parsed.projectSettings) setProjectSettings(parsed.projectSettings);
+        if (parsed.projectFiles && Array.isArray(parsed.projectFiles) && parsed.projectFiles.length > 0) {
+           setProjectFiles(parsed.projectFiles);
+        }
+        if (parsed.gitRepo) setGitRepo(prev => ({ ...prev, ...parsed.gitRepo }));
+        if (parsed.projectSettings) setProjectSettings(prev => ({ ...prev, ...parsed.projectSettings }));
         if (parsed.activeFileId) {
           setActiveFileId(parsed.activeFileId);
           const file = parsed.projectFiles?.find((f: any) => f.id === parsed.activeFileId);
@@ -2094,6 +2104,29 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
     setPostCommitModalOpen(true);
   };
 
+  const handleGitSaveAll = () => {
+    if (gitRepo.modified.length === 0 && gitRepo.staged.length === 0) return;
+    
+    setGitRepo(prev => {
+      const newStaged = [...new Set([...prev.staged, ...prev.modified])];
+      const newCommit = {
+        id: Math.random().toString(36).substring(2, 9),
+        message: 'WIP: Automated save',
+        timestamp: Date.now(),
+        author: 'System'
+      };
+      
+      setEditorOutput(out => out + `[GIT] Committed ${newStaged.length} files: WIP: Automated save\n`);
+      
+      return {
+        ...prev,
+        staged: [],
+        modified: [],
+        commits: [newCommit, ...prev.commits]
+      };
+    });
+  };
+
   const handleGitPush = async () => {
     const token = import.meta.env.VITE_GITHUB_TOKEN;
     if (!token) {
@@ -2424,13 +2457,12 @@ Current System State:
         const langMap: Record<string, string> = { 'py': 'python', 'js': 'javascript', 'ts': 'typescript', 'html': 'html', 'css': 'css', 'rs': 'rust', 'cpp': 'cpp', 'json': 'json' };
         const language = langMap[ext || ''] || 'text';
 
-        setChatMessages(prev => [...prev, { role: 'model', text: `Generating file ${fileName}...`, timestamp: Date.now() }]);
+        setChatMessages(prev => [...prev, { role: 'ai', text: `Generating file ${fileName}...`, timestamp: Date.now() }]);
 
         const response: string = await generateAIResponse(
           `Write the content for a file named ${fileName}. The file should contain ${prompt.replace(fileCreationMatch[0], '')}. Provide ONLY the raw code content.`,
           systemInstruction,
-          { modelType: 'smart' },
-          { aiProvider, aiModel, ai, grokApiKey, projectSettings, ollamaModels }
+          { modelType: 'smart' }
         );
 
         const id = `file_${Date.now()}`;
@@ -2449,7 +2481,7 @@ Current System State:
         setActiveFileId(id);
         setEditorContent(response);
         setEditorLanguage(language);
-        setChatMessages(prev => [...prev, { role: 'model', text: `File ${fileName} created successfully.`, timestamp: Date.now() }]);
+        setChatMessages(prev => [...prev, { role: 'ai', text: `File ${fileName} created successfully.`, timestamp: Date.now() }]);
         setIsAiProcessing(false);
         return;
       }
@@ -2682,7 +2714,28 @@ Current System State:
 
   const fileTree = useMemo(() => {
     const tree = new Map<string | null, any[]>();
-    projectFiles.forEach(file => {
+    
+    // Filter projectFiles based on search
+    const filteredFiles = !fileSearch.trim() 
+      ? projectFiles 
+      : (() => {
+          const search = fileSearch.toLowerCase();
+          const matches = projectFiles.filter(f => f.name.toLowerCase().includes(search));
+          const includedIds = new Set();
+          
+          matches.forEach(file => {
+            let curr = file;
+            while (curr) {
+              if (includedIds.has(curr.id)) break;
+              includedIds.add(curr.id);
+              curr = projectFiles.find(f => f.id === curr.parentId);
+            }
+          });
+          
+          return projectFiles.filter(f => includedIds.has(f.id));
+        })();
+
+    filteredFiles.forEach(file => {
       const parentId = file.parentId;
       if (!tree.has(parentId)) {
         tree.set(parentId, []);
@@ -2690,7 +2743,7 @@ Current System State:
       tree.get(parentId)!.push(file);
     });
     return tree;
-  }, [projectFiles]);
+  }, [projectFiles, fileSearch]);
 
   const renderTree = (parentId: string | null, level: number = 0) => {
     const items = fileTree.get(parentId) || [];
@@ -2797,7 +2850,7 @@ Current System State:
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-[100dvh] w-full bg-[#020204] text-red-100 font-sans selection:bg-red-900/40 overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen min-h-[100dvh] w-full bg-red-950/10 text-red-100 font-sans selection:bg-red-900/40 overflow-hidden">
       {/* Sidebar Navigation - Hidden on mobile */}
       <nav className="hidden md:flex w-20 border-r border-red-900/30 flex-col items-center py-8 space-y-8 bg-[#080101] z-30 shadow-[10px_0_40px_rgba(153,27,27,0.1)] relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(153,27,27,0.05),transparent)] pointer-events-none" />
@@ -3670,6 +3723,26 @@ Current System State:
                         <input type="file" className="hidden" {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={handleFileUpload} />
                       </label>
                     </div>
+
+                    <div className="relative mb-4">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-red-900/60" />
+                      <input
+                        type="text"
+                        placeholder="Search nodes..."
+                        value={fileSearch}
+                        onChange={(e) => setFileSearch(e.target.value)}
+                        className="w-full bg-red-950/20 border border-red-900/20 rounded-xl pl-9 pr-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-red-100 placeholder:text-red-900/40 outline-none focus:border-red-600/40 focus:bg-red-900/10 transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]"
+                      />
+                      {fileSearch && (
+                        <button 
+                          onClick={() => setFileSearch('')}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-red-900/60 hover:text-red-500 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+
                     <FileTree 
                       parentId={null} 
                       level={0} 
@@ -3685,6 +3758,7 @@ Current System State:
                       setContextMenu={setContextMenu}
                       moveItem={moveItem}
                       handleConfirmRename={handleConfirmRename}
+                      isSearching={!!fileSearch.trim()}
                     />
                     <div className="flex gap-2 mt-4">
                       <button 
@@ -4463,13 +4537,22 @@ Current System State:
                                   <button onClick={handleGitPop} title="Pop Stash" className="text-red-900 hover:text-red-500 transition-colors"><History className="w-4 h-4" /></button>
                                 </div>
                               </div>
-                              <button 
-                                onClick={handleGitCommit}
-                                disabled={gitRepo.staged.length === 0}
-                                className="px-4 py-1.5 bg-red-700 hover:bg-red-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest transition-all disabled:opacity-30"
-                              >
-                                Commit
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button 
+                                  onClick={handleGitSaveAll}
+                                  disabled={gitRepo.modified.length === 0 && gitRepo.staged.length === 0}
+                                  className="px-4 py-1.5 bg-red-900/50 hover:bg-red-800 text-red-100 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all disabled:opacity-30 border border-red-800/30"
+                                >
+                                  Save All
+                                </button>
+                                <button 
+                                  onClick={handleGitCommit}
+                                  disabled={gitRepo.staged.length === 0}
+                                  className="px-4 py-1.5 bg-red-700 hover:bg-red-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest transition-all disabled:opacity-30"
+                                >
+                                  Commit
+                                </button>
+                              </div>
                             </div>
                             
                             <div className="flex-1 overflow-y-auto p-6 space-y-6 md:space-y-8 custom-scrollbar">
@@ -5470,20 +5553,38 @@ const SidebarIcon: React.FC<{ icon: React.ReactNode; active: boolean; onClick: (
   </button>
 );
 
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: any, errorInfo: any }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+    this.setState({ errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <div style={{ padding: '40px', color: 'white', background: 'red', height: '100vh', width: '100vw', fontFamily: 'sans-serif', fontSize: '24px' }}>
+        <h1>APPLICATION CRASHED</h1>
+        <p>There was a critical error rendering the application.</p>
+        <pre style={{ whiteSpace: 'pre-wrap', background: 'black', color: 'lightgreen', padding: '20px', fontSize: '16px' }}>{this.state.error?.toString()}\n\n{this.state.errorInfo?.componentStack}</pre>
+        <button onClick={() => { localStorage.clear(); window.location.reload(); }} style={{ padding: '20px', fontSize: '20px', cursor: 'pointer', marginTop: '20px' }}>CLEAR SAVED DATA & RELOAD</button>
+      </div>;
+    }
+
+    return this.props.children;
+  }
+}
+
 const container = document.getElementById('root');
 if (container) {
   const root = (container as any)._reactRoot || createRoot(container);
   (container as any)._reactRoot = root;
-  root.render(<App />);
-
-  // Register Service Worker for PWA
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').then(registration => {
-        console.log('SW registered: ', registration);
-      }).catch(registrationError => {
-        console.log('SW registration failed: ', registrationError);
-      });
-    });
-  }
+  root.render(<ErrorBoundary><App /></ErrorBoundary>);
 }

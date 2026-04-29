@@ -15,7 +15,8 @@ export const FileTree = ({
   handleFileSwitch,
   setContextMenu,
   moveItem,
-  handleConfirmRename
+  handleConfirmRename,
+  isSearching
 }: any) => {
   const items = fileTree.get(parentId) || [];
   
@@ -25,6 +26,7 @@ export const FileTree = ({
         const isModified = gitRepo.modified.includes(item.id);
         const isStaged = gitRepo.staged.includes(item.id);
         const isRenaming = renamingId === item.id;
+        const isExpanded = item.isOpen || isSearching;
 
         return (
           <div key={item.id} className="flex flex-col">
@@ -37,7 +39,7 @@ export const FileTree = ({
                 activeFileId === item.id 
                   ? 'bg-red-700 text-white glow-red border border-red-500 scale-[1.02]' 
                   : item.type === 'folder' 
-                    ? (item.isOpen ? 'bg-red-950/30 text-red-300 border border-red-900/30 hover:bg-red-900/40 hover:translate-x-1' : 'hover:bg-red-950/20 text-red-800 hover:text-red-400 border border-transparent hover:translate-x-1')
+                    ? (isExpanded ? 'bg-red-950/30 text-red-300 border border-red-900/30 hover:bg-red-900/40 hover:translate-x-1' : 'hover:bg-red-950/20 text-red-800 hover:text-red-400 border border-transparent hover:translate-x-1')
                     : `hover:bg-red-950/20 text-red-900 hover:text-red-500 border border-transparent hover:translate-x-1 ${isModified ? 'border-l-2 border-l-orange-500' : isStaged ? 'border-l-2 border-l-green-500' : ''}`
               }`}
               style={{ paddingLeft: `${level * 12 + 12}px` }}
@@ -49,8 +51,8 @@ export const FileTree = ({
             >
               {item.type === 'folder' ? (
                 <div className="flex items-center gap-1.5">
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform shrink-0 ${item.isOpen ? '' : '-rotate-90'}`} />
-                  {item.isOpen ? <FolderOpen className="w-3.5 h-3.5 shrink-0" /> : <Folder className="w-3.5 h-3.5 shrink-0" />}
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform shrink-0 ${isExpanded ? '' : '-rotate-90'}`} />
+                  {isExpanded ? <FolderOpen className="w-3.5 h-3.5 shrink-0" /> : <Folder className="w-3.5 h-3.5 shrink-0" />}
                 </div>
               ) : (
                 <FileCode className={`w-3.5 h-3.5 shrink-0 ${isModified ? 'text-orange-500' : isStaged ? 'text-green-500' : ''}`} />
@@ -78,7 +80,7 @@ export const FileTree = ({
                 </span>
               )}
             </div>
-            {item.type === 'folder' && item.isOpen && (
+            {item.type === 'folder' && isExpanded && (
               <FileTree 
                 parentId={item.id} 
                 level={level + 1} 
@@ -94,6 +96,7 @@ export const FileTree = ({
                 setContextMenu={setContextMenu}
                 moveItem={moveItem}
                 handleConfirmRename={handleConfirmRename}
+                isSearching={isSearching}
               />
             )}
           </div>
