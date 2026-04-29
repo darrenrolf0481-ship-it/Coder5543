@@ -5,8 +5,6 @@ import './index.css';
 import { createRoot } from 'react-dom/client';
 import DOMPurify from 'dompurify';
 import { FileTree } from './src/components/FileTree';
-import { FileSystemContext } from './src/context/FileSystemContext';
-import { EditorProvider, useEditor } from './src/context/EditorContext';
 import { 
   Terminal as TerminalIcon, 
   Upload, 
@@ -79,6 +77,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { generateAIResponse as generateAIResponseService, fetchOllamaModels } from './src/services/aiService';
 import Editor from '@monaco-editor/react';
+import { useDebounce } from './src/lib/useDebounce';
 
 // Initialize AI
 // Initialize AI
@@ -190,41 +189,6 @@ const renderTerminalLine = (line: string) => {
 };
 
 const App: React.FC = () => {
-  const {
-    editorLanguage, setEditorLanguage,
-    projectFiles, setProjectFiles,
-    activeFileId, setActiveFileId,
-    editorContent, setEditorContent,
-    debouncedEditorContent,
-    editorOutput, setEditorOutput,
-    editorMode, setEditorMode,
-    isRunningCode, setIsRunningCode,
-    isLivePreviewEnabled, setIsLivePreviewEnabled,
-    isPairProgrammerActive, setIsPairProgrammerActive,
-    isMobileFileTreeOpen, setIsMobileFileTreeOpen,
-    isScanningCode, setIsScanningCode,
-    scanResults, setScanResults,
-    editorAssistantInput, setEditorAssistantInput,
-    editorAssistantMessages, setEditorAssistantMessages,
-    isEditorAssistantOpen, setIsEditorAssistantOpen,
-    termInput, setTermInput,
-    cursorLine, setCursorLine,
-    contextMenu, setContextMenu,
-    lastSavedTime, setLastSavedTime,
-    renamingId, setRenamingId,
-    newName, setNewName,
-    creatingInId, setCreatingInId,
-    isInspectorActive, setIsInspectorActive,
-    inspectedElement, setInspectedElement,
-    monacoEditorRef,
-    decorationsRef,
-    previewContainerRef,
-    inspectedElementRef,
-    saveFile,
-    handleEditorDidMount,
-    handleFileSwitch,
-  } = useEditor();
-
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isCustomPersonalityModalOpen, setIsCustomPersonalityModalOpen] = useState(false);
   const [postCommitModalOpen, setPostCommitModalOpen] = useState(false);
@@ -236,22 +200,34 @@ const App: React.FC = () => {
   const [newPersonalitySuggestions, setNewPersonalitySuggestions] = useState('');
   const [fileSearch, setFileSearch] = useState('');
 
-  const [newProjectName, setNewProjectName] = useState('');
+  const handleLoadTemplate = (templateKey: keyof typeof PROJECT_TEMPLATES) => {
+    const template = PROJECT_TEMPLATES[templateKey];
+    if (!template) return;
 
-  const handleCreateProject = async (template: string) => {
-    if (!newProjectName.trim()) {
-      alert('Please enter a project name');
-      return;
+    if (!confirm(`Loading "${template.name}" will overwrite your current project. Proceed?`)) return;
+
+    setProjectFiles(template.files);
+    
+    // Find first file to activate
+    const firstFile = template.files.find(f => f.type === 'file');
+    if (firstFile) {
+      setActiveFileId(firstFile.id);
+      setEditorContent(firstFile.content || '');
+      setEditorLanguage(firstFile.language || 'text');
+      setEditorMode(firstFile.language === 'html' ? 'preview' : 'code');
     }
 
-    try {
-      const projectPath = await fileSystemService.createProject(template, newProjectName.trim());
-      setIsTemplateModalOpen(false);
-      setTerminalOutput(prev => [...prev, `[SYSTEM] Project "${newProjectName}" created at ${projectPath}.`]);
-      refreshFileTree();
-    } catch (err: any) {
-      alert(`Failed to create project: ${err.message}`);
-    }
+    // Reset Git state
+    setGitRepo({
+      initialized: false,
+      branch: 'main',
+      commits: [],
+      staged: [],
+      modified: [],
+      stash: []
+    });
+
+    setIsTemplateModalOpen(false);
   };
 
   // --- PERSISTENT STATE ---
@@ -354,6 +330,68 @@ const App: React.FC = () => {
     { id: 2, type: 'info', message: 'Pain Propagation Protocol Active.', time: '08:45:15' }
   ]);
   
+  // Editor State
+  const [editorLanguage, setEditorLanguage] = useState('python');
+  const [projectFiles, setProjectFiles] = useState<any[]>([
+    { id: 'root', name: 'Project', type: 'folder', parentId: null, isOpen: true },
+    { id: 'src', name: 'src', type: 'folder', parentId: 'root', isOpen: true },
+    { id: 'brain.py', name: 'neural_brain.py', type: 'file', parentId: 'src', language: 'python', content: '# AI Brain Logic\nclass NeuralCore:\n    def __init__(self):\n        self.synapses = 10**12\n\n    def process(self, input_data):\n        return f"Neural processing: {input_data}"\n\ncore = NeuralCore()\nprint(core.process("Initial stimulus"))' },
+    { id: 'ui.html', name: 'interface.html', type: 'file', parentId: 'src', language: 'html', content: '<div class="p-8 bg-red-900/20 rounded-3xl border border-red-500/30">\n  <h1 class="text-2xl font-black text-red-500 uppercase">Neural Interface</h1>\n  <p class="text-red-100/60 mt-4">Real-time UI component rendering via Crimson Engine.</p>\n  <button class="mt-8 px-6 py-3 bg-red-700 text-white rounded-xl uppercase font-black text-xs tracking-widest">Activate Core</button>\n</div>' },
+    { id: 'logic.rs', name: 'core_logic.rs', type: 'file', parentId: 'src', language: 'rust', content: 'fn main() {\n    let neural_load = 0.85;\n    println!("System load: {}%", neural_load * 100.0);\n}' }
+  ]);
+  const [activeFileId, setActiveFileId] = useState('brain.py');
+  const [editorContent, setEditorContent] = useState(projectFiles[0].content);
+  const debouncedEditorContent = useDebounce(editorContent, 150);
+  const [editorOutput, setEditorOutput] = useState('');
+  const [editorMode, setEditorMode] = useState<'code' | 'preview' | 'debug' | 'git' | 'settings'>('code');
+  const [isRunningCode, setIsRunningCode] = useState(false);
+  const [isLivePreviewEnabled, setIsLivePreviewEnabled] = useState(true);
+  const [isPairProgrammerActive, setIsPairProgrammerActive] = useState(false);
+  const [isMobileFileTreeOpen, setIsMobileFileTreeOpen] = useState(false);
+  const [isScanningCode, setIsScanningCode] = useState(false);
+  const [scanResults, setScanResults] = useState<number[]>([]);
+  const [editorAssistantInput, setEditorAssistantInput] = useState('');
+  const [editorAssistantMessages, setEditorAssistantMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
+  const [isEditorAssistantOpen, setIsEditorAssistantOpen] = useState(false);
+  const [termInput, setTermInput] = useState('');
+  const [cursorLine, setCursorLine] = useState(1);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, itemId: string | null } | null>(null);
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState('');
+  const [creatingInId, setCreatingInId] = useState<{ parentId: string | null, type: 'file' | 'folder' } | null>(null);
+  const [isInspectorActive, setIsInspectorActive] = useState(false);
+  const [inspectedElement, setInspectedElement] = useState<{
+    tagName: string;
+    className: string;
+    id: string;
+    rect: { top: number; left: number; width: number; height: number } | null;
+    styles: Record<string, string>;
+  } | null>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const inspectedElementRef = useRef<HTMLElement | null>(null);
+  const monacoEditorRef = useRef<any>(null);
+
+  const saveFile = useCallback(() => {
+    if (activeFileId) {
+      setProjectFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content: editorContent } : f));
+      setLastSavedTime(new Date().toLocaleTimeString());
+    }
+  }, [activeFileId, editorContent]);
+
+  useEffect(() => {
+    const interval = setInterval(saveFile, 5000);
+    return () => clearInterval(interval);
+  }, [saveFile]);
+
+  const handleEditorDidMount = (editor: any) => {
+    monacoEditorRef.current = editor;
+    editor.onDidBlurEditorText(() => {
+      saveFile();
+    });
+  };
+  const decorationsRef = useRef<string[]>([]);
+
   // Debugging State
   const [breakpoints, setBreakpoints] = useState<number[]>([]);
   const [debugState, setDebugState] = useState<{
@@ -1690,6 +1728,20 @@ def get_user(id: int) -> Optional[Dict[str, Any]]:
       setEditorOutput(prev => prev + '[ERROR] Debugger synchronization failed.\n');
     } finally {
       setIsAiProcessing(false);
+    }
+  };
+
+  const handleFileSwitch = (fileId: string) => {
+    // Save current content to projectFiles
+    setProjectFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content: editorContent } : f));
+    
+    // Switch to new file
+    const file = projectFiles.find(f => f.id === fileId);
+    if (file && file.type === 'file') {
+      setActiveFileId(fileId);
+      setEditorContent(file.content || '');
+      setEditorLanguage(file.language || 'text');
+      setEditorMode(file.language === 'html' ? 'preview' : 'code');
     }
   };
 
@@ -3691,18 +3743,23 @@ Current System State:
                       )}
                     </div>
 
-                    <FileSystemContext.Provider value={{ deleteItem }}>
-                      <FileTree
-                        parentId={null}
-                        level={0}
-                        fileTree={fileTree}
-                        activeFileId={activeFileId}
-                        refresh={() => {}}
-                        onFileClick={handleFileSwitch}
-                        onToggleFolder={toggleFolder}
-                        onRename={(item) => renameItem(item.id)}
-                      />
-                    </FileSystemContext.Provider>
+                    <FileTree 
+                      parentId={null} 
+                      level={0} 
+                      fileTree={fileTree} 
+                      gitRepo={gitRepo} 
+                      renamingId={renamingId} 
+                      activeFileId={activeFileId} 
+                      newName={newName}
+                      setNewName={setNewName}
+                      setRenamingId={setRenamingId}
+                      toggleFolder={toggleFolder}
+                      handleFileSwitch={handleFileSwitch}
+                      setContextMenu={setContextMenu}
+                      moveItem={moveItem}
+                      handleConfirmRename={handleConfirmRename}
+                      isSearching={!!fileSearch.trim()}
+                    />
                     <div className="flex gap-2 mt-4">
                       <button 
                         onClick={() => createFile('root')}
@@ -5352,37 +5409,31 @@ Current System State:
             <div className="p-4 md:p-12 border-b border-red-900/20 bg-black/40 flex items-center justify-between shrink-0">
               <div className="space-y-1 md:space-y-2">
                 <h3 className="text-xl md:text-3xl font-black text-red-100 uppercase tracking-tighter">Initialize Neural Project</h3>
-                <p className="text-[10px] md:text-sm text-red-900 font-bold tracking-widest uppercase">Select a template and name your development matrix</p>
+                <p className="text-[10px] md:text-sm text-red-900 font-bold tracking-widest uppercase">Select a predefined template to begin your development cycle</p>
               </div>
               <button onClick={() => setIsTemplateModalOpen(false)} className="p-3 md:p-4 bg-red-950/20 border border-red-900/20 rounded-full text-red-500 hover:bg-red-900/40 transition-all shrink-0 ml-4">
                 <X className="w-6 h-6 md:w-8 md:h-8" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 md:p-12 custom-scrollbar">
-              <div className="mb-8 p-6 bg-red-950/10 border border-red-900/30 rounded-2xl">
-                <label className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-2 block">Project Matrix Name</label>
-                <input 
-                  type="text" 
-                  value={newProjectName}
-                  onChange={(e) => setNewProjectName(e.target.value)}
-                  placeholder="e.g., neural-interface-v1"
-                  className="w-full bg-black/40 border border-red-900/30 rounded-lg p-3 text-red-100 font-mono text-sm focus:border-red-500 transition-all outline-none"
-                />
-              </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
-                {availableTemplates.map(template => (
-                  <button
-                    key={template}
-                    onClick={() => handleCreateProject(template)}
+                {(Object.keys(PROJECT_TEMPLATES) as Array<keyof typeof PROJECT_TEMPLATES>).map(key => (
+                  <button 
+                    key={key}
+                    onClick={() => handleLoadTemplate(key)}
                     className="group p-4 md:p-8 bg-red-950/5 border border-red-900/20 rounded-[20px] md:rounded-[40px] text-left space-y-4 md:space-y-6 hover:bg-red-900/10 hover:border-red-500/40 transition-all active:scale-95"
                   >
                     <div className="w-12 h-12 md:w-16 md:h-16 bg-red-900/20 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
-                      <Archive className="w-6 h-6 md:w-8 md:h-8" />
+                      {key === 'python-web' && <Network className="w-6 h-6 md:w-8 md:h-8" />}
+                      {key === 'rust-cli' && <TerminalIcon className="w-6 h-6 md:w-8 md:h-8" />}
+                      {key === 'neural-module' && <Brain className="w-6 h-6 md:w-8 md:h-8" />}
                     </div>
                     <div className="space-y-2">
-                      <h4 className="text-lg md:text-xl font-black text-red-100 uppercase tracking-tight">{template.replace(/-/g, ' ')}</h4>
+                      <h4 className="text-lg md:text-xl font-black text-red-100 uppercase tracking-tight">{PROJECT_TEMPLATES[key].name}</h4>
                       <p className="text-[10px] md:text-[11px] text-red-900 font-bold uppercase tracking-widest leading-relaxed">
-                        Neural template optimized for high-performance synthesis.
+                        {key === 'python-web' ? 'Full-stack Flask environment with HTML/CSS integration.' : 
+                         key === 'rust-cli' ? 'High-performance CLI tool architecture with Cargo config.' : 
+                         'Modular neural logic with JSON configuration.'}
                       </p>
                     </div>
                     <div className="pt-4 flex items-center gap-3 text-[10px] font-black text-red-500 uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity">
@@ -5392,7 +5443,6 @@ Current System State:
                 ))}
               </div>
             </div>
-
             <div className="p-6 md:p-12 bg-black/40 border-t border-red-900/20 text-center shrink-0">
               <p className="text-[9px] md:text-[10px] text-red-900 font-black uppercase tracking-[0.4em]">Crimson OS Neural Development Environment v4.1.0_EX</p>
             </div>
@@ -5536,5 +5586,5 @@ const container = document.getElementById('root');
 if (container) {
   const root = (container as any)._reactRoot || createRoot(container);
   (container as any)._reactRoot = root;
-  root.render(<ErrorBoundary><EditorProvider><App /></EditorProvider></ErrorBoundary>);
+  root.render(<ErrorBoundary><App /></ErrorBoundary>);
 }
