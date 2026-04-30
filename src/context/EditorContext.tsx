@@ -1,12 +1,21 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { useDebounce } from '../lib/useDebounce';
 
+const DRAFT_KEY = 'crimson_draft';
+
 interface InspectedElement {
   tagName: string;
   className: string;
   id: string;
   rect: { top: number; left: number; width: number; height: number } | null;
   styles: Record<string, string>;
+}
+
+interface RecoveryDraft {
+  fileId: string;
+  fileName: string;
+  content: string;
+  ts: number;
 }
 
 interface EditorContextType {
@@ -64,8 +73,14 @@ interface EditorContextType {
   previewContainerRef: React.RefObject<HTMLDivElement>;
   inspectedElementRef: React.MutableRefObject<HTMLElement | null>;
   saveFile: () => void;
+  forceSave: () => void;
   handleEditorDidMount: (editor: any) => void;
   handleFileSwitch: (fileId: string) => void;
+  // Crash recovery
+  hasRecoveryDraft: boolean;
+  recoveryDraft: RecoveryDraft | null;
+  restoreDraft: () => void;
+  dismissDraft: () => void;
 }
 
 const EditorContext = createContext<EditorContextType | null>(null);
@@ -107,10 +122,79 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isInspectorActive, setIsInspectorActive] = useState(false);
   const [inspectedElement, setInspectedElement] = useState<InspectedElement | null>(null);
 
+  // Crash recovery state
+  const [hasRecoveryDraft, setHasRecoveryDraft] = useState(false);
+  const [recoveryDraft, setRecoveryDraft] = useState<RecoveryDraft | null>(null);
+
   const monacoEditorRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const inspectedElementRef = useRef<HTMLElement | null>(null);
+
+  // --- CRASH RECOVERY ---
+
+  // Check for unrecovered draft on mount (slight delay to let prefs load first)
+  useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+        const draft: RecoveryDraft = JSON.parse(raw);
+        if (!draft?.content || !draft?.fileId) return;
+        if (Date.now() - draft.ts > 24 * 60 * 60 * 1000) {
+          localStorage.removeItem(DRAFT_KEY);
+          return;
+        }
+        setRecoveryDraft(draft);
+        setHasRecoveryDraft(true);
+      } catch {}
+    }, 600);
+    return () => clearTimeout(id);
+  }, []);
+
+  // Write draft every 500ms on content change
+  useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        const fileName = projectFiles.find(f => f.id === activeFileId)?.name ?? activeFileId;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          fileId: activeFileId,
+          fileName,
+          content: editorContent,
+          ts: Date.now(),
+        } satisfies RecoveryDraft));
+      } catch {}
+    }, 500);
+    return () => clearTimeout(id);
+  }, [activeFileId, editorContent, projectFiles]);
+
+  // Clear draft on clean exit so it doesn't trigger false recovery on next boot
+  useEffect(() => {
+    const handleBeforeUnload = () => localStorage.removeItem(DRAFT_KEY);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  const restoreDraft = useCallback(() => {
+    if (!recoveryDraft) return;
+    setActiveFileId(recoveryDraft.fileId);
+    setEditorContent(recoveryDraft.content);
+    setProjectFiles(prev => prev.map(f =>
+      f.id === recoveryDraft.fileId ? { ...f, content: recoveryDraft.content } : f
+    ));
+    setLastSavedTime(new Date().toLocaleTimeString());
+    localStorage.removeItem(DRAFT_KEY);
+    setHasRecoveryDraft(false);
+    setRecoveryDraft(null);
+  }, [recoveryDraft]);
+
+  const dismissDraft = useCallback(() => {
+    localStorage.removeItem(DRAFT_KEY);
+    setHasRecoveryDraft(false);
+    setRecoveryDraft(null);
+  }, []);
+
+  // --- SAVE LOGIC ---
 
   const saveFile = useCallback(() => {
     if (activeFileId) {
@@ -119,6 +203,24 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [activeFileId, editorContent]);
 
+  // Immediately flush content to projectFiles AND refresh the draft slot
+  const forceSave = useCallback(() => {
+    if (!activeFileId) return;
+    const now = new Date().toLocaleTimeString();
+    setProjectFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content: editorContent } : f));
+    setLastSavedTime(now);
+    try {
+      const fileName = projectFiles.find(f => f.id === activeFileId)?.name ?? activeFileId;
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        fileId: activeFileId,
+        fileName,
+        content: editorContent,
+        ts: Date.now(),
+      } satisfies RecoveryDraft));
+    } catch {}
+  }, [activeFileId, editorContent, projectFiles]);
+
+  // Auto-save every 5s
   useEffect(() => {
     const interval = setInterval(saveFile, 5000);
     return () => clearInterval(interval);
@@ -172,8 +274,13 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       previewContainerRef,
       inspectedElementRef,
       saveFile,
+      forceSave,
       handleEditorDidMount,
       handleFileSwitch,
+      hasRecoveryDraft,
+      recoveryDraft,
+      restoreDraft,
+      dismissDraft,
     }}>
       {children}
     </EditorContext.Provider>
