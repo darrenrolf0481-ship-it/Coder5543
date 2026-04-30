@@ -172,8 +172,13 @@ const App: React.FC = () => {
     previewContainerRef,
     inspectedElementRef,
     saveFile,
+    forceSave,
     handleEditorDidMount,
     handleFileSwitch,
+    hasRecoveryDraft,
+    recoveryDraft,
+    restoreDraft,
+    dismissDraft,
   } = useEditor();
 
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -216,7 +221,19 @@ const App: React.FC = () => {
   useEffect(() => {
     document.documentElement.className = theme;
   }, [theme]);
-  
+
+  // Ctrl+S — force save current file immediately
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        forceSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [forceSave]);
+
   // ToolNeuron State
   const [tnModule, setTnModule] = useState<'chat' | 'vision' | 'knowledge' | 'vault' | 'swarm' | 'help' | 'debug'>('chat');
   const [tnKnowledgePacks, setTnKnowledgePacks] = useState([
@@ -3688,10 +3705,18 @@ Current System State:
                           </button>
                         ))}
                       </div>
+                      <button
+                        onClick={forceSave}
+                        title="Save (Ctrl+S)"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-900/30 border border-red-700/40 text-red-400 hover:bg-red-700 hover:text-white transition-all shrink-0"
+                      >
+                        <Save className="w-3 h-3" />
+                        <span className="hidden sm:inline">Save</span>
+                      </button>
                       {lastSavedTime && (
                         <div className="flex items-center gap-2 text-[8px] md:text-[9px] font-black text-red-900 uppercase tracking-widest animate-in fade-in duration-500 shrink-0">
                           <ShieldCheck className="w-3 h-3" />
-                          <span className="hidden sm:inline">Autosaved at</span> {lastSavedTime}
+                          <span className="hidden sm:inline">Saved</span> {lastSavedTime}
                         </div>
                       )}
                     </div>
@@ -5395,6 +5420,40 @@ Current System State:
         }
       `}</style>
       
+      {/* Crash Recovery Banner */}
+      {hasRecoveryDraft && recoveryDraft && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9998] w-[90vw] max-w-lg animate-in slide-in-from-bottom-4 duration-400">
+          <div className="bg-black/95 border border-orange-500/60 rounded-2xl shadow-[0_0_40px_rgba(249,115,22,0.3)] backdrop-blur-xl p-4 flex flex-col gap-3">
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 rounded-full bg-orange-500 mt-1.5 shrink-0 animate-pulse" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-black text-orange-400 uppercase tracking-widest">Crash Recovery</p>
+                <p className="text-[10px] text-red-100/70 mt-0.5 truncate">
+                  Unsaved draft found: <span className="text-white font-bold">{recoveryDraft.fileName}</span>
+                </p>
+                <p className="text-[9px] text-red-900 mt-0.5">
+                  {new Date(recoveryDraft.ts).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={restoreDraft}
+                className="flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-orange-600 hover:bg-orange-500 text-white transition-all"
+              >
+                Restore Draft
+              </button>
+              <button
+                onClick={dismissDraft}
+                className="flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-950/60 border border-red-900/30 text-red-500 hover:bg-red-900/30 transition-all"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {contextMenu && (
         <div 
           className="fixed z-[9999] bg-black/90 border border-red-900/50 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl overflow-hidden min-w-[160px]"
