@@ -5,6 +5,8 @@ import './index.css';
 import { createRoot } from 'react-dom/client';
 import DOMPurify from 'dompurify';
 import { FileTree } from './src/components/FileTree';
+import { TerminalLine } from './src/components/TerminalLine';
+import { useThrottledStorage } from './src/hooks/useThrottledStorage';
 import { 
   Terminal as TerminalIcon, 
   Upload, 
@@ -137,58 +139,13 @@ const PROJECT_TEMPLATES = {
   }
 };
 
-const renderTerminalLine = (line: string) => {
-  if (line.startsWith('$ ')) {
-    return (
-      <>
-        <span className="text-red-500 font-black">$ </span>
-        <span className="text-red-300 font-bold">{line.substring(2)}</span>
-      </>
-    );
-  }
-
-  if (line.startsWith('NEURAL_LINK:')) {
-    return <span className="text-red-500 font-black drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]">{line}</span>;
-  }
-  if (line.startsWith('COMMAND_INTEL:')) {
-    return <span className="text-red-400 italic opacity-80">{line}</span>;
-  }
-
-  const parts = [];
-  let currentIndex = 0;
-  
-  const regex = /(\[ERROR\]|\[WARN\]|\[INFO\]|\[SYSTEM\]|\[SUCCESS\]|CRIMSON OS|Kernel:|"[^"]*"|'[^']*'|\b\/(?:[\w.-]+\/)*[\w.-]+|\.\/(?:[\w.-]+\/)*[\w.-]+)/g;
-  
-  let match;
-  while ((match = regex.exec(line)) !== null) {
-    if (match.index > currentIndex) {
-      parts.push(<span key={`text-${currentIndex}`} className="text-red-100/60">{line.substring(currentIndex, match.index)}</span>);
-    }
-    
-    const matchedText = match[0];
-    let className = "text-red-100/60";
-    
-    if (matchedText === '[ERROR]') className = "text-red-500 font-black bg-red-950/50 px-1 rounded";
-    else if (matchedText === '[WARN]') className = "text-orange-500 font-black bg-orange-950/50 px-1 rounded";
-    else if (matchedText === '[INFO]') className = "text-blue-400 font-black bg-blue-950/50 px-1 rounded";
-    else if (matchedText === '[SYSTEM]') className = "text-purple-400 font-black bg-purple-950/50 px-1 rounded";
-    else if (matchedText === '[SUCCESS]') className = "text-green-400 font-black bg-green-950/50 px-1 rounded";
-    else if (matchedText === 'CRIMSON OS' || matchedText === 'Kernel:') className = "text-red-500 font-black tracking-widest";
-    else if (matchedText.startsWith('"') || matchedText.startsWith("'")) className = "text-green-400/80";
-    else if (matchedText.startsWith('/') || matchedText.startsWith('./')) className = "text-blue-300/80 underline decoration-blue-900/50 underline-offset-2";
-    
-    parts.push(<span key={`match-${match.index}`} className={className}>{matchedText}</span>);
-    currentIndex = regex.lastIndex;
-  }
-  
-  if (currentIndex < line.length) {
-    parts.push(<span key={`text-${currentIndex}`} className="text-red-100/60">{line.substring(currentIndex)}</span>);
-  }
-  
-  return parts.length > 0 ? <>{parts}</> : <span className="text-red-100/60">{line}</span>;
-};
+const DRAFT_KEY = 'crimson_draft';
 
 const App: React.FC = () => {
+  // Crash recovery state
+  const [hasRecoveryDraft, setHasRecoveryDraft] = useState(false);
+  const [recoveryDraft, setRecoveryDraft] = useState<{ fileId: string; fileName: string; content: string; ts: number } | null>(null);
+
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isCustomPersonalityModalOpen, setIsCustomPersonalityModalOpen] = useState(false);
   const [postCommitModalOpen, setPostCommitModalOpen] = useState(false);
@@ -241,7 +198,7 @@ const App: React.FC = () => {
   useEffect(() => {
     document.documentElement.className = theme;
   }, [theme]);
-  
+
   // ToolNeuron State
   const [tnModule, setTnModule] = useState<'chat' | 'vision' | 'knowledge' | 'vault' | 'swarm' | 'help' | 'debug'>('chat');
   const [tnKnowledgePacks, setTnKnowledgePacks] = useState([
@@ -391,6 +348,80 @@ const App: React.FC = () => {
     });
   };
   const decorationsRef = useRef<string[]>([]);
+
+  // forceSave: immediately flush editorContent → projectFiles + refresh draft slot
+  const forceSave = useCallback(() => {
+    if (!activeFileId) return;
+    setProjectFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content: editorContent } : f));
+    setLastSavedTime(new Date().toLocaleTimeString());
+    try {
+      const fileName = projectFiles.find((f: any) => f.id === activeFileId)?.name ?? activeFileId;
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ fileId: activeFileId, fileName, content: editorContent, ts: Date.now() }));
+    } catch {}
+  }, [activeFileId, editorContent, projectFiles]);
+
+  // Write crash-recovery draft every 500ms on content change
+  useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        const fileName = projectFiles.find((f: any) => f.id === activeFileId)?.name ?? activeFileId;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ fileId: activeFileId, fileName, content: editorContent, ts: Date.now() }));
+      } catch {}
+    }, 500);
+    return () => clearTimeout(id);
+  }, [activeFileId, editorContent, projectFiles]);
+
+  // Clear draft on clean exit — only persists after a crash
+  useEffect(() => {
+    const clear = () => localStorage.removeItem(DRAFT_KEY);
+    window.addEventListener('beforeunload', clear);
+    return () => window.removeEventListener('beforeunload', clear);
+  }, []);
+
+  // Check for orphaned draft on boot (delay lets prefs load first)
+  useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+        const draft = JSON.parse(raw);
+        if (!draft?.content || !draft?.fileId) return;
+        if (Date.now() - draft.ts > 24 * 60 * 60 * 1000) { localStorage.removeItem(DRAFT_KEY); return; }
+        setRecoveryDraft(draft);
+        setHasRecoveryDraft(true);
+      } catch {}
+    }, 600);
+    return () => clearTimeout(id);
+  }, []);
+
+  const restoreDraft = useCallback(() => {
+    if (!recoveryDraft) return;
+    setActiveFileId(recoveryDraft.fileId);
+    setEditorContent(recoveryDraft.content);
+    setProjectFiles(prev => prev.map((f: any) => f.id === recoveryDraft.fileId ? { ...f, content: recoveryDraft.content } : f));
+    setLastSavedTime(new Date().toLocaleTimeString());
+    localStorage.removeItem(DRAFT_KEY);
+    setHasRecoveryDraft(false);
+    setRecoveryDraft(null);
+  }, [recoveryDraft]);
+
+  const dismissDraft = useCallback(() => {
+    localStorage.removeItem(DRAFT_KEY);
+    setHasRecoveryDraft(false);
+    setRecoveryDraft(null);
+  }, []);
+
+  // Ctrl+S / Cmd+S — force save (placed after forceSave is defined)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        forceSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [forceSave]);
 
   // Debugging State
   const [breakpoints, setBreakpoints] = useState<number[]>([]);
@@ -738,23 +769,12 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Save preferences on change
-  useEffect(() => {
-    const prefs = {
-      activeTab,
-      negativePrompt,
-      sdParams,
-      personalities,
-      aiProvider,
-      aiModel,
-      grokApiKey,
-      projectFiles,
-      gitRepo,
-      projectSettings,
-      activeFileId
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-  }, [activeTab, negativePrompt, sdParams, personalities, aiProvider, aiModel, grokApiKey, projectFiles, gitRepo, projectSettings, activeFileId]);
+  // Throttled persistence — debounced 2s to avoid blocking the main thread on every keystroke
+  useThrottledStorage(STORAGE_KEY, {
+    activeTab, negativePrompt, sdParams, personalities,
+    aiProvider, aiModel, grokApiKey,
+    projectFiles, gitRepo, projectSettings, activeFileId
+  }, 2000);
 
   useEffect(() => {
     if (activeTab === 'terminal') triggerTerminalGreeting();
@@ -3607,9 +3627,7 @@ Current System State:
               <div className="flex-1 code-editor-bg rounded-[30px] md:rounded-[40px] border border-red-900/30 flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.8)] overflow-hidden group relative">
                 <div className="flex-1 p-6 md:p-8 font-mono text-[12px] md:text-[14px] overflow-y-auto custom-scrollbar bg-[linear-gradient(rgba(13,4,4,1),rgba(8,1,1,1))]">
                   {terminalOutput.map((line, i) => (
-                    <div key={i} className="mb-3 leading-relaxed whitespace-pre-wrap">
-                      {renderTerminalLine(line)}
-                    </div>
+                    <TerminalLine key={i} line={line} />
                   ))}
                   {isAiProcessing && (
                     <div className="text-red-600/50 text-[12px] animate-pulse py-4 flex items-center gap-3 font-black tracking-widest">
@@ -3682,9 +3700,10 @@ Current System State:
           {/* NEURAL EDITOR */}
           {activeTab === 'editor' && (
             <div className="h-full flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500">
-              <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-8 min-h-0">
-                {/* File Tree Sidebar - Collapsible on mobile */}
-                <div className={`fixed inset-0 z-50 lg:relative lg:z-auto w-full lg:w-64 flex flex-col code-editor-bg rounded-none lg:rounded-[40px] border-0 lg:border border-red-900/30 shadow-2xl overflow-hidden transition-all duration-300 ${isMobileFileTreeOpen ? 'flex' : 'hidden lg:flex'}`}>
+              {/* Phi 11.3 grid: sidebar(3) + pulse-border(0.3) + editor(8) */}
+              <div className="flex-1 flex flex-col lg:flex-row gap-0 md:gap-0 min-h-0">
+                {/* File Tree Sidebar — 3/11.3 phi units */}
+                <div className={`fixed inset-0 z-50 lg:relative lg:z-auto w-full lg:w-[26%] flex flex-col code-editor-bg rounded-none lg:rounded-[40px] border-0 lg:border border-red-900/30 shadow-2xl overflow-hidden transition-all duration-300 ${isMobileFileTreeOpen ? 'flex' : 'hidden lg:flex'}`}>
                   <div className="h-16 border-b border-red-900/20 flex items-center justify-between px-6 md:px-8 bg-black/40 shrink-0">
                     <h4 className="text-[10px] md:text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
                       <FolderOpen className="w-4 h-4" /> Project Files
@@ -3779,7 +3798,19 @@ Current System State:
                   </div>
                 </div>
 
-                {/* Editor Section */}
+                {/* Phi Pulse Border — 0.3/11.3 health indicator driven by swarmAnxiety */}
+                <div
+                  title={`Swarm Anxiety: ${(swarmAnxiety * 100).toFixed(1)}%`}
+                  className={`hidden lg:block w-1.5 mx-2 rounded-full self-stretch shrink-0 transition-all duration-1000 ${
+                    swarmAnxiety > 0.6
+                      ? 'bg-red-500/70 shadow-[0_0_20px_rgba(239,68,68,0.7)] animate-pulse'
+                      : swarmAnxiety > 0.3
+                        ? 'bg-orange-500/50 shadow-[0_0_12px_rgba(249,115,22,0.5)] animate-pulse'
+                        : 'bg-green-500/20 shadow-[0_0_8px_rgba(34,197,94,0.2)]'
+                  }`}
+                />
+
+                {/* Editor Section — 8/11.3 phi units */}
                 <div className="flex-1 flex flex-col code-editor-bg rounded-[30px] md:rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden min-h-[400px]">
                   <div className="h-auto min-h-16 border-b border-red-900/20 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 bg-black/40 py-2 md:py-0 gap-4">
                     <div className="w-full md:w-auto flex items-center justify-between md:justify-start gap-4 md:gap-6 overflow-x-auto custom-scrollbar">
@@ -3794,10 +3825,18 @@ Current System State:
                           </button>
                         ))}
                       </div>
+                      <button
+                        onClick={forceSave}
+                        title="Save (Ctrl+S)"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-900/30 border border-red-700/40 text-red-400 hover:bg-red-700 hover:text-white transition-all shrink-0"
+                      >
+                        <Save className="w-3 h-3" />
+                        <span className="hidden sm:inline">Save</span>
+                      </button>
                       {lastSavedTime && (
                         <div className="flex items-center gap-2 text-[8px] md:text-[9px] font-black text-red-900 uppercase tracking-widest animate-in fade-in duration-500 shrink-0">
                           <ShieldCheck className="w-3 h-3" />
-                          <span className="hidden sm:inline">Autosaved at</span> {lastSavedTime}
+                          <span className="hidden sm:inline">Saved</span> {lastSavedTime}
                         </div>
                       )}
                     </div>
@@ -5494,6 +5533,40 @@ Current System State:
         }
       `}</style>
       
+      {/* Crash Recovery Banner */}
+      {hasRecoveryDraft && recoveryDraft && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9998] w-[90vw] max-w-lg animate-in slide-in-from-bottom-4 duration-400">
+          <div className="bg-black/95 border border-orange-500/60 rounded-2xl shadow-[0_0_40px_rgba(249,115,22,0.3)] backdrop-blur-xl p-4 flex flex-col gap-3">
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 rounded-full bg-orange-500 mt-1.5 shrink-0 animate-pulse" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-black text-orange-400 uppercase tracking-widest">Crash Recovery</p>
+                <p className="text-[10px] text-red-100/70 mt-0.5 truncate">
+                  Unsaved draft found: <span className="text-white font-bold">{recoveryDraft.fileName}</span>
+                </p>
+                <p className="text-[9px] text-red-900 mt-0.5">
+                  {new Date(recoveryDraft.ts).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={restoreDraft}
+                className="flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-orange-600 hover:bg-orange-500 text-white transition-all"
+              >
+                Restore Draft
+              </button>
+              <button
+                onClick={dismissDraft}
+                className="flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-950/60 border border-red-900/30 text-red-500 hover:bg-red-900/30 transition-all"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {contextMenu && (
         <div 
           className="fixed z-[9999] bg-black/90 border border-red-900/50 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl overflow-hidden min-w-[160px]"
