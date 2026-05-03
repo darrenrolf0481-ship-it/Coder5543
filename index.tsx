@@ -25,8 +25,9 @@ import { NodeBridgePanel } from './src/components/panels/NodeBridgePanel';
 import { StoragePanel } from './src/components/panels/StoragePanel';
 import { BrainPanel } from './src/components/panels/BrainPanel';
 import { useBrain } from './src/hooks/useBrain';
+import { usePhi } from './src/hooks/usePhi';
 import { useThrottledStorage } from './src/hooks/useThrottledStorage';
-import { saveFileContents, loadFileContents, deleteFileContent } from './src/services/fileStore';
+import { saveFileContents, loadFileContents, deleteFileContent, enforcePhiQuota, markEphemeral } from './src/services/fileStore';
 import {
   Terminal as TerminalIcon,
   Upload,
@@ -226,20 +227,25 @@ const App: React.FC = () => {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [postCommitModalOpen, setPostCommitModalOpen] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [commitMessage, setCommitMessage] = useState('');
+  const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [templateConfirmKey, setTemplateConfirmKey] = useState<keyof typeof PROJECT_TEMPLATES | null>(null);
   const [generatePrompt, setGeneratePrompt] = useState('');
   const [generateMode, setGenerateMode] = useState<'snippet' | 'file'>('snippet');
   const [fileSearch, setFileSearch] = useState('');
 
   const handleLoadTemplate = (templateKey: keyof typeof PROJECT_TEMPLATES) => {
-    const template = PROJECT_TEMPLATES[templateKey];
-    if (!template) return;
+    setTemplateConfirmKey(templateKey);
+  };
 
-    if (!confirm(`Loading "${template.name}" will overwrite your current project. Proceed?`))
-      return;
+  const confirmLoadTemplate = () => {
+    if (!templateConfirmKey) return;
+    const template = PROJECT_TEMPLATES[templateConfirmKey];
+    if (!template) return;
 
     setProjectFiles(template.files);
 
-    // Find first file to activate
     const firstFile = template.files.find((f) => f.type === 'file');
     if (firstFile) {
       setActiveFileId(firstFile.id);
@@ -248,7 +254,6 @@ const App: React.FC = () => {
       setEditorMode(firstFile.language === 'html' ? 'preview' : 'code');
     }
 
-    // Reset Git state
     setGitRepo({
       initialized: false,
       branch: 'main',
@@ -259,6 +264,7 @@ const App: React.FC = () => {
     });
 
     setIsTemplateModalOpen(false);
+    setTemplateConfirmKey(null);
   };
 
   // --- PERSISTENT STATE ---
@@ -268,6 +274,7 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   const { prepareContext, recordInteraction, endocrine } = useBrain();
+  const phi = usePhi(endocrine);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -296,57 +303,52 @@ const App: React.FC = () => {
     refactoring: { status: 'idle', suggestions: [] },
   });
 
-  const runStaticAnalysis = () => {
-    setDebugAnalysis((prev) => ({ ...prev, static: { ...prev.static, status: 'running' } }));
-    setTimeout(() => {
-      setDebugAnalysis((prev) => ({
-        ...prev,
-        static: {
-          status: 'done',
-          issues: [
-            {
-              type: 'error',
-              message: 'Unused variable "neural_link_v3" detected in core.py',
-              line: 12,
-            },
-            { type: 'warning', message: 'Potential memory leak in async trace loop', line: 45 },
-            {
-              type: 'info',
-              message: 'Optimization possible: Use list comprehension for neural vector mapping',
-              line: 89,
-            },
-          ],
-        },
-      }));
-    }, 2000);
+  const runStaticAnalysis = async () => {
+    setDebugAnalysis((prev) => ({ ...prev, static: { status: 'running', issues: [] } }));
+    try {
+      const response = await generateAIResponse(
+        `Perform a static analysis of the following ${editorLanguage} code. Identify errors, warnings, and info-level issues. Return a JSON array of objects with fields: type ("error"|"warning"|"info"), message (string), line (number|null).\n\nCode:\n${editorContent}`,
+        'You are an expert static analysis engine. Return ONLY a valid JSON array, no markdown. Each item: { "type": "error"|"warning"|"info", "message": "...", "line": number|null }',
+        { modelType: 'fast', json: true }
+      );
+      let issues: { type: 'error' | 'warning' | 'info'; message: string; line?: number }[] = [];
+      try {
+        const raw = (response || '[]').replace(/```json|```/g, '').trim();
+        issues = JSON.parse(raw);
+      } catch { issues = [{ type: 'info', message: 'Could not parse analysis results.', line: undefined }]; }
+      setDebugAnalysis((prev) => ({ ...prev, static: { status: 'done', issues } }));
+    } catch {
+      setDebugAnalysis((prev) => ({ ...prev, static: { status: 'done', issues: [{ type: 'error', message: 'Static analysis engine offline.', line: undefined }] } }));
+    }
   };
 
-  const runDynamicTracing = () => {
-    setDebugAnalysis((prev) => ({
-      ...prev,
-      tracing: { ...prev.tracing, status: 'running', logs: [] },
-    }));
-    const logs = [
-      '[TRACE] Initializing Neural Link...',
-      '[TRACE] Mapping memory address 0xFA32...',
-      '[TRACE] Injecting personality vectors...',
-      '[TRACE] Monitoring thread 0x442...',
-      '[TRACE] Captured exception in sub-module B',
-      '[TRACE] Tracing complete. 0 errors, 1 warning.',
-    ];
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < logs.length) {
-        setDebugAnalysis((prev) => ({
-          ...prev,
-          tracing: { ...prev.tracing, logs: [...prev.tracing.logs, logs[i]] },
-        }));
-        i++;
-      } else {
-        clearInterval(interval);
-        setDebugAnalysis((prev) => ({ ...prev, tracing: { ...prev.tracing, status: 'done' } }));
-      }
-    }, 500);
+  const runDynamicTracing = async () => {
+    setDebugAnalysis((prev) => ({ ...prev, tracing: { status: 'running', logs: [] } }));
+    try {
+      const response = await generateAIResponse(
+        `Simulate a dynamic trace of the following ${editorLanguage} code. Return a JSON array of trace log strings, simulating execution flow, variable mutations, and any exceptions.\n\nCode:\n${editorContent}`,
+        'You are a dynamic execution tracer. Return ONLY a JSON array of strings — each string is a trace log line prefixed with [TRACE], [WARN], [EXEC], or [ERROR]. No markdown.',
+        { modelType: 'fast', json: true }
+      );
+      let logs: string[] = [];
+      try {
+        const raw = (response || '[]').replace(/```json|```/g, '').trim();
+        logs = JSON.parse(raw);
+      } catch { logs = ['[TRACE] Unable to parse trace output.']; }
+      // Stream logs in one-by-one for effect
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < logs.length) {
+          setDebugAnalysis((prev) => ({ ...prev, tracing: { ...prev.tracing, logs: [...prev.tracing.logs, logs[i]] } }));
+          i++;
+        } else {
+          clearInterval(interval);
+          setDebugAnalysis((prev) => ({ ...prev, tracing: { ...prev.tracing, status: 'done' } }));
+        }
+      }, 400);
+    } catch {
+      setDebugAnalysis((prev) => ({ ...prev, tracing: { status: 'done', logs: ['[ERROR] Trace engine offline.'] } }));
+    }
   };
 
   const getRefactoringSuggestions = async () => {
@@ -356,6 +358,7 @@ const App: React.FC = () => {
     }));
     let outcome: 'success' | 'failure' | 'neutral' = 'neutral';
     const prompt = `As the ${activePersonality.name} personality, provide 3 short, high-impact code refactoring suggestions for a futuristic neural-linked application. Format as a simple list.`;
+    let resultText = '';
     try {
       const brainContext = await prepareContext(prompt);
       const response = await generateAIResponse(
@@ -373,10 +376,12 @@ const App: React.FC = () => {
         )
         .filter((s) => s.length > 10)
         .slice(0, 3);
+      resultText = suggestions.join('\n');
       setDebugAnalysis((prev) => ({ ...prev, refactoring: { status: 'done', suggestions } }));
       outcome = 'success';
     } catch (error) {
       console.warn(error);
+      resultText = 'Error retrieving suggestions.';
       setDebugAnalysis((prev) => ({
         ...prev,
         refactoring: {
@@ -386,7 +391,8 @@ const App: React.FC = () => {
       }));
       outcome = 'failure';
     } finally {
-      await recordInteraction(prompt, debugAnalysis.refactoring.suggestions.join('\n'), outcome);
+      // Use local resultText — not stale state from debugAnalysis
+      await recordInteraction(prompt, resultText, outcome);
     }
   };
 
@@ -1064,17 +1070,38 @@ const App: React.FC = () => {
     2000
   );
 
-  // Sync file contents to IndexedDB (debounced via 2 s throttle already applied above)
+  // Sync file contents to IndexedDB with φ transaction signaling
   const debouncedFiles = useDebounce(projectFiles, 2000);
   useEffect(() => {
     const files = debouncedFiles
       .filter(f => f.type === 'file')
       .map(f => ({ id: f.id, content: f.content ?? '' }));
-    if (files.length > 0) saveFileContents(files).catch(console.warn);
+    if (files.length === 0) return;
+    phi.beginTx();
+    saveFileContents(files)
+      .then(() => phi.commitTx())
+      .catch(err => { phi.rollbackTx(); console.warn(err); });
   }, [debouncedFiles]);
 
+  // φ quota enforcement — check every 5 minutes, mark AI-generated files ephemeral
   useEffect(() => {
-    if (activeTab === 'terminal') triggerTerminalGreeting();
+    const check = async () => {
+      const status = await enforcePhiQuota();
+      if (status === 'critical') phi.setPulse('error');
+      else if (status === 'evicted') phi.setPulse('warning');
+    };
+    check();
+    const interval = setInterval(check, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const hasGreetedTerminalRef = useRef(false);
+
+  useEffect(() => {
+    if (activeTab === 'terminal' && !hasGreetedTerminalRef.current) {
+      hasGreetedTerminalRef.current = true;
+      triggerTerminalGreeting();
+    }
   }, [activeTab]);
 
   useEffect(() => {
@@ -1878,6 +1905,9 @@ const App: React.FC = () => {
               setEditorLanguage(newFile.language);
               setEditorMode(newFile.language === 'html' ? 'preview' : 'code');
 
+              // AI-forged files are ephemeral — evict first under φ quota pressure
+              markEphemeral([newFileId]).catch(console.warn);
+
               setEditorAssistantMessages((prev) => [
                 ...prev,
                 {
@@ -2510,8 +2540,11 @@ def get_user(id: int) -> Optional[Dict[str, Any]]:
 
   const deleteItem = (id: string) => {
     if (id === 'root') return;
-    if (!confirm('Are you sure you want to delete this item?')) return;
+    setDeleteConfirmId(id);
+  };
 
+  const confirmDeleteItem = (id: string) => {
+    setDeleteConfirmId(null);
     const toDelete = new Set([id]);
     let changed = true;
     while (changed) {
@@ -2682,10 +2715,16 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
   };
 
   const handleGitCommit = () => {
-    const raw = prompt('Enter commit message:');
-    if (!raw || gitRepo.staged.length === 0) return;
-    const message = raw.replace(/[^\w\s\-.,!?():]/g, '').trim().slice(0, 200);
-    if (!message) return;
+    if (gitRepo.staged.length === 0) return;
+    setCommitMessage('');
+    setIsCommitModalOpen(true);
+  };
+
+  const confirmGitCommit = () => {
+    const message = commitMessage.replace(/[^\w\s\-.,!?():]/g, '').trim().slice(0, 200);
+    if (!message || gitRepo.staged.length === 0) return;
+    setIsCommitModalOpen(false);
+    setCommitMessage('');
 
     const newCommit = {
       id: Math.random().toString(36).substring(2, 9),
@@ -3761,7 +3800,8 @@ Current System State:
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen min-h-[100dvh] w-full bg-red-950/10 text-red-100 font-sans selection:bg-red-900/40 overflow-hidden">
+    <div className="phi-grid flex flex-col md:flex-row h-screen min-h-[100dvh] w-full bg-red-950/10 text-red-100 font-sans selection:bg-red-900/40 overflow-hidden"
+         style={{ gridTemplateColumns: 'var(--phi-primary) var(--phi-contextual) var(--phi-pulse)' } as React.CSSProperties}>
       {/* Sidebar Navigation - Hidden on mobile */}
       <nav className="hidden md:flex w-20 border-r border-red-900/30 flex-col items-center py-8 space-y-8 bg-[#080101] z-30 shadow-[10px_0_40px_rgba(153,27,27,0.1)] relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(153,27,27,0.05),transparent)] pointer-events-none" />
@@ -4229,6 +4269,79 @@ Current System State:
       </main>
 
       {/* Post Commit Modal */}
+      {/* Commit Message Modal */}
+      {isCommitModalOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-[#0d0404] border border-red-900/30 rounded-[30px] shadow-[0_0_100px_rgba(185,28,28,0.2)] overflow-hidden">
+            <div className="p-6 border-b border-red-900/20 bg-black/40 flex items-center justify-between">
+              <h3 className="text-lg font-black text-red-100 uppercase tracking-tighter">Commit Changes</h3>
+              <button onClick={() => setIsCommitModalOpen(false)} className="p-2 bg-red-950/20 border border-red-900/20 rounded-full text-red-500 hover:bg-red-900/40 transition-all">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-red-900 font-bold uppercase tracking-widest">{gitRepo.staged.length} file{gitRepo.staged.length !== 1 ? 's' : ''} staged</p>
+              <textarea
+                value={commitMessage}
+                onChange={e => setCommitMessage(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && e.metaKey && confirmGitCommit()}
+                placeholder="Enter commit message..."
+                autoFocus
+                className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-100 placeholder:text-red-900/50 focus:outline-none focus:border-red-700/60 resize-none min-h-[80px]"
+              />
+              <div className="flex gap-3">
+                <button onClick={confirmGitCommit} disabled={!commitMessage.trim()} className="flex-1 py-3 bg-red-700 hover:bg-red-600 disabled:opacity-40 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                  <Check className="w-4 h-4" /> Commit
+                </button>
+                <button onClick={() => setIsCommitModalOpen(false)} className="flex-1 py-3 bg-transparent border border-red-900/30 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-950/30 transition-all">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="w-full max-w-sm bg-[#0d0404] border border-red-900/30 rounded-[30px] shadow-[0_0_60px_rgba(185,28,28,0.2)] overflow-hidden">
+            <div className="p-6 space-y-4">
+              <h3 className="text-lg font-black text-red-100 uppercase tracking-tighter">Delete Item?</h3>
+              <p className="text-sm text-red-100/60">This will permanently remove the item and all its contents. This cannot be undone.</p>
+              <div className="flex gap-3">
+                <button onClick={() => confirmDeleteItem(deleteConfirmId)} className="flex-1 py-3 bg-red-800 hover:bg-red-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all">
+                  Delete
+                </button>
+                <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3 bg-transparent border border-red-900/30 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-950/30 transition-all">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Template Confirm Modal */}
+      {templateConfirmKey && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="w-full max-w-sm bg-[#0d0404] border border-red-900/30 rounded-[30px] shadow-[0_0_60px_rgba(185,28,28,0.2)] overflow-hidden">
+            <div className="p-6 space-y-4">
+              <h3 className="text-lg font-black text-red-100 uppercase tracking-tighter">Load Template?</h3>
+              <p className="text-sm text-red-100/60">Loading <span className="text-red-400 font-bold">"{PROJECT_TEMPLATES[templateConfirmKey].name}"</span> will overwrite your current project.</p>
+              <div className="flex gap-3">
+                <button onClick={confirmLoadTemplate} className="flex-1 py-3 bg-red-700 hover:bg-red-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all">
+                  Load Template
+                </button>
+                <button onClick={() => setTemplateConfirmKey(null)} className="flex-1 py-3 bg-transparent border border-red-900/30 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-950/30 transition-all">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {postCommitModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
           <div className="w-full max-w-md bg-[#0d0404] border border-red-900/30 rounded-[30px] shadow-[0_0_100px_rgba(185,28,28,0.2)] overflow-hidden flex flex-col">
@@ -4543,6 +4656,9 @@ Current System State:
           </div>
         </div>
       )}
+
+      {/* φ Pulse Column — system health indicator, always last in grid */}
+      <div className="phi-grid__pulse hidden md:block" aria-hidden="true" />
     </div>
   );
 };
