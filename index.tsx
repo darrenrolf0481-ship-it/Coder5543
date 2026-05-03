@@ -4499,6 +4499,24 @@ Current System State:
               setTermuxFiles={setTermuxFiles}
               setTermuxStatus={setTermuxStatus}
               handleTermuxFileUpload={handleTermuxFileUpload}
+              onImportFile={(name, content, path) => {
+                const ext = name.split('.').pop() ?? 'text';
+                const langMap: Record<string,string> = { py:'python', js:'javascript', ts:'typescript', tsx:'typescript', jsx:'javascript', html:'html', css:'css', rs:'rust', go:'go', cpp:'cpp', json:'json', md:'markdown', sh:'shell' };
+                const newFile = {
+                  id: `termux_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+                  name,
+                  type: 'file' as const,
+                  parentId: 'root',
+                  language: langMap[ext] ?? 'text',
+                  content,
+                };
+                setProjectFiles(prev => [...prev, newFile]);
+                setActiveFileId(newFile.id);
+                setEditorContent(content);
+                setEditorLanguage(newFile.language);
+                setActiveTab('editor');
+                setTerminalOutput(prev => [...prev, `[IMPORT] ${path} → project`]);
+              }}
             />
           )}
 
