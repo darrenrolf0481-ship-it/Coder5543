@@ -42,15 +42,21 @@
 .phi-grid__primary     { overflow: hidden; }
 .phi-grid__contextual  { overflow-y: auto; border-left: 1px solid rgba(255,255,255,0.06); }
 
-/* ── Pulse column ─────────────────────────────────────────────────── */
+/* ── Pulse column — fixed right edge ─────────────────────────────── */
 
 .phi-grid__pulse {
-  position: relative;
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
   background: var(--pulse-color);
   opacity: var(--pulse-opacity);
   animation: var(--pulse-anim);
   transition: background 0.3s ease, opacity 0.3s ease;
   overflow: hidden;
+  pointer-events: none;
+  z-index: 9999;
 }
 
 /* Transaction progress fill rises from the bottom */
