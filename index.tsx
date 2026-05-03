@@ -26,7 +26,7 @@ import { StoragePanel } from './src/components/panels/StoragePanel';
 import { BrainPanel } from './src/components/panels/BrainPanel';
 import { useBrain } from './src/hooks/useBrain';
 import { useThrottledStorage } from './src/hooks/useThrottledStorage';
-import { saveFileContents, loadFileContents, deleteFileContent, enforcePhiQuota, markEphemeral } from './src/services/fileStore';
+import { saveFileContents, loadFileContents, deleteFileContent } from './src/services/fileStore';
 import {
   Terminal as TerminalIcon,
   Upload,
@@ -245,6 +245,74 @@ function usePhi(endocrine: { dopamine: number; cortisol: number; lastUpdated: nu
   const rollbackTx = React.useCallback(() => { _setPulse('error'); _setTxProgress(0); }, []);
 
   return { beginTx, commitTx, rollbackTx, setPulse: _setPulse, phi: _PHI, phiInv: _PHI_INV };
+}
+
+// ── φ IndexedDB Quota Manager (inlined — no separate fileStore export needed) ──
+
+async function enforcePhiQuota(): Promise<'ok' | 'warn' | 'evicted' | 'critical'> {
+  if (!navigator.storage?.estimate) return 'ok';
+  const { usage = 0, quota = 1 } = await navigator.storage.estimate();
+  const ratio = usage / quota;
+  if (ratio < _PHI_INV) return 'ok';
+
+  const DB = 'crimson_files', STORE = 'file_contents';
+  const db: IDBDatabase = await new Promise((res, rej) => {
+    const r = indexedDB.open(DB, 1);
+    r.onsuccess = () => res(r.result);
+    r.onerror   = () => rej(r.error);
+  });
+
+  const records: any[] = await new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror   = () => rej(req.error);
+  });
+
+  const ephemeral = records
+    .filter(r => r.priority === 'ephemeral')
+    .sort((a, b) => (a.lastAccessed ?? 0) - (b.lastAccessed ?? 0));
+
+  if (ephemeral.length === 0) return 'critical';
+
+  const evictCount = Math.max(1, Math.ceil(ephemeral.length * (1 - _PHI_INV)));
+  const toEvict = ephemeral.slice(0, evictCount);
+
+  await new Promise<void>((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const st = tx.objectStore(STORE);
+    toEvict.forEach(r => st.delete(r.id));
+    tx.oncomplete = () => res();
+    tx.onerror    = () => rej(tx.error);
+  });
+
+  console.info(`[φ-Quota] Evicted ${evictCount} ephemeral record(s). Usage: ${(ratio * 100).toFixed(1)}%`);
+  return 'evicted';
+}
+
+async function markEphemeral(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const DB = 'crimson_files', STORE = 'file_contents';
+  const db: IDBDatabase = await new Promise((res, rej) => {
+    const r = indexedDB.open(DB, 1);
+    r.onsuccess = () => res(r.result);
+    r.onerror   = () => rej(r.error);
+  });
+  const records: any[] = await new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror   = () => rej(req.error);
+  });
+  const targets = records.filter(r => ids.includes(r.id));
+  if (targets.length === 0) return;
+  await new Promise<void>((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const st = tx.objectStore(STORE);
+    targets.forEach(r => st.put({ ...r, priority: 'ephemeral' }));
+    tx.oncomplete = () => res();
+    tx.onerror    = () => rej(tx.error);
+  });
 }
 
 const App: React.FC = () => {
