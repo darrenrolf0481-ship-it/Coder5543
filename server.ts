@@ -310,8 +310,16 @@ async function startServer() {
 
   // ── Vite / static serving ───────────────────────────────────────────────────
   if (process.env.NODE_ENV !== 'production') {
+    const httpServer = app.listen(PORT, '0.0.0.0', () => {
+      console.log(`[Server] Running on http://localhost:${PORT}`);
+      console.log('[Pipeline] Stages: ingestion → filtering → pattern_injection');
+    });
+
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: { server: httpServer },  // attach HMR WS to the same http server — fixes "WebSocket closed without opened"
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -319,13 +327,11 @@ async function startServer() {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.use((_req, res) => res.sendFile(path.join(distPath, 'index.html')));
-  }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`[Server] Running on http://localhost:${PORT}`);
-    console.log('[Pipeline] Stages: ingestion → filtering → pattern_injection');
-    console.log('[Pipeline] Routes: GET /api/pipeline/status | GET /api/pipeline/dlq | POST /api/pipeline/inject | GET /api/pipeline/events');
-  });
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`[Server] Running on http://localhost:${PORT}`);
+    });
+  }
 }
 
 startServer();
