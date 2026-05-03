@@ -25,7 +25,6 @@ import { NodeBridgePanel } from './src/components/panels/NodeBridgePanel';
 import { StoragePanel } from './src/components/panels/StoragePanel';
 import { BrainPanel } from './src/components/panels/BrainPanel';
 import { useBrain } from './src/hooks/useBrain';
-import { usePhi } from './src/hooks/usePhi';
 import { useThrottledStorage } from './src/hooks/useThrottledStorage';
 import { saveFileContents, loadFileContents, deleteFileContent, enforcePhiQuota, markEphemeral } from './src/services/fileStore';
 import {
@@ -213,6 +212,40 @@ const PROJECT_TEMPLATES = {
 };
 
 const DRAFT_KEY = 'crimson_draft';
+
+// ── φ System Bridge ───────────────────────────────────────────────────────────
+// Connects brain endocrine state → CSS pulse column and transaction indicator.
+// φ = 1.618 | 1/φ = 0.618 | Warn threshold = 61.8% | Evict threshold = 38.2%
+
+const _PHI     = 1.618;
+const _PHI_INV = 0.618;
+
+function _setPulse(state: 'healthy' | 'warning' | 'error' | 'sync') {
+  const el = document.querySelector('.phi-grid');
+  if (el instanceof HTMLElement) el.dataset.pulse = state;
+}
+function _setTxProgress(v: number) {
+  document.documentElement.style.setProperty('--tx-progress', String(Math.max(0, Math.min(1, v))));
+}
+
+function usePhi(endocrine: { dopamine: number; cortisol: number; lastUpdated: number }) {
+  const commitTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    if (endocrine.cortisol >= 0.8)        _setPulse('error');
+    else if (endocrine.cortisol >= _PHI_INV) _setPulse('warning');
+    else if (endocrine.dopamine >= _PHI_INV) _setPulse('healthy');
+    else                                   _setPulse('sync');
+  }, [endocrine.cortisol, endocrine.dopamine, endocrine.lastUpdated]);
+
+  React.useEffect(() => () => { if (commitTimer.current) clearTimeout(commitTimer.current); }, []);
+
+  const beginTx   = React.useCallback(() => { if (commitTimer.current) clearTimeout(commitTimer.current); _setTxProgress(_PHI_INV); }, []);
+  const commitTx  = React.useCallback(() => { _setTxProgress(1); commitTimer.current = setTimeout(() => _setTxProgress(0), 200); }, []);
+  const rollbackTx = React.useCallback(() => { _setPulse('error'); _setTxProgress(0); }, []);
+
+  return { beginTx, commitTx, rollbackTx, setPulse: _setPulse, phi: _PHI, phiInv: _PHI_INV };
+}
 
 const App: React.FC = () => {
   // Crash recovery state
