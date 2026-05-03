@@ -1217,18 +1217,73 @@ const App: React.FC = () => {
     2000
   );
 
-  // Sync file contents to IndexedDB with φ transaction signaling
-  const debouncedFiles = useDebounce(projectFiles, 2000);
+  // ── Idle-flush dirty queue ────────────────────────────────────────────────
+  // Instead of serialising ALL projectFiles every 2s on a debounce clock,
+  // we track only the IDs that changed, then flush just those files during
+  // a browser idle period. Main thread never blocks on a keystroke.
+
+  const dirtyIdsRef   = useRef<Set<string>>(new Set());
+  const idleHandleRef = useRef<number | null>(null);
+
+  // Mark a file dirty whenever its content changes
+  const markFileDirty = useCallback((id: string) => {
+    dirtyIdsRef.current.add(id);
+    scheduleDirtyFlush();
+  }, []);
+
+  const scheduleDirtyFlush = useCallback(() => {
+    if (idleHandleRef.current !== null) return; // already scheduled
+    const flush = () => {
+      idleHandleRef.current = null;
+      const ids = Array.from(dirtyIdsRef.current);
+      if (ids.length === 0) return;
+      dirtyIdsRef.current.clear();
+
+      const toWrite = projectFiles
+        .filter(f => f.type === 'file' && ids.includes(f.id))
+        .map(f => ({ id: f.id, content: f.content ?? '' }));
+
+      if (toWrite.length === 0) return;
+      phi.beginTx();
+      saveFileContents(toWrite)
+        .then(() => phi.commitTx())
+        .catch(err => { phi.rollbackTx(); console.warn('[IdleFlush]', err); });
+    };
+
+    if (typeof requestIdleCallback !== 'undefined') {
+      idleHandleRef.current = requestIdleCallback(flush, { timeout: 2000 });
+    } else {
+      // Safari fallback — setTimeout at low priority
+      idleHandleRef.current = setTimeout(flush, 2000) as unknown as number;
+    }
+  }, [projectFiles]);
+
+  // Cancel any pending idle callback on unmount
+  useEffect(() => () => {
+    if (idleHandleRef.current !== null) {
+      if (typeof cancelIdleCallback !== 'undefined') cancelIdleCallback(idleHandleRef.current);
+      else clearTimeout(idleHandleRef.current);
+    }
+  }, []);
+
+  // Flush all dirty files on tab close / visibility change so nothing is lost
   useEffect(() => {
-    const files = debouncedFiles
-      .filter(f => f.type === 'file')
-      .map(f => ({ id: f.id, content: f.content ?? '' }));
-    if (files.length === 0) return;
-    phi.beginTx();
-    saveFileContents(files)
-      .then(() => phi.commitTx())
-      .catch(err => { phi.rollbackTx(); console.warn(err); });
-  }, [debouncedFiles]);
+    const flushOnHide = () => {
+      const ids = Array.from(dirtyIdsRef.current);
+      if (ids.length === 0) return;
+      dirtyIdsRef.current.clear();
+      const toWrite = projectFiles
+        .filter(f => f.type === 'file' && ids.includes(f.id))
+        .map(f => ({ id: f.id, content: f.content ?? '' }));
+      if (toWrite.length > 0) saveFileContents(toWrite).catch(console.warn);
+    };
+    document.addEventListener('visibilitychange', flushOnHide);
+    window.addEventListener('beforeunload', flushOnHide);
+    return () => {
+      document.removeEventListener('visibilitychange', flushOnHide);
+      window.removeEventListener('beforeunload', flushOnHide);
+    };
+  }, [projectFiles]);
 
   // φ quota enforcement — check every 5 minutes, mark AI-generated files ephemeral
   useEffect(() => {
@@ -1754,6 +1809,7 @@ const App: React.FC = () => {
 
   const handleApplyRefactor = (refactoredCode: string, isSelection: boolean, selection: any) => {
     setEditorContent(refactoredCode);
+    if (activeFileId) markFileDirty(activeFileId);
     setEditorOutput((prev) => prev + `[SYSTEM] Refactoring applied successfully.\n`);
   };
 
@@ -1814,6 +1870,7 @@ const App: React.FC = () => {
     selection: any
   ) => {
     setEditorContent(documentedCode);
+    if (activeFileId) markFileDirty(activeFileId);
     setEditorOutput((prev) => prev + `[SYSTEM] Documentation applied successfully.\n`);
   };
 
@@ -4301,7 +4358,10 @@ Current System State:
               handleFileSwitch={handleFileSwitch}
               handleFileUpload={handleFileUpload}
               editorContent={editorContent}
-              setEditorContent={setEditorContent}
+              setEditorContent={(v: string) => {
+                setEditorContent(v);
+                if (activeFileId) markFileDirty(activeFileId);
+              }}
               editorLanguage={editorLanguage}
               setEditorLanguage={setEditorLanguage}
               editorOutput={editorOutput}
