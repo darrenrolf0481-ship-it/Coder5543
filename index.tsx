@@ -213,7 +213,53 @@ const PROJECT_TEMPLATES = {
 
 const DRAFT_KEY = 'crimson_draft';
 
-// ── φ System Bridge ───────────────────────────────────────────────────────────
+// ── Prompt Builder ────────────────────────────────────────────────────────────
+// Single source of truth for code-context prompts.
+// All AI calls that operate on editor content should use this.
+
+interface PromptOptions {
+  lang: string;
+  code: string;
+  instruction: string;
+  extra?: string;
+  json?: boolean;
+}
+
+function makePrompt({ lang, code, instruction, extra = '', json = false }: PromptOptions): string {
+  const codeBlock = `\`\`\`${lang}\n${code}\n\`\`\``;
+  const base = `[Context: language=${lang}]\n\n${instruction}\n\n${codeBlock}`;
+  const suffix = extra ? `\n\n${extra}` : '';
+  const format = json ? '\n\nRespond ONLY with valid JSON. No markdown fences.' : '';
+  return base + suffix + format;
+}
+
+// ── Safe Markdown Renderer ────────────────────────────────────────────────────
+// Sanitizes AI output through DOMPurify before ReactMarkdown parses it,
+// preventing XSS if the model ever returns malicious HTML.
+
+const DOMPURIFY_CONFIG = {
+  ALLOWED_TAGS: [
+    'p','br','strong','em','b','i','u','s','code','pre','blockquote',
+    'h1','h2','h3','h4','h5','h6','ul','ol','li','table','thead','tbody',
+    'tr','th','td','hr','a','span','div',
+  ],
+  ALLOWED_ATTR: ['href','class','id','target','rel'],
+  FORCE_BODY: true,
+};
+
+const SafeMarkdown: React.FC<{ children: string }> = ({ children }) => {
+  const sanitized = React.useMemo(
+    () => DOMPurify.sanitize(children ?? '', DOMPURIFY_CONFIG),
+    [children]
+  );
+  return (
+    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+      {sanitized}
+    </ReactMarkdown>
+  );
+};
+
+
 // Connects brain endocrine state → CSS pulse column and transaction indicator.
 // φ = 1.618 | 1/φ = 0.618 | Warn threshold = 61.8% | Evict threshold = 38.2%
 
@@ -1536,7 +1582,12 @@ const App: React.FC = () => {
     setIsAiProcessing(true);
     setEditorOutput('Analyzing code structure...\n');
     let outcome: 'success' | 'failure' | 'neutral' = 'neutral';
-    const prompt = `Analyze the following ${editorLanguage} code based on this request: "${editorAssistantInput}"\n\nCode:\n${editorContent}`;
+    const prompt = makePrompt({
+      lang: editorLanguage,
+      code: editorContent,
+      instruction: `Analyze this code based on this request: "${editorAssistantInput}"`,
+      extra: 'Provide a detailed, structured analysis pointing out vulnerabilities, performance issues, or architectural improvements.',
+    });
 
     try {
       const brainContext = await prepareContext(prompt);
@@ -1566,7 +1617,12 @@ const App: React.FC = () => {
     setIsAiProcessing(true);
     try {
       const response = await generateAIResponse(
-        `Format this ${editorLanguage} code based on standard project conventions. ${isMobile ? 'Ensure the code is formatted for mobile screens, with shorter line lengths and vertical layout optimization.' : 'Ensure proper indentation, spacing, and line breaks.'} Return ONLY the formatted code, without any markdown formatting or explanations.\n\nCode:\n${editorContent}`,
+        makePrompt({
+          lang: editorLanguage,
+          code: editorContent,
+          instruction: `Format this code using standard conventions. ${isMobile ? 'Optimise for mobile: shorter line lengths and vertical layout.' : 'Ensure proper indentation, spacing, and line breaks.'}`,
+          extra: 'Return ONLY the formatted code, without any markdown fences or explanations.',
+        }),
         'You are an expert code formatter. Return ONLY the formatted code. Do not wrap in markdown blocks.',
         { modelType: 'fast' }
       );
@@ -1596,7 +1652,13 @@ const App: React.FC = () => {
         setEditorOutput((prev) => prev + `[INFO] Refactoring ${file.name}...\n`);
         try {
           const response = await generateAIResponse(
-            `Refactor this ${file.language || 'code'} code for better performance, readability, and structural integrity. Return a JSON object with 'refactoredCode' and 'explanation' fields.\n\nCode:\n${file.content}`,
+            makePrompt({
+              lang: file.language || 'code',
+              code: file.content,
+              instruction: 'Refactor this code for better performance, readability, and structural integrity.',
+              extra: "Return a JSON object with 'refactoredCode' and 'explanation' fields.",
+              json: true,
+            }),
             'You are a world-class software architect. You refactor code to be production-ready. Always return valid JSON.',
             {
               modelType: 'smart',
@@ -1645,7 +1707,13 @@ const App: React.FC = () => {
     setIsAiProcessing(true);
     try {
       const response = await generateAIResponse(
-        `Refactor this ${editorLanguage} code for better performance, readability, and structural integrity. Return a JSON object with 'refactoredCode' and 'explanation' fields.\n\nCode:\n${codeToRefactor}`,
+        makePrompt({
+          lang: editorLanguage,
+          code: codeToRefactor,
+          instruction: 'Refactor this code for better performance, readability, and structural integrity.',
+          extra: "Return a JSON object with 'refactoredCode' and 'explanation' fields.",
+          json: true,
+        }),
         'You are a world-class software architect. You refactor code to be production-ready. Always return valid JSON.',
         {
           modelType: 'smart',
@@ -1696,7 +1764,13 @@ const App: React.FC = () => {
     setIsAiProcessing(true);
     try {
       const response = await generateAIResponse(
-        `Generate comprehensive documentation (docstrings, JSDoc, or comments) for this ${editorLanguage} code. Focus on explaining the logic, parameters, and return values. Return a JSON object with 'documentedCode' and 'summary' fields.\n\nCode:\n${codeToDocument}`,
+        makePrompt({
+          lang: editorLanguage,
+          code: codeToDocument,
+          instruction: 'Generate comprehensive documentation (docstrings, JSDoc, or comments) for this code. Focus on explaining the logic, parameters, and return values.',
+          extra: "Return a JSON object with 'documentedCode' and 'summary' fields.",
+          json: true,
+        }),
         `You are a world-class documentation expert. Generate clear, concise, and helpful documentation for the provided ${editorLanguage} code. Always return valid JSON.`,
         {
           modelType: 'smart',
@@ -2076,7 +2150,11 @@ const App: React.FC = () => {
     setIsAiProcessing(true);
     try {
       const response = await generateAIResponse(
-        `Analyze and explain this ${editorLanguage} code. Suggest optimizations if possible.\n\nCode:\n${editorContent}`,
+        makePrompt({
+          lang: editorLanguage,
+          code: editorContent,
+          instruction: 'Analyze and explain this code. Suggest optimizations where possible.',
+        }),
         'You are a senior software engineer. Provide a deep technical analysis of the code. Be concise but thorough.',
         { modelType: 'smart' }
       );
@@ -2333,7 +2411,11 @@ def get_user(id: int) -> Optional[Dict[str, Any]]:
       const dataAnalystInstruction =
         'You are the Data Analyst, a specialized intelligence focused on code analysis, performance profiling, and suggesting data visualization improvements. You provide actionable insights from complex datasets and code structures.';
       const response = await generateAIResponse(
-        `Analyze the following ${editorLanguage} code for performance bottlenecks and suggest data visualization improvements.\n\nCode:\n${editorContent}`,
+        makePrompt({
+          lang: editorLanguage,
+          code: editorContent,
+          instruction: 'Analyze this code for performance bottlenecks and suggest data visualization improvements.',
+        }),
         dataAnalystInstruction,
         { modelType: 'smart' }
       );
