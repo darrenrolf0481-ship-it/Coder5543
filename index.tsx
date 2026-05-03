@@ -3901,8 +3901,9 @@ Current System State:
   };
 
   return (
-    <div className="phi-grid flex flex-col md:flex-row h-screen min-h-[100dvh] w-full bg-red-950/10 text-red-100 font-sans selection:bg-red-900/40 overflow-hidden"
-         style={{ gridTemplateColumns: 'var(--phi-primary) var(--phi-contextual) var(--phi-pulse)' } as React.CSSProperties}>
+    <div className="flex flex-col md:flex-row h-screen min-h-[100dvh] w-full bg-red-950/10 text-red-100 font-sans selection:bg-red-900/40 overflow-hidden">
+      {/* φ Pulse Column — fixed right edge, doesn't affect layout */}
+      <div className="phi-grid phi-grid__pulse fixed right-0 top-0 bottom-0 w-[3px] md:w-[4px] z-50 pointer-events-none" aria-hidden="true" />
       {/* Sidebar Navigation - Hidden on mobile */}
       <nav className="hidden md:flex w-20 border-r border-red-900/30 flex-col items-center py-8 space-y-8 bg-[#080101] z-30 shadow-[10px_0_40px_rgba(153,27,27,0.1)] relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(153,27,27,0.05),transparent)] pointer-events-none" />
@@ -4758,8 +4759,7 @@ Current System State:
         </div>
       )}
 
-      {/* φ Pulse Column — system health indicator, always last in grid */}
-      <div className="phi-grid__pulse hidden md:block" aria-hidden="true" />
+      {/* φ Pulse Column — fixed right edge (handled above) */}
     </div>
   );
 };
