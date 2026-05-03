@@ -361,6 +361,44 @@ async function markEphemeral(ids: string[]): Promise<void> {
   });
 }
 
+// ── useAiRequest — centralised AI loading & error handling per domain ─────────
+// Replaces scattered setIsAiProcessing(true/false) + individual try/catch blocks.
+// Each domain gets its own loading flag — only that panel re-renders.
+
+type AiDomain = 'editor' | 'terminal' | 'chat' | 'swarm' | 'analysis' | 'debug' | 'default';
+
+function useAiRequest(generateFn: (...args: any[]) => Promise<any>) {
+  const [loading, setLoading] = React.useState<Partial<Record<AiDomain, boolean>>>({});
+  const [errors,  setErrors]  = React.useState<Partial<Record<AiDomain, string | undefined>>>({});
+
+  const request = React.useCallback(async (
+    domain: AiDomain,
+    prompt: string,
+    systemInstruction: string,
+    options?: object
+  ): Promise<string | null> => {
+    setLoading(prev => ({ ...prev, [domain]: true }));
+    setErrors(prev  => ({ ...prev, [domain]: undefined }));
+    try {
+      return await generateFn(prompt, systemInstruction, options, domain) ?? null;
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return null;
+      const msg = err instanceof Error ? err.message : String(err);
+      setErrors(prev => ({ ...prev, [domain]: msg }));
+      console.error(`[AI:${domain}]`, msg);
+      return null;
+    } finally {
+      setLoading(prev => ({ ...prev, [domain]: false }));
+    }
+  }, [generateFn]);
+
+  const isLoading  = React.useCallback((d: AiDomain) => !!loading[d], [loading]);
+  const anyLoading = Object.values(loading).some(Boolean);
+  const getError   = React.useCallback((d: AiDomain) => errors[d] ?? null, [errors]);
+
+  return { request, isLoading, anyLoading, getError };
+}
+
 const App: React.FC = () => {
   // Crash recovery state
   const [hasRecoveryDraft, setHasRecoveryDraft] = useState(false);
@@ -1526,6 +1564,9 @@ const App: React.FC = () => {
   // ── Event-driven pipeline ──────────────────────────────────────────────────
   const pipeline = usePipeline(generateAIResponse as any);
 
+  // Centralised AI request hook — domain-specific loading flags
+  const ai = useAiRequest(generateAIResponse);
+
   // Route AI_RESPONSE_RECEIVED back to the correct state setter.
   useEffect(() => {
     const unsub = pipeline.onResponse((result: PatternResult) => {
@@ -1633,40 +1674,22 @@ const App: React.FC = () => {
 
   const handleAnalyzeCode = async () => {
     if (!editorAssistantInput.trim()) return;
-
     setIsAiProcessing(true);
     setEditorOutput('Analyzing code structure...\n');
-    let outcome: 'success' | 'failure' | 'neutral' = 'neutral';
     const prompt = makePrompt({
-      lang: editorLanguage,
-      code: editorContent,
+      lang: editorLanguage, code: editorContent,
       instruction: `Analyze this code based on this request: "${editorAssistantInput}"`,
       extra: 'Provide a detailed, structured analysis pointing out vulnerabilities, performance issues, or architectural improvements.',
     });
-
-    try {
-      const brainContext = await prepareContext(prompt);
-      const response = await generateAIResponse(
-        prompt,
-        'You are an elite code analyst. Provide a detailed, side-by-side style analysis, pointing out vulnerabilities, performance issues, or architectural improvements. Format your response clearly.',
-        { modelType: 'smart', brainContext }
-      );
-
-      if (response) {
-        setEditorOutput(response);
-        outcome = 'success';
-      } else {
-        setEditorOutput('[INFO] Analysis yielded no actionable results.');
-        outcome = 'neutral';
-      }
-    } catch (err) {
+    const response = await ai.request('analysis', prompt, 'You are an elite code analyst. Provide a detailed, side-by-side style analysis. Format your response clearly.');
+    if (response) {
+      setEditorOutput(response);
+      await recordInteraction(prompt, response, 'success');
+    } else {
       setEditorOutput('[ERROR] Analysis engine failed.\n');
-      console.warn('Code Analysis failed', err);
-      outcome = 'failure';
-    } finally {
-      setIsAiProcessing(false);
-      await recordInteraction(prompt, editorOutput, outcome);
+      await recordInteraction(prompt, '', 'failure');
     }
+    setIsAiProcessing(false);
   };
   const handleFormatCode = async (isMobile: boolean = false) => {
     setIsAiProcessing(true);
@@ -4323,6 +4346,10 @@ Current System State:
                 } else {
                   handleApplyForge(code, false);
                 }
+                setActiveTab('editor');
+              }}
+              onSaveReport={(text) => {
+                handleSaveAnalysis(text);
                 setActiveTab('editor');
               }}
             />

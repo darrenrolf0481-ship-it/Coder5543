@@ -3,9 +3,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
 import {
-  Activity, BookOpen, Brain, Bug, Database, Download, FileCode, FileSearch,
+  Activity, BookOpen, Brain, Bug, Copy, Database, Download, FileCode, FileSearch,
   Fingerprint, HelpCircle, ImageIcon, LayoutTemplate, MessageSquare,
-  Network, Send, ShieldCheck, Sparkles, Trash2, Unlock, Users, Zap,
+  Network, Save, Send, ShieldCheck, Sparkles, Trash2, Unlock, Users, Zap,
 } from 'lucide-react';
 import { Personality } from './SettingsPanel';
 
@@ -23,8 +23,28 @@ type KnowledgePack = { id: number; name: string; size: string; status: string };
 type ChatMessage = { role: 'user' | 'ai'; text: string; type?: 'text' | 'image'; url?: string; timestamp: number };
 
 function extractCodeBlock(text: string): string | null {
-  const match = text.match(/```(?:\w+)?\n([\s\S]*?)```/);
+  const match = text.match(/```(?:\w+)?\n?([\s\S]*?)```/);
   return match ? match[1].trim() : null;
+}
+
+function extractAllCodeBlocks(text: string): { lang: string; code: string }[] {
+  const blocks: { lang: string; code: string }[] = [];
+  const re = /```(\w*)\n?([\s\S]*?)```/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const code = m[2].trim();
+    if (code) blocks.push({ lang: m[1] || 'code', code });
+  }
+  return blocks;
+}
+
+const ANALYSIS_KEYWORDS = [
+  'CODE_ANALYSIS', 'FULL_PROJECT_ANALYSIS', 'DEEP_PROJECT_AUDIT',
+  'PAIR_PROGRAMMER', 'REFACTOR_COMPLETE', 'DATA_ANALYSIS', 'CODE_REVIEW',
+];
+
+function isAnalysisMessage(text: string): boolean {
+  return ANALYSIS_KEYWORDS.some(k => text.includes(k)) || text.length > 800;
 }
 
 const PURIFY_CFG = {
@@ -59,7 +79,23 @@ interface ToolNeuronPanelProps {
   handleKnowledgeUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   setActiveTab: (tab: 'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain') => void;
   onApplyCode: (code: string, mode: 'refactor' | 'replace') => void;
+  onSaveReport: (text: string) => void;
 }
+
+const CopyButton: React.FC<{ text: string; label?: string }> = ({ text, label = 'Copy' }) => {
+  const [copied, setCopied] = React.useState(false);
+  return (
+    <button
+      onClick={() => navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1800); })}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${
+        copied ? 'bg-emerald-700/30 border border-emerald-600/40 text-emerald-400' : 'bg-red-950/30 border border-red-900/30 text-red-400 hover:bg-red-900/30'
+      }`}
+    >
+      <Copy className="w-3 h-3" />
+      {copied ? 'Copied!' : label}
+    </button>
+  );
+};
 
 // ── Component ──────────────────────────────────────────────────────────────
 
@@ -68,7 +104,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
   isVaultUnlocked, setIsVaultUnlocked,
   swarmAnxiety, swarmAgents, swarmLogs, triggerSwarmCycle,
   isAiProcessing, debugAnalysis, runStaticAnalysis, runDynamicTracing, getRefactoringSuggestions,
-  activePersonality, tnKnowledgePacks, handleKnowledgeUpload, setActiveTab, onApplyCode,
+  activePersonality, tnKnowledgePacks, handleKnowledgeUpload, setActiveTab, onApplyCode, onSaveReport,
 }) => {
   // ── Local state ────────────────────────────────────────────────────────
   const [tnModule, setTnModule] = useState<'chat' | 'vision' | 'knowledge' | 'vault' | 'swarm' | 'help' | 'debug'>('chat');
@@ -188,50 +224,79 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
                 <span className="text-[10px] font-mono text-red-900">LATENCY: 12ms</span>
               </div>
               <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 custom-scrollbar">
-                {chatMessages.map((msg, i) => (
-                  <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`max-w-[80%] rounded-3xl p-6 text-[13px] leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'bg-red-800 text-white rounded-tr-none'
-                        : 'bg-red-950/20 border border-red-900/20 text-red-100 rounded-tl-none'
-                    }`}>
-                      {msg.type === 'image' ? (
-                        <div className="space-y-4">
-                          <img src={msg.url} alt="Generated" className="w-full rounded-xl border border-red-900/30" />
-                          <p className="text-[10px] font-mono text-red-400 opacity-70">{msg.text}</p>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="markdown-body">
-                            <SafeMarkdown>{msg.text}</SafeMarkdown>
+                {chatMessages.map((msg, i) => {
+                  const codeBlocks = msg.role === 'ai' ? extractAllCodeBlocks(msg.text) : [];
+                  const showSave   = msg.role === 'ai' && isAnalysisMessage(msg.text);
+                  return (
+                    <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                      <div className={`max-w-[85%] rounded-3xl p-5 text-[13px] leading-relaxed ${
+                        msg.role === 'user'
+                          ? 'bg-red-800 text-white rounded-tr-none'
+                          : 'bg-red-950/20 border border-red-900/20 text-red-100 rounded-tl-none'
+                      }`}>
+                        {msg.type === 'image' ? (
+                          <div className="space-y-4">
+                            <img src={msg.url} alt="Generated" className="w-full rounded-xl border border-red-900/30" />
+                            <p className="text-[10px] font-mono text-red-400 opacity-70">{msg.text}</p>
                           </div>
-                          {msg.role === 'ai' && (() => {
-                            const code = extractCodeBlock(msg.text);
-                            if (!code) return null;
-                            return (
-                              <div className="flex gap-2 mt-3 pt-3 border-t border-red-900/20">
-                                <button
-                                  onClick={() => onApplyCode(code, 'refactor')}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-700 border border-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all active:scale-95"
-                                >
-                                  <Sparkles className="w-3 h-3" />
-                                  Refactor
-                                </button>
-                                <button
-                                  onClick={() => onApplyCode(code, 'replace')}
-                                  className="flex items-center gap-1.5 px-3 py-1.5 bg-red-950/60 border border-red-800 rounded-lg text-[9px] font-black uppercase tracking-widest text-red-300 hover:bg-red-900/40 transition-all active:scale-95"
-                                >
-                                  <FileCode className="w-3 h-3" />
-                                  Replace
-                                </button>
+                        ) : (
+                          <>
+                            <div className="markdown-body">
+                              <SafeMarkdown>{msg.text}</SafeMarkdown>
+                            </div>
+
+                            {/* Action bar — only for AI messages with actionable content */}
+                            {msg.role === 'ai' && (showSave || codeBlocks.length > 0) && (
+                              <div className="mt-4 pt-3 border-t border-red-900/20 space-y-2">
+
+                                {/* Top row: Copy + Save Report */}
+                                <div className="flex flex-wrap gap-2">
+                                  <CopyButton text={msg.text} />
+                                  {showSave && (
+                                    <button
+                                      onClick={() => onSaveReport(msg.text)}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-900/30 border border-red-700/40 rounded-lg text-[9px] font-black uppercase tracking-widest text-red-200 hover:bg-red-800/50 transition-all active:scale-95"
+                                    >
+                                      <Save className="w-3 h-3" />
+                                      Save Report
+                                    </button>
+                                  )}
+                                </div>
+
+                                {/* Code blocks: each gets its own Apply row */}
+                                {codeBlocks.map((block, bi) => (
+                                  <div key={bi} className="rounded-lg overflow-hidden border border-red-900/20">
+                                    <div className="flex items-center justify-between px-3 py-1.5 bg-black/40 border-b border-red-900/20">
+                                      <span className="text-[9px] font-mono text-red-700 uppercase tracking-widest">{block.lang}</span>
+                                      <div className="flex gap-1.5">
+                                        <CopyButton text={block.code} label="Copy Code" />
+                                        <button
+                                          onClick={() => onApplyCode(block.code, 'refactor')}
+                                          className="flex items-center gap-1 px-2 py-1 bg-red-700 border border-red-500 rounded text-[8px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all active:scale-95"
+                                        >
+                                          <Sparkles className="w-2.5 h-2.5" />
+                                          Refactor
+                                        </button>
+                                        <button
+                                          onClick={() => onApplyCode(block.code, 'replace')}
+                                          className="flex items-center gap-1 px-2 py-1 bg-red-950/60 border border-red-800 rounded text-[8px] font-black uppercase tracking-widest text-red-300 hover:bg-red-900/40 transition-all active:scale-95"
+                                        >
+                                          <FileCode className="w-2.5 h-2.5" />
+                                          Replace
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <pre className="px-3 py-2 text-[10px] font-mono text-red-200/70 overflow-x-auto max-h-32 bg-black/20 whitespace-pre">{block.code}</pre>
+                                  </div>
+                                ))}
                               </div>
-                            );
-                          })()}
-                        </>
-                      )}
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <form onSubmit={handleStudioSubmit} className="p-4 md:p-8 bg-black/40 border-t border-red-900/20">
                 <div className="relative max-w-3xl mx-auto">
