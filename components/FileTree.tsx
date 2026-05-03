@@ -3,7 +3,7 @@ import { List } from 'react-window';
 import {
   ChevronDown, Folder, FolderOpen, FileCode, Edit2, Check,
   GitBranch, Plus, Trash2, Search, X, FolderPlus, FilePlus,
-  Copy, Archive, MoreVertical, HardDrive, ChevronRight, Download,
+  Copy, Archive, MoreVertical,
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -261,115 +261,6 @@ const TreeRow = memo((props: TreeRowProps) => {
   );
 });
 
-// ── Termux filesystem browser ──────────────────────────────────────────────
-
-interface FsEntry { name: string; type: 'dir' | 'file'; path: string }
-interface FsData  { path: string; parent: string; entries: FsEntry[] }
-
-const TermuxBrowser: React.FC<{
-  onImport: (nodes: FileNode[]) => void;
-  onClose: () => void;
-}> = ({ onImport, onClose }) => {
-  const [data,    setData]    = useState<FsData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [err,     setErr]     = useState('');
-
-  const browse = useCallback(async (p?: string) => {
-    setLoading(true); setErr('');
-    try {
-      const url = p ? `/api/fs/browse?path=${encodeURIComponent(p)}` : '/api/fs/browse';
-      const r = await fetch(url);
-      if (!r.ok) { const e = await r.json(); throw new Error(e.error ?? r.statusText); }
-      setData(await r.json());
-    } catch (e: any) {
-      setErr(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { browse(); }, [browse]);
-
-  const importFile = useCallback(async (entry: FsEntry) => {
-    if (entry.type === 'dir') { browse(entry.path); return; }
-    try {
-      const r = await fetch(`/api/fs/read?path=${encodeURIComponent(entry.path)}`);
-      if (!r.ok) { const e = await r.json(); throw new Error(e.error ?? r.statusText); }
-      const { content } = await r.json();
-      const ext = entry.name.split('.').pop() ?? 'text';
-      const EXT_MAP: Record<string, string> = {
-        py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript',
-        jsx: 'javascript', html: 'html', css: 'css', rs: 'rust', cpp: 'cpp',
-        c: 'c', json: 'json', md: 'markdown', sh: 'shell', yaml: 'yaml', yml: 'yaml',
-      };
-      onImport([{
-        id: `fs_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-        name: entry.name,
-        type: 'file',
-        parentId: null,
-        language: EXT_MAP[ext] ?? ext,
-        content,
-      }]);
-    } catch (e: any) {
-      setErr(e.message);
-    }
-  }, [browse, onImport]);
-
-  return (
-    <div className="mt-3 rounded-xl border border-red-800/40 bg-red-950/30 text-[10px] font-mono overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-red-900/30 bg-black/30">
-        <div className="flex items-center gap-2 text-red-400 font-black uppercase tracking-widest text-[9px]">
-          <HardDrive className="w-3 h-3" />
-          <span className="truncate max-w-[160px]" title={data?.path}>{data?.path ?? '…'}</span>
-        </div>
-        <button onClick={onClose} className="text-red-900 hover:text-red-400 transition-colors">
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {loading && (
-        <div className="px-3 py-4 text-red-900 text-center">Loading…</div>
-      )}
-      {err && (
-        <div className="px-3 py-2 text-red-500">{err}</div>
-      )}
-
-      {!loading && data && (
-        <div className="max-h-52 overflow-y-auto custom-scrollbar">
-          {data.path !== data.parent && (
-            <button
-              onClick={() => browse(data.parent)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-red-800 hover:bg-red-900/20 hover:text-red-400 transition-colors"
-            >
-              <ChevronDown className="w-3 h-3 rotate-90 shrink-0" />
-              <span>.. (up)</span>
-            </button>
-          )}
-          {data.entries.length === 0 && (
-            <div className="px-3 py-3 text-red-900">Empty directory</div>
-          )}
-          {data.entries.map(e => (
-            <button
-              key={e.path}
-              onClick={() => importFile(e)}
-              title={e.type === 'file' ? `Import ${e.name}` : `Open ${e.name}`}
-              className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-red-900/20 transition-colors text-left group"
-            >
-              {e.type === 'dir'
-                ? <Folder className="w-3.5 h-3.5 text-red-700 shrink-0" />
-                : <FileCode className="w-3.5 h-3.5 text-red-900 shrink-0" />}
-              <span className="flex-1 truncate text-red-300">{e.name}</span>
-              {e.type === 'file' && (
-                <Download className="w-3 h-3 text-red-900 group-hover:text-red-400 shrink-0" />
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 // ── Main component ─────────────────────────────────────────────────────────
 
 export const FileTree: React.FC<FileTreeProps> = ({
@@ -383,7 +274,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
   const [dragOverId,    setDragOverId]    = useState<string | null>(null);
   const [showNewProject, setShowNewProject] = useState(false);
   const [projectName,   setProjectName]   = useState('');
-  const [showTermuxFS,  setShowTermuxFS]  = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [listHeight,    setListHeight]    = useState(400);
   const ctxRef = useRef<HTMLDivElement>(null);
@@ -561,9 +451,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
         <Btn title="New File at root"   onClick={() => startCreate(null, 'file')}  ><FilePlus   className="w-4 h-4" /></Btn>
         <Btn title="New Folder at root" onClick={() => startCreate(null, 'folder')}><FolderPlus className="w-4 h-4" /></Btn>
         <div className="flex-1" />
-        <Btn title="Browse Termux Filesystem" onClick={() => setShowTermuxFS(v => !v)}>
-          <HardDrive className="w-4 h-4" />
-        </Btn>
         <Btn title="New Project" onClick={() => setShowNewProject(v => !v)}>
           <Archive className="w-4 h-4" />
         </Btn>
@@ -586,14 +473,6 @@ export const FileTree: React.FC<FileTreeProps> = ({
             Create
           </button>
         </div>
-      )}
-
-      {/* Termux filesystem browser */}
-      {showTermuxFS && (
-        <TermuxBrowser
-          onImport={nodes => { onFilesChange([...files, ...nodes]); nodes.filter(n => n.type === 'file').forEach(n => onFileSelect(n.id, n)); }}
-          onClose={() => setShowTermuxFS(false)}
-        />
       )}
 
       {/* Search */}
@@ -622,7 +501,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
             style={{ height: listHeight }}
             rowCount={flatRows.length + (creating && creating.parentId === null ? 1 : 0)}
             rowHeight={ROW_HEIGHT}
-            rowComponent={TreeRow as unknown as (props: any) => React.ReactElement}
+            rowComponent={TreeRow}
             rowProps={itemData}
             className="custom-scrollbar"
             overscanCount={5}

@@ -17,6 +17,7 @@
     "@tailwindcss/vite": "^4.2.2",
     "@types/dompurify": "^3.0.5",
     "@types/express": "^5.0.6",
+    "@types/react-window": "^2.0.0",
     "dompurify": "^3.4.0",
     "express": "^5.2.1",
     "lucide-react": "^0.563.0",
@@ -25,6 +26,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-markdown": "^10.1.0",
+    "react-window": "^2.2.7",
     "remark-gfm": "^4.0.1",
     "tailwindcss": "^4.2.2",
     "tsx": "^4.21.0"
@@ -38,5 +40,8 @@
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vitest": "^4.1.4"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-arm64-gnu": "^4.60.2"
   }
 }
