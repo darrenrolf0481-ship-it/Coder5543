@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   FolderOpen, X, Brain, LayoutTemplate, Upload, Folder,
   Save, ShieldCheck, Globe, MessageSquare, Circle, Network,
@@ -14,6 +14,16 @@ import Editor from '@monaco-editor/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
+
+const _EP_PURIFY_CFG = {
+  ALLOWED_TAGS: ['p','br','strong','em','b','i','u','s','code','pre','blockquote','h1','h2','h3','h4','h5','h6','ul','ol','li','table','thead','tbody','tr','th','td','hr','a','span','div'],
+  ALLOWED_ATTR: ['href','class','id','target','rel'],
+  FORCE_BODY: true,
+};
+const SafeMarkdown: React.FC<{ children: string }> = ({ children }) => {
+  const clean = useMemo(() => DOMPurify.sanitize(children ?? '', _EP_PURIFY_CFG), [children]);
+  return <ReactMarkdown remarkPlugins={[remarkGfm]}>{clean}</ReactMarkdown>;
+};
 
 // ── Props ──────────────────────────────────────────────────────────────────
 
@@ -528,9 +538,9 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                       : 'bg-red-950/20 border border-red-900/20 text-red-100 rounded-tl-none'
                   }`}>
                     <div className="markdown-body">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <SafeMarkdown>
                         {msg.text}
-                      </ReactMarkdown>
+                      </SafeMarkdown>
                     </div>
 
                     {/* Action buttons — always outside markdown div, always reachable */}

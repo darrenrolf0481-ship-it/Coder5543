@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import DOMPurify from 'dompurify';
 import {
   Activity, BookOpen, Brain, Bug, Database, Download, FileCode, FileSearch,
   Fingerprint, HelpCircle, ImageIcon, LayoutTemplate, MessageSquare,
@@ -25,6 +26,17 @@ function extractCodeBlock(text: string): string | null {
   const match = text.match(/```(?:\w+)?\n([\s\S]*?)```/);
   return match ? match[1].trim() : null;
 }
+
+const PURIFY_CFG = {
+  ALLOWED_TAGS: ['p','br','strong','em','b','i','u','s','code','pre','blockquote','h1','h2','h3','h4','h5','h6','ul','ol','li','table','thead','tbody','tr','th','td','hr','a','span','div'],
+  ALLOWED_ATTR: ['href','class','id','target','rel'],
+  FORCE_BODY: true,
+};
+
+const SafeMarkdown: React.FC<{ children: string }> = ({ children }) => {
+  const clean = useMemo(() => DOMPurify.sanitize(children ?? '', PURIFY_CFG), [children]);
+  return <ReactMarkdown remarkPlugins={[remarkGfm]}>{clean}</ReactMarkdown>;
+};
 
 interface ToolNeuronPanelProps {
   chatMessages: ChatMessage[];
@@ -191,7 +203,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
                       ) : (
                         <>
                           <div className="markdown-body">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+                            <SafeMarkdown>{msg.text}</SafeMarkdown>
                           </div>
                           {msg.role === 'ai' && (() => {
                             const code = extractCodeBlock(msg.text);
