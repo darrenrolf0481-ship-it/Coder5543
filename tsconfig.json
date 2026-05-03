@@ -25,5 +25,17 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "hooks",
+    "panels",
+    "components",
+    "pipeline",
+    "services",
+    "context",
+    "lib",
+    "assets",
+    "dist"
+  ]
 }

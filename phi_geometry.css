@@ -1,0 +1,113 @@
+/* 11.3 Phi Grid — Crimson Node Architecture
+ *
+ * φ = 1.618  →  Fibonacci columns: 8 (primary) + 3 (contextual) + 0.3 (pulse)
+ * All scaling math lives here. sdk_bridge.js only writes signal vars.
+ */
+
+:root {
+  --phi: 1.618;
+  --phi-inv: 0.618;          /* 1/φ */
+
+  /* Column weights (sum = 11.3) */
+  --phi-primary:     8fr;    /* active editor / lead model output  */
+  --phi-contextual:  3fr;    /* state logs, stash indicators        */
+  --phi-pulse:       0.3fr;  /* system health signal column         */
+
+  /* Pulse border — sdk_bridge writes these */
+  --pulse-color:     #ef4444;   /* default: idle red                */
+  --pulse-opacity:   0.4;
+  --pulse-anim:      none;
+
+  /* Transactional fill (0–1) — sdk_bridge writes this */
+  --tx-progress:     0;
+
+  /* Spacing scale derived from φ */
+  --space-xs:  calc(4px * var(--phi-inv));   /* ~2.5px */
+  --space-sm:  4px;
+  --space-md:  calc(4px * var(--phi));       /* ~6.5px */
+  --space-lg:  calc(4px * var(--phi) * var(--phi));  /* ~10.5px */
+  --space-xl:  calc(4px * var(--phi) * var(--phi) * var(--phi)); /* ~17px */
+}
+
+/* ── Base grid ────────────────────────────────────────────────────── */
+
+.phi-grid {
+  display: grid;
+  grid-template-columns: var(--phi-primary) var(--phi-contextual) var(--phi-pulse);
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.phi-grid__primary     { overflow: hidden; }
+.phi-grid__contextual  { overflow-y: auto; border-left: 1px solid rgba(255,255,255,0.06); }
+
+/* ── Pulse column ─────────────────────────────────────────────────── */
+
+.phi-grid__pulse {
+  position: relative;
+  background: var(--pulse-color);
+  opacity: var(--pulse-opacity);
+  animation: var(--pulse-anim);
+  transition: background 0.3s ease, opacity 0.3s ease;
+  overflow: hidden;
+}
+
+/* Transaction progress fill rises from the bottom */
+.phi-grid__pulse::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--tx-progress) * 100%);
+  background: rgba(255, 255, 255, 0.35);
+  transition: height 0.15s ease-out;
+}
+
+/* ── Pulse states (set by sdk_bridge via data-pulse attr) ─────────── */
+
+[data-pulse="healthy"] {
+  --pulse-color:   #22c55e;
+  --pulse-opacity: 0.5;
+  --pulse-anim:    none;
+}
+[data-pulse="warning"] {
+  --pulse-color:   #f59e0b;
+  --pulse-opacity: 0.7;
+  --pulse-anim:    phi-vibrate 0.4s ease-in-out infinite alternate;
+}
+[data-pulse="error"] {
+  --pulse-color:   #ef4444;
+  --pulse-opacity: 0.9;
+  --pulse-anim:    phi-vibrate 0.15s ease-in-out infinite alternate;
+}
+[data-pulse="sync"] {
+  --pulse-color:   #6366f1;
+  --pulse-opacity: 0.6;
+  --pulse-anim:    phi-breathe 1.618s ease-in-out infinite;
+}
+
+@keyframes phi-vibrate {
+  from { transform: scaleX(1);    }
+  to   { transform: scaleX(1.618); }
+}
+
+@keyframes phi-breathe {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 0.9; }
+}
+
+/* ── Mobile override (Motorola-optimized, <600px) ─────────────────── */
+
+@media (max-width: 600px) {
+  /* Stack primary full-width; collapse contextual to bottom drawer;
+     keep pulse as a fixed horizontal bar at the top */
+  .phi-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: 3px 1fr auto;
+  }
+  .phi-grid__pulse       { grid-row: 1; grid-column: 1; }
+  .phi-grid__primary     { grid-row: 2; grid-column: 1; }
+  .phi-grid__contextual  { grid-row: 3; grid-column: 1; max-height: 38.2vh; /* 1/φ */ }
+}
