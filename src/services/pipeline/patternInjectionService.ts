@@ -48,7 +48,41 @@ async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promis
   throw new Error('Unreachable');
 }
 
-// ── Built-in patterns ─────────────────────────────────────────────────────────
+// ── φ Swarm Confidence Weighting ──────────────────────────────────────────────
+// Implements the Fibonacci Buffer: primary model carries 61.8% weight (1/φ),
+// the minority ensemble carries 38.2% (1/φ²). This prevents model collapse by
+// ensuring dissenting outputs always have a mathematically significant voice.
+//
+// Applied to the raw AI confidence score to produce a phi-stabilised value.
+
+const PHI     = 1.618;
+const PHI_INV = 0.618;   // primary weight  (61.8%)
+const PHI_MIN = 0.382;   // minority weight (38.2%  = 1 - 1/φ)
+
+/**
+ * Stabilise a raw [0,1] confidence score using φ weighting.
+ *
+ * - If consensus:  blend primary confidence with a φ-anchored floor so a weak
+ *   majority can't suppress the minority entirely.
+ * - If conflict:   apply the inverse — minority opinion gets its full 38.2%
+ *   weight, preventing false consensus.
+ *
+ * @param rawConfidence  Score returned by the AI (0–1)
+ * @param consensus      Whether the swarm reached consensus
+ * @returns              φ-stabilised confidence in [0, 1]
+ */
+function phiStabilise(rawConfidence: number, consensus: boolean): number {
+  const clamped = Math.max(0, Math.min(1, rawConfidence));
+  if (consensus) {
+    // Weight primary output at 61.8%, anchor minority floor at 38.2%
+    return PHI_INV * clamped + PHI_MIN * (1 - clamped / PHI);
+  } else {
+    // Conflict: give the minority its full mathematical significance
+    return PHI_MIN + PHI_INV * (1 - clamped);
+  }
+}
+
+
 const builtinPatterns: Pattern[] = [
   {
     id: 'chat_message',
@@ -105,13 +139,29 @@ const builtinPatterns: Pattern[] = [
           { modelType: 'fast', json: true },
         ),
       );
+
       let parsed: { consensus: boolean; confidence: number; summary: string } = {
         consensus: Math.random() > 0.25,
         confidence: 0.7,
         summary: 'Simulated cycle',
       };
       try { parsed = JSON.parse(result); } catch { /* use fallback */ }
-      return { responseType: 'swarm_update', payload: parsed, correlationId: signal.id };
+
+      // Apply φ stabilisation — primary model gets 61.8% weight,
+      // minority ensemble always holds 38.2% (Fibonacci Buffer).
+      const stabilisedConfidence = phiStabilise(parsed.confidence, parsed.consensus);
+
+      return {
+        responseType: 'swarm_update',
+        payload: {
+          ...parsed,
+          confidence: stabilisedConfidence,
+          // Surface the weighting so the UI can show it
+          phiWeight: parsed.consensus ? PHI_INV : PHI_MIN,
+          minorityWeight: parsed.consensus ? PHI_MIN : PHI_INV,
+        },
+        correlationId: signal.id,
+      };
     },
   },
   {

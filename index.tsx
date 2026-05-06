@@ -96,8 +96,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { GoogleGenAI, Type } from '@google/genai';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { SafeMarkdown } from './src/components/SafeMarkdown';
 import {
   generateAIResponse as generateAIResponseService,
   fetchOllamaModels,
@@ -125,91 +124,7 @@ const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
-const PROJECT_TEMPLATES = {
-  'python-web': {
-    name: 'Python Web App',
-    files: [
-      { id: 'root', name: 'Python_Web_Project', type: 'folder', parentId: null, isOpen: true },
-      {
-        id: 'app.py',
-        name: 'app.py',
-        type: 'file',
-        parentId: 'root',
-        language: 'python',
-        content:
-          'from flask import Flask, render_template\n\napp = Flask(__name__)\n\n@app.route("/")\ndef home():\n    return render_template("index.html")\n\nif __name__ == "__main__":\n    app.run(debug=True)',
-      },
-      { id: 'templates', name: 'templates', type: 'folder', parentId: 'root', isOpen: true },
-      {
-        id: 'index.html',
-        name: 'index.html',
-        type: 'file',
-        parentId: 'templates',
-        language: 'html',
-        content:
-          '<!DOCTYPE html>\n<html>\n<head>\n    <title>Neural Web App</title>\n</head>\n<body style="background: #050101; color: #fecaca; font-family: sans-serif; padding: 2rem;">\n    <h1>Neural Interface Active</h1>\n    <p>Welcome to the Crimson OS web portal.</p>\n</body>\n</html>',
-      },
-      { id: 'static', name: 'static', type: 'folder', parentId: 'root', isOpen: false },
-      {
-        id: 'style.css',
-        name: 'style.css',
-        type: 'file',
-        parentId: 'static',
-        language: 'css',
-        content: 'body { margin: 0; }',
-      },
-    ],
-  },
-  'rust-cli': {
-    name: 'Rust CLI Tool',
-    files: [
-      { id: 'root', name: 'Rust_CLI_Project', type: 'folder', parentId: null, isOpen: true },
-      { id: 'src', name: 'src', type: 'folder', parentId: 'root', isOpen: true },
-      {
-        id: 'main.rs',
-        name: 'main.rs',
-        type: 'file',
-        parentId: 'src',
-        language: 'rust',
-        content:
-          'use std::io;\n\nfn main() {\n    println!("Neural CLI Initialized.");\n    println!("Enter command:");\n    let mut input = String::new();\n    io::stdin().read_line(&mut input).unwrap();\n    println!("Executing: {}", input.trim());\n}',
-      },
-      {
-        id: 'cargo.toml',
-        name: 'Cargo.toml',
-        type: 'file',
-        parentId: 'root',
-        language: 'toml',
-        content:
-          '[package]\nname = "neural-cli"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]',
-      },
-    ],
-  },
-  'neural-module': {
-    name: 'Neural Module',
-    files: [
-      { id: 'root', name: 'Neural_Module', type: 'folder', parentId: null, isOpen: true },
-      {
-        id: 'core.py',
-        name: 'core.py',
-        type: 'file',
-        parentId: 'root',
-        language: 'python',
-        content:
-          'class NeuralModule:\n    def __init__(self):\n        self.active = True\n\n    def run(self):\n        print("Neural Module Running...")\n\nif __name__ == "__main__":\n    module = NeuralModule()\n    module.run()',
-      },
-      {
-        id: 'config.json',
-        name: 'config.json',
-        type: 'file',
-        parentId: 'root',
-        language: 'json',
-        content:
-          '{\n  "module_name": "NeuralCore",\n  "version": "1.0.0",\n  "permissions": ["vault", "vision"]\n}',
-      },
-    ],
-  },
-};
+import { PROJECT_TEMPLATES } from './src/services/templates';
 
 const DRAFT_KEY = 'crimson_draft';
 
@@ -232,33 +147,6 @@ function makePrompt({ lang, code, instruction, extra = '', json = false }: Promp
   const format = json ? '\n\nRespond ONLY with valid JSON. No markdown fences.' : '';
   return base + suffix + format;
 }
-
-// ── Safe Markdown Renderer ────────────────────────────────────────────────────
-// Sanitizes AI output through DOMPurify before ReactMarkdown parses it,
-// preventing XSS if the model ever returns malicious HTML.
-
-const DOMPURIFY_CONFIG = {
-  ALLOWED_TAGS: [
-    'p','br','strong','em','b','i','u','s','code','pre','blockquote',
-    'h1','h2','h3','h4','h5','h6','ul','ol','li','table','thead','tbody',
-    'tr','th','td','hr','a','span','div',
-  ],
-  ALLOWED_ATTR: ['href','class','id','target','rel'],
-  FORCE_BODY: true,
-};
-
-const SafeMarkdown: React.FC<{ children: string }> = ({ children }) => {
-  const sanitized = React.useMemo(
-    () => DOMPurify.sanitize(children ?? '', DOMPURIFY_CONFIG),
-    [children]
-  );
-  return (
-    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-      {sanitized}
-    </ReactMarkdown>
-  );
-};
-
 
 // Connects brain endocrine state → CSS pulse column and transaction indicator.
 // φ = 1.618 | 1/φ = 0.618 | Warn threshold = 61.8% | Evict threshold = 38.2%
@@ -2206,12 +2094,18 @@ const App: React.FC = () => {
 
   const handleSaveAnalysis = (analysisText: string) => {
     const isAudit = analysisText.includes('DEEP_PROJECT_AUDIT');
-    const prefix = isAudit ? 'audit' : 'analysis';
-    const fileName = `${prefix}_${new Date().getTime()}.md`;
+    const defaultName = `${isAudit ? 'audit' : 'analysis'}_${new Date().getTime()}.md`;
+    const chosenName = window.prompt('Enter filename to save analysis:', defaultName);
+
+    if (chosenName === null) return; // User cancelled
+
+    let fileName = chosenName.trim() || defaultName;
+    if (!fileName.includes('.')) fileName += '.md';
+
     const newFile = {
-      id: `${prefix}_${Date.now()}`,
+      id: `analysis_${Date.now()}`,
       name: fileName,
-      type: 'file',
+      type: 'file' as const,
       parentId: 'root',
       language: 'markdown',
       content: analysisText,
@@ -2222,7 +2116,7 @@ const App: React.FC = () => {
     setEditorContent(analysisText);
     setEditorLanguage('markdown');
     setEditorOutput(
-      (prev) => prev + `[SYSTEM] ${isAudit ? 'Audit' : 'Analysis'} saved as "${fileName}".\n`
+      (prev) => prev + `[SYSTEM] Analysis saved as "${fileName}".\n`
     );
   };
 
@@ -3096,23 +2990,45 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
     }
   };
 
-  const handleEditorAssistantSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const prompt = editorAssistantInput.trim();
+  const [lastEditorAssistantPrompt, setLastEditorAssistantPrompt] = useState('');
+  const handleEditorAssistantSubmit = async (e?: React.FormEvent, promptOverride?: string) => {
+    if (e) e.preventDefault();
+    const prompt = promptOverride || editorAssistantInput.trim();
     if (!prompt) return;
 
+    if (!promptOverride) {
+      setLastEditorAssistantPrompt(prompt);
+      setEditorAssistantInput('');
+    }
+
+    const activeFileName = projectFiles.find((f: any) => f.id === activeFileId)?.name || 'unknown';
+    const recentMessages = editorAssistantMessages.slice(-6).map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
+
     setEditorAssistantMessages((prev) => [...prev, { role: 'user', text: prompt }]);
-    setEditorAssistantInput('');
     setIsAiProcessing(true);
 
     try {
       const response = await generateAIResponse(
-        `Context: Coding in ${editorLanguage}. Current code:\n${editorContent}\n\nUser request: ${prompt}`,
-        'You are a world-class coding assistant. Help the user with their code. You can provide code snippets, debug, or explain concepts. Keep responses concise and technical. If you provide a code snippet, wrap it in triple backticks with the language specified.',
+        `[NEURAL_CONTEXT_INIT]
+Active File: ${activeFileName}
+Language: ${editorLanguage}
+
+[HISTORY_STREAM]
+${recentMessages || 'No previous history.'}
+
+[CODE_BUFFER_START]
+\`\`\`${editorLanguage}
+${editorContent}
+\`\`\`
+[CODE_BUFFER_END]
+
+[OPERATOR_DIRECTIVE]
+${prompt}`,
+        'You are the Crimson Neural Assistant, a world-class coding intelligence. Help the operator with their code. Be extremely technical, concise, and pro-active. Always wrap code snippets in triple backticks with the correct language. If you identify security flaws, performance bottlenecks, or logical errors, highlight them immediately using [ALERT] blocks.',
         { modelType: 'smart' }
       );
 
-      const text = response || 'Process finalized.';
+      const text = response || 'Neural synchronization complete. No response payload.';
       const codeMatch = text.match(/```[\s\S]*?```/);
       const extractedCode = codeMatch ? codeMatch[0].replace(/```[a-z]*\n|```/g, '') : null;
 
@@ -3124,10 +3040,11 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
           metadata: extractedCode ? { generatedCode: extractedCode } : undefined,
         },
       ]);
-    } catch (err) {
+    } catch (err: any) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
       setEditorAssistantMessages((prev) => [
         ...prev,
-        { role: 'ai', text: 'CRITICAL ERROR: Neural link failed.' },
+        { role: 'ai', text: `[CRITICAL_FAILURE] Neural link severed. Reason: ${errorMsg}` },
       ]);
     } finally {
       setIsAiProcessing(false);
@@ -4429,6 +4346,7 @@ Current System State:
               handleApplyRefactor={handleApplyRefactor}
               handleApplyForge={handleApplyForge}
               isAiProcessing={isAiProcessing}
+              lastEditorAssistantPrompt={lastEditorAssistantPrompt}
               handleExplainCode={handleExplainCode}
               handleFullProjectAnalysis={handleFullProjectAnalysis}
               handleDeepProjectAudit={handleDeepProjectAudit}
