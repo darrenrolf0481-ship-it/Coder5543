@@ -1,5 +1,6 @@
 import React from 'react';
 import { FileCode, Sparkles, Wand2 } from 'lucide-react';
+import { SafeMarkdown } from '../SafeMarkdown';
 
 // ── Props ──────────────────────────────────────────────────────────────────
 
@@ -61,8 +62,10 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                 <span className="text-[10px] font-black text-red-700 uppercase tracking-[0.3em]">Analyzing Code Structure...</span>
               </div>
             ) : (
-              <div className="text-xs font-mono text-red-100 whitespace-pre-wrap leading-relaxed">
-                {editorOutput || "No analysis generated yet. Enter a prompt below to analyze the current file."}
+              <div className="text-[12px] leading-relaxed text-red-100 markdown-body">
+                <SafeMarkdown>
+                  {editorOutput || "No analysis generated yet. Enter a prompt below to analyze the current file."}
+                </SafeMarkdown>
               </div>
             )}
           </div>

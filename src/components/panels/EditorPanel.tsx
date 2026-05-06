@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   FolderOpen, X, Brain, LayoutTemplate, Upload, Folder,
   Save, ShieldCheck, Globe, MessageSquare, Circle, Network,
@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 import { FileTree } from '../FileTree';
 import Editor from '@monaco-editor/react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { SafeMarkdown } from '../SafeMarkdown';
+import { ActionButton } from '../ActionButton';
 import DOMPurify from 'dompurify';
 
 // ── Props ──────────────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ interface EditorPanelProps {
   editorAssistantMessages: any[];
   editorAssistantInput: string;
   setEditorAssistantInput: (v: string) => void;
-  handleEditorAssistantSubmit: (e: React.FormEvent) => void;
+  handleEditorAssistantSubmit: (e?: React.FormEvent, promptOverride?: string) => void;
   handleCodeReview: () => void;
   handleSaveAnalysis: (analysisText: string) => void;
   handleApplyDocumentation: (documentedCode: string, isSelection: boolean, selection: any) => void;
@@ -88,6 +88,7 @@ interface EditorPanelProps {
 
   // AI processing
   isAiProcessing: boolean;
+  lastEditorAssistantPrompt: string;
   handleExplainCode: () => void;
   handleFullProjectAnalysis: () => void;
   handleDeepProjectAudit: () => void;
@@ -187,7 +188,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
   editorAssistantMessages, editorAssistantInput, setEditorAssistantInput,
   handleEditorAssistantSubmit, handleCodeReview, handleSaveAnalysis,
   handleApplyDocumentation, handleApplyRefactor, handleApplyForge,
-  isAiProcessing, handleExplainCode, handleFullProjectAnalysis,
+  isAiProcessing, lastEditorAssistantPrompt, handleExplainCode, handleFullProjectAnalysis,
   handleDeepProjectAudit, handleGenerateDocs, handleFormatCode,
   handleRefactorCode, handleRefactorAllFiles, handleReviewCode,
   handleAnalyzeData, handleGenerateCode,
@@ -527,52 +528,71 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                       ? 'bg-red-800 text-white rounded-tr-none'
                       : 'bg-red-950/20 border border-red-900/20 text-red-100 rounded-tl-none'
                   }`}>
-                    <div className="markdown-body prose prose-invert prose-red max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <div className="markdown-body">
+                      <SafeMarkdown>
                         {msg.text}
-                      </ReactMarkdown>
+                      </SafeMarkdown>
                     </div>
-                    {msg.role === 'ai' && (msg.text.includes('CODE_ANALYSIS') || msg.text.includes('FULL_PROJECT_ANALYSIS') || msg.text.includes('DEEP_PROJECT_AUDIT')) && (
-                      <button
-                        onClick={() => handleSaveAnalysis(msg.text)}
-                        className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-red-900/40 border border-red-500/30 rounded-lg text-[9px] font-black uppercase tracking-widest text-red-100 hover:bg-red-800/60 transition-all"
-                      >
-                        <Save className="w-3 h-3" />
-                        Save Report
-                      </button>
-                    )}
-                    {msg.role === 'ai' && msg.text.includes('DOCUMENTATION_GENERATED') && msg.metadata && (
-                      <button
-                        onClick={() => handleApplyDocumentation(msg.metadata.documentedCode, msg.metadata.isSelection, msg.metadata.selection)}
-                        className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-red-700 border border-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all"
-                      >
-                        <FileText className="w-3 h-3" />
-                        Apply Documentation
-                      </button>
-                    )}
-                    {msg.role === 'ai' && msg.text.includes('REFACTOR_COMPLETE') && msg.metadata && (
-                      <div className="mt-4 space-y-4">
-                        <div className="p-3 bg-black/40 rounded-lg border border-red-900/30">
-                          <h6 className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-2">Refactoring Explanation</h6>
-                          <p className="text-[11px] text-red-200/80 leading-relaxed">{msg.metadata.explanation}</p>
-                        </div>
-                        <button
-                          onClick={() => handleApplyRefactor(msg.metadata.refactoredCode, msg.metadata.isSelection, msg.metadata.selection)}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-red-700 border border-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all"
-                        >
-                          <Check className="w-3 h-3" />
-                          Apply Refactor
-                        </button>
+
+                    {/* Action buttons — always outside markdown div, always reachable */}
+                    {msg.role === 'ai' && (
+                      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-red-900/20 empty:hidden">
+
+                        {(msg.text.includes('CODE_ANALYSIS') || msg.text.includes('FULL_PROJECT_ANALYSIS') || msg.text.includes('DEEP_PROJECT_AUDIT')) && (
+                          <ActionButton
+                            onClick={() => handleSaveAnalysis(msg.text)}
+                            icon={Save}
+                            label="Save Report"
+                            activeLabel="Saved!"
+                          />
+                        )}
+
+                        {msg.text.includes('DOCUMENTATION_GENERATED') && msg.metadata?.documentedCode && (
+                          <ActionButton
+                            onClick={() => handleApplyDocumentation(msg.metadata.documentedCode, msg.metadata.isSelection, msg.metadata.selection)}
+                            icon={FileText}
+                            label="Apply Documentation"
+                            activeLabel="Applied!"
+                          />
+                        )}
+
+                        {msg.text.includes('REFACTOR_COMPLETE') && msg.metadata?.refactoredCode && (
+                          <>
+                            {msg.metadata.explanation && (
+                              <div className="w-full p-3 bg-black/40 rounded-lg border border-red-900/30 mb-1">
+                                <h6 className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1">Refactoring Explanation</h6>
+                                <p className="text-[11px] text-red-200/80 leading-relaxed">{msg.metadata.explanation}</p>
+                              </div>
+                            )}
+                            <ActionButton
+                              onClick={() => handleApplyRefactor(msg.metadata.refactoredCode, msg.metadata.isSelection, msg.metadata.selection)}
+                              icon={Check}
+                              label="Apply Refactor"
+                              activeLabel="Applied!"
+                            />
+                          </>
+                        )}
+
+                        {msg.metadata?.generatedCode && (
+                          <ActionButton
+                            onClick={() => handleApplyForge(msg.metadata.generatedCode, msg.metadata.isSnippet)}
+                            icon={Zap}
+                            label={msg.metadata.isSnippet ? 'Insert Snippet' : 'Replace File'}
+                            activeLabel="Forged!"
+                            variant="emerald"
+                          />
+                        )}
+
+                        {msg.text.includes('[CRITICAL_FAILURE]') && lastEditorAssistantPrompt && (
+                          <ActionButton
+                            onClick={() => handleEditorAssistantSubmit(undefined, lastEditorAssistantPrompt)}
+                            icon={RefreshCw}
+                            label="Retry"
+                            activeLabel="Retrying..."
+                          />
+                        )}
+
                       </div>
-                    )}
-                    {msg.role === 'ai' && msg.metadata?.generatedCode && (
-                      <button
-                        onClick={() => handleApplyForge(msg.metadata.generatedCode, msg.metadata.isSnippet)}
-                        className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-emerald-700 border border-emerald-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-emerald-600 transition-all"
-                      >
-                        <Zap className="w-3 h-3" />
-                        {msg.metadata.isSnippet ? 'Insert Snippet' : 'Replace File'}
-                      </button>
                     )}
                   </div>
                 </div>

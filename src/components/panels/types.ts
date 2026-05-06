@@ -1,0 +1,10 @@
+export type DebugAnalysis = {
+  static: { status: 'idle' | 'running' | 'done'; issues: { type: 'error' | 'warning' | 'info'; message: string; line?: number }[] };
+  tracing: { status: 'idle' | 'running' | 'done'; logs: string[] };
+  refactoring: { status: 'idle' | 'running' | 'done'; suggestions: string[] };
+};
+
+export type SwarmAgent = { id: string; name: string; expertise: string; status: 'active' | 'idle'; trust: number };
+export type SwarmLog = { id: number; type: 'consensus' | 'pain' | 'info'; message: string; time: string };
+export type KnowledgePack = { id: number; name: string; size: string; status: string };
+export type ChatMessage = { role: 'user' | 'ai'; text: string; type?: 'text' | 'image'; url?: string; timestamp: number };
