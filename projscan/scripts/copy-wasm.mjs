@@ -1,0 +1,54 @@
+import { copyFile, mkdir, stat } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(here, '..');
+
+const targets = [
+  {
+    from: path.join(root, 'node_modules/web-tree-sitter/web-tree-sitter.wasm'),
+    to: path.join(root, 'dist/grammars/web-tree-sitter.wasm'),
+  },
+  {
+    from: path.join(root, 'node_modules/tree-sitter-python/tree-sitter-python.wasm'),
+    to: path.join(root, 'dist/grammars/tree-sitter-python.wasm'),
+  },
+  {
+    from: path.join(root, 'node_modules/tree-sitter-go/tree-sitter-go.wasm'),
+    to: path.join(root, 'dist/grammars/tree-sitter-go.wasm'),
+  },
+  {
+    from: path.join(root, 'node_modules/tree-sitter-java/tree-sitter-java.wasm'),
+    to: path.join(root, 'dist/grammars/tree-sitter-java.wasm'),
+  },
+  {
+    from: path.join(root, 'node_modules/tree-sitter-ruby/tree-sitter-ruby.wasm'),
+    to: path.join(root, 'dist/grammars/tree-sitter-ruby.wasm'),
+  },
+  {
+    from: path.join(root, 'node_modules/tree-sitter-rust/tree-sitter-rust.wasm'),
+    to: path.join(root, 'dist/grammars/tree-sitter-rust.wasm'),
+  },
+  {
+    from: path.join(root, 'node_modules/tree-sitter-php/tree-sitter-php.wasm'),
+    to: path.join(root, 'dist/grammars/tree-sitter-php.wasm'),
+  },
+  {
+    from: path.join(root, 'node_modules/tree-sitter-c-sharp/tree-sitter-c_sharp.wasm'),
+    to: path.join(root, 'dist/grammars/tree-sitter-c_sharp.wasm'),
+  },
+];
+
+await mkdir(path.join(root, 'dist/grammars'), { recursive: true });
+
+for (const { from, to } of targets) {
+  try {
+    await stat(from);
+  } catch {
+    throw new Error(`Source wasm not found: ${from}\nRun \`npm install\` first.`);
+  }
+  await copyFile(from, to);
+  const { size } = await stat(to);
+  console.log(`copied ${path.basename(to)} (${(size / 1024).toFixed(1)} KB)`);
+}

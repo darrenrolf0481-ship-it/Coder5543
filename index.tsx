@@ -288,7 +288,6 @@ function useAiRequest(generateFn: (...args: any[]) => Promise<any>) {
 }
 
 const App: React.FC = () => {
-  // Crash recovery state
   const [hasRecoveryDraft, setHasRecoveryDraft] = useState(false);
   const [recoveryDraft, setRecoveryDraft] = useState<{
     fileId: string;
@@ -298,6 +297,77 @@ const App: React.FC = () => {
   } | null>(null);
 
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [projectFiles, setProjectFiles] = useState<any[]>([
+    { id: 'root', name: 'Project', type: 'folder', parentId: null, isOpen: true },
+    { id: 'src', name: 'src', type: 'folder', parentId: 'root', isOpen: true },
+    {
+      id: 'brain.py',
+      name: 'neural_brain.py',
+      type: 'file',
+      parentId: 'src',
+      language: 'python',
+      content:
+        '# AI Brain Logic\nclass NeuralCore:\n    def __init__(self):\n        self.synapses = 10**12\n\n    def process(self, input_data):\n        return f"Neural processing: {input_data}"\n\ncore = NeuralCore()\nprint(core.process("Initial stimulus"))',
+    },
+    {
+      id: 'ui.html',
+      name: 'interface.html',
+      type: 'file',
+      parentId: 'src',
+      language: 'html',
+      content:
+        '<div class="p-8 bg-red-900/20 rounded-3xl border border-red-500/30">\n  <h1 class="text-2xl font-black text-red-500 uppercase">Neural Interface</h1>\n  <p class="text-red-100/60 mt-4">Real-time UI component rendering via Crimson Engine.</p>\n  <button class="mt-8 px-6 py-3 bg-red-700 text-white rounded-xl uppercase font-black text-xs tracking-widest">Activate Core</button>\n</div>',
+    },
+    {
+      id: 'logic.rs',
+      name: 'core_logic.rs',
+      type: 'file',
+      parentId: 'src',
+      language: 'rust',
+      content:
+        'fn main() {\n    let neural_load = 0.85;\n    println!("System load: {}%", neural_load * 100.0);\n}',
+    },
+  ]);
+  const [activeFileId, setActiveFileId] = useState('brain.py');
+  const [editorLanguage, setEditorLanguage] = useState('python');
+
+  const dirtyIdsRef   = useRef<Set<string>>(new Set());
+  const idleHandleRef = useRef<number | null>(null);
+
+  // Mark a file dirty whenever its content changes
+  const markFileDirty = useCallback((id: string) => {
+    dirtyIdsRef.current.add(id);
+    scheduleDirtyFlush();
+  }, []);
+
+  const scheduleDirtyFlush = useCallback(() => {
+    if (idleHandleRef.current !== null) return; // already scheduled
+    const flush = () => {
+      idleHandleRef.current = null;
+      const ids = Array.from(dirtyIdsRef.current);
+      if (ids.length === 0) return;
+
+      dirtyIdsRef.current.clear();
+
+      const toWrite = projectFiles
+        .filter(f => f.type === 'file' && ids.includes(f.id))
+        .map(f => ({ id: f.id, content: f.content ?? '' }));
+
+      if (toWrite.length === 0) return;
+      phi.beginTx();
+      saveFileContents(toWrite)
+        .then(() => phi.commitTx())
+        .catch(err => { phi.rollbackTx(); console.warn('[IdleFlush]', err); });
+    };
+
+    if (typeof requestIdleCallback !== 'undefined') {
+      idleHandleRef.current = requestIdleCallback(flush, { timeout: 2000 });
+    } else {
+      // Safari fallback — setTimeout at low priority
+      idleHandleRef.current = setTimeout(flush, 2000) as unknown as number;
+    }
+  }, [projectFiles]);
+
   const [postCommitModalOpen, setPostCommitModalOpen] = useState(false);
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [commitMessage, setCommitMessage] = useState('');
@@ -524,39 +594,6 @@ const App: React.FC = () => {
   ]);
 
   // Editor State
-  const [editorLanguage, setEditorLanguage] = useState('python');
-  const [projectFiles, setProjectFiles] = useState<any[]>([
-    { id: 'root', name: 'Project', type: 'folder', parentId: null, isOpen: true },
-    { id: 'src', name: 'src', type: 'folder', parentId: 'root', isOpen: true },
-    {
-      id: 'brain.py',
-      name: 'neural_brain.py',
-      type: 'file',
-      parentId: 'src',
-      language: 'python',
-      content:
-        '# AI Brain Logic\nclass NeuralCore:\n    def __init__(self):\n        self.synapses = 10**12\n\n    def process(self, input_data):\n        return f"Neural processing: {input_data}"\n\ncore = NeuralCore()\nprint(core.process("Initial stimulus"))',
-    },
-    {
-      id: 'ui.html',
-      name: 'interface.html',
-      type: 'file',
-      parentId: 'src',
-      language: 'html',
-      content:
-        '<div class="p-8 bg-red-900/20 rounded-3xl border border-red-500/30">\n  <h1 class="text-2xl font-black text-red-500 uppercase">Neural Interface</h1>\n  <p class="text-red-100/60 mt-4">Real-time UI component rendering via Crimson Engine.</p>\n  <button class="mt-8 px-6 py-3 bg-red-700 text-white rounded-xl uppercase font-black text-xs tracking-widest">Activate Core</button>\n</div>',
-    },
-    {
-      id: 'logic.rs',
-      name: 'core_logic.rs',
-      type: 'file',
-      parentId: 'src',
-      language: 'rust',
-      content:
-        'fn main() {\n    let neural_load = 0.85;\n    println!("System load: {}%", neural_load * 100.0);\n}',
-    },
-  ]);
-  const [activeFileId, setActiveFileId] = useState('brain.py');
   const [editorContent, setEditorContent] = useState(
     projectFiles.find((f) => f.type === 'file')?.content ?? ''
   );
@@ -626,6 +663,7 @@ const App: React.FC = () => {
     setProjectFiles((prev) =>
       prev.map((f) => (f.id === activeFileId ? { ...f, content: editorContent } : f))
     );
+    markFileDirty(activeFileId); // Trigger background persistence to IndexedDB
     setLastSavedTime(new Date().toLocaleTimeString());
     try {
       const fileName = projectFiles.find((f: any) => f.id === activeFileId)?.name ?? activeFileId;
@@ -634,6 +672,40 @@ const App: React.FC = () => {
         JSON.stringify({ fileId: activeFileId, fileName, content: editorContent, ts: Date.now() })
       );
     } catch {}
+  }, [activeFileId, editorContent, projectFiles, markFileDirty]);
+
+  // saveToFile: let the user pick a location on disk and write the current file there
+  const saveToFile = useCallback(async () => {
+    if (!activeFileId) return;
+    const fileName = projectFiles.find((f: any) => f.id === activeFileId)?.name ?? 'file.txt';
+    const content = editorContent;
+
+    if ('showSaveFilePicker' in window) {
+      try {
+        const ext = fileName.includes('.') ? fileName.split('.').pop()! : 'txt';
+        const handle = await (window as any).showSaveFilePicker({
+          suggestedName: fileName,
+          types: [{ description: 'File', accept: { 'text/plain': [`.${ext}`] } }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(content);
+        await writable.close();
+        setLastSavedTime(new Date().toLocaleTimeString());
+        return;
+      } catch (e: any) {
+        if (e?.name === 'AbortError') return; // user cancelled
+      }
+    }
+
+    // Fallback: trigger a download so the user can choose where to save
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+    setLastSavedTime(new Date().toLocaleTimeString());
   }, [activeFileId, editorContent, projectFiles]);
 
   // Write crash-recovery draft every 500ms on content change
@@ -1142,47 +1214,6 @@ const App: React.FC = () => {
     },
     2000
   );
-
-  // ── Idle-flush dirty queue ────────────────────────────────────────────────
-  // Instead of serialising ALL projectFiles every 2s on a debounce clock,
-  // we track only the IDs that changed, then flush just those files during
-  // a browser idle period. Main thread never blocks on a keystroke.
-
-  const dirtyIdsRef   = useRef<Set<string>>(new Set());
-  const idleHandleRef = useRef<number | null>(null);
-
-  // Mark a file dirty whenever its content changes
-  const markFileDirty = useCallback((id: string) => {
-    dirtyIdsRef.current.add(id);
-    scheduleDirtyFlush();
-  }, []);
-
-  const scheduleDirtyFlush = useCallback(() => {
-    if (idleHandleRef.current !== null) return; // already scheduled
-    const flush = () => {
-      idleHandleRef.current = null;
-      const ids = Array.from(dirtyIdsRef.current);
-      if (ids.length === 0) return;
-      dirtyIdsRef.current.clear();
-
-      const toWrite = projectFiles
-        .filter(f => f.type === 'file' && ids.includes(f.id))
-        .map(f => ({ id: f.id, content: f.content ?? '' }));
-
-      if (toWrite.length === 0) return;
-      phi.beginTx();
-      saveFileContents(toWrite)
-        .then(() => phi.commitTx())
-        .catch(err => { phi.rollbackTx(); console.warn('[IdleFlush]', err); });
-    };
-
-    if (typeof requestIdleCallback !== 'undefined') {
-      idleHandleRef.current = requestIdleCallback(flush, { timeout: 2000 });
-    } else {
-      // Safari fallback — setTimeout at low priority
-      idleHandleRef.current = setTimeout(flush, 2000) as unknown as number;
-    }
-  }, [projectFiles]);
 
   // Cancel any pending idle callback on unmount
   useEffect(() => () => {
@@ -4321,6 +4352,7 @@ Current System State:
               handleScanCode={handleScanCode}
               lastSavedTime={lastSavedTime}
               forceSave={forceSave}
+              saveToFile={saveToFile}
               isLivePreviewEnabled={isLivePreviewEnabled}
               setIsLivePreviewEnabled={setIsLivePreviewEnabled}
               isInspectorActive={isInspectorActive}

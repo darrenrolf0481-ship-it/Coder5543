@@ -49,6 +49,7 @@ interface EditorPanelProps {
   // Save state
   lastSavedTime: string | null;
   forceSave: () => void;
+  saveToFile: () => void;
 
   // Preview & inspector state
   isLivePreviewEnabled: boolean;
@@ -178,7 +179,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
   editorOutput, setEditorOutput, editorMode, setEditorMode, theme,
   debouncedEditorContent,
   isRunningCode, isScanningCode, scanResults, handleRunCode, handleScanCode,
-  lastSavedTime, forceSave,
+  lastSavedTime, forceSave, saveToFile,
   isLivePreviewEnabled, setIsLivePreviewEnabled,
   isInspectorActive, setIsInspectorActive,
   inspectedElement, setInspectedElement, inspectedElementRef, previewContainerRef,
@@ -287,14 +288,24 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                   </button>
                 ))}
               </div>
-              <button
-                onClick={forceSave}
-                title="Save (Ctrl+S)"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-900/30 border border-red-700/40 text-red-400 hover:bg-red-700 hover:text-white transition-all shrink-0"
-              >
-                <Save className="w-3 h-3" />
-                <span className="hidden sm:inline">Save</span>
-              </button>
+              <div className="flex items-center shrink-0">
+                <button
+                  onClick={forceSave}
+                  title="Save to app (Ctrl+S)"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-l-lg text-[9px] font-black uppercase tracking-widest bg-red-900/30 border border-red-700/40 text-red-400 hover:bg-red-700 hover:text-white transition-all"
+                >
+                  <Save className="w-3 h-3" />
+                  <span className="hidden sm:inline">Save</span>
+                </button>
+                <button
+                  onClick={saveToFile}
+                  title="Save As — choose location on disk"
+                  className="flex items-center gap-1 px-2 py-1.5 rounded-r-lg text-[9px] font-black uppercase tracking-widest bg-red-900/20 border border-l-0 border-red-700/40 text-red-500 hover:bg-red-700 hover:text-white transition-all"
+                >
+                  <span className="hidden sm:inline">As...</span>
+                  <span className="sm:hidden">↓</span>
+                </button>
+              </div>
               {lastSavedTime && (
                 <div className="flex items-center gap-2 text-[8px] md:text-[9px] font-black text-red-900 uppercase tracking-widest animate-in fade-in duration-500 shrink-0">
                   <ShieldCheck className="w-3 h-3" />
