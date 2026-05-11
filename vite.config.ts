@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     return {
       server: {
-        port: 3001,
+        port: 3003,
         host: '0.0.0.0',
       },
       plugins: [react(), tailwindcss()],
@@ -38,3 +38,4 @@ export default defineConfig(({ mode }) => {
       }
     };
 });
+
