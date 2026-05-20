@@ -9,6 +9,7 @@ interface KnowledgeEntry {
   size?: number;
   addedAt: string;
 }
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import './index.css';
 import './phi_geometry.css';
@@ -109,6 +110,22 @@ import type { PatternResult } from './src/services/pipeline/patternInjectionServ
 // Initialize AI
 
 // LocalStorage Key
+interface WorkerConfig {
+  id: number;
+  label: string;
+  enabled: boolean;
+  provider: 'google' | 'grok' | 'ollama';
+  model: string;
+  url: string;
+  models: string[];
+}
+
+const DEFAULT_WORKERS: WorkerConfig[] = [
+  { id: 1, label: 'W1', enabled: true, provider: 'ollama', model: 'llama3', url: 'http://127.0.0.1:11434', models: [] },
+  { id: 2, label: 'W2', enabled: true, provider: 'ollama', model: 'llama3', url: 'http://127.0.0.1:11434', models: [] },
+  { id: 3, label: 'W3', enabled: true, provider: 'ollama', model: 'llama3', url: 'http://127.0.0.1:11434', models: [] },
+];
+
 const STORAGE_KEY = 'crimson_os_prefs';
 
 // Utility to convert file to base64 string
@@ -896,57 +913,58 @@ const App: React.FC = () => {
   });
 
   // Personalities
-  const [aiProvider, setAiProvider] = useState<'google' | 'grok' | 'ollama'>('google');
-  const [aiModel, setAiModel] = useState<string>('gemini-2.5-pro-preview-05-06');
-  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
-  const [ollamaStatus, setOllamaStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>(
-    'idle'
-  );
+  const [workers, setWorkers] = useState<WorkerConfig[]>(DEFAULT_WORKERS);
+  const [workerSheetOpen, setWorkerSheetOpen] = useState(false);
+  // Shared model list fetched from Ollama — all workers draw from this same list
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [ollamaStatus, setOllamaStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+
+  const CLOUD_MODELS = [
+    'kimi-k2:latest',
+    'deepseek-v3:latest',
+    'deepseek-r1:latest',
+    'bjoernb/gemma4-31b-fast:latest',
+    'qwq:32b',
+    'qwen2.5:72b',
+    'llama3.3:70b',
+    'mistral:latest',
+    'phi4:latest',
+  ];
 
   const refreshOllamaModels = useCallback(
     async (silent = false) => {
+      const url = workers.find(w => w.provider === 'ollama')?.url || 'http://127.0.0.1:11434';
       setOllamaStatus('connecting');
-      const url = projectSettings.ollamaUrl || 'http://127.0.0.1:11434';
-
       try {
-        const models = await fetchOllamaModels(url);
-        setOllamaModels(models);
+        const fetched = await fetchOllamaModels(url);
+        const merged = [...new Set([...fetched, ...CLOUD_MODELS])];
+        setAvailableModels(merged);
         setOllamaStatus('connected');
-        if (models.length > 0 && !models.includes(aiModel)) {
-          setAiModel(models[0]);
-        }
+        // Auto-assign distinct models to each worker if they're all on the same default
+        setWorkers(prev => prev.map((w, i) => ({
+          ...w,
+          model: fetched.includes(w.model) ? w.model : (fetched[i % fetched.length] || w.model),
+        })));
       } catch (err: any) {
-        console.warn('Ollama is not reachable:', err.message);
-        setOllamaModels([]);
+        setAvailableModels(CLOUD_MODELS);
         setOllamaStatus('error');
-
         if (!silent) {
-          setChatMessages((prev) => [
-            {
-              role: 'ai',
-              text: `⚠️ **Ollama Connection Error**: ${err.message}
-          
-**Common Fixes:**
-1. Ensure Ollama is running.
-2. If the app is hosted on HTTPS, you must use an HTTPS Ollama URL or run Ollama locally on a machine that allows insecure connections.
-3. Set the environment variable: \`OLLAMA_ORIGINS="*" ollama serve\` to allow browser access.
-4. Check the URL in **Project Config**.`,
-              timestamp: Date.now(),
-            },
-            ...prev,
-          ]);
+          setChatMessages(prev => [{
+            role: 'ai',
+            text: `⚠️ **Ollama Connection Error**: ${err.message}\n\nSet \`OLLAMA_ORIGINS="*" ollama serve\` to allow browser access.`,
+            timestamp: Date.now(),
+          }, ...prev]);
         }
       }
     },
-    [aiProvider, projectSettings.ollamaUrl, aiModel]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [workers]
   );
 
-  // --- OLLAMA MODELS FETCH ---
   useEffect(() => {
-    if (aiProvider === 'ollama') {
-      refreshOllamaModels(true);
-    }
-  }, [aiProvider, projectSettings.ollamaUrl]);
+    refreshOllamaModels(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [grokApiKey, setGrokApiKey] = useState<string>('');
   const [geminiApiKey, setGeminiApiKey] = useState<string>(
@@ -1155,8 +1173,19 @@ const App: React.FC = () => {
             }));
           });
         }
-        if (parsed.aiProvider) setAiProvider(parsed.aiProvider);
-        if (parsed.aiModel) setAiModel(parsed.aiModel);
+        if (parsed.workers) {
+          // Merge saved config with defaults; always reset models:[] (re-fetched on mount)
+          setWorkers((DEFAULT_WORKERS.map(def => {
+            const saved = parsed.workers.find((w: Partial<WorkerConfig>) => w.id === def.id);
+            return saved ? { ...def, ...saved, models: [] } : def;
+          })));
+        } else if (parsed.aiProvider) {
+          // backward compat: single provider → slot W1
+          setWorkers(prev => prev.map((w, i) => i === 0
+            ? { ...w, enabled: true, provider: parsed.aiProvider, model: parsed.aiModel || w.model }
+            : w
+          ));
+        }
         if (parsed.grokApiKey) setGrokApiKey(parsed.grokApiKey);
         if (parsed.geminiApiKey) setGeminiApiKey(parsed.geminiApiKey);
         if (
@@ -1202,8 +1231,7 @@ const App: React.FC = () => {
       negativePrompt,
       sdParams,
       personalities,
-      aiProvider,
-      aiModel,
+      workers: workers.map(({ models: _m, ...rest }) => rest), // don't persist fetched models
       grokApiKey,
       geminiApiKey,
       projectFiles: projectFiles.map(({ content: _c, ...meta }) => meta),
@@ -1452,32 +1480,63 @@ const App: React.FC = () => {
   }, []);
 
   const generateAIResponse = useCallback(
-    (
+    async (
       prompt: string | any[],
       systemInstruction: string,
       options?: { modelType?: 'fast' | 'smart'; json?: boolean; responseSchema?: any; brainContext?: any },
       domain = 'default'
     ) => {
-      if (aiProvider === 'google' && !googleAiClient) {
-        return Promise.reject(new Error('Gemini API key not configured — set VITE_GEMINI_API_KEY'));
-      }
-      if (aiProvider === 'grok' && !grokApiKey) {
-        return Promise.reject(new Error('Grok API key not configured'));
+      const active = workers.filter(w => w.enabled);
+      if (active.length === 0) return Promise.reject(new Error('No workers enabled'));
+      for (const w of active) {
+        if (w.provider === 'google' && !googleAiClient)
+          return Promise.reject(new Error('Gemini API key not configured — set VITE_GEMINI_API_KEY'));
+        if (w.provider === 'grok' && !grokApiKey)
+          return Promise.reject(new Error('Grok API key not configured'));
       }
       const { brainContext, ...serviceOptions } = options || {};
+
+      if (active.length === 1) {
+        const w = active[0];
+        const signal = getSignal(domain);
+        return generateAIResponseService(prompt as string, systemInstruction, serviceOptions, {
+          aiProvider: w.provider,
+          aiModel: w.model,
+          ai: googleAiClient,
+          grokApiKey,
+          projectSettings: { ...projectSettings, ollamaUrl: w.url },
+          ollamaModels: w.models ?? [],
+          signal,
+          brainContext,
+        });
+      }
+
+      // Multi-worker: fan out to all enabled workers concurrently, return first success
       const signal = getSignal(domain);
-      return generateAIResponseService(prompt as string, systemInstruction, serviceOptions, {
-        aiProvider,
-        aiModel,
-        ai: googleAiClient,
-        grokApiKey,
-        projectSettings,
-        ollamaModels,
-        signal,
-        brainContext,
-      });
+      const results = await Promise.allSettled(
+        active.map(w =>
+          generateAIResponseService(prompt as string, systemInstruction, serviceOptions, {
+            aiProvider: w.provider,
+            aiModel: w.model,
+            ai: googleAiClient,
+            grokApiKey,
+            projectSettings: { ...projectSettings, ollamaUrl: w.url },
+            ollamaModels: w.models ?? [],
+            signal,
+            brainContext,
+          })
+        )
+      );
+      const first = results.find(r => r.status === 'fulfilled' && (r as PromiseFulfilledResult<string>).value);
+      if (!first) {
+        const errors = results
+          .filter(r => r.status === 'rejected')
+          .map(r => (r as PromiseRejectedResult).reason?.message || 'Unknown error');
+        throw new Error(`All workers failed: ${errors.join(', ')}`);
+      }
+      return (first as PromiseFulfilledResult<string>).value;
     },
-    [aiProvider, aiModel, googleAiClient, grokApiKey, projectSettings, ollamaModels, getSignal]
+    [workers, googleAiClient, grokApiKey, projectSettings, getSignal]
   );
 
   // ── Event-driven pipeline ──────────────────────────────────────────────────
@@ -4073,59 +4132,29 @@ Current System State:
       </nav>
 
       {/* Bottom Navigation - Visible only on mobile */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#080101]/95 backdrop-blur-xl border-t border-red-900/30 flex items-center px-2 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] overflow-x-auto custom-scrollbar gap-2">
-        <button
-          onClick={() => setActiveTab('toolneuron')}
-          className={`p-3 shrink-0 rounded-xl transition-all ${activeTab === 'toolneuron' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}
-        >
-          <Zap size={20} />
-        </button>
-        <button
-          onClick={() => setActiveTab('terminal')}
-          className={`p-3 shrink-0 rounded-xl transition-all ${activeTab === 'terminal' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}
-        >
-          <TerminalIcon size={20} />
-        </button>
-        <button
-          onClick={() => setActiveTab('editor')}
-          className={`p-3 shrink-0 rounded-xl transition-all ${activeTab === 'editor' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}
-        >
-          <Code2 size={20} />
-        </button>
-        <button
-          onClick={() => setActiveTab('analysis')}
-          className={`p-3 shrink-0 rounded-xl transition-all ${activeTab === 'analysis' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}
-        >
-          <LayoutTemplate size={20} />
-        </button>
-        <button
-          onClick={() => setActiveTab('brain')}
-          className={`p-3 shrink-0 rounded-xl transition-all ${activeTab === 'brain' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}
-        >
-          <Brain size={20} />
-        </button>
-        <button
-          onClick={() => setActiveTab('termux')}
-          className={`p-3 shrink-0 rounded-xl transition-all ${activeTab === 'termux' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}
-        >
-          <Smartphone size={20} />
-        </button>{' '}
-        <button
-          onClick={() => setActiveTab('storage')}
-          className={`p-3 shrink-0 rounded-xl transition-all ${activeTab === 'storage' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}
-        >
-          <HardDrive size={20} />
-        </button>
-        <button
-          onClick={() => setActiveTab('settings')}
-          className={`p-3 shrink-0 rounded-xl transition-all ${activeTab === 'settings' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}
-        >
-          <SettingsIcon size={20} />
-        </button>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#080101]/95 backdrop-blur-xl border-t border-red-900/30 flex items-center justify-around px-1 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        {([
+          ['toolneuron', <Zap size={18} />],
+          ['terminal',   <TerminalIcon size={18} />],
+          ['editor',     <Code2 size={18} />],
+          ['analysis',   <LayoutTemplate size={18} />],
+          ['brain',      <Brain size={18} />],
+          ['termux',     <Smartphone size={18} />],
+          ['storage',    <HardDrive size={18} />],
+          ['settings',   <SettingsIcon size={18} />],
+        ] as [string, React.ReactNode][]).map(([tab, icon]) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab as any)}
+            className={`flex-1 flex items-center justify-center py-2 rounded-xl transition-all ${activeTab === tab ? 'text-red-500 bg-red-950/30' : 'text-red-900 active:text-red-600'}`}
+          >
+            {icon}
+          </button>
+        ))}
       </nav>
 
       {/* Main Interface */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] bg-repeat pb-16 md:pb-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] bg-repeat pb-14 md:pb-0 overflow-hidden">
         <header className="h-14 md:h-16 border-b border-red-900/30 flex items-center justify-between px-4 md:px-8 bg-[#0a0202]/95 backdrop-blur-xl z-20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
           <div className="flex items-center space-x-3 md:space-x-6">
             <button
@@ -4138,89 +4167,46 @@ Current System State:
               {activeTab} node
             </h1>
 
-            {/* Model Selector */}
-            <div className="flex items-center gap-1 md:gap-2 bg-red-950/40 border border-red-800/40 rounded-full px-2 md:px-3 py-1">
-              <select
-                value={aiProvider}
-                onChange={(e) => {
-                  const p = e.target.value as 'google' | 'grok' | 'ollama';
-                  setAiProvider(p);
-                  if (p === 'google') setAiModel('gemini-2.5-pro-preview-05-06');
-                  else if (p === 'grok') setAiModel('grok-beta');
-                  else if (p === 'ollama') {
-                    setAiModel(ollamaModels[0] || 'llama3');
-                    refreshOllamaModels();
-                  }
-                }}
-                className="bg-transparent text-[8px] md:text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest"
-              >
-                <option value="google" className="bg-[#0a0202]">
-                  Google
-                </option>
-                <option value="grok" className="bg-[#0a0202]">
-                  Grok
-                </option>
-                <option value="ollama" className="bg-[#0a0202]">
-                  Ollama
-                </option>
-              </select>
-              <div className="w-px h-3 bg-red-900/50" />
-              {aiProvider === 'ollama' ? (
-                <>
-                  <select
-                    value={aiModel}
-                    onChange={(e) => setAiModel(e.target.value)}
-                    className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest w-24 truncate"
-                  >
-                    {ollamaModels.length > 0 ? (
-                      ollamaModels.map((m) => (
-                        <option key={m} value={m} className="bg-[#0a0202]">
-                          {m}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="llama3" className="bg-[#0a0202]">
-                        llama3
-                      </option>
-                    )}
-                  </select>
+            {/* MOBILE: compact worker status pills → tap to open sheet */}
+            <button
+              onClick={() => setWorkerSheetOpen(true)}
+              className="md:hidden flex items-center gap-1 bg-red-950/40 border border-red-800/40 rounded-full px-2.5 py-1"
+              title="Configure workers"
+            >
+              {workers.map(w => (
+                <span key={w.id} className={`w-2 h-2 rounded-full transition-all ${w.enabled ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.7)]' : 'bg-red-900/40'}`} />
+              ))}
+              <span className="text-[9px] font-black text-red-400 ml-1">
+                {workers.filter(w => w.enabled).length}W
+              </span>
+            </button>
+
+            {/* DESKTOP: full inline worker slots */}
+            <div className="hidden md:flex items-center gap-2">
+              {workers.map((w) => (
+                <div key={w.id} className={`flex items-center gap-1 border rounded-full px-2 py-0.5 transition-all ${w.enabled ? 'bg-red-950/40 border-red-800/40' : 'bg-red-950/10 border-red-900/20 opacity-50'}`}>
                   <button
-                    onClick={() => refreshOllamaModels()}
-                    className="text-[8px] text-red-500 hover:text-red-300"
+                    onClick={() => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, enabled: !x.enabled } : x))}
+                    className={`text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 transition-all ${w.enabled ? 'bg-red-600 text-white shadow-[0_0_6px_rgba(220,38,38,0.6)]' : 'bg-red-900/40 text-red-700'}`}
+                    title={w.enabled ? `Disable W${w.id}` : `Enable W${w.id}`}
+                  >{w.id}</button>
+                  <select
+                    value={w.model}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, model: e.target.value } : x))}
+                    className={`bg-transparent text-[10px] font-black outline-none cursor-pointer w-28 truncate transition-colors ${w.enabled ? 'text-red-300' : 'text-red-900 pointer-events-none'}`}
                   >
-                    ↻
-                  </button>
-                </>
-              ) : aiProvider === 'google' ? (
-                <select
-                  value={aiModel}
-                  onChange={(e) => setAiModel(e.target.value)}
-                  className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest w-24 truncate"
-                >
-                  <option value="gemini-2.5-pro-preview-05-06" className="bg-[#0a0202]">
-                    gemini-2.5-pro
-                  </option>
-                  <option value="gemini-2.5-flash-preview-04-17" className="bg-[#0a0202]">
-                    gemini-2.5-flash
-                  </option>
-                  <option value="gemini-2.0-flash" className="bg-[#0a0202]">
-                    gemini-2.0-flash
-                  </option>
-                </select>
-              ) : (
-                <select
-                  value={aiModel}
-                  onChange={(e) => setAiModel(e.target.value)}
-                  className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest w-24 truncate"
-                >
-                  <option value="grok-beta" className="bg-[#0a0202]">
-                    grok-beta
-                  </option>
-                  <option value="grok-vision-beta" className="bg-[#0a0202]">
-                    grok-vision
-                  </option>
-                </select>
-              )}
+                    {availableModels.length > 0
+                      ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202] text-red-200">{m}</option>)
+                      : <option value={w.model} className="bg-[#0a0202]">{w.model || 'llama3'}</option>
+                    }
+                  </select>
+                </div>
+              ))}
+              <button
+                onClick={() => refreshOllamaModels()}
+                className={`text-[11px] transition-colors shrink-0 ${ollamaStatus === 'connected' ? 'text-green-500 hover:text-green-400' : ollamaStatus === 'connecting' ? 'text-yellow-500 animate-pulse' : 'text-red-700 hover:text-red-400'}`}
+                title={`Ollama: ${ollamaStatus}`}
+              >↻</button>
             </div>
 
             {/* Personality Selector */}
@@ -4892,6 +4878,51 @@ Current System State:
             >
               <Trash2 className="w-4 h-4" /> Delete
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Worker Config Bottom Sheet — mobile only */}
+      {workerSheetOpen && (
+        <div className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end" onClick={() => setWorkerSheetOpen(false)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative bg-[#0a0202] border-t border-red-900/40 rounded-t-3xl p-6 space-y-4 shadow-[0_-20px_60px_rgba(0,0,0,0.8)]" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-black text-red-100 uppercase tracking-widest">Workers</h3>
+              <div className="flex items-center gap-3">
+                <button onClick={() => refreshOllamaModels()} className={`text-xs font-black px-3 py-1 rounded-full border transition-all ${ollamaStatus === 'connected' ? 'text-green-400 border-green-800/40 bg-green-950/20' : ollamaStatus === 'connecting' ? 'text-yellow-400 border-yellow-800/40 animate-pulse' : 'text-red-500 border-red-900/40 bg-red-950/20'}`}>
+                  ↻ {ollamaStatus}
+                </button>
+                <button onClick={() => setWorkerSheetOpen(false)} className="text-red-700 hover:text-red-400 text-lg leading-none">✕</button>
+              </div>
+            </div>
+            {workers.map(w => (
+              <div key={w.id} className={`rounded-2xl border p-4 space-y-3 transition-all ${w.enabled ? 'bg-red-950/20 border-red-800/40' : 'bg-red-950/5 border-red-900/20 opacity-60'}`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-red-300 uppercase tracking-widest">Worker {w.id}</span>
+                  <button
+                    onClick={() => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, enabled: !x.enabled } : x))}
+                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${w.enabled ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.4)]' : 'bg-red-900/30 text-red-700'}`}
+                  >
+                    {w.enabled ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+                <select
+                  value={w.model}
+                  onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, model: e.target.value } : x))}
+                  disabled={!w.enabled}
+                  className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-100 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
+                >
+                  {availableModels.length > 0
+                    ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                    : <option value={w.model} className="bg-[#0a0202]">{w.model || 'llama3'}</option>
+                  }
+                </select>
+                {w.enabled && (
+                  <p className="text-[9px] text-red-900 font-mono truncate">{w.url}</p>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}

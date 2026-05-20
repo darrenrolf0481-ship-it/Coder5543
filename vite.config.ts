@@ -10,12 +10,16 @@ const __dirname = path.dirname(__filename);
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     return {
+      base: './',
       server: {
         port: 3003,
         host: '0.0.0.0',
+        allowedHosts: true,
       },
       plugins: [react(), tailwindcss()],
       build: {
+        crossOriginLoading: false,
+        modulePreload: { polyfill: false },
         rollupOptions: {
           output: {
             manualChunks: {
@@ -28,8 +32,9 @@ export default defineConfig(({ mode }) => {
         },
       },
       define: {
-        'import.meta.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'import.meta.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'import.meta.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
+        'import.meta.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
+        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
       },
       resolve: {
         alias: {

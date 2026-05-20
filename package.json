@@ -18,6 +18,7 @@
     "@types/dompurify": "^3.0.5",
     "@types/express": "^5.0.6",
     "@types/react-window": "^2.0.0",
+    "dep": "^0.18.3",
     "dompurify": "^3.4.0",
     "express": "^5.2.1",
     "lucide-react": "^0.563.0",
