@@ -38,6 +38,12 @@ async function startServer() {
   const PORT = 3001;
 
   app.use(express.json());
+  app.use((_req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    next();
+  });
 
   // ── Pipeline status ─────────────────────────────────────────────────────────
   app.get('/api/pipeline/status', (_req, res) => {
@@ -318,7 +324,7 @@ async function startServer() {
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
-        hmr: { server: httpServer },  // attach HMR WS to the same http server — fixes "WebSocket closed without opened"
+        hmr: { server: httpServer, overlay: false },  // attach HMR WS to the same http server; overlay disabled for proxy access
       },
       appType: 'spa',
     });

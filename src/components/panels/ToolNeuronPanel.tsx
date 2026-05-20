@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
@@ -50,6 +50,18 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
 }) => {
   // ── Local state ────────────────────────────────────────────────────────
   const [tnModule, setTnModule] = useState<'chat' | 'vision' | 'knowledge' | 'vault' | 'swarm' | 'help' | 'debug'>('chat');
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  // On mobile, scroll input into view when keyboard opens
+  const handleInputFocus = () => {
+    setTimeout(() => chatInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 300);
+  };
 
   // Vault local state
   const [vaultPin, setVaultPin]                     = useState('');
@@ -103,30 +115,47 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
 
   // ── Render ─────────────────────────────────────────────────────────────
 
+  const modules = [
+    { id: 'chat',      label: 'Chat',     icon: <MessageSquare className="w-4 h-4" /> },
+    { id: 'vision',    label: 'Vision',   icon: <ImageIcon className="w-4 h-4" /> },
+    { id: 'knowledge', label: 'Database', icon: <Database className="w-4 h-4" /> },
+    { id: 'vault',     label: 'Vault',    icon: <ShieldCheck className="w-4 h-4" /> },
+    { id: 'swarm',     label: 'Swarm',    icon: <Network className="w-4 h-4" /> },
+    { id: 'debug',     label: 'Debug',    icon: <Bug className="w-4 h-4" /> },
+    { id: 'help',      label: 'Guide',    icon: <HelpCircle className="w-4 h-4" /> },
+  ] as const;
+
   return (
-    <div className="h-full flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
-      <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-8 min-h-0 overflow-hidden custom-scrollbar">
-        {/* Module Navigation */}
-        <div className="w-full lg:w-72 flex flex-col gap-4 md:gap-6 shrink-0">
-          <div className="code-editor-bg rounded-[30px] md:rounded-[40px] border border-red-900/30 p-6 md:p-8 space-y-6 md:space-y-8 shadow-2xl">
-            <div className="space-y-1 md:space-y-2">
-              <h3 className="text-lg md:text-xl font-black text-red-100 uppercase tracking-tighter">ToolNeuron</h3>
-              <p className="text-[9px] md:text-[10px] text-red-900 font-black tracking-[0.3em] uppercase">Offline AI Ecosystem</p>
+    <div className="h-full flex flex-col animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+
+      {/* MOBILE: horizontal scroll tab strip */}
+      <div className="lg:hidden flex items-center gap-2 px-4 py-3 bg-[#080101] border-b border-red-900/20 overflow-x-auto no-scrollbar shrink-0">
+        {modules.map(mod => (
+          <button
+            key={mod.id}
+            onClick={() => setTnModule(mod.id as any)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap shrink-0 transition-all ${tnModule === mod.id ? 'bg-red-700 text-white shadow-[0_0_12px_rgba(220,38,38,0.3)]' : 'bg-red-950/20 text-red-700 border border-red-900/20'}`}
+          >
+            {mod.icon}
+            {mod.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-8 min-h-0 overflow-hidden p-4 md:p-8">
+        {/* DESKTOP: sidebar module navigation */}
+        <div className="hidden lg:flex w-72 flex-col gap-6 shrink-0">
+          <div className="code-editor-bg rounded-[40px] border border-red-900/30 p-8 space-y-8 shadow-2xl">
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-red-100 uppercase tracking-tighter">ToolNeuron</h3>
+              <p className="text-[10px] text-red-900 font-black tracking-[0.3em] uppercase">Offline AI Ecosystem</p>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 md:gap-3">
-              {[
-                { id: 'chat',      label: 'Chat',     icon: <MessageSquare className="w-4 h-4" /> },
-                { id: 'vision',    label: 'Vision',   icon: <ImageIcon className="w-4 h-4" /> },
-                { id: 'knowledge', label: 'Database', icon: <Database className="w-4 h-4" /> },
-                { id: 'vault',     label: 'Vault',    icon: <ShieldCheck className="w-4 h-4" /> },
-                { id: 'swarm',     label: 'Swarm',    icon: <Network className="w-4 h-4" /> },
-                { id: 'debug',     label: 'Debug',    icon: <Bug className="w-4 h-4" /> },
-                { id: 'help',      label: 'Guide',    icon: <HelpCircle className="w-4 h-4" /> },
-              ].map(mod => (
+            <div className="flex flex-col gap-3">
+              {modules.map(mod => (
                 <button
                   key={mod.id}
                   onClick={() => setTnModule(mod.id as any)}
-                  className={`flex items-center gap-3 md:gap-4 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl text-[9px] md:text-[11px] font-black uppercase tracking-widest transition-all ${tnModule === mod.id ? 'bg-red-700 text-white shadow-lg scale-[1.02]' : 'bg-red-950/10 text-red-900 hover:text-red-500'}`}
+                  className={`flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${tnModule === mod.id ? 'bg-red-700 text-white shadow-lg scale-[1.02]' : 'bg-red-950/10 text-red-900 hover:text-red-500'}`}
                 >
                   {mod.icon}
                   <span className="truncate">{mod.label}</span>
@@ -134,8 +163,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
               ))}
             </div>
           </div>
-
-          <div className="hidden lg:flex flex-1 code-editor-bg rounded-[40px] border border-red-900/30 p-8 space-y-6 shadow-2xl overflow-y-auto custom-scrollbar">
+          <div className="flex-1 code-editor-bg rounded-[40px] border border-red-900/30 p-8 space-y-6 shadow-2xl overflow-y-auto custom-scrollbar">
             <h4 className="text-[10px] font-black text-red-800 uppercase tracking-[0.4em]">System Status</h4>
             <div className="space-y-4">
               <div className="p-4 bg-red-950/10 rounded-2xl border border-red-900/10">
@@ -154,7 +182,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
         </div>
 
         {/* Module Content */}
-        <div className="flex-1 code-editor-bg rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden flex flex-col">
+        <div className="flex-1 code-editor-bg rounded-[20px] md:rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden flex flex-col">
 
           {/* CHAT */}
           {tnModule === 'chat' && (
@@ -245,12 +273,20 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
                     </div>
                   );
                 })}
+                <div ref={chatEndRef} />
               </div>
-              <form onSubmit={handleStudioSubmit} className="p-4 md:p-8 bg-black/40 border-t border-red-900/20">
+              <form onSubmit={handleStudioSubmit} className="p-3 md:p-6 bg-black/40 border-t border-red-900/20 shrink-0">
                 <div className="relative max-w-3xl mx-auto">
-                  <input value={studioInput} onChange={(e) => setStudioInput(e.target.value)} placeholder="Send local neural directive..." className="w-full bg-[#0d0404] border border-red-900/40 rounded-2xl px-6 py-4 text-sm text-red-100 focus:border-red-600/60 outline-none" />
-                  <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 bg-red-700 rounded-xl text-white">
-                    <Send className="w-5 h-5" />
+                  <input
+                    ref={chatInputRef}
+                    value={studioInput}
+                    onChange={(e) => setStudioInput(e.target.value)}
+                    onFocus={handleInputFocus}
+                    placeholder="Send neural directive..."
+                    className="w-full bg-[#0d0404] border border-red-900/40 rounded-2xl pl-4 pr-14 py-3.5 text-sm text-red-100 focus:border-red-600/60 outline-none"
+                  />
+                  <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-red-700 hover:bg-red-600 active:scale-95 rounded-xl text-white transition-all">
+                    <Send className="w-4 h-4" />
                   </button>
                 </div>
               </form>
