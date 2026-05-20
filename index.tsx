@@ -106,6 +106,8 @@ import Editor from '@monaco-editor/react';
 import { useDebounce } from './src/lib/useDebounce';
 import { usePipeline } from './src/hooks/usePipeline';
 import type { PatternResult } from './src/services/pipeline/patternInjectionService';
+import { AGENTS, AGENT_DOMAINS, getAgent, getAgentsByDomain } from './src/data/agentRegistry';
+import type { AgentDefinition } from './src/data/agentRegistry';
 
 // Initialize AI
 
@@ -118,6 +120,7 @@ interface WorkerConfig {
   model: string;
   url: string;
   models: string[];
+  agentId?: string;
 }
 
 const DEFAULT_WORKERS: WorkerConfig[] = [
@@ -1496,10 +1499,18 @@ const App: React.FC = () => {
       }
       const { brainContext, ...serviceOptions } = options || {};
 
+      // Helper: prepend agent system prompt if worker has one assigned
+      const buildInstruction = (w: WorkerConfig) => {
+        if (!w.agentId) return systemInstruction;
+        const agent = getAgent(w.agentId);
+        if (!agent) return systemInstruction;
+        return `${agent.systemPrompt}\n\n---\n\n${systemInstruction}`;
+      };
+
       if (active.length === 1) {
         const w = active[0];
         const signal = getSignal(domain);
-        return generateAIResponseService(prompt as string, systemInstruction, serviceOptions, {
+        return generateAIResponseService(prompt as string, buildInstruction(w), serviceOptions, {
           aiProvider: w.provider,
           aiModel: w.model,
           ai: googleAiClient,
@@ -1515,7 +1526,7 @@ const App: React.FC = () => {
       const signal = getSignal(domain);
       const results = await Promise.allSettled(
         active.map(w =>
-          generateAIResponseService(prompt as string, systemInstruction, serviceOptions, {
+          generateAIResponseService(prompt as string, buildInstruction(w), serviceOptions, {
             aiProvider: w.provider,
             aiModel: w.model,
             ai: googleAiClient,
@@ -4200,6 +4211,21 @@ Current System State:
                       : <option value={w.model} className="bg-[#0a0202]">{w.model || 'llama3'}</option>
                     }
                   </select>
+                  <select
+                    value={w.agentId || ''}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x))}
+                    className={`bg-transparent text-[9px] font-black outline-none cursor-pointer max-w-[80px] truncate transition-colors ${w.enabled ? 'text-red-400' : 'text-red-900 pointer-events-none'}`}
+                    title="Agent role"
+                  >
+                    <option value="" className="bg-[#0a0202] text-red-200">🤖 General</option>
+                    {AGENT_DOMAINS.map(domain => (
+                      <optgroup key={domain} label={domain} className="bg-[#0a0202]">
+                        {getAgentsByDomain(domain).map(a => (
+                          <option key={a.id} value={a.id} className="bg-[#0a0202] text-red-200">{a.emoji} {a.label}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
                 </div>
               ))}
               <button
@@ -4917,6 +4943,21 @@ Current System State:
                     ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
                     : <option value={w.model} className="bg-[#0a0202]">{w.model || 'llama3'}</option>
                   }
+                </select>
+                <select
+                  value={w.agentId || ''}
+                  onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x))}
+                  disabled={!w.enabled}
+                  className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-300 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
+                >
+                  <option value="" className="bg-[#0a0202]">🤖 General (no role)</option>
+                  {AGENT_DOMAINS.map(domain => (
+                    <optgroup key={domain} label={domain} className="bg-[#0a0202]">
+                      {getAgentsByDomain(domain).map(a => (
+                        <option key={a.id} value={a.id} className="bg-[#0a0202]">{a.emoji} {a.label}</option>
+                      ))}
+                    </optgroup>
+                  ))}
                 </select>
                 {w.enabled && (
                   <p className="text-[9px] text-red-900 font-mono truncate">{w.url}</p>
