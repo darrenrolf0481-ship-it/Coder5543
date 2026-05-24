@@ -5,15 +5,17 @@ export const fillTemplate = (template: string, data: Record<string, string>): st
     return template.replace(/\{\{(\w+)\}\}/g, (_: string, key: string) => data[key] || `{{${key}}}`);
 };
 
-export const fetchOllamaModels = async (ollamaUrl: string): Promise<string[]> => {
+export const fetchOllamaModels = async (_ollamaUrl: string): Promise<string[]> => {
   try {
-    const response = await fetch(`${ollamaUrl}/api/tags`);
+    // Use the server-side proxy to avoid CORS issues
+    const response = await fetch('./api/ollama/tags');
     if (!response.ok) throw new Error('Failed to fetch Ollama models');
     const data = await response.json();
+    if (data.error) throw new Error(data.error);
     return data.models.map((m: any) => m.name);
   } catch (error) {
     console.error('Error fetching Ollama models:', error);
-    throw error; // Rethrow to handle in the caller
+    throw error;
   }
 };
 
@@ -128,9 +130,8 @@ const generateOllamaResponse = async (
     enrichedSystemInstruction += formatNeuralContext(brainContext);
   }
 
-  const url = projectSettings.ollamaUrl || 'http://127.0.0.1:11434';
-  const model = aiModel || (ollamaModels.length > 0 ? ollamaModels[0] : 'llama3');
-  
+  const model = aiModel || (ollamaModels.length > 0 ? ollamaModels[0] : 'llama3.2:latest');
+
   let messages: any[] = [{ role: 'system', content: enrichedSystemInstruction }];
   if (Array.isArray(finalPrompt)) {
     messages = [
@@ -144,7 +145,8 @@ const generateOllamaResponse = async (
     messages.push({ role: 'user', content: finalPrompt });
   }
 
-  const res = await fetch(`${url}/api/chat`, {
+  // Use server-side proxy to avoid CORS
+  const res = await fetch('./api/ollama/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

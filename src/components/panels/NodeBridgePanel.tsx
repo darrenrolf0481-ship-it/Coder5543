@@ -31,7 +31,7 @@ function useFsBrowser() {
   const browse = useCallback(async (path: string) => {
     setLoading(true); setError(null);
     try {
-      const res  = await fetch(`/api/fs/browse?path=${encodeURIComponent(path)}`);
+      const res  = await fetch(`./api/fs/browse?path=${encodeURIComponent(path)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Browse failed');
       setCwd(data.path); setParent(data.parent); setEntries(data.entries);
@@ -43,7 +43,7 @@ function useFsBrowser() {
   const readFile = useCallback(async (path: string): Promise<string | null> => {
     setImporting(path);
     try {
-      const res  = await fetch(`/api/fs/read?path=${encodeURIComponent(path)}`);
+      const res  = await fetch(`./api/fs/read?path=${encodeURIComponent(path)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       return data.content as string;

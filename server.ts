@@ -173,6 +173,49 @@ async function startServer() {
     }
   });
 
+  // ── Ollama proxy — avoids CORS when browser calls Ollama directly ──────────
+  const OLLAMA_BASE = process.env.OLLAMA_HOST || 'http://127.0.0.1:11434';
+
+  app.get('/api/ollama/tags', async (_req, res) => {
+    try {
+      const r = await fetch(`${OLLAMA_BASE}/api/tags`);
+      const data = await r.json();
+      res.json(data);
+    } catch (err: any) {
+      res.status(502).json({ error: `Ollama unreachable: ${err.message}` });
+    }
+  });
+
+  app.post('/api/ollama/chat', async (req, res) => {
+    try {
+      const r = await fetch(`${OLLAMA_BASE}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body),
+      });
+      const text = await r.text();
+      res.setHeader('Content-Type', 'application/json');
+      res.status(r.status).send(text);
+    } catch (err: any) {
+      res.status(502).json({ error: `Ollama unreachable: ${err.message}` });
+    }
+  });
+
+  app.post('/api/ollama/generate', async (req, res) => {
+    try {
+      const r = await fetch(`${OLLAMA_BASE}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body),
+      });
+      const text = await r.text();
+      res.setHeader('Content-Type', 'application/json');
+      res.status(r.status).send(text);
+    } catch (err: any) {
+      res.status(502).json({ error: `Ollama unreachable: ${err.message}` });
+    }
+  });
+
   // ── Termux filesystem API ───────────────────────────────────────────────────
   const TERMUX_HOME = process.env.HOME ?? '/data/data/com.termux/files/home';
   const FS_ROOTS = [TERMUX_HOME, process.cwd()];

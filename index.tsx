@@ -124,9 +124,9 @@ interface WorkerConfig {
 }
 
 const DEFAULT_WORKERS: WorkerConfig[] = [
-  { id: 1, label: 'W1', enabled: true, provider: 'ollama', model: 'llama3', url: 'http://127.0.0.1:11434', models: [] },
-  { id: 2, label: 'W2', enabled: true, provider: 'ollama', model: 'llama3', url: 'http://127.0.0.1:11434', models: [] },
-  { id: 3, label: 'W3', enabled: true, provider: 'ollama', model: 'llama3', url: 'http://127.0.0.1:11434', models: [] },
+  { id: 1, label: 'W1', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [] },
+  { id: 2, label: 'W2', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [] },
+  { id: 3, label: 'W3', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [] },
 ];
 
 const STORAGE_KEY = 'crimson_os_prefs';
@@ -147,6 +147,9 @@ const fileToBase64 = (file: File): Promise<string> => {
 import { PROJECT_TEMPLATES } from './src/services/templates';
 
 const DRAFT_KEY = 'crimson_draft';
+// Unique ID for this browser session — drafts written in the current session
+// are ignored by the recovery checker (they can't be "orphaned" yet).
+const SESSION_ID = `s-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 // ── Prompt Builder ────────────────────────────────────────────────────────────
 // Single source of truth for code-context prompts.
@@ -447,6 +450,15 @@ const App: React.FC = () => {
     document.documentElement.className = theme;
   }, [theme]);
 
+  // Remove splash screen on first paint
+  useEffect(() => {
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.style.opacity = '0';
+      setTimeout(() => splash.remove(), 350);
+    }
+  }, []);
+
   // ToolNeuron State
   const [tnKnowledgePacks, setTnKnowledgePacks] = useState([
     { id: 1, name: 'Medical_Core_v2', size: '1.2GB', status: 'indexed' },
@@ -735,7 +747,7 @@ const App: React.FC = () => {
         const fileName = projectFiles.find((f: any) => f.id === activeFileId)?.name ?? activeFileId;
         localStorage.setItem(
           DRAFT_KEY,
-          JSON.stringify({ fileId: activeFileId, fileName, content: editorContent, ts: Date.now() })
+          JSON.stringify({ fileId: activeFileId, fileName, content: editorContent, ts: Date.now(), sessionId: SESSION_ID })
         );
       } catch {}
     }, 500);
@@ -757,6 +769,8 @@ const App: React.FC = () => {
         if (!raw) return;
         const draft = JSON.parse(raw);
         if (!draft?.content || !draft?.fileId) return;
+        // Ignore drafts from the current session — they can't be orphaned yet
+        if (draft.sessionId === SESSION_ID) return;
         if (Date.now() - draft.ts > 24 * 60 * 60 * 1000) {
           localStorage.removeItem(DRAFT_KEY);
           return;
@@ -921,18 +935,7 @@ const App: React.FC = () => {
   // Shared model list fetched from Ollama — all workers draw from this same list
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [ollamaStatus, setOllamaStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
-
-  const CLOUD_MODELS = [
-    'kimi-k2:latest',
-    'deepseek-v3:latest',
-    'deepseek-r1:latest',
-    'bjoernb/gemma4-31b-fast:latest',
-    'qwq:32b',
-    'qwen2.5:72b',
-    'llama3.3:70b',
-    'mistral:latest',
-    'phi4:latest',
-  ];
+  const [ollamaError, setOllamaError] = useState<string | null>(null);
 
   const refreshOllamaModels = useCallback(
     async (silent = false) => {
@@ -940,17 +943,18 @@ const App: React.FC = () => {
       setOllamaStatus('connecting');
       try {
         const fetched = await fetchOllamaModels(url);
-        const merged = [...new Set([...fetched, ...CLOUD_MODELS])];
-        setAvailableModels(merged);
+        setAvailableModels(fetched);
         setOllamaStatus('connected');
-        // Auto-assign distinct models to each worker if they're all on the same default
+        setOllamaError(null);
+        // Assign each worker a distinct model from the fetched list
         setWorkers(prev => prev.map((w, i) => ({
           ...w,
           model: fetched.includes(w.model) ? w.model : (fetched[i % fetched.length] || w.model),
         })));
       } catch (err: any) {
-        setAvailableModels(CLOUD_MODELS);
+        setAvailableModels([]);
         setOllamaStatus('error');
+        setOllamaError(err.message || String(err));
         if (!silent) {
           setChatMessages(prev => [{
             role: 'ai',
@@ -3031,7 +3035,7 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
     setIsAiProcessing(true);
     setEditorOutput((prev) => prev + '[GIT] Pushing to GitHub...\n');
     try {
-      const response = await fetch('/api/github/push', { method: 'POST' });
+      const response = await fetch('./api/github/push', { method: 'POST' });
       const data = await response.json();
       if (data.ok) {
         setEditorOutput((prev) => prev + '[GIT] Successfully pushed to GitHub.\n');
@@ -3048,7 +3052,7 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
     setIsAiProcessing(true);
     setEditorOutput((prev) => prev + '[GIT] Pulling from GitHub...\n');
     try {
-      const response = await fetch('/api/github/pull');
+      const response = await fetch('./api/github/pull');
       const data = await response.json();
       if (data.ok) {
         setEditorOutput((prev) => prev + '[GIT] Successfully pulled from GitHub.\n');
@@ -3215,7 +3219,7 @@ ${prompt}`,
     const runShellCmd = async (shellCmd: string) => {
       setIsAiProcessing(true);
       try {
-        const res = await fetch('/api/terminal/exec', {
+        const res = await fetch('./api/terminal/exec', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ cmd: shellCmd, cwd: realCwd }),
@@ -4178,18 +4182,15 @@ Current System State:
               {activeTab} node
             </h1>
 
-            {/* MOBILE: compact worker status pills → tap to open sheet */}
+            {/* MOBILE: Ollama model button → tap to open sheet */}
             <button
               onClick={() => setWorkerSheetOpen(true)}
-              className="md:hidden flex items-center gap-1 bg-red-950/40 border border-red-800/40 rounded-full px-2.5 py-1"
-              title="Configure workers"
+              className={`md:hidden flex items-center gap-1.5 border rounded-full px-3 py-1.5 transition-all ${ollamaStatus === 'connected' ? 'bg-green-950/40 border-green-800/40' : ollamaStatus === 'connecting' ? 'bg-yellow-950/40 border-yellow-800/40' : 'bg-red-950/40 border-red-800/40'}`}
+              title="Configure Ollama models"
             >
-              {workers.map(w => (
-                <span key={w.id} className={`w-2 h-2 rounded-full transition-all ${w.enabled ? 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.7)]' : 'bg-red-900/40'}`} />
-              ))}
-              <span className="text-[9px] font-black text-red-400 ml-1">
-                {workers.filter(w => w.enabled).length}W
-              </span>
+              <span className={`w-2 h-2 rounded-full shrink-0 ${ollamaStatus === 'connected' ? 'bg-green-500' : ollamaStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-700'}`} />
+              <span className="text-[10px] font-black text-red-200 uppercase tracking-wider">Ollama</span>
+              <span className="text-[9px] text-red-400">▾</span>
             </button>
 
             {/* DESKTOP: full inline worker slots */}
@@ -4914,7 +4915,10 @@ Current System State:
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
           <div className="relative bg-[#0a0202] border-t border-red-900/40 rounded-t-3xl p-6 space-y-4 shadow-[0_-20px_60px_rgba(0,0,0,0.8)]" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-black text-red-100 uppercase tracking-widest">Workers</h3>
+              <div>
+                <h3 className="text-sm font-black text-red-100 uppercase tracking-widest">Ollama Models</h3>
+                <p className="text-[10px] text-red-700 mt-0.5">{availableModels.length} model{availableModels.length !== 1 ? 's' : ''} available</p>
+              </div>
               <div className="flex items-center gap-3">
                 <button onClick={() => refreshOllamaModels()} className={`text-xs font-black px-3 py-1 rounded-full border transition-all ${ollamaStatus === 'connected' ? 'text-green-400 border-green-800/40 bg-green-950/20' : ollamaStatus === 'connecting' ? 'text-yellow-400 border-yellow-800/40 animate-pulse' : 'text-red-500 border-red-900/40 bg-red-950/20'}`}>
                   ↻ {ollamaStatus}
@@ -4922,10 +4926,24 @@ Current System State:
                 <button onClick={() => setWorkerSheetOpen(false)} className="text-red-700 hover:text-red-400 text-lg leading-none">✕</button>
               </div>
             </div>
+            {availableModels.length === 0 && ollamaStatus !== 'connecting' && (
+              <div className="rounded-2xl border border-red-900/30 bg-red-950/10 p-4 space-y-2">
+                <p className="text-xs font-black text-red-500 uppercase tracking-widest">Ollama Not Connected</p>
+                {ollamaError && (
+                  <p className="text-[11px] text-red-300 font-mono bg-black/40 rounded-lg px-3 py-2 break-all">{ollamaError}</p>
+                )}
+                <button onClick={() => refreshOllamaModels()} className="w-full mt-1 px-4 py-2 rounded-xl bg-red-700 text-white text-xs font-black uppercase tracking-widest">↻ Retry</button>
+              </div>
+            )}
             {workers.map(w => (
               <div key={w.id} className={`rounded-2xl border p-4 space-y-3 transition-all ${w.enabled ? 'bg-red-950/20 border-red-800/40' : 'bg-red-950/5 border-red-900/20 opacity-60'}`}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-red-300 uppercase tracking-widest">Worker {w.id}</span>
+                  <div>
+                    <span className="text-xs font-black text-red-300 uppercase tracking-widest">Worker {w.id}</span>
+                    {w.enabled && w.model && (
+                      <p className="text-[10px] text-red-500 font-mono mt-0.5 truncate">{w.model}</p>
+                    )}
+                  </div>
                   <button
                     onClick={() => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, enabled: !x.enabled } : x))}
                     className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${w.enabled ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.4)]' : 'bg-red-900/30 text-red-700'}`}
@@ -4933,35 +4951,38 @@ Current System State:
                     {w.enabled ? 'ON' : 'OFF'}
                   </button>
                 </div>
-                <select
-                  value={w.model}
-                  onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, model: e.target.value } : x))}
-                  disabled={!w.enabled}
-                  className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-100 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
-                >
-                  {availableModels.length > 0
-                    ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
-                    : <option value={w.model} className="bg-[#0a0202]">{w.model || 'llama3'}</option>
-                  }
-                </select>
-                <select
-                  value={w.agentId || ''}
-                  onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x))}
-                  disabled={!w.enabled}
-                  className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-300 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
-                >
-                  <option value="" className="bg-[#0a0202]">🤖 General (no role)</option>
-                  {AGENT_DOMAINS.map(domain => (
-                    <optgroup key={domain} label={domain} className="bg-[#0a0202]">
-                      {getAgentsByDomain(domain).map(a => (
-                        <option key={a.id} value={a.id} className="bg-[#0a0202]">{a.emoji} {a.label}</option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-                {w.enabled && (
-                  <p className="text-[9px] text-red-900 font-mono truncate">{w.url}</p>
-                )}
+                <div>
+                  <p className="text-[9px] text-red-700 uppercase tracking-widest mb-1 font-black">Ollama Model</p>
+                  <select
+                    value={w.model}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, model: e.target.value } : x))}
+                    disabled={!w.enabled}
+                    className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-100 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
+                  >
+                    {availableModels.length > 0
+                      ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                      : <option value={w.model} className="bg-[#0a0202]">{w.model}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <p className="text-[9px] text-red-700 uppercase tracking-widest mb-1 font-black">Agent Role</p>
+                  <select
+                    value={w.agentId || ''}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x))}
+                    disabled={!w.enabled}
+                    className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-300 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
+                  >
+                    <option value="" className="bg-[#0a0202]">🤖 General (no role)</option>
+                    {AGENT_DOMAINS.map(domain => (
+                      <optgroup key={domain} label={domain} className="bg-[#0a0202]">
+                        {getAgentsByDomain(domain).map(a => (
+                          <option key={a.id} value={a.id} className="bg-[#0a0202]">{a.emoji} {a.label}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
               </div>
             ))}
           </div>
@@ -5006,6 +5027,9 @@ class ErrorBoundary extends React.Component<
   componentDidCatch(error: any, errorInfo: any) {
     console.error('ErrorBoundary caught an error', error, errorInfo);
     this.setState({ errorInfo });
+    // Always remove splash on error too
+    const splash = document.getElementById('splash');
+    if (splash) splash.remove();
   }
 
   render() {
