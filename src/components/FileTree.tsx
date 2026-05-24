@@ -277,7 +277,7 @@ const TermuxBrowser: React.FC<{
   const browse = useCallback(async (p?: string) => {
     setLoading(true); setErr('');
     try {
-      const url = p ? `/api/fs/browse?path=${encodeURIComponent(p)}` : '/api/fs/browse';
+      const url = p ? `./api/fs/browse?path=${encodeURIComponent(p)}` : './api/fs/browse';
       const r = await fetch(url);
       if (!r.ok) { const e = await r.json(); throw new Error(e.error ?? r.statusText); }
       setData(await r.json());
@@ -293,7 +293,7 @@ const TermuxBrowser: React.FC<{
   const importFile = useCallback(async (entry: FsEntry) => {
     if (entry.type === 'dir') { browse(entry.path); return; }
     try {
-      const r = await fetch(`/api/fs/read?path=${encodeURIComponent(entry.path)}`);
+      const r = await fetch(`./api/fs/read?path=${encodeURIComponent(entry.path)}`);
       if (!r.ok) { const e = await r.json(); throw new Error(e.error ?? r.statusText); }
       const { content } = await r.json();
       const ext = entry.name.split('.').pop() ?? 'text';

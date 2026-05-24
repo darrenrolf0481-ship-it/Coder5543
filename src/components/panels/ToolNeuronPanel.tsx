@@ -194,6 +194,13 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
                 <span className="text-[10px] font-mono text-red-900">LATENCY: 12ms</span>
               </div>
               <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 custom-scrollbar">
+                {chatMessages.length === 0 && (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-4 opacity-40">
+                    <MessageSquare className="w-12 h-12 text-red-600 mb-4" />
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-red-400 mb-1">Neural Chat Ready</p>
+                    <p className="text-[10px] text-red-700 uppercase tracking-widest">Type a message to begin</p>
+                  </div>
+                )}
                 {chatMessages.map((msg, i) => {
                   const codeBlocks = msg.role === 'ai' ? extractAllCodeBlocks(msg.text) : [];
                   const showSave   = msg.role === 'ai' && isAnalysisMessage(msg.text);
@@ -202,7 +209,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
                       <div className={`max-w-[85%] rounded-3xl p-5 text-[13px] leading-relaxed ${
                         msg.role === 'user'
                           ? 'bg-red-800 text-white rounded-tr-none'
-                          : 'bg-red-950/20 border border-red-900/20 text-red-100 rounded-tl-none'
+                          : 'bg-[#1a0505] border border-red-800/40 text-red-100 rounded-tl-none shadow-[inset_0_0_20px_rgba(0,0,0,0.3)]'
                       }`}>
                         {msg.type === 'image' ? (
                           <div className="space-y-4">

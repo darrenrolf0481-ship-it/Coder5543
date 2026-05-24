@@ -537,7 +537,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                   <div className={`max-w-[90%] rounded-2xl p-4 text-[12px] leading-relaxed ${
                     msg.role === 'user'
                       ? 'bg-red-800 text-white rounded-tr-none'
-                      : 'bg-red-950/20 border border-red-900/20 text-red-100 rounded-tl-none'
+                      : 'bg-[#1a0505] border border-red-800/40 text-red-100 rounded-tl-none shadow-[inset_0_0_20px_rgba(0,0,0,0.3)]'
                   }`}>
                     <div className="markdown-body">
                       <SafeMarkdown>
