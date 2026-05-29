@@ -11,8 +11,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import type { EndocrineState } from '../services/brain/types';
 
-const PHI      = 1.618;
-const PHI_INV  = 0.618;
+export const PHI      = 1.618;
+export const PHI_INV  = 0.618;
 
 // Thresholds derived from φ — warn at 1/φ, critical at 1 - 1/φ²
 const CORTISOL_WARN     = PHI_INV;           // 0.618

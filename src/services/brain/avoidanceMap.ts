@@ -1,3 +1,4 @@
+import { storage } from './storage';
 import type { AvoidanceEntry } from './types';
 
 const STORAGE_KEY = 'brain_avoidance';
@@ -39,7 +40,7 @@ export class AvoidanceMap {
 
   private load(): void {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = storage.getItem(STORAGE_KEY);
       if (raw) {
         const entries: AvoidanceEntry[] = JSON.parse(raw);
         entries.forEach(e => this.map.set(e.hash, e));
@@ -49,7 +50,7 @@ export class AvoidanceMap {
 
   private persist(): void {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...this.map.values()]));
+      storage.setItem(STORAGE_KEY, JSON.stringify([...this.map.values()]));
     } catch { /* ignore */ }
   }
 

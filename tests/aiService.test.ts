@@ -74,7 +74,7 @@ describe('generateAIResponse', () => {
     );
     
     expect(response).toBe('Ollama response');
-    expect(fetch).toHaveBeenCalledWith('http://localhost:11434/api/chat', expect.any(Object));
+    expect(fetch).toHaveBeenCalledWith('./api/ollama/chat', expect.any(Object));
   });
 
   it('should fill prompt template', async () => {

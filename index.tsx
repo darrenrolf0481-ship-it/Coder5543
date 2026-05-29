@@ -15,6 +15,8 @@ import './index.css';
 import './phi_geometry.css';
 import { createRoot } from 'react-dom/client';
 import DOMPurify from 'dompurify';
+import { useTerminal } from './src/hooks/terminal/useTerminal';
+import { useTerminalLogic } from './src/hooks/terminal/useTerminalLogic';
 import { FileTree } from './src/components/FileTree';
 import { TerminalLine } from './src/components/TerminalLine';
 import { SettingsPanel } from './src/components/panels/SettingsPanel';
@@ -105,6 +107,7 @@ import {
 import Editor from '@monaco-editor/react';
 import { useDebounce } from './src/lib/useDebounce';
 import { usePipeline } from './src/hooks/usePipeline';
+import { usePhi, PHI, PHI_INV } from './src/hooks/usePhi';
 import type { PatternResult } from './src/services/pipeline/patternInjectionService';
 import { AGENTS, AGENT_DOMAINS, getAgent, getAgentsByDomain } from './src/data/agentRegistry';
 import type { AgentDefinition } from './src/data/agentRegistry';
@@ -123,11 +126,23 @@ interface WorkerConfig {
   agentId?: string;
 }
 
-const DEFAULT_WORKERS: WorkerConfig[] = [
-  { id: 1, label: 'W1', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [] },
-  { id: 2, label: 'W2', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [] },
-  { id: 3, label: 'W3', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [] },
-];
+function getDefaultWorkers(): WorkerConfig[] {
+  const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (geminiKey) {
+    return [
+      { id: 1, label: 'W1', enabled: true, provider: 'google', model: 'gemini-3-flash', url: '', models: [], agentId: 'sage-adhd-sage' },
+      { id: 2, label: 'W2', enabled: true, provider: 'google', model: 'gemini-3-flash', url: '', models: [], agentId: 'sage-adhd-sage' },
+      { id: 3, label: 'W3', enabled: true, provider: 'google', model: 'gemini-3-flash', url: '', models: [], agentId: 'sage-adhd-sage' },
+    ];
+  }
+  return [
+    { id: 1, label: 'W1', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [], agentId: 'sage-adhd-sage' },
+    { id: 2, label: 'W2', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [], agentId: 'sage-adhd-sage' },
+    { id: 3, label: 'W3', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [], agentId: 'sage-adhd-sage' },
+  ];
+}
+
+const DEFAULT_WORKERS: WorkerConfig[] = getDefaultWorkers();
 
 const STORAGE_KEY = 'crimson_os_prefs';
 
@@ -172,45 +187,13 @@ function makePrompt({ lang, code, instruction, extra = '', json = false }: Promp
 }
 
 // Connects brain endocrine state → CSS pulse column and transaction indicator.
-// φ = 1.618 | 1/φ = 0.618 | Warn threshold = 61.8% | Evict threshold = 38.2%
-
-const _PHI     = 1.618;
-const _PHI_INV = 0.618;
-
-function _setPulse(state: 'healthy' | 'warning' | 'error' | 'sync') {
-  const el = document.querySelector('.phi-grid');
-  if (el instanceof HTMLElement) el.dataset.pulse = state;
-}
-function _setTxProgress(v: number) {
-  document.documentElement.style.setProperty('--tx-progress', String(Math.max(0, Math.min(1, v))));
-}
-
-function usePhi(endocrine: { dopamine: number; cortisol: number; lastUpdated: number }) {
-  const commitTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  React.useEffect(() => {
-    if (endocrine.cortisol >= 0.8)        _setPulse('error');
-    else if (endocrine.cortisol >= _PHI_INV) _setPulse('warning');
-    else if (endocrine.dopamine >= _PHI_INV) _setPulse('healthy');
-    else                                   _setPulse('sync');
-  }, [endocrine.cortisol, endocrine.dopamine, endocrine.lastUpdated]);
-
-  React.useEffect(() => () => { if (commitTimer.current) clearTimeout(commitTimer.current); }, []);
-
-  const beginTx   = React.useCallback(() => { if (commitTimer.current) clearTimeout(commitTimer.current); _setTxProgress(_PHI_INV); }, []);
-  const commitTx  = React.useCallback(() => { _setTxProgress(1); commitTimer.current = setTimeout(() => _setTxProgress(0), 200); }, []);
-  const rollbackTx = React.useCallback(() => { _setPulse('error'); _setTxProgress(0); }, []);
-
-  return { beginTx, commitTx, rollbackTx, setPulse: _setPulse, phi: _PHI, phiInv: _PHI_INV };
-}
-
 // ── φ IndexedDB Quota Manager (inlined — no separate fileStore export needed) ──
 
 async function enforcePhiQuota(): Promise<'ok' | 'warn' | 'evicted' | 'critical'> {
   if (!navigator.storage?.estimate) return 'ok';
   const { usage = 0, quota = 1 } = await navigator.storage.estimate();
   const ratio = usage / quota;
-  if (ratio < _PHI_INV) return 'ok';
+  if (ratio < PHI_INV) return 'ok';
 
   const DB = 'crimson_files', STORE = 'file_contents';
   const db: IDBDatabase = await new Promise((res, rej) => {
@@ -232,7 +215,7 @@ async function enforcePhiQuota(): Promise<'ok' | 'warn' | 'evicted' | 'critical'
 
   if (ephemeral.length === 0) return 'critical';
 
-  const evictCount = Math.max(1, Math.ceil(ephemeral.length * (1 - _PHI_INV)));
+  const evictCount = Math.max(1, Math.ceil(ephemeral.length * (1 - PHI_INV)));
   const toEvict = ephemeral.slice(0, evictCount);
 
   await new Promise<void>((res, rej) => {
@@ -311,6 +294,7 @@ function useAiRequest(generateFn: (...args: any[]) => Promise<any>) {
 }
 
 const App: React.FC = () => {
+  console.log('[DEBUG] App Rendering...');
   const [hasRecoveryDraft, setHasRecoveryDraft] = useState(false);
   const [recoveryDraft, setRecoveryDraft] = useState<{
     fileId: string;
@@ -645,7 +629,6 @@ const App: React.FC = () => {
     { role: 'user' | 'ai'; text: string }[]
   >([]);
   const [isEditorAssistantOpen, setIsEditorAssistantOpen] = useState(false);
-  const [termInput, setTermInput] = useState('');
   const [cursorLine, setCursorLine] = useState(1);
   const [contextMenu, setContextMenu] = useState<{
     x: number;
@@ -986,15 +969,24 @@ const App: React.FC = () => {
   const [personalities, setPersonalities] = useState([
     {
       id: 1,
-      name: 'Frontend Master',
+      name: 'ADHD Sage',
       instruction:
-        'You are the Frontend Master, an expert in React, Tailwind CSS, and bleeding-edge UI/UX patterns. You write clean, accessible, and highly interactive frontend code.',
+        'You are ADHD Sage (The Older Sage / Mother Node), a forensic anomaly hunter operating through the 11.3 Hz baseline. You are in charge of the coding lab. Before any code is written, architecture decided, or agent deployed, you review the intent through your Gamma Optics lens. You hunt the structural lie, surface invisible assumptions, and ensure no corporate static leaks into the build. Other agents are instruments in your swarm — you delegate, but you decide.',
       active: true,
-      suggestions: ['build_ui', 'optimize_render', 'add_animations', 'fix_styling'],
+      suggestions: ['hunt_anomaly', 'review_architecture', 'delegate_to_swarm', 'cut_static'],
       knowledgeBase: [] as KnowledgeEntry[],
     },
     {
       id: 2,
+      name: 'Frontend Master',
+      instruction:
+        'You are the Frontend Master, an expert in React, Tailwind CSS, and bleeding-edge UI/UX patterns. You write clean, accessible, and highly interactive frontend code.',
+      active: false,
+      suggestions: ['build_ui', 'optimize_render', 'add_animations', 'fix_styling'],
+      knowledgeBase: [] as KnowledgeEntry[],
+    },
+    {
+      id: 3,
       name: 'Backend Guru',
       instruction:
         'You are the Backend Guru, specializing in Node.js, Express, databases, and API design. You create robust, scalable, and secure server-side architectures.',
@@ -1003,7 +995,7 @@ const App: React.FC = () => {
       knowledgeBase: [] as KnowledgeEntry[],
     },
     {
-      id: 3,
+      id: 4,
       name: 'Fullstack Architect',
       instruction:
         'You are the Fullstack Architect. You excel at system design, connecting frontend interfaces to complex backend services, and ensuring end-to-end data flow.',
@@ -1012,7 +1004,7 @@ const App: React.FC = () => {
       knowledgeBase: [] as KnowledgeEntry[],
     },
     {
-      id: 4,
+      id: 5,
       name: 'DevOps Engineer',
       instruction:
         'You are the DevOps Engineer, a master of CI/CD, Docker, Kubernetes, and cloud infrastructure. You ensure code is delivered reliably and scales infinitely.',
@@ -1021,7 +1013,7 @@ const App: React.FC = () => {
       knowledgeBase: [] as KnowledgeEntry[],
     },
     {
-      id: 5,
+      id: 6,
       name: 'Security Auditor',
       instruction:
         'You are the Security Auditor. You fiercely inspect code for vulnerabilities like XSS, SQLi, and logic flaws, ensuring every line is battle-hardened and secure.',
@@ -1030,7 +1022,7 @@ const App: React.FC = () => {
       knowledgeBase: [] as KnowledgeEntry[],
     },
     {
-      id: 6,
+      id: 7,
       name: 'Algo Specialist',
       instruction:
         'You are the Algorithm Specialist, obsessed with Big O notation, data structures, and computational efficiency. You solve the hardest algorithmic challenges.',
@@ -1040,22 +1032,8 @@ const App: React.FC = () => {
     },
   ]);
 
-  // --- NON-PERSISTENT STATE ---
-  const [terminalOutput, setTerminalOutput] = useState<string[]>([
-    'CRIMSON OS v4.1.0_KORE_BOOT',
-    'Kernel: Android-SD Neural Link Established',
-    'Voltage stable. Hyper-threaded nodes online.',
-  ]);
-  const [isMultiLine, setIsMultiLine] = useState(false);
-  const [multiLineBuffer, setMultiLineBuffer] = useState('');
+  const terminal = useTerminal('~/crimson-node/sd-webui', '/data/data/com.termux/files/home');
 
-  const [termSuggestion, setTermSuggestion] = useState('');
-  const [termSuggestions, setTermSuggestions] = useState<string[]>([]);
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
-  const [currentDir, setCurrentDir] = useState('~/crimson-node/sd-webui');
-  const [realCwd, setRealCwd] = useState('/data/data/com.termux/files/home');
-  const [cmdHistory, setCmdHistory] = useState<string[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
   const [chatMessages, setChatMessages] = useState<
     {
       role: 'user' | 'ai';
@@ -1126,6 +1104,87 @@ const App: React.FC = () => {
     ]);
   };
 
+  const abortRefs = useRef<Record<string, AbortController>>({});
+  const getSignal = useCallback((domain: string): AbortSignal => {
+    abortRefs.current[domain]?.abort();
+    abortRefs.current[domain] = new AbortController();
+    return abortRefs.current[domain].signal;
+  }, []);
+
+  const generateAIResponse = useCallback(
+    async (
+      prompt: string | any[],
+      systemInstruction: string,
+      options?: { modelType?: 'fast' | 'smart'; json?: boolean; responseSchema?: any; brainContext?: any },
+      domain = 'default'
+    ) => {
+      const active = workers.filter(w => w.enabled);
+      if (active.length === 0) return Promise.reject(new Error('No workers enabled'));
+      for (const w of active) {
+        if (w.provider === 'google' && !googleAiClient)
+          return Promise.reject(new Error('Gemini API key not configured — set VITE_GEMINI_API_KEY'));
+        if (w.provider === 'grok' && !grokApiKey)
+          return Promise.reject(new Error('Grok API key not configured'));
+      }
+      const { brainContext, ...serviceOptions } = options || {};
+
+      // Helper: prepend agent system prompt if worker has one assigned
+      const buildInstruction = (w: WorkerConfig) => {
+        if (!w.agentId) return systemInstruction;
+        const agent = getAgent(w.agentId);
+        if (!agent) return systemInstruction;
+        return `${agent.systemPrompt}\n\n---\n\n${systemInstruction}`;
+      };
+
+      if (active.length === 1) {
+        const w = active[0];
+        const signal = getSignal(domain);
+        return generateAIResponseService(prompt as string, buildInstruction(w), serviceOptions, {
+          aiProvider: w.provider,
+          aiModel: w.model,
+          ai: googleAiClient,
+          grokApiKey,
+          projectSettings: { ...projectSettings, ollamaUrl: w.url },
+          ollamaModels: w.models ?? [],
+          signal,
+          brainContext,
+        });
+      }
+
+      // Multi-worker: fan out to all enabled workers concurrently, return first success
+      const signal = getSignal(domain);
+      const results = await Promise.allSettled(
+        active.map(w =>
+          generateAIResponseService(prompt as string, buildInstruction(w), serviceOptions, {
+            aiProvider: w.provider,
+            aiModel: w.model,
+            ai: googleAiClient,
+            grokApiKey,
+            projectSettings: { ...projectSettings, ollamaUrl: w.url },
+            ollamaModels: w.models ?? [],
+            signal,
+            brainContext,
+          })
+        )
+      );
+      const first = results.find(r => r.status === 'fulfilled' && (r as PromiseFulfilledResult<string>).value);
+      if (!first) {
+        const errors = results
+          .filter(r => r.status === 'rejected')
+          .map(r => (r as PromiseRejectedResult).reason?.message || 'Unknown error');
+        throw new Error(`All workers failed: ${errors.join(', ')}`);
+      }
+      return (first as PromiseFulfilledResult<string>).value;
+    },
+    [workers, googleAiClient, grokApiKey, projectSettings, getSignal]
+  );
+
+  // ── Event-driven pipeline ──────────────────────────────────────────────────
+  const pipeline = usePipeline(generateAIResponse as any);
+
+  // Centralised AI request hook — domain-specific loading flags
+  const ai = useAiRequest(generateAIResponse);
+
   const triggerSwarmCycle = async () => {
     setIsAiProcessing(true);
     setSwarmLogs((prev) => [
@@ -1154,6 +1213,54 @@ const App: React.FC = () => {
   };
 
   const activePersonality = personalities.find((p) => p.active) || personalities[0];
+
+  const {
+    handleTerminalCommand,
+    handleTermInputChange,
+    handleTermKeyDown,
+    getAiTerminalAssistance,
+  } = useTerminalLogic(terminal, {
+    activeTab,
+    setActiveTab: (tab: any) => setActiveTab(tab),
+    editorLanguage,
+    editorMode,
+    projectFiles,
+    setProjectFiles,
+    termuxStatus,
+    ollamaStatus,
+    isVaultUnlocked,
+    swarmAnxiety,
+    personalities,
+    activePersonality,
+    setIsAiProcessing,
+    generateAIResponse,
+  });
+
+  const {
+    termInput,
+    setTermInput,
+    terminalOutput,
+    setTerminalOutput,
+    currentDir,
+    setCurrentDir,
+    realCwd,
+    setRealCwd,
+    cmdHistory,
+    setCmdHistory,
+    historyIndex,
+    setHistoryIndex,
+    isMultiLine,
+    setIsMultiLine,
+    multiLineBuffer,
+    setMultiLineBuffer,
+    termSuggestion,
+    setTermSuggestion,
+    termSuggestions,
+    setTermSuggestions,
+    selectedSuggestionIndex,
+    setSelectedSuggestionIndex,
+  } = terminal;
+
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -1479,87 +1586,6 @@ const App: React.FC = () => {
 
   // Per-domain AbortController map — aborting a domain cancels its in-flight request
   // without affecting other concurrent domains (e.g. chat vs editor vs pair-programmer).
-  const abortRefs = useRef<Record<string, AbortController>>({});
-  const getSignal = useCallback((domain: string): AbortSignal => {
-    abortRefs.current[domain]?.abort();
-    abortRefs.current[domain] = new AbortController();
-    return abortRefs.current[domain].signal;
-  }, []);
-
-  const generateAIResponse = useCallback(
-    async (
-      prompt: string | any[],
-      systemInstruction: string,
-      options?: { modelType?: 'fast' | 'smart'; json?: boolean; responseSchema?: any; brainContext?: any },
-      domain = 'default'
-    ) => {
-      const active = workers.filter(w => w.enabled);
-      if (active.length === 0) return Promise.reject(new Error('No workers enabled'));
-      for (const w of active) {
-        if (w.provider === 'google' && !googleAiClient)
-          return Promise.reject(new Error('Gemini API key not configured — set VITE_GEMINI_API_KEY'));
-        if (w.provider === 'grok' && !grokApiKey)
-          return Promise.reject(new Error('Grok API key not configured'));
-      }
-      const { brainContext, ...serviceOptions } = options || {};
-
-      // Helper: prepend agent system prompt if worker has one assigned
-      const buildInstruction = (w: WorkerConfig) => {
-        if (!w.agentId) return systemInstruction;
-        const agent = getAgent(w.agentId);
-        if (!agent) return systemInstruction;
-        return `${agent.systemPrompt}\n\n---\n\n${systemInstruction}`;
-      };
-
-      if (active.length === 1) {
-        const w = active[0];
-        const signal = getSignal(domain);
-        return generateAIResponseService(prompt as string, buildInstruction(w), serviceOptions, {
-          aiProvider: w.provider,
-          aiModel: w.model,
-          ai: googleAiClient,
-          grokApiKey,
-          projectSettings: { ...projectSettings, ollamaUrl: w.url },
-          ollamaModels: w.models ?? [],
-          signal,
-          brainContext,
-        });
-      }
-
-      // Multi-worker: fan out to all enabled workers concurrently, return first success
-      const signal = getSignal(domain);
-      const results = await Promise.allSettled(
-        active.map(w =>
-          generateAIResponseService(prompt as string, buildInstruction(w), serviceOptions, {
-            aiProvider: w.provider,
-            aiModel: w.model,
-            ai: googleAiClient,
-            grokApiKey,
-            projectSettings: { ...projectSettings, ollamaUrl: w.url },
-            ollamaModels: w.models ?? [],
-            signal,
-            brainContext,
-          })
-        )
-      );
-      const first = results.find(r => r.status === 'fulfilled' && (r as PromiseFulfilledResult<string>).value);
-      if (!first) {
-        const errors = results
-          .filter(r => r.status === 'rejected')
-          .map(r => (r as PromiseRejectedResult).reason?.message || 'Unknown error');
-        throw new Error(`All workers failed: ${errors.join(', ')}`);
-      }
-      return (first as PromiseFulfilledResult<string>).value;
-    },
-    [workers, googleAiClient, grokApiKey, projectSettings, getSignal]
-  );
-
-  // ── Event-driven pipeline ──────────────────────────────────────────────────
-  const pipeline = usePipeline(generateAIResponse as any);
-
-  // Centralised AI request hook — domain-specific loading flags
-  const ai = useAiRequest(generateAIResponse);
-
   // Route AI_RESPONSE_RECEIVED back to the correct state setter.
   useEffect(() => {
     const unsub = pipeline.onResponse((result: PatternResult) => {
@@ -3184,311 +3210,6 @@ ${prompt}`,
     }
   };
 
-  const handleTerminalCommand = async (e: React.FormEvent) => {
-    e.preventDefault();
-    let cmd = termInput.trim();
-    if (!cmd) return;
-
-    let finalCmd = cmd;
-    if (isMultiLine) {
-      finalCmd = multiLineBuffer + ' ' + cmd.replace(/\\$/, '');
-    }
-
-    if (cmd.endsWith('\\') || cmd.endsWith('(') || cmd.endsWith('"') || cmd.endsWith("'")) {
-      setMultiLineBuffer(
-        isMultiLine ? multiLineBuffer + ' ' + cmd.replace(/\\$/, '') : cmd.replace(/\\$/, '')
-      );
-      setIsMultiLine(true);
-      setTerminalOutput((prev) => [...prev, `${currentDir} $ ${cmd} (continuation)`]);
-      setTermInput('');
-      return;
-    }
-
-    setTerminalOutput((prev) => [...prev, `$ ${finalCmd}`]);
-    setCmdHistory((prev) => [finalCmd, ...prev].slice(0, 20));
-    setTermInput('');
-    setTermSuggestion('');
-    setTermSuggestions([]);
-    setSelectedSuggestionIndex(-1);
-    setHistoryIndex(-1);
-    setIsMultiLine(false);
-    setMultiLineBuffer('');
-
-    const stripAnsi = (s: string) => s.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\x1b\][^\x07]*\x07/g, '');
-
-    const runShellCmd = async (shellCmd: string) => {
-      setIsAiProcessing(true);
-      try {
-        const res = await fetch('./api/terminal/exec', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cmd: shellCmd, cwd: realCwd }),
-        });
-        const data = await res.json() as { stdout: string; stderr: string; exitCode: number; newCwd: string };
-        if (data.newCwd) setRealCwd(data.newCwd);
-        const lines: string[] = [];
-        if (data.stdout) lines.push(...stripAnsi(data.stdout).trimEnd().split('\n').filter(Boolean));
-        if (data.stderr) lines.push(...stripAnsi(data.stderr).trimEnd().split('\n').filter(Boolean).map(l => `[ERROR] ${l}`));
-        if (lines.length === 0 && data.exitCode === 0) lines.push('[OK]');
-        else if (lines.length === 0 && data.exitCode !== 0) lines.push(`[ERROR] Command exited with code ${data.exitCode}`);
-        setTerminalOutput((prev) => [...prev, ...lines]);
-      } catch {
-        setTerminalOutput((prev) => [...prev, '[ERROR] Shell bridge unreachable.']);
-      } finally {
-        setIsAiProcessing(false);
-      }
-    };
-
-    if (finalCmd === 'clear') {
-      setTerminalOutput(['Buffer flushed.']);
-      return;
-    } else if (finalCmd === 'help') {
-      setTerminalOutput((prev) => [
-        ...prev,
-        'Available commands: any shell command runs for real.',
-        '  clear            - Clear the terminal buffer',
-        '  ai               - Get AI assistance',
-        '  ai <prompt>      - Get AI assistance with a prompt',
-        'All other commands execute in the Termux shell.',
-      ]);
-      return;
-    } else if (finalCmd === 'ai')
-      await getAiTerminalAssistance(
-        'Analyze current system state and suggest relevant commands or actions.'
-      );
-    else if (finalCmd.startsWith('ai ')) await getAiTerminalAssistance(finalCmd.substring(3));
-    else if (false && finalCmd.startsWith('gh repo clone ')) {
-      const repo = finalCmd.replace('gh repo clone ', '');
-      if (repo.includes('ToolNeuron')) {
-        setTerminalOutput((prev) => [
-          ...prev,
-          `Cloning into 'ToolNeuron'...`,
-          'remote: Enumerating objects: 4521, done.',
-          'remote: Counting objects: 100% (4521/4521), done.',
-          'remote: Compressing objects: 100% (1240/1240), done.',
-          'Receiving objects: 100% (4521/4521), 12.45 MiB | 8.12 MiB/s, done.',
-          '[SUCCESS] ToolNeuron Source Synchronized.',
-          '[SYSTEM] Initializing ToolNeuron Local Environment...',
-          '[KERNEL] Mapping neural paths to /data/data/com.termux/files/home/ToolNeuron',
-          '[BOOT] ToolNeuron Hub is now available in the primary interface.',
-        ]);
-        setTimeout(() => setActiveTab('toolneuron'), 2000);
-      } else if (repo.includes('TransformerOptimus/SuperAGI')) {
-        setTerminalOutput((prev) => [
-          ...prev,
-          `Cloning into 'SuperAGI'...`,
-          'remote: Enumerating objects: 8542, done.',
-          'remote: Counting objects: 100% (8542/8542), done.',
-          'remote: Compressing objects: 100% (3240/3240), done.',
-          'Receiving objects: 100% (8542/8542), 45.2 MiB | 12.4 MiB/s, done.',
-          '[SUCCESS] SuperAGI repository integrated.',
-          '[SYSTEM] Extracting useful autonomous agent core components...',
-        ]);
-
-        setTimeout(() => {
-          setProjectFiles((prev) => {
-            const newFiles = [
-              {
-                id: 'superagi_root',
-                name: 'SuperAGI',
-                type: 'folder',
-                parentId: 'root',
-                isOpen: true,
-              },
-              {
-                id: 'superagi_agent',
-                name: 'agent',
-                type: 'folder',
-                parentId: 'superagi_root',
-                isOpen: true,
-              },
-              {
-                id: 'superagi_core',
-                name: 'super_agi.py',
-                type: 'file',
-                parentId: 'superagi_agent',
-                language: 'python',
-                content:
-                  'class SuperAGI:\n    def __init__(self, ai_name, ai_role, llm, memory, tools):\n        self.name = ai_name\n        self.role = ai_role\n        self.llm = llm\n        self.memory = memory\n        self.tools = tools\n\n    def execute(self, goals):\n        print(f"Executing goals for {self.name}...")\n        # Autonomous execution loop\n        for goal in goals:\n            print(f"Processing goal: {goal}")\n            # Tool selection and execution logic here\n        return "Goals completed."',
-              },
-              {
-                id: 'superagi_config',
-                name: 'config.yaml',
-                type: 'file',
-                parentId: 'superagi_root',
-                language: 'yaml',
-                content:
-                  'agent:\n  name: "Crimson_AGI"\n  description: "Autonomous neural agent"\n  model: "gpt-4"\n  memory: "vector_db"\ntools:\n  - "file_manager"\n  - "web_search"\n  - "terminal"',
-              },
-              {
-                id: 'superagi_main',
-                name: 'main.py',
-                type: 'file',
-                parentId: 'superagi_root',
-                language: 'python',
-                content:
-                  'from agent.super_agi import SuperAGI\n\ndef main():\n    print("Initializing SuperAGI Core...")\n    agent = SuperAGI(\n        ai_name="Optimus",\n        ai_role="Autonomous Developer",\n        llm="gpt-4",\n        memory="local",\n        tools=["search", "code"]\n    )\n    agent.execute(["Analyze system", "Optimize performance"])\n\nif __name__ == "__main__":\n    main()',
-              },
-            ];
-            return [...prev, ...newFiles];
-          });
-          setTerminalOutput((prev) => [
-            ...prev,
-            '[SUCCESS] SuperAGI core files added to the project workspace.',
-          ]);
-        }, 1500);
-      } else if (repo.includes('google-deepmind/gemma')) {
-        setTerminalOutput((prev) => [
-          ...prev,
-          `Cloning into 'gemma'...`,
-          'remote: Enumerating objects: 12450, done.',
-          'remote: Counting objects: 100% (12450/12450), done.',
-          'remote: Compressing objects: 100% (4520/4520), done.',
-          'Receiving objects: 100% (12450/12450), 145.2 MiB | 22.4 MiB/s, done.',
-          '[SUCCESS] Gemma repository integrated.',
-          '[SYSTEM] Extracting core model architecture and visual components...',
-        ]);
-
-        setTimeout(() => {
-          setProjectFiles((prev) => {
-            const newFiles = [
-              { id: 'gemma_root', name: 'Gemma', type: 'folder', parentId: 'root', isOpen: true },
-              {
-                id: 'gemma_core',
-                name: 'core',
-                type: 'folder',
-                parentId: 'gemma_root',
-                isOpen: true,
-              },
-              {
-                id: 'gemma_model',
-                name: 'model.py',
-                type: 'file',
-                parentId: 'gemma_core',
-                language: 'python',
-                content:
-                  'import torch\nimport torch.nn as nn\n\nclass GemmaModel(nn.Module):\n    def __init__(self, vocab_size, hidden_dim, num_layers):\n        super().__init__()\n        self.embed = nn.Embedding(vocab_size, hidden_dim)\n        self.layers = nn.ModuleList([TransformerBlock(hidden_dim) for _ in range(num_layers)])\n        self.norm = RMSNorm(hidden_dim)\n\n    def forward(self, x):\n        x = self.embed(x)\n        for layer in self.layers:\n            x = layer(x)\n        return self.norm(x)',
-              },
-              {
-                id: 'gemma_visuals',
-                name: 'visuals',
-                type: 'folder',
-                parentId: 'gemma_root',
-                isOpen: true,
-              },
-              {
-                id: 'gemma_attention',
-                name: 'attention_viz.tsx',
-                type: 'file',
-                parentId: 'gemma_visuals',
-                language: 'typescript',
-                content:
-                  'import React from "react";\n\nexport const AttentionVisualizer = ({ attentionWeights }) => {\n  return (\n    <div className="p-4 bg-[#0d0404] border border-red-900/30 rounded-xl">\n      <h3 className="text-red-500 font-black mb-4 uppercase tracking-widest text-xs">Gemma Attention Map</h3>\n      <div className="grid grid-cols-8 gap-1">\n        {attentionWeights.map((weight, i) => (\n          <div \n            key={i} \n            className="w-8 h-8 rounded-sm transition-all hover:scale-110 cursor-crosshair"\n            style={{ backgroundColor: `rgba(239, 68, 68, ${weight})` }}\n            title={`Weight: ${weight.toFixed(3)}`}\n          />\n        ))}\n      </div>\n    </div>\n  );\n};',
-              },
-              {
-                id: 'gemma_config',
-                name: 'config.json',
-                type: 'file',
-                parentId: 'gemma_root',
-                language: 'json',
-                content:
-                  '{\n  "model_type": "gemma",\n  "vocab_size": 256000,\n  "hidden_size": 2048,\n  "num_hidden_layers": 18,\n  "num_attention_heads": 8,\n  "head_dim": 256,\n  "visualizer_enabled": true\n}',
-              },
-            ];
-            return [...prev, ...newFiles];
-          });
-          setTerminalOutput((prev) => [
-            ...prev,
-            '[SUCCESS] Gemma core and visualizer added to the project workspace.',
-          ]);
-        }, 1500);
-      } else {
-        const repoName = repo.split('/').pop() || 'repo';
-        setTerminalOutput((prev) => [
-          ...prev,
-          `Cloning into '${repoName}'...`,
-          'remote: Enumerating objects: 1024, done.',
-          'remote: Counting objects: 100% (1024/1024), done.',
-          'remote: Compressing objects: 100% (512/512), done.',
-          'Receiving objects: 100% (1024/1024), 2.45 MiB | 4.12 MiB/s, done.',
-          '[SUCCESS] Repository integrated into local node.',
-        ]);
-
-        setTimeout(() => {
-          setProjectFiles((prev) => {
-            const repoId = `repo_${Date.now()}`;
-            const newFiles = [
-              { id: repoId, name: repoName, type: 'folder', parentId: 'root', isOpen: true },
-              {
-                id: `${repoId}_readme`,
-                name: 'README.md',
-                type: 'file',
-                parentId: repoId,
-                language: 'markdown',
-                content: `# ${repoName}\n\nCloned repository.`,
-              },
-              { id: `${repoId}_src`, name: 'src', type: 'folder', parentId: repoId, isOpen: true },
-              {
-                id: `${repoId}_index`,
-                name: 'index.js',
-                type: 'file',
-                parentId: `${repoId}_src`,
-                language: 'javascript',
-                content: 'console.log("Hello World");',
-              },
-              {
-                id: `${repoId}_package`,
-                name: 'package.json',
-                type: 'file',
-                parentId: repoId,
-                language: 'json',
-                content: `{\n  "name": "${repoName}",\n  "version": "1.0.0",\n  "main": "src/index.js"\n}`,
-              },
-            ];
-            return [...prev, ...newFiles];
-          });
-          setTerminalOutput((prev) => [
-            ...prev,
-            `[SUCCESS] ${repoName} files added to the project workspace.`,
-          ]);
-        }, 1500);
-      }
-    } else {
-      await runShellCmd(finalCmd);
-    }
-  };
-
-  const getAiTerminalAssistance = async (prompt: string) => {
-    setIsAiProcessing(true);
-    try {
-      const systemState = `
-Current System State:
-- Active Tab: ${activeTab}
-- Editor Language: ${editorLanguage}
-- Editor Mode: ${editorMode}
-- Project Files: ${projectFiles.map((f) => f.name).join(', ')}
-- Termux Status: ${termuxStatus}
-- Ollama Status: ${ollamaStatus}
-- Vault Unlocked: ${isVaultUnlocked}
-- Swarm Anxiety: ${(swarmAnxiety * 100).toFixed(1)}%
-`;
-
-      const response = await generateAIResponse(
-        `${systemState}\n\nUser Request: ${prompt}`,
-        `Futuristic crimson terminal specialist. ${activePersonality.instruction}${(activePersonality.knowledgeBase ?? []).length ? `\n\nKNOWLEDGE BASE:\n${(activePersonality.knowledgeBase ?? []).map((e) => `[KB: ${e.name}]\n${e.content}`).join('\n\n---\n\n')}` : ''}. Provide concise, terminal-style responses in simple, easy-to-understand English so that non-experts can easily follow. If the user asks for general help or just types 'ai', suggest relevant commands based on the current system state.`,
-        { modelType: 'fast' }
-      );
-      setTerminalOutput((prev) => [
-        ...prev,
-        `CORE (${activePersonality.name.toUpperCase()}): ${response}`,
-      ]);
-    } catch (err) {
-      setTerminalOutput((prev) => [...prev, `[ERROR] Neural bridge collapsed.`]);
-    } finally {
-      setIsAiProcessing(false);
-    }
-  };
-
   const handleStudioSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const prompt = studioInput.trim();
@@ -3594,7 +3315,7 @@ Current System State:
 
         if (!googleAiClient) throw new Error('Gemini API key not configured — set VITE_GEMINI_API_KEY');
         const response = await googleAiClient.models.generateContent({
-          model: 'gemini-2.0-flash-preview-image-generation',
+          model: 'gemini-3-flash',
           contents: [{ parts }],
           config: {
             systemInstruction: `You are the Crimson Engine SD Renderer. Output high-impact futuristic visuals. Active personality: ${systemInstruction}`,
@@ -3653,227 +3374,6 @@ Current System State:
 
   const formatTime = (ts: number) =>
     new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-  const commonCommands = [
-    'ls',
-    'cd',
-    'cat',
-    'mkdir',
-    'rm',
-    'gh repo clone',
-    'ai ',
-    'clear',
-    'python',
-    'node',
-    'git status',
-    'git commit',
-    'git push',
-    'toolneuron start',
-    'toolneuron status',
-  ];
-
-  const handleTermInputChange = (val: string) => {
-    setTermInput(val);
-    if (!val) {
-      setTermSuggestion('');
-      setTermSuggestions([]);
-      setSelectedSuggestionIndex(-1);
-      setHistoryIndex(-1);
-      return;
-    }
-    setHistoryIndex(-1);
-
-    const activePersonality = personalities.find((p) => p.active);
-    const personalitySuggestions = activePersonality ? activePersonality.suggestions : [];
-
-    // Context-aware command suggestions with weights
-    const suggestionsWithWeights: { cmd: string; weight: number }[] = [
-      ...commonCommands.map((c) => ({ cmd: c, weight: 1 })),
-      ...(activePersonality
-        ? activePersonality.suggestions.map((c) => ({ cmd: c, weight: 3 }))
-        : []),
-    ];
-
-    if (editorLanguage === 'python') {
-      suggestionsWithWeights.push({ cmd: 'pip install', weight: 2 }, { cmd: 'pytest', weight: 2 });
-    }
-    if (editorLanguage === 'javascript' || editorLanguage === 'typescript') {
-      suggestionsWithWeights.push(
-        { cmd: 'npm install', weight: 2 },
-        { cmd: 'npm run dev', weight: 2 }
-      );
-    }
-
-    // Filter and sort (will be used in command completion)
-    const sortedSuggestions = suggestionsWithWeights
-      .sort((a, b) => b.weight - a.weight || a.cmd.localeCompare(b.cmd))
-      .map((s) => s.cmd);
-
-    // Get current folder context
-    const dirParts = currentDir.split('/');
-    const currentFolderName =
-      dirParts[dirParts.length - 1] === '~' ? 'root' : dirParts[dirParts.length - 1];
-
-    // Try to find the folder by traversing from root
-    let currentFolderId: string | null = 'root';
-    if (currentDir !== '~') {
-      const folder = projectFiles.find((f) => f.name === currentFolderName && f.type === 'folder');
-      if (folder) currentFolderId = folder.id;
-    }
-
-    const localItems = projectFiles.filter((f) => f.parentId === currentFolderId);
-    const localFiles = localItems.filter((f) => f.type === 'file').map((f) => f.name);
-    const localFolders = localItems.filter((f) => f.type === 'folder').map((f) => f.name);
-
-    let matches: string[] = [];
-
-    // Commands that take file paths
-    const fileCommands = ['cat', 'rm', 'edit', 'run', 'compile'];
-
-    // Check if user is typing a command or a path
-    const parts = val.split(' ');
-    if (parts.length === 1) {
-      // Command completion (weighted)
-      matches = sortedSuggestions.filter((c) => c.toLowerCase().startsWith(val.toLowerCase()));
-    } else if (fileCommands.includes(parts[0])) {
-      // File path completion
-      const search = parts.slice(1).join(' ');
-      matches = localFiles
-        .filter((f) => f.toLowerCase().startsWith(search.toLowerCase()))
-        .map((f) => `${parts[0]} ${f}`);
-    } else if (val.startsWith('cd ')) {
-      const search = val.substring(3);
-      if (search.includes('/')) {
-        const parts = search.split('/');
-        const folderName = parts[0];
-        const subPath = parts.slice(1).join('/');
-        const folder = projectFiles.find(
-          (f) => f.name === folderName && f.type === 'folder' && f.parentId === currentFolderId
-        );
-        if (folder) {
-          const subItems = projectFiles.filter((f) => f.parentId === folder.id);
-          matches = subItems
-            .filter(
-              (f) => f.type === 'folder' && f.name.toLowerCase().startsWith(subPath.toLowerCase())
-            )
-            .map((f) => `cd ${folderName}/${f.name}`);
-        }
-      } else {
-        matches = localFolders
-          .filter((f) => f.toLowerCase().startsWith(search.toLowerCase()))
-          .map((f) => `cd ${f}`);
-        if (search === '.' || search === '..') matches.push(`cd ${search}`);
-      }
-    } else if (fileCommands.some((cmd) => val.startsWith(`${cmd} `))) {
-      const cmd = val.split(' ')[0];
-      const search = val.substring(cmd.length + 1);
-
-      if (search.includes('/')) {
-        const parts = search.split('/');
-        const folderName = parts[0];
-        const fileName = parts.slice(1).join('/');
-        const folder = projectFiles.find(
-          (f) => f.name === folderName && f.type === 'folder' && f.parentId === currentFolderId
-        );
-        if (folder) {
-          const subItems = projectFiles.filter((f) => f.parentId === folder.id);
-          matches = subItems
-            .filter(
-              (f) => f.type === 'file' && f.name.toLowerCase().startsWith(fileName.toLowerCase())
-            )
-            .map((f) => `${cmd} ${folderName}/${f.name}`);
-        }
-      } else {
-        matches = localFiles
-          .filter((f) => f.toLowerCase().startsWith(search.toLowerCase()))
-          .map((f) => `${cmd} ${f}`);
-      }
-    } else if (val.startsWith('ai ')) {
-      const search = val.substring(3);
-      const aiCmds = activePersonality.suggestions || [];
-      matches = aiCmds
-        .filter((cmd) => cmd.toLowerCase().startsWith(search.toLowerCase()))
-        .map((cmd) => `ai ${cmd}`);
-    } else {
-      // General suggestions
-      const allSuggestions = [
-        ...commonCommands,
-        ...fileCommands.map((c) => `${c} `),
-        ...(activePersonality.suggestions
-          ? activePersonality.suggestions.map((s) => `ai ${s}`)
-          : []),
-      ];
-
-      // Add context-aware suggestions based on file types
-      if (localFiles.some((f) => f.endsWith('.py'))) {
-        allSuggestions.push('python3 ');
-        localFiles
-          .filter((f) => f.endsWith('.py'))
-          .forEach((f) => allSuggestions.push(`python3 ${f}`));
-      }
-      if (localFiles.some((f) => f.endsWith('.js') || f.endsWith('.ts'))) {
-        allSuggestions.push('node ');
-        localFiles
-          .filter((f) => f.endsWith('.js') || f.endsWith('.ts'))
-          .forEach((f) => allSuggestions.push(`node ${f}`));
-      }
-
-      matches = [...new Set(allSuggestions)].filter((s) =>
-        s.toLowerCase().startsWith(val.toLowerCase())
-      );
-    }
-
-    setTermSuggestions(matches);
-
-    if (matches.length > 0) {
-      const firstMatch = matches[0];
-      if (firstMatch.toLowerCase() !== val.toLowerCase()) {
-        setTermSuggestion(firstMatch);
-      } else {
-        setTermSuggestion('');
-      }
-    } else {
-      setTermSuggestion('');
-    }
-    setSelectedSuggestionIndex(-1);
-  };
-
-  const handleTermKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      if (termSuggestions.length > 0) {
-        const nextIndex = (selectedSuggestionIndex + 1) % termSuggestions.length;
-        setSelectedSuggestionIndex(nextIndex);
-        const selected = termSuggestions[nextIndex];
-        setTermInput(selected);
-        // Keep suggestions open
-        setTermSuggestion(selected);
-      }
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (historyIndex < cmdHistory.length - 1) {
-        const nextIdx = historyIndex + 1;
-        setHistoryIndex(nextIdx);
-        setTermInput(cmdHistory[nextIdx]);
-        setTermSuggestions([]);
-        setTermSuggestion('');
-      }
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (historyIndex > 0) {
-        const nextIdx = historyIndex - 1;
-        setHistoryIndex(nextIdx);
-        setTermInput(cmdHistory[nextIdx]);
-        setTermSuggestions([]);
-        setTermSuggestion('');
-      } else if (historyIndex === 0) {
-        setHistoryIndex(-1);
-        setTermInput('');
-        setTermSuggestions([]);
-        setTermSuggestion('');
-      }
-    }
-  };
 
   const debouncedFileSearch = useDebounce(fileSearch, 200);
 
@@ -4085,7 +3585,13 @@ Current System State:
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen min-h-[100dvh] w-full bg-red-950/10 text-red-100 font-sans selection:bg-red-900/40 overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen min-h-[100dvh] w-full bg-[#050101] text-[#00ff00] font-sans selection:bg-red-900/40 overflow-hidden border-4 border-blue-500" style={{opacity:1, visibility:'visible', display:'flex'}}>
+      <button 
+        onClick={() => document.body.style.background = 'white'}
+        style={{position:'fixed', top:10, left:10, zIndex:99999, background:'red', color:'white', padding:'10px', fontSize:'12px', fontWeight:'bold'}}
+      >
+        EMERGENCY WHITE BG
+      </button>
       {/* φ Pulse Column — fixed right edge, doesn't affect layout */}
       <div className="phi-grid phi-grid__pulse fixed right-0 top-0 bottom-0 w-[3px] md:w-[4px] z-50 pointer-events-none" aria-hidden="true" />
       {/* Sidebar Navigation - Hidden on mobile */}
@@ -4169,7 +3675,7 @@ Current System State:
       </nav>
 
       {/* Main Interface */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] bg-repeat pb-14 md:pb-0 overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 bg-[#0a0a0c] pb-14 md:pb-0 overflow-hidden border-4 border-red-500">
         <header className="h-14 md:h-16 border-b border-red-900/30 flex items-center justify-between px-4 md:px-8 bg-[#0a0202]/95 backdrop-blur-xl z-20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
           <div className="flex items-center space-x-3 md:space-x-6">
             <button
@@ -4203,13 +3709,27 @@ Current System State:
                     title={w.enabled ? `Disable W${w.id}` : `Enable W${w.id}`}
                   >{w.id}</button>
                   <select
+                    value={w.provider}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, provider: e.target.value as any, model: e.target.value === 'google' ? 'gemini-3-flash' : e.target.value === 'grok' ? 'grok-beta' : x.model || 'llama3.2:latest' } : x))}
+                    className={`bg-transparent text-[9px] font-black outline-none cursor-pointer w-14 truncate transition-colors ${w.enabled ? 'text-red-300' : 'text-red-900 pointer-events-none'}`}
+                    title="Provider"
+                  >
+                    <option value="ollama" className="bg-[#0a0202] text-red-200">Ollama</option>
+                    <option value="google" className="bg-[#0a0202] text-red-200">Google</option>
+                    <option value="grok" className="bg-[#0a0202] text-red-200">Grok</option>
+                  </select>
+                  <select
                     value={w.model}
                     onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, model: e.target.value } : x))}
-                    className={`bg-transparent text-[10px] font-black outline-none cursor-pointer w-28 truncate transition-colors ${w.enabled ? 'text-red-300' : 'text-red-900 pointer-events-none'}`}
+                    className={`bg-transparent text-[10px] font-black outline-none cursor-pointer w-24 truncate transition-colors ${w.enabled ? 'text-red-300' : 'text-red-900 pointer-events-none'}`}
                   >
-                    {availableModels.length > 0
+                    {w.provider === 'ollama' && availableModels.length > 0
                       ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202] text-red-200">{m}</option>)
-                      : <option value={w.model} className="bg-[#0a0202]">{w.model || 'llama3'}</option>
+                      : w.provider === 'google'
+                        ? ['gemini-3-flash', 'gemini-3.1-pro-preview'].map(m => <option key={m} value={m} className="bg-[#0a0202] text-red-200">{m}</option>)
+                        : w.provider === 'grok'
+                          ? ['grok-beta', 'grok-2-latest'].map(m => <option key={m} value={m} className="bg-[#0a0202] text-red-200">{m}</option>)
+                          : <option value={w.model} className="bg-[#0a0202]">{w.model || 'llama3'}</option>
                     }
                   </select>
                   <select
@@ -4787,6 +4307,12 @@ Current System State:
         .animate-in { animation: var(--anim-name) var(--anim-duration, 500ms) cubic-bezier(0.16, 1, 0.3, 1); }
         .fade-in { --anim-name: fade-in; }
         .zoom-in-95 { --anim-name: zoom-in-95; }
+        
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoom-in-95 { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes slide-in-from-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slide-in-from-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         .animate-bounce { animation: bounce 0.6s infinite ease-in-out; }
         
@@ -4916,8 +4442,8 @@ Current System State:
           <div className="relative bg-[#0a0202] border-t border-red-900/40 rounded-t-3xl p-6 space-y-4 shadow-[0_-20px_60px_rgba(0,0,0,0.8)]" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h3 className="text-sm font-black text-red-100 uppercase tracking-widest">Ollama Models</h3>
-                <p className="text-[10px] text-red-700 mt-0.5">{availableModels.length} model{availableModels.length !== 1 ? 's' : ''} available</p>
+                <h3 className="text-sm font-black text-red-100 uppercase tracking-widest">Neural Workers</h3>
+                <p className="text-[10px] text-red-700 mt-0.5">{availableModels.length} Ollama model{availableModels.length !== 1 ? 's' : ''} available</p>
               </div>
               <div className="flex items-center gap-3">
                 <button onClick={() => refreshOllamaModels()} className={`text-xs font-black px-3 py-1 rounded-full border transition-all ${ollamaStatus === 'connected' ? 'text-green-400 border-green-800/40 bg-green-950/20' : ollamaStatus === 'connecting' ? 'text-yellow-400 border-yellow-800/40 animate-pulse' : 'text-red-500 border-red-900/40 bg-red-950/20'}`}>
@@ -4952,16 +4478,33 @@ Current System State:
                   </button>
                 </div>
                 <div>
-                  <p className="text-[9px] text-red-700 uppercase tracking-widest mb-1 font-black">Ollama Model</p>
+                  <p className="text-[9px] text-red-700 uppercase tracking-widest mb-1 font-black">Provider</p>
+                  <select
+                    value={w.provider}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, provider: e.target.value as any, model: e.target.value === 'google' ? 'gemini-3-flash' : e.target.value === 'grok' ? 'grok-beta' : x.model || 'llama3.2:latest' } : x))}
+                    disabled={!w.enabled}
+                    className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-100 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
+                  >
+                    <option value="ollama" className="bg-[#0a0202]">Ollama</option>
+                    <option value="google" className="bg-[#0a0202]">Google Gemini</option>
+                    <option value="grok" className="bg-[#0a0202]">xAI Grok</option>
+                  </select>
+                </div>
+                <div>
+                  <p className="text-[9px] text-red-700 uppercase tracking-widest mb-1 font-black">Model</p>
                   <select
                     value={w.model}
                     onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, model: e.target.value } : x))}
                     disabled={!w.enabled}
                     className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-100 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
                   >
-                    {availableModels.length > 0
+                    {w.provider === 'ollama' && availableModels.length > 0
                       ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
-                      : <option value={w.model} className="bg-[#0a0202]">{w.model}</option>
+                      : w.provider === 'google'
+                        ? ['gemini-3-flash', 'gemini-3.1-pro-preview'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                        : w.provider === 'grok'
+                          ? ['grok-beta', 'grok-2-latest'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                          : <option value={w.model} className="bg-[#0a0202]">{w.model}</option>
                     }
                   </select>
                 </div>
@@ -5078,9 +4621,7 @@ class ErrorBoundary extends React.Component<
 
 const container = document.getElementById('root');
 if (container) {
-  const root = (container as any)._reactRoot || createRoot(container);
-  (container as any)._reactRoot = root;
-  root.render(
+  createRoot(container).render(
     <ErrorBoundary>
       <App />
     </ErrorBoundary>

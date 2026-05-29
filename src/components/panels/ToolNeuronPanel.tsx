@@ -126,7 +126,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
   ] as const;
 
   return (
-    <div className="h-full flex flex-col animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
+    <div className="h-full flex flex-col overflow-hidden">
 
       {/* MOBILE: horizontal scroll tab strip */}
       <div className="lg:hidden flex items-center gap-2 px-4 py-3 bg-[#080101] border-b border-red-900/20 overflow-x-auto no-scrollbar shrink-0">

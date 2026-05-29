@@ -1,3 +1,4 @@
+import { storage } from './storage';
 import type { WorkingMemory } from './types';
 
 const STORAGE_KEY = 'brain_stm';
@@ -12,13 +13,13 @@ export class STMBuffer {
 
   private load(): void {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = storage.getItem(STORAGE_KEY);
       if (raw) this.buffer = JSON.parse(raw);
     } catch { this.buffer = []; }
   }
 
   private persist(): void {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.buffer)); } catch { /* ignore */ }
+    try { storage.setItem(STORAGE_KEY, JSON.stringify(this.buffer)); } catch { /* ignore */ }
   }
 
   push(entry: WorkingMemory): void {

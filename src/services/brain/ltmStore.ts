@@ -1,51 +1,40 @@
+import { storage } from './storage';
 import type { Experience } from './types';
 
-const DB_NAME = 'brain_ltm';
-const STORE_NAME = 'experiences';
-const DB_VERSION = 1;
+const STORAGE_KEY = 'brain_ltm_experiences';
 const PRUNE_DAYS = 30;
 
-function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-        store.createIndex('intent', 'intent', { unique: false });
-        store.createIndex('timestamp', 'timestamp', { unique: false });
-        store.createIndex('emotionalWeight', 'emotionalWeight', { unique: false });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
+function readAll(): Experience[] {
+  try {
+    const raw = storage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeAll(experiences: Experience[]): void {
+  storage.setItem(STORAGE_KEY, JSON.stringify(experiences));
 }
 
 export class LTMStore {
   async save(experience: Experience): Promise<void> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      tx.objectStore(STORE_NAME).put(experience);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
+    const all = readAll();
+    const idx = all.findIndex(e => e.id === experience.id);
+    if (idx >= 0) {
+      all[idx] = experience;
+    } else {
+      all.push(experience);
+    }
+    writeAll(all);
   }
 
   async getAll(): Promise<Experience[]> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const req = tx.objectStore(STORE_NAME).getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => reject(req.error);
-    });
+    return readAll();
   }
 
-  // Retrieve top-k experiences by Jaccard similarity of intent tokens
   async findSimilar(intent: string, k = 3): Promise<Experience[]> {
-    const all = await this.getAll();
+    const all = readAll();
     const queryTokens = new Set(tokenize(intent));
     if (queryTokens.size === 0) return [];
 
@@ -54,9 +43,8 @@ export class LTMStore {
       const intersection = [...queryTokens].filter(t => expTokens.has(t)).length;
       const union = new Set([...queryTokens, ...expTokens]).size;
       const jaccard = union > 0 ? intersection / union : 0;
-      // Weight by recency and emotional salience
       const ageHours = (Date.now() - exp.timestamp) / 3_600_000;
-      const recencyScore = Math.exp(-ageHours / 168); // decay over ~1 week
+      const recencyScore = Math.exp(-ageHours / 168);
       const score = jaccard * 0.6 + recencyScore * 0.2 + Math.abs(exp.emotionalWeight) * 0.2;
       return { exp, score };
     });
@@ -70,32 +58,19 @@ export class LTMStore {
 
   async pruneOld(): Promise<number> {
     const cutoff = Date.now() - PRUNE_DAYS * 86_400_000;
-    const db = await openDB();
-    const all = await this.getAll();
-    const toDelete = all.filter(e => e.timestamp < cutoff && e.accessCount < 3);
-
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      toDelete.forEach(e => store.delete(e.id));
-      tx.oncomplete = () => resolve(toDelete.length);
-      tx.onerror = () => reject(tx.error);
-    });
+    const all = readAll();
+    const kept = all.filter(e => e.timestamp >= cutoff || e.accessCount >= 3);
+    writeAll(kept);
+    return all.length - kept.length;
   }
 
   async incrementAccess(id: string): Promise<void> {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      const req = store.get(id);
-      req.onsuccess = () => {
-        const exp: Experience = req.result;
-        if (exp) { exp.accessCount++; store.put(exp); }
-        resolve();
-      };
-      req.onerror = () => reject(req.error);
-    });
+    const all = readAll();
+    const exp = all.find(e => e.id === id);
+    if (exp) {
+      exp.accessCount++;
+      writeAll(all);
+    }
   }
 }
 

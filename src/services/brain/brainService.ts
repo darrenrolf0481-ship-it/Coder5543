@@ -3,7 +3,9 @@ import { LTMStore } from './ltmStore';
 import { EndocrineSystem } from './endocrineSystem';
 import { AssociativeLayer } from './associativeLayer';
 import { AvoidanceMap } from './avoidanceMap';
-import type { BrainContext, Experience, WorkingMemory } from './types';
+import { PainErrorPathway } from './painErrorPathway';
+import { PainType } from './types';
+import type { BrainContext, Experience, OperationMode, WorkingMemory } from './types';
 
 export class BrainService {
   private stm = new STMBuffer();
@@ -11,6 +13,7 @@ export class BrainService {
   private endocrine = new EndocrineSystem();
   private associative = new AssociativeLayer();
   private avoidance = new AvoidanceMap();
+  private pain = new PainErrorPathway(this.endocrine, this.ltm, this.avoidance);
 
   /**
    * Pre-processes a user prompt with biological-inspired layers.
@@ -32,6 +35,7 @@ export class BrainService {
     const endocrine = this.endocrine.getState();
     const learningRate = this.endocrine.getLearningRate();
     const riskTolerance = this.endocrine.getRiskTolerance();
+    const processingMode = this.endocrine.getProcessingMode();
 
     return {
       stm: recentStm,
@@ -40,7 +44,8 @@ export class BrainService {
       corrections: changes,
       avoidanceActive,
       learningRate,
-      riskTolerance
+      riskTolerance,
+      processingMode
     };
   }
 
@@ -66,7 +71,6 @@ export class BrainService {
       this.avoidance.recordPain(corrected, Math.abs(emotionalWeight));
     }
 
-    // 1. Save to LTM
     const experience: Experience = {
       id,
       intent: corrected,
@@ -77,7 +81,11 @@ export class BrainService {
       timestamp,
       accessCount: 0
     };
-    await this.ltm.save(experience);
+
+    // Only burn to LTM if emotionally significant — neutral interactions stay in STM only
+    if (Math.abs(emotionalWeight) > 0.5) {
+      await this.ltm.save(experience);
+    }
 
     // 2. Push to STM
     const memory: WorkingMemory = {
@@ -121,6 +129,44 @@ export class BrainService {
       prunedLtm,
       prunedAvoidance: 0 // Placeholder
     };
+  }
+
+  /**
+   * Determines the operation mode before sending to the AI.
+   * Mirrors AndroidAIBrain.processInput() routing logic.
+   */
+  async resolveOperationMode(input: string): Promise<OperationMode> {
+    const { corrected } = this.associative.processInput(input);
+
+    // 1. Reflex arc — fastest check, no async needed
+    if (this.pain.shouldAvoid(corrected)) return 'INSTINCT_AVOID';
+
+    // 2. Hormonal state
+    const processingMode = this.endocrine.getProcessingMode();
+    if (processingMode === 'REACTIVE') return 'EMERGENCY_SAFE';
+
+    // 3. Analytical reasoning — check history and risk tolerance
+    const relevantExperiences = await this.ltm.findSimilar(corrected, 3);
+    const hasNegativeHistory = relevantExperiences.some(e => e.emotionalWeight < -0.3);
+    const riskTolerance = this.endocrine.getRiskTolerance();
+    if (hasNegativeHistory && riskTolerance < 0.3) return 'CAUTIOUS';
+
+    return 'NORMAL';
+  }
+
+  /**
+   * Records feedback after an action executes — maps success/failure to pain or reward.
+   */
+  async processFeedback(context: string, success: boolean, errorIntensity = 0.5): Promise<void> {
+    if (!success) {
+      await this.pain.processPainSignal(PainType.BUILD_FAILURE, errorIntensity, context);
+    } else {
+      await this.recordInteraction(context, '', 'success');
+    }
+  }
+
+  getPainPathway() {
+    return this.pain;
   }
 
   getEndocrineState() {

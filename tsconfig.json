@@ -36,6 +36,7 @@
     "context",
     "lib",
     "assets",
-    "dist"
+    "dist",
+    "projscan"
   ]
 }
