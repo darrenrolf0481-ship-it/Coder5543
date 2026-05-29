@@ -1,2 +1,5 @@
 flask
 gunicorn
+pytest>=8.0
+ruff>=0.6
+black>=24.0

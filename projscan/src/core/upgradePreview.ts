@@ -82,7 +82,7 @@ export async function previewUpgrade(
   let registryError: string | undefined;
   if (options.checkRegistry) {
     const fetched = await fetchLatestFromRegistry(pkgName, options);
-    if (fetched.ok) {
+    if (fetched.ok === true) {
       latest = fetched.version;
     } else {
       registryError = fetched.error;

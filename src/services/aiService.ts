@@ -54,7 +54,7 @@ const generateGoogleResponse = async (
   const isFast = options?.modelType === 'fast';
   const isJson = options?.json;
 
-  const model = aiModel || (isFast ? 'gemini-2.5-flash-preview-04-17' : 'gemini-2.5-pro-preview-05-06');
+  const model = aiModel || (isFast ? 'gemini-3-flash' : 'gemini-3.1-pro-preview');
   const config: any = { systemInstruction: enrichedSystemInstruction };
   if (isJson) {
     config.responseMimeType = "application/json";
@@ -67,7 +67,20 @@ const generateGoogleResponse = async (
     contents: finalPrompt,
     config
   });
-  return response.text;
+  // Defensive: .text getter returns undefined when the model emits non-text parts
+  // (e.g. function calls, unexpected finish reasons) or empty candidates.
+  const text = response.text;
+  if (text === undefined) {
+    const finishReason = response.candidates?.[0]?.finishReason;
+    const nonTextParts = response.candidates?.[0]?.content?.parts
+      ?.filter((p: any) => !p.text)
+      ?.map((p: any) => Object.keys(p).join(','))
+      ?.join('; ');
+    throw new Error(
+      `Google model returned no text. finishReason=${finishReason || 'unknown'}${nonTextParts ? ` nonTextParts=[${nonTextParts}]` : ''}`
+    );
+  }
+  return text;
 };
 
 const generateGrokResponse = async (
@@ -113,7 +126,11 @@ const generateGrokResponse = async (
     signal,
   });
   const data = await res.json();
-  return data.choices?.[0]?.message?.content;
+  const text = data.choices?.[0]?.message?.content;
+  if (text === undefined) {
+    throw new Error(`Grok API returned empty response: ${data.error?.message || JSON.stringify(data).slice(0, 200)}`);
+  }
+  return text;
 };
 
 const generateOllamaResponse = async (
@@ -158,7 +175,11 @@ const generateOllamaResponse = async (
     signal,
   });
   const data = await res.json();
-  return data.message?.content;
+  const text = data.message?.content;
+  if (text === undefined) {
+    throw new Error(`Ollama returned empty response: ${data.error || JSON.stringify(data).slice(0, 200)}`);
+  }
+  return text;
 };
 
 export const generateAIResponse = async (

@@ -4,10 +4,35 @@ import { EventEmitter } from 'events';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
-import { brainService } from './brain/brainService.js';
-import { PainType } from './brain/types.js';
+import os from 'os';
+
+// ── Inject Node-specific storage for the brain service ────────────────────────
+const BRAIN_DATA_DIR = path.join(os.homedir(), 'brain-data');
+if (!await fs.access(BRAIN_DATA_DIR).then(() => true).catch(() => false)) {
+  await fs.mkdir(BRAIN_DATA_DIR, { recursive: true });
+}
+
+(globalThis as any).brainStorage = {
+  getItem: (key: string) => {
+    try {
+      const p = path.join(BRAIN_DATA_DIR, `${key.replace(/[^a-z0-9_-]/gi, '_')}.json`);
+      // We use a sync read here because the brain service expects a sync storage API (localStorage-like)
+      const data = require('fs').readFileSync(p, 'utf-8');
+      return data;
+    } catch { return null; }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      const p = path.join(BRAIN_DATA_DIR, `${key.replace(/[^a-z0-9_-]/gi, '_')}.json`);
+      require('fs').writeFileSync(p, value, 'utf-8');
+    } catch (e) { console.error('[ServerStorage] Error saving brain data:', e); }
+  }
+};
+
+import { brainService } from './src/services/brain/brainService.js';
+import { PainType } from './src/services/brain/types.js';
 
 const execAsync = promisify(exec);
 
@@ -305,6 +330,55 @@ async function startServer() {
   app.post('/api/brain/sleep', async (_req, res) => {
     const result = await brainService.sleepCycle();
     res.json(result);
+  });
+
+  // ── Python Brain Bridge ─────────────────────────────────────────────────────
+  // Stateless cognitive tool. Agents call it with raw perception/intent.
+  // The Python layer NEVER sees agent identity, system prompts, or personalities.
+  app.post('/api/python-brain/process', (req, res) => {
+    const { perception, intent, is_danger, agent_id } = req.body as {
+      perception?: string;
+      intent?: string;
+      is_danger?: boolean;
+      agent_id?: string;
+    };
+    if (!perception || !intent) {
+      res.status(400).json({ error: 'perception and intent required' });
+      return;
+    }
+
+    const payload = JSON.stringify({
+      perception,
+      intent,
+      is_danger: !!is_danger,
+      agent_id: agent_id || 'anonymous',
+    });
+
+    const python = spawn('python3', ['python-backend/brain_cli.py'], {
+      cwd: process.cwd(),
+      env: { ...process.env, PYTHONPATH: process.cwd() },
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    python.stdout.on('data', (data: Buffer) => { stdout += data.toString(); });
+    python.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
+
+    python.on('close', (code) => {
+      if (code !== 0) {
+        res.status(500).json({ error: 'Python brain failed', detail: stderr });
+        return;
+      }
+      try {
+        res.json(JSON.parse(stdout));
+      } catch {
+        res.status(500).json({ error: 'Invalid JSON from Python brain', raw: stdout });
+      }
+    });
+
+    python.stdin.write(payload);
+    python.stdin.end();
   });
 
   // ── Terminal exec ───────────────────────────────────────────────────────────

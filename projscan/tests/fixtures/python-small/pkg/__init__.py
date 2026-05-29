@@ -4,4 +4,4 @@ the language adapter end-to-end. Not runnable code - intended for parsing."""
 from .core import greet
 from .utils import PREFIX
 
-__all__ = ['greet', 'PREFIX']
+__all__ = ["greet", "PREFIX"]

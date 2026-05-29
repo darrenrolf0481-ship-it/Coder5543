@@ -1,0 +1,1073 @@
+{
+  "schemaVersion": 1,
+  "lastUpdatedAt": "2026-05-28T21:01:21.154Z",
+  "rules": {
+    "hardcoded-secret": {
+      "ruleId": "hardcoded-secret",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:21:10.816Z",
+      "runCount": 13,
+      "fixedCount": 15,
+      "suppressedInConfig": false
+    },
+    "missing-eslint": {
+      "ruleId": "missing-eslint",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T16:02:00.468Z",
+      "runCount": 5,
+      "fixedCount": 13,
+      "suppressedInConfig": false
+    },
+    "missing-prettier": {
+      "ruleId": "missing-prettier",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T16:02:00.468Z",
+      "runCount": 5,
+      "fixedCount": 13,
+      "suppressedInConfig": false
+    },
+    "gitignore-missing-env": {
+      "ruleId": "gitignore-missing-env",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T16:09:33.761Z",
+      "runCount": 7,
+      "fixedCount": 11,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-dep": {
+      "ruleId": "unused-dependency-dep",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T16:09:33.761Z",
+      "runCount": 7,
+      "fixedCount": 11,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-puppeteer-core": {
+      "ruleId": "unused-dependency-puppeteer-core",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T16:09:33.761Z",
+      "runCount": 7,
+      "fixedCount": 11,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-tailwindcss": {
+      "ruleId": "unused-dependency-tailwindcss",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T21:01:21.152Z",
+      "runCount": 28,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "missing-python-test-framework": {
+      "ruleId": "missing-python-test-framework",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T18:50:44.331Z",
+      "runCount": 11,
+      "fixedCount": 7,
+      "suppressedInConfig": false
+    },
+    "missing-python-linter": {
+      "ruleId": "missing-python-linter",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T18:50:44.331Z",
+      "runCount": 11,
+      "fixedCount": 7,
+      "suppressedInConfig": false
+    },
+    "missing-python-formatter": {
+      "ruleId": "missing-python-formatter",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T18:50:44.331Z",
+      "runCount": 11,
+      "fixedCount": 7,
+      "suppressedInConfig": false
+    },
+    "missing-editorconfig": {
+      "ruleId": "missing-editorconfig",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T16:02:00.468Z",
+      "runCount": 5,
+      "fixedCount": 13,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-@testing-library/jest-dom": {
+      "ruleId": "unused-dependency-@testing-library/jest-dom",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T16:09:33.761Z",
+      "runCount": 7,
+      "fixedCount": 11,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-@testing-library/react": {
+      "ruleId": "unused-dependency-@testing-library/react",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T16:09:33.761Z",
+      "runCount": 7,
+      "fixedCount": 11,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-jsdom": {
+      "ruleId": "unused-dependency-jsdom",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-26T16:09:33.761Z",
+      "runCount": 7,
+      "fixedCount": 11,
+      "suppressedInConfig": false
+    },
+    "unused-exports-neural_brain.py": {
+      "ruleId": "unused-exports-neural_brain.py",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:21:10.816Z",
+      "runCount": 15,
+      "fixedCount": 13,
+      "suppressedInConfig": false
+    },
+    "unused-exports-sdk_bridge.js": {
+      "ruleId": "unused-exports-sdk_bridge.js",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-components/FileTree.tsx": {
+      "ruleId": "unused-exports-components/FileTree.tsx",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-components/TerminalLine.tsx": {
+      "ruleId": "unused-exports-components/TerminalLine.tsx",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-context/AppState.tsx": {
+      "ruleId": "unused-exports-context/AppState.tsx",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-hooks/useBrain.ts": {
+      "ruleId": "unused-exports-hooks/useBrain.ts",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-hooks/usePipeline.ts": {
+      "ruleId": "unused-exports-hooks/usePipeline.ts",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-hooks/useThrottledStorage.ts": {
+      "ruleId": "unused-exports-hooks/useThrottledStorage.ts",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-pipeline/filteringService.ts": {
+      "ruleId": "unused-exports-pipeline/filteringService.ts",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-pipeline/ingestionService.ts": {
+      "ruleId": "unused-exports-pipeline/ingestionService.ts",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-pipeline/patternInjectionService.ts": {
+      "ruleId": "unused-exports-pipeline/patternInjectionService.ts",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-services/aiService.ts": {
+      "ruleId": "unused-exports-services/aiService.ts",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-services/fileStore.ts": {
+      "ruleId": "unused-exports-services/fileStore.ts",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/context/AppState.tsx": {
+      "ruleId": "unused-exports-src/context/AppState.tsx",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/usePhi.ts": {
+      "ruleId": "unused-exports-src/hooks/usePhi.ts",
+      "firstSeenAt": "2026-05-26T15:55:16.058Z",
+      "lastSeenAt": "2026-05-28T20:22:36.006Z",
+      "runCount": 22,
+      "fixedCount": 6,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-@typescript-eslint/eslint-plugin": {
+      "ruleId": "unused-dependency-@typescript-eslint/eslint-plugin",
+      "firstSeenAt": "2026-05-26T16:02:13.662Z",
+      "lastSeenAt": "2026-05-28T21:01:21.152Z",
+      "runCount": 23,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-@typescript-eslint/parser": {
+      "ruleId": "unused-dependency-@typescript-eslint/parser",
+      "firstSeenAt": "2026-05-26T16:02:13.662Z",
+      "lastSeenAt": "2026-05-28T21:01:21.152Z",
+      "runCount": 23,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-python-backend/brain_cli.py": {
+      "ruleId": "unused-exports-python-backend/brain_cli.py",
+      "firstSeenAt": "2026-05-26T19:15:45.850Z",
+      "lastSeenAt": "2026-05-28T20:21:10.816Z",
+      "runCount": 5,
+      "fixedCount": 11,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/services/brain_old/brainService.ts": {
+      "ruleId": "unused-exports-src/services/brain_old/brainService.ts",
+      "firstSeenAt": "2026-05-28T21:00:38.551Z",
+      "lastSeenAt": "2026-05-28T21:00:38.551Z",
+      "runCount": 1,
+      "fixedCount": 1,
+      "suppressedInConfig": false
+    }
+  },
+  "hotspots": {
+    "index.tsx": {
+      "file": "index.tsx",
+      "firstSeenAt": "2026-05-26T15:56:11.205Z",
+      "lastSeenAt": "2026-05-28T20:55:15.426Z",
+      "runCount": 7,
+      "lastCc": 495,
+      "lastChurn": 29
+    },
+    "src/components/FileTree.tsx": {
+      "file": "src/components/FileTree.tsx",
+      "firstSeenAt": "2026-05-26T15:56:11.205Z",
+      "lastSeenAt": "2026-05-28T20:55:15.426Z",
+      "runCount": 7,
+      "lastCc": 114,
+      "lastChurn": 7
+    },
+    "server.ts": {
+      "file": "server.ts",
+      "firstSeenAt": "2026-05-26T15:56:11.205Z",
+      "lastSeenAt": "2026-05-28T20:55:15.426Z",
+      "runCount": 7,
+      "lastCc": 57,
+      "lastChurn": 7
+    },
+    "src/components/panels/EditorPanel.tsx": {
+      "file": "src/components/panels/EditorPanel.tsx",
+      "firstSeenAt": "2026-05-26T15:56:11.205Z",
+      "lastSeenAt": "2026-05-28T20:55:15.426Z",
+      "runCount": 6,
+      "lastCc": 104,
+      "lastChurn": 4
+    },
+    "src/services/aiService.ts": {
+      "file": "src/services/aiService.ts",
+      "firstSeenAt": "2026-05-26T15:56:11.205Z",
+      "lastSeenAt": "2026-05-28T20:55:15.426Z",
+      "runCount": 6,
+      "lastCc": 39,
+      "lastChurn": 6
+    },
+    "src/components/panels/ToolNeuronPanel.tsx": {
+      "file": "src/components/panels/ToolNeuronPanel.tsx",
+      "firstSeenAt": "2026-05-26T15:56:11.205Z",
+      "lastSeenAt": "2026-05-28T20:55:15.426Z",
+      "runCount": 4,
+      "lastCc": 66,
+      "lastChurn": 4
+    },
+    "assets/index-CdxXPu_B.js": {
+      "file": "assets/index-CdxXPu_B.js",
+      "firstSeenAt": "2026-05-26T15:56:11.205Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 2,
+      "lastCc": 5268,
+      "lastChurn": 1
+    },
+    "assets/vendor-ai-nQIKaGtM.js": {
+      "file": "assets/vendor-ai-nQIKaGtM.js",
+      "firstSeenAt": "2026-05-26T15:56:11.205Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 2,
+      "lastCc": 3794,
+      "lastChurn": 1
+    },
+    "assets/vendor-ai-wssDUia_.js": {
+      "file": "assets/vendor-ai-wssDUia_.js",
+      "firstSeenAt": "2026-05-26T15:56:11.205Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 2,
+      "lastCc": 3794,
+      "lastChurn": 1
+    },
+    "assets/index-DNeYY9GU.js": {
+      "file": "assets/index-DNeYY9GU.js",
+      "firstSeenAt": "2026-05-26T15:56:11.205Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 2,
+      "lastCc": 5211,
+      "lastChurn": 1
+    },
+    "src/components/panels/NodeBridgePanel.tsx": {
+      "file": "src/components/panels/NodeBridgePanel.tsx",
+      "firstSeenAt": "2026-05-26T21:13:44.546Z",
+      "lastSeenAt": "2026-05-28T20:55:15.426Z",
+      "runCount": 3,
+      "lastCc": 31,
+      "lastChurn": 3
+    },
+    "neural_brain.py": {
+      "file": "neural_brain.py",
+      "firstSeenAt": "2026-05-26T21:13:44.546Z",
+      "lastSeenAt": "2026-05-28T20:55:15.426Z",
+      "runCount": 3,
+      "lastCc": 12,
+      "lastChurn": 3
+    },
+    "vite.config.ts": {
+      "file": "vite.config.ts",
+      "firstSeenAt": "2026-05-26T21:13:44.546Z",
+      "lastSeenAt": "2026-05-28T20:55:15.426Z",
+      "runCount": 3,
+      "lastCc": 4,
+      "lastChurn": 5
+    },
+    "components/FileTree.tsx": {
+      "file": "components/FileTree.tsx",
+      "firstSeenAt": "2026-05-26T21:13:44.546Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 2,
+      "lastCc": 93,
+      "lastChurn": 1
+    },
+    "assets/vendor-ui-BcaOoVGz.js": {
+      "file": "assets/vendor-ui-BcaOoVGz.js",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 2842,
+      "lastChurn": 1
+    },
+    "assets/vendor-ui-Dew6HpGH.js": {
+      "file": "assets/vendor-ui-Dew6HpGH.js",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 2842,
+      "lastChurn": 1
+    },
+    "projscan/src/reporters/consoleReporter.ts": {
+      "file": "projscan/src/reporters/consoleReporter.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 296,
+      "lastChurn": 1
+    },
+    "assets/vendor-monaco-ChYIzc51.js": {
+      "file": "assets/vendor-monaco-ChYIzc51.js",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 218,
+      "lastChurn": 1
+    },
+    "assets/vendor-monaco-Y8mdJUZx.js": {
+      "file": "assets/vendor-monaco-Y8mdJUZx.js",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 218,
+      "lastChurn": 1
+    },
+    "projscan/src/reporters/markdownReporter.ts": {
+      "file": "projscan/src/reporters/markdownReporter.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 200,
+      "lastChurn": 1
+    },
+    "projscan/src/core/ast.ts": {
+      "file": "projscan/src/core/ast.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 196,
+      "lastChurn": 1
+    },
+    "sw.js": {
+      "file": "sw.js",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-28T20:55:15.426Z",
+      "runCount": 2,
+      "lastCc": 1,
+      "lastChurn": 4
+    },
+    "src/services/pipeline/patternInjectionService.ts": {
+      "file": "src/services/pipeline/patternInjectionService.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 18,
+      "lastChurn": 2
+    },
+    "projscan/src/core/hotspotAnalyzer.ts": {
+      "file": "projscan/src/core/hotspotAnalyzer.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 130,
+      "lastChurn": 1
+    },
+    "projscan/src/core/review.ts": {
+      "file": "projscan/src/core/review.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 119,
+      "lastChurn": 1
+    },
+    "services/aiService.ts": {
+      "file": "services/aiService.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 32,
+      "lastChurn": 1
+    },
+    "src/services/fileStore.ts": {
+      "file": "src/services/fileStore.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 11,
+      "lastChurn": 2
+    },
+    "projscan/src/core/fixSuggest.ts": {
+      "file": "projscan/src/core/fixSuggest.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 81,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/pythonManifests.ts": {
+      "file": "projscan/src/core/languages/pythonManifests.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 81,
+      "lastChurn": 1
+    },
+    "projscan/src/mcp/server.ts": {
+      "file": "projscan/src/mcp/server.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 80,
+      "lastChurn": 1
+    },
+    "projscan/tests/analyzers/securityCheck.test.ts": {
+      "file": "projscan/tests/analyzers/securityCheck.test.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 21,
+      "lastChurn": 1
+    },
+    "projscan/src/core/auditRunner.ts": {
+      "file": "projscan/src/core/auditRunner.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 69,
+      "lastChurn": 1
+    },
+    "projscan/src/core/searchIndex.ts": {
+      "file": "projscan/src/core/searchIndex.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 67,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/rustImports.ts": {
+      "file": "projscan/src/core/languages/rustImports.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 66,
+      "lastChurn": 1
+    },
+    "components/TerminalLine.tsx": {
+      "file": "components/TerminalLine.tsx",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 19,
+      "lastChurn": 1
+    },
+    "projscan/src/core/fileInspector.ts": {
+      "file": "projscan/src/core/fileInspector.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 65,
+      "lastChurn": 1
+    },
+    "src/components/panels/SettingsPanel.tsx": {
+      "file": "src/components/panels/SettingsPanel.tsx",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 65,
+      "lastChurn": 1
+    },
+    "projscan/src/cli/commands/search.ts": {
+      "file": "projscan/src/cli/commands/search.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 64,
+      "lastChurn": 1
+    },
+    "projscan/src/core/codeGraph.ts": {
+      "file": "projscan/src/core/codeGraph.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 62,
+      "lastChurn": 1
+    },
+    "projscan/src/utils/config.ts": {
+      "file": "projscan/src/utils/config.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 62,
+      "lastChurn": 1
+    },
+    "projscan/src/core/monorepo.ts": {
+      "file": "projscan/src/core/monorepo.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 61,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/csharpFunctions.ts": {
+      "file": "projscan/src/core/languages/csharpFunctions.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 61,
+      "lastChurn": 1
+    },
+    "assets/vendor-react-BTEzUGtv.js": {
+      "file": "assets/vendor-react-BTEzUGtv.js",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 60,
+      "lastChurn": 1
+    },
+    "assets/vendor-react-CpQaE0NB.js": {
+      "file": "assets/vendor-react-CpQaE0NB.js",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 60,
+      "lastChurn": 1
+    },
+    "projscan/src/cli/_shared.ts": {
+      "file": "projscan/src/cli/_shared.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 59,
+      "lastChurn": 1
+    },
+    "projscan/src/reporters/htmlReporter.ts": {
+      "file": "projscan/src/reporters/htmlReporter.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 57,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/rustFunctions.ts": {
+      "file": "projscan/src/core/languages/rustFunctions.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 57,
+      "lastChurn": 1
+    },
+    "src/components/panels/AnalysisPanel.tsx": {
+      "file": "src/components/panels/AnalysisPanel.tsx",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 7,
+      "lastChurn": 2
+    },
+    "projscan/src/core/languages/phpFunctions.ts": {
+      "file": "projscan/src/core/languages/phpFunctions.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 54,
+      "lastChurn": 1
+    },
+    "projscan/src/core/upgradePreview.ts": {
+      "file": "projscan/src/core/upgradePreview.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 53,
+      "lastChurn": 1
+    },
+    "projscan/src/core/prDiff.ts": {
+      "file": "projscan/src/core/prDiff.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 52,
+      "lastChurn": 1
+    },
+    "pipeline/filteringService.ts": {
+      "file": "pipeline/filteringService.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 15,
+      "lastChurn": 1
+    },
+    "pipeline/patternInjectionService.ts": {
+      "file": "pipeline/patternInjectionService.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 15,
+      "lastChurn": 1
+    },
+    "projscan/src/core/applyFix.ts": {
+      "file": "projscan/src/core/applyFix.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 46,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/rustAdapter.ts": {
+      "file": "projscan/src/core/languages/rustAdapter.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 46,
+      "lastChurn": 1
+    },
+    "projscan/src/mcp/prompts.ts": {
+      "file": "projscan/src/mcp/prompts.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 45,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/pythonExports.ts": {
+      "file": "projscan/src/core/languages/pythonExports.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 42,
+      "lastChurn": 1
+    },
+    "projscan/src/core/memory.ts": {
+      "file": "projscan/src/core/memory.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 41,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/phpImports.ts": {
+      "file": "projscan/src/core/languages/phpImports.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 41,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/rubyFunctions.ts": {
+      "file": "projscan/src/core/languages/rubyFunctions.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 41,
+      "lastChurn": 1
+    },
+    "projscan/scripts/check-stability.mjs": {
+      "file": "projscan/scripts/check-stability.mjs",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 39,
+      "lastChurn": 1
+    },
+    "projscan/src/analyzers/deadCodeCheck.ts": {
+      "file": "projscan/src/analyzers/deadCodeCheck.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 39,
+      "lastChurn": 1
+    },
+    "projscan/src/core/semanticSearch.ts": {
+      "file": "projscan/src/core/semanticSearch.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 39,
+      "lastChurn": 1
+    },
+    "projscan/src/core/couplingAnalyzer.ts": {
+      "file": "projscan/src/core/couplingAnalyzer.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 37,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/goFunctions.ts": {
+      "file": "projscan/src/core/languages/goFunctions.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 36,
+      "lastChurn": 1
+    },
+    "projscan/src/mcp/tools/workspaceGraph.ts": {
+      "file": "projscan/src/mcp/tools/workspaceGraph.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 36,
+      "lastChurn": 1
+    },
+    "src/hooks/usePhi.ts": {
+      "file": "src/hooks/usePhi.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 10,
+      "lastChurn": 1
+    },
+    "projscan/src/analyzers/pythonLinterCheck.ts": {
+      "file": "projscan/src/analyzers/pythonLinterCheck.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 35,
+      "lastChurn": 1
+    },
+    "projscan/src/analyzers/unusedDependencyCheck.ts": {
+      "file": "projscan/src/analyzers/unusedDependencyCheck.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 35,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/javaFunctions.ts": {
+      "file": "projscan/src/core/languages/javaFunctions.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 35,
+      "lastChurn": 1
+    },
+    "projscan/src/core/coverageParser.ts": {
+      "file": "projscan/src/core/coverageParser.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 34,
+      "lastChurn": 1
+    },
+    "projscan/src/core/dependencyAnalyzer.ts": {
+      "file": "projscan/src/core/dependencyAnalyzer.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 34,
+      "lastChurn": 1
+    },
+    "projscan/src/core/impact.ts": {
+      "file": "projscan/src/core/impact.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 33,
+      "lastChurn": 1
+    },
+    "projscan/src/cli/commands/session.ts": {
+      "file": "projscan/src/cli/commands/session.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 33,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/phpAdapter.ts": {
+      "file": "projscan/src/core/languages/phpAdapter.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 33,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/pythonFunctions.ts": {
+      "file": "projscan/src/core/languages/pythonFunctions.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 33,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/javaAdapter.ts": {
+      "file": "projscan/src/core/languages/javaAdapter.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 32,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/pythonAdapter.ts": {
+      "file": "projscan/src/core/languages/pythonAdapter.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 31,
+      "lastChurn": 1
+    },
+    "projscan/src/analyzers/pythonTestCheck.ts": {
+      "file": "projscan/src/analyzers/pythonTestCheck.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 30,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/csharpAdapter.ts": {
+      "file": "projscan/src/core/languages/csharpAdapter.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 30,
+      "lastChurn": 1
+    },
+    "projscan/src/analyzers/crossPackageImportCheck.ts": {
+      "file": "projscan/src/analyzers/crossPackageImportCheck.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 29,
+      "lastChurn": 1
+    },
+    "projscan/src/core/taint.ts": {
+      "file": "projscan/src/core/taint.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 29,
+      "lastChurn": 1
+    },
+    "projscan/src/mcp/tokenBudget.ts": {
+      "file": "projscan/src/mcp/tokenBudget.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 29,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/goAdapter.ts": {
+      "file": "projscan/src/core/languages/goAdapter.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 28,
+      "lastChurn": 1
+    },
+    "projscan/src/mcp/tools/search.ts": {
+      "file": "projscan/src/mcp/tools/search.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 28,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/goExports.ts": {
+      "file": "projscan/src/core/languages/goExports.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 27,
+      "lastChurn": 1
+    },
+    "projscan/src/core/workspace.ts": {
+      "file": "projscan/src/core/workspace.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 26,
+      "lastChurn": 1
+    },
+    "pipeline/ingestionService.ts": {
+      "file": "pipeline/ingestionService.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 7,
+      "lastChurn": 1
+    },
+    "projscan/src/cli/commands/applyFix.ts": {
+      "file": "projscan/src/cli/commands/applyFix.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 25,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/phpManifests.ts": {
+      "file": "projscan/src/core/languages/phpManifests.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 25,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/rubyAdapter.ts": {
+      "file": "projscan/src/core/languages/rubyAdapter.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 25,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/rustManifests.ts": {
+      "file": "projscan/src/core/languages/rustManifests.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 25,
+      "lastChurn": 1
+    },
+    "projscan/src/core/session.ts": {
+      "file": "projscan/src/core/session.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 24,
+      "lastChurn": 1
+    },
+    "projscan/src/mcp/sessionTouchScanner.ts": {
+      "file": "projscan/src/mcp/sessionTouchScanner.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 24,
+      "lastChurn": 1
+    },
+    "sdk_bridge.js": {
+      "file": "sdk_bridge.js",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 6,
+      "lastChurn": 1
+    },
+    "projscan/src/analyzers/securityCheck.ts": {
+      "file": "projscan/src/analyzers/securityCheck.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 22,
+      "lastChurn": 1
+    },
+    "projscan/src/core/outdatedDetector.ts": {
+      "file": "projscan/src/core/outdatedDetector.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 22,
+      "lastChurn": 1
+    },
+    "projscan/src/cli/commands/memory.ts": {
+      "file": "projscan/src/cli/commands/memory.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 22,
+      "lastChurn": 1
+    },
+    "projscan/src/core/languages/csharpImports.ts": {
+      "file": "projscan/src/core/languages/csharpImports.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 22,
+      "lastChurn": 1
+    },
+    "projscan/src/analyzers/architectureCheck.ts": {
+      "file": "projscan/src/analyzers/architectureCheck.ts",
+      "firstSeenAt": "2026-05-26T21:13:53.901Z",
+      "lastSeenAt": "2026-05-26T21:13:53.901Z",
+      "runCount": 1,
+      "lastCc": 21,
+      "lastChurn": 1
+    }
+  },
+  "totalRuns": 28
+}

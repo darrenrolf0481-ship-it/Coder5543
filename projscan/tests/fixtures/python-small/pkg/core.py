@@ -1,5 +1,5 @@
-from .utils import PREFIX
 from .sub.deep import deep_helper
+from .utils import PREFIX
 
 
 def greet(name: str) -> str:

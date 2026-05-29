@@ -18,9 +18,18 @@ export interface Experience {
 }
 
 export interface EndocrineState {
-  dopamine: number;   // 0–1: reward signal, drives exploration
-  cortisol: number;   // 0–1: stress/pain signal, drives caution
+  dopamine: number;        // 0–1: reward signal, drives exploration
+  cortisol: number;        // 0–1: stress/pain signal, drives caution
+  norepinephrine: number;  // 0–1: focus/panic signal, shifts processing mode
   lastUpdated: number;
+}
+
+export type ProcessingMode = 'REACTIVE' | 'ANALYTICAL';
+
+export enum PainType {
+  BUILD_FAILURE       = 'BUILD_FAILURE',        // Code/task failed to execute
+  LOGICAL_INCONSISTENCY = 'LOGICAL_INCONSISTENCY', // Contradictory reasoning detected
+  USER_REJECTION      = 'USER_REJECTION',        // Explicit negative feedback from user
 }
 
 export interface AvoidanceEntry {
@@ -31,6 +40,12 @@ export interface AvoidanceEntry {
   lastTriggered: number;
 }
 
+export type OperationMode =
+  | 'INSTINCT_AVOID'   // reflex arc triggered — skip processing entirely
+  | 'EMERGENCY_SAFE'   // REACTIVE hormonal state — fast, conservative
+  | 'CAUTIOUS'         // ANALYTICAL + negative history + low risk tolerance
+  | 'NORMAL';          // ANALYTICAL, no red flags
+
 export interface BrainContext {
   stm: WorkingMemory[];
   relevantExperiences: Experience[];
@@ -39,4 +54,5 @@ export interface BrainContext {
   avoidanceActive: boolean;
   learningRate: number;
   riskTolerance: number;
+  processingMode: ProcessingMode;
 }
