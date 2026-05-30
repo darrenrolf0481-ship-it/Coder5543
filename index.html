@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Crimson OS | AI Node</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ef4444">
@@ -12,17 +11,46 @@
     <meta name="apple-mobile-web-app-title" content="Crimson OS">
     <link rel="apple-touch-icon" href="https://picsum.photos/seed/crimson-icon/192/192">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #0a0a0c;
-            overscroll-behavior-y: contain;
+        html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background-color: #0a0a0c !important;
+            color: white !important;
+            height: 100% !important;
+            width: 100% !important;
+            overflow: hidden !important;
         }
     </style>
-<link rel="stylesheet" href="/index.css">
+    <script>
+      window.onerror = function(msg, url, line, col, error) {
+        var div = document.createElement('div');
+        div.style.position = 'fixed';
+        div.style.top = '0';
+        div.style.left = '0';
+        div.style.background = 'red';
+        div.style.color = 'white';
+        div.style.padding = '20px';
+        div.style.zIndex = '999999';
+        div.style.fontFamily = 'monospace';
+        div.innerText = 'FATAL ERROR: ' + msg + '\\nAt: ' + url + ':' + line;
+        document.body.appendChild(div);
+      };
+    </script>
 </head>
-<body>
-    <div id="root"></div>
+<body style="background-color: #0a0a0c">
+    <div id="root" style="color: #ef4444; font-family: monospace; font-size: 10px; padding: 20px; text-transform: uppercase; letter-spacing: 2px;">
+        LOADING NEURAL INTERFACE...
+    </div>
     <script type="module" src="/index.tsx"></script>
+    <script>
+      // Force unregister service worker to clear caching issues
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for(let registration of registrations) {
+            registration.unregister();
+          }
+        });
+      }
+    </script>
 </body>
 </html>
