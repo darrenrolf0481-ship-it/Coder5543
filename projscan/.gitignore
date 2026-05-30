@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.cache/
+.projscan-cache/
+.projscan-memory/
+.bench-cache/
+*.tgz
+.DS_Store
+.env

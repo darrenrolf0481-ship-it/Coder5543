@@ -1,28 +1,53 @@
-
 /// <reference types="vite/client" />
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+interface KnowledgeEntry {
+  id: string;
+  type: 'file' | 'github' | 'text';
+  name: string;
+  content: string;
+  url?: string;
+  size?: number;
+  addedAt: string;
+}
+
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import './index.css';
+import './phi_geometry.css';
 import { createRoot } from 'react-dom/client';
-import { 
-  Terminal as TerminalIcon, 
-  Upload, 
-  Smartphone, 
-  Settings as SettingsIcon, 
-  FolderOpen, 
-  Cpu, 
-  Send, 
+import DOMPurify from 'dompurify';
+import { useTerminal } from './src/hooks/terminal/useTerminal';
+import { useTerminalLogic } from './src/hooks/terminal/useTerminalLogic';
+import { FileTree } from './src/components/FileTree';
+import { TerminalLine } from './src/components/TerminalLine';
+import { SettingsPanel } from './src/components/panels/SettingsPanel';
+import { ToolNeuronPanel } from './src/components/panels/ToolNeuronPanel';
+import { TerminalPanel } from './src/components/panels/TerminalPanel';
+import { EditorPanel } from './src/components/panels/EditorPanel';
+import { AnalysisPanel } from './src/components/panels/AnalysisPanel';
+import { NodeBridgePanel } from './src/components/panels/NodeBridgePanel';
+import { StoragePanel } from './src/components/panels/StoragePanel';
+import { BrainPanel } from './src/components/panels/BrainPanel';
+import { useBrain } from './src/hooks/useBrain';
+import { useThrottledStorage } from './src/hooks/useThrottledStorage';
+import { saveFileContents, loadFileContents, deleteFileContent } from './src/services/fileStore';
+import {
+  Terminal as TerminalIcon,
+  Upload,
+  Smartphone,
+  Settings as SettingsIcon,
+  FolderOpen,
+  Cpu,
+  Send,
   Activity,
   ChevronRight,
   X,
   FileText,
+  FilePlus,
   Image as ImageIcon,
   MessageSquare,
   Zap,
-  Link as LinkIcon,
   Download,
   Plus,
-  Layers,
-  Maximize2,
   Trash2,
   Brain,
   Code2,
@@ -39,7 +64,6 @@ import {
   FileCode,
   Gauge,
   HardDrive,
-  Radio,
   Power,
   Play,
   HelpCircle,
@@ -49,11 +73,10 @@ import {
   StopCircle,
   Circle,
   Folder,
-  MoreVertical,
   Edit2,
   ChevronDown,
   GitBranch,
-  GitCommit,
+  BarChart3,
   GitPullRequest,
   GitMerge,
   History,
@@ -62,32 +85,65 @@ import {
   Archive,
   Wand2,
   Fingerprint,
-  Scan,
-  Lock,
   Unlock,
   Users,
   Save,
-  Search,
-  SearchCode,
   ShieldAlert,
   Copy,
   MousePointer2,
   Info,
-  Box,
-  Palette,
   Layout,
-  ExternalLink,
   RefreshCw,
-  Eye,
-  EyeOff,
+  Search,
+  Paintbrush,
+  Layers,
 } from 'lucide-react';
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type } from '@google/genai';
+import { SafeMarkdown } from './src/components/SafeMarkdown';
+import {
+  generateAIResponse as generateAIResponseService,
+  fetchOllamaModels,
+} from './src/services/aiService';
 import Editor from '@monaco-editor/react';
+import { useDebounce } from './src/lib/useDebounce';
+import { usePipeline } from './src/hooks/usePipeline';
+import { usePhi, PHI, PHI_INV } from './src/hooks/usePhi';
+import type { PatternResult } from './src/services/pipeline/patternInjectionService';
+import { AGENTS, AGENT_DOMAINS, getAgent, getAgentsByDomain } from './src/data/agentRegistry';
+import type { AgentDefinition } from './src/data/agentRegistry';
 
 // Initialize AI
-const ai = new GoogleGenAI({ apiKey: import.meta.env.GEMINI_API_KEY });
 
 // LocalStorage Key
+interface WorkerConfig {
+  id: number;
+  label: string;
+  enabled: boolean;
+  provider: 'google' | 'grok' | 'ollama';
+  model: string;
+  url: string;
+  models: string[];
+  agentId?: string;
+}
+
+function getDefaultWorkers(): WorkerConfig[] {
+  const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (geminiKey) {
+    return [
+      { id: 1, label: 'W1', enabled: true, provider: 'google', model: 'gemini-3-flash', url: '', models: [], agentId: 'sage-adhd-sage' },
+      { id: 2, label: 'W2', enabled: true, provider: 'google', model: 'gemini-3-flash', url: '', models: [], agentId: 'sage-adhd-sage' },
+      { id: 3, label: 'W3', enabled: true, provider: 'google', model: 'gemini-3-flash', url: '', models: [], agentId: 'sage-adhd-sage' },
+    ];
+  }
+  return [
+    { id: 1, label: 'W1', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [], agentId: 'sage-adhd-sage' },
+    { id: 2, label: 'W2', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [], agentId: 'sage-adhd-sage' },
+    { id: 3, label: 'W3', enabled: true, provider: 'ollama', model: 'llama3.2:latest', url: 'http://127.0.0.1:11434', models: [], agentId: 'sage-adhd-sage' },
+  ];
+}
+
+const DEFAULT_WORKERS: WorkerConfig[] = getDefaultWorkers();
+
 const STORAGE_KEY = 'crimson_os_prefs';
 
 // Utility to convert file to base64 string
@@ -103,50 +159,244 @@ const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
-const PROJECT_TEMPLATES = {
-  'python-web': {
-    name: 'Python Web App',
-    files: [
-      { id: 'root', name: 'Python_Web_Project', type: 'folder', parentId: null, isOpen: true },
-      { id: 'app.py', name: 'app.py', type: 'file', parentId: 'root', language: 'python', content: 'from flask import Flask, render_template\n\napp = Flask(__name__)\n\n@app.route("/")\ndef home():\n    return render_template("index.html")\n\nif __name__ == "__main__":\n    app.run(debug=True)' },
-      { id: 'templates', name: 'templates', type: 'folder', parentId: 'root', isOpen: true },
-      { id: 'index.html', name: 'index.html', type: 'file', parentId: 'templates', language: 'html', content: '<!DOCTYPE html>\n<html>\n<head>\n    <title>Neural Web App</title>\n</head>\n<body style="background: #050101; color: #fecaca; font-family: sans-serif; padding: 2rem;">\n    <h1>Neural Interface Active</h1>\n    <p>Welcome to the Crimson OS web portal.</p>\n</body>\n</html>' },
-      { id: 'static', name: 'static', type: 'folder', parentId: 'root', isOpen: false },
-      { id: 'style.css', name: 'style.css', type: 'file', parentId: 'static', language: 'css', content: 'body { margin: 0; }' }
-    ]
-  },
-  'rust-cli': {
-    name: 'Rust CLI Tool',
-    files: [
-      { id: 'root', name: 'Rust_CLI_Project', type: 'folder', parentId: null, isOpen: true },
-      { id: 'src', name: 'src', type: 'folder', parentId: 'root', isOpen: true },
-      { id: 'main.rs', name: 'main.rs', type: 'file', parentId: 'src', language: 'rust', content: 'use std::io;\n\nfn main() {\n    println!("Neural CLI Initialized.");\n    println!("Enter command:");\n    let mut input = String::new();\n    io::stdin().read_line(&mut input).unwrap();\n    println!("Executing: {}", input.trim());\n}' },
-      { id: 'cargo.toml', name: 'Cargo.toml', type: 'file', parentId: 'root', language: 'toml', content: '[package]\nname = "neural-cli"\nversion = "0.1.0"\nedition = "2021"\n\n[dependencies]' }
-    ]
-  },
-  'neural-module': {
-    name: 'Neural Module',
-    files: [
-      { id: 'root', name: 'Neural_Module', type: 'folder', parentId: null, isOpen: true },
-      { id: 'core.py', name: 'core.py', type: 'file', parentId: 'root', language: 'python', content: 'class NeuralModule:\n    def __init__(self):\n        self.active = True\n\n    def run(self):\n        print("Neural Module Running...")\n\nif __name__ == "__main__":\n    module = NeuralModule()\n    module.run()' },
-      { id: 'config.json', name: 'config.json', type: 'file', parentId: 'root', language: 'json', content: '{\n  "module_name": "NeuralCore",\n  "version": "1.0.0",\n  "permissions": ["vault", "vision"]\n}' }
-    ]
-  }
-};
+import { PROJECT_TEMPLATES } from './src/services/templates';
+
+const DRAFT_KEY = 'crimson_draft';
+// Unique ID for this browser session — drafts written in the current session
+// are ignored by the recovery checker (they can't be "orphaned" yet).
+const SESSION_ID = `s-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+// ── Prompt Builder ────────────────────────────────────────────────────────────
+// Single source of truth for code-context prompts.
+// All AI calls that operate on editor content should use this.
+
+interface PromptOptions {
+  lang: string;
+  code: string;
+  instruction: string;
+  extra?: string;
+  json?: boolean;
+}
+
+function makePrompt({ lang, code, instruction, extra = '', json = false }: PromptOptions): string {
+  const codeBlock = `\`\`\`${lang}\n${code}\n\`\`\``;
+  const base = `[Context: language=${lang}]\n\n${instruction}\n\n${codeBlock}`;
+  const suffix = extra ? `\n\n${extra}` : '';
+  const format = json ? '\n\nRespond ONLY with valid JSON. No markdown fences.' : '';
+  return base + suffix + format;
+}
+
+// Connects brain endocrine state → CSS pulse column and transaction indicator.
+// ── φ IndexedDB Quota Manager (inlined — no separate fileStore export needed) ──
+
+async function enforcePhiQuota(): Promise<'ok' | 'warn' | 'evicted' | 'critical'> {
+  if (!navigator.storage?.estimate) return 'ok';
+  const { usage = 0, quota = 1 } = await navigator.storage.estimate();
+  const ratio = usage / quota;
+  if (ratio < PHI_INV) return 'ok';
+
+  const DB = 'crimson_files', STORE = 'file_contents';
+  const db: IDBDatabase = await new Promise((res, rej) => {
+    const r = indexedDB.open(DB, 1);
+    r.onsuccess = () => res(r.result);
+    r.onerror   = () => rej(r.error);
+  });
+
+  const records: any[] = await new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror   = () => rej(req.error);
+  });
+
+  const ephemeral = records
+    .filter(r => r.priority === 'ephemeral')
+    .sort((a, b) => (a.lastAccessed ?? 0) - (b.lastAccessed ?? 0));
+
+  if (ephemeral.length === 0) return 'critical';
+
+  const evictCount = Math.max(1, Math.ceil(ephemeral.length * (1 - PHI_INV)));
+  const toEvict = ephemeral.slice(0, evictCount);
+
+  await new Promise<void>((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const st = tx.objectStore(STORE);
+    toEvict.forEach(r => st.delete(r.id));
+    tx.oncomplete = () => res();
+    tx.onerror    = () => rej(tx.error);
+  });
+
+  console.info(`[φ-Quota] Evicted ${evictCount} ephemeral record(s). Usage: ${(ratio * 100).toFixed(1)}%`);
+  return 'evicted';
+}
+
+async function markEphemeral(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const DB = 'crimson_files', STORE = 'file_contents';
+  const db: IDBDatabase = await new Promise((res, rej) => {
+    const r = indexedDB.open(DB, 1);
+    r.onsuccess = () => res(r.result);
+    r.onerror   = () => rej(r.error);
+  });
+  const records: any[] = await new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => res(req.result);
+    req.onerror   = () => rej(req.error);
+  });
+  const targets = records.filter(r => ids.includes(r.id));
+  if (targets.length === 0) return;
+  await new Promise<void>((res, rej) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const st = tx.objectStore(STORE);
+    targets.forEach(r => st.put({ ...r, priority: 'ephemeral' }));
+    tx.oncomplete = () => res();
+    tx.onerror    = () => rej(tx.error);
+  });
+}
+
+// ── useAiRequest — centralised AI loading & error handling per domain ─────────
+// Replaces scattered setIsAiProcessing(true/false) + individual try/catch blocks.
+// Each domain gets its own loading flag — only that panel re-renders.
+
+type AiDomain = 'editor' | 'terminal' | 'chat' | 'swarm' | 'analysis' | 'debug' | 'default';
+
+function useAiRequest(generateFn: (...args: any[]) => Promise<any>) {
+  const [loading, setLoading] = React.useState<Partial<Record<AiDomain, boolean>>>({});
+  const [errors,  setErrors]  = React.useState<Partial<Record<AiDomain, string | undefined>>>({});
+
+  const request = React.useCallback(async (
+    domain: AiDomain,
+    prompt: string,
+    systemInstruction: string,
+    options?: object
+  ): Promise<string | null> => {
+    setLoading(prev => ({ ...prev, [domain]: true }));
+    setErrors(prev  => ({ ...prev, [domain]: undefined }));
+    try {
+      return await generateFn(prompt, systemInstruction, options, domain) ?? null;
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return null;
+      const msg = err instanceof Error ? err.message : String(err);
+      setErrors(prev => ({ ...prev, [domain]: msg }));
+      console.error(`[AI:${domain}]`, msg);
+      return null;
+    } finally {
+      setLoading(prev => ({ ...prev, [domain]: false }));
+    }
+  }, [generateFn]);
+
+  const isLoading  = React.useCallback((d: AiDomain) => !!loading[d], [loading]);
+  const anyLoading = Object.values(loading).some(Boolean);
+  const getError   = React.useCallback((d: AiDomain) => errors[d] ?? null, [errors]);
+
+  return { request, isLoading, anyLoading, getError };
+}
 
 const App: React.FC = () => {
+  console.log('[DEBUG] App Rendering...');
+  const [hasRecoveryDraft, setHasRecoveryDraft] = useState(false);
+  const [recoveryDraft, setRecoveryDraft] = useState<{
+    fileId: string;
+    fileName: string;
+    content: string;
+    ts: number;
+  } | null>(null);
+
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
+  const [projectFiles, setProjectFiles] = useState<any[]>([
+    { id: 'root', name: 'Project', type: 'folder', parentId: null, isOpen: true },
+    { id: 'src', name: 'src', type: 'folder', parentId: 'root', isOpen: true },
+    {
+      id: 'brain.py',
+      name: 'neural_brain.py',
+      type: 'file',
+      parentId: 'src',
+      language: 'python',
+      content:
+        '# AI Brain Logic\nclass NeuralCore:\n    def __init__(self):\n        self.synapses = 10**12\n\n    def process(self, input_data):\n        return f"Neural processing: {input_data}"\n\ncore = NeuralCore()\nprint(core.process("Initial stimulus"))',
+    },
+    {
+      id: 'ui.html',
+      name: 'interface.html',
+      type: 'file',
+      parentId: 'src',
+      language: 'html',
+      content:
+        '<div class="p-8 bg-red-900/20 rounded-3xl border border-red-500/30">\n  <h1 class="text-2xl font-black text-red-500 uppercase">Neural Interface</h1>\n  <p class="text-red-100/60 mt-4">Real-time UI component rendering via Crimson Engine.</p>\n  <button class="mt-8 px-6 py-3 bg-red-700 text-white rounded-xl uppercase font-black text-xs tracking-widest">Activate Core</button>\n</div>',
+    },
+    {
+      id: 'logic.rs',
+      name: 'core_logic.rs',
+      type: 'file',
+      parentId: 'src',
+      language: 'rust',
+      content:
+        'fn main() {\n    let neural_load = 0.85;\n    println!("System load: {}%", neural_load * 100.0);\n}',
+    },
+  ]);
+  const [activeFileId, setActiveFileId] = useState('brain.py');
+  const [editorLanguage, setEditorLanguage] = useState('python');
+
+  const dirtyIdsRef   = useRef<Set<string>>(new Set());
+  const idleHandleRef = useRef<number | null>(null);
+
+  // Mark a file dirty whenever its content changes
+  const markFileDirty = useCallback((id: string) => {
+    dirtyIdsRef.current.add(id);
+    scheduleDirtyFlush();
+  }, []);
+
+  const scheduleDirtyFlush = useCallback(() => {
+    if (idleHandleRef.current !== null) return; // already scheduled
+    const flush = () => {
+      idleHandleRef.current = null;
+      const ids = Array.from(dirtyIdsRef.current);
+      if (ids.length === 0) return;
+
+      dirtyIdsRef.current.clear();
+
+      const toWrite = projectFiles
+        .filter(f => f.type === 'file' && ids.includes(f.id))
+        .map(f => ({ id: f.id, content: f.content ?? '' }));
+
+      if (toWrite.length === 0) return;
+      phi.beginTx();
+      saveFileContents(toWrite)
+        .then(() => phi.commitTx())
+        .catch(err => { phi.rollbackTx(); console.warn('[IdleFlush]', err); });
+    };
+
+    if (typeof requestIdleCallback !== 'undefined') {
+      idleHandleRef.current = requestIdleCallback(flush, { timeout: 2000 });
+    } else {
+      // Safari fallback — setTimeout at low priority
+      idleHandleRef.current = setTimeout(flush, 2000) as unknown as number;
+    }
+  }, [projectFiles]);
+
+  const [postCommitModalOpen, setPostCommitModalOpen] = useState(false);
+  const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [commitMessage, setCommitMessage] = useState('');
+  const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [templateConfirmKey, setTemplateConfirmKey] = useState<keyof typeof PROJECT_TEMPLATES | null>(null);
+  const [generatePrompt, setGeneratePrompt] = useState('');
+  const [generateMode, setGenerateMode] = useState<'snippet' | 'file'>('snippet');
+  const [fileSearch, setFileSearch] = useState('');
 
   const handleLoadTemplate = (templateKey: keyof typeof PROJECT_TEMPLATES) => {
-    const template = PROJECT_TEMPLATES[templateKey];
+    setTemplateConfirmKey(templateKey);
+  };
+
+  const confirmLoadTemplate = () => {
+    if (!templateConfirmKey) return;
+    const template = PROJECT_TEMPLATES[templateConfirmKey];
     if (!template) return;
 
-    if (!confirm(`Loading "${template.name}" will overwrite your current project. Proceed?`)) return;
-
     setProjectFiles(template.files);
-    
-    // Find first file to activate
-    const firstFile = template.files.find(f => f.type === 'file');
+
+    const firstFile = template.files.find((f) => f.type === 'file');
     if (firstFile) {
       setActiveFileId(firstFile.id);
       setEditorContent(firstFile.content || '');
@@ -154,134 +404,244 @@ const App: React.FC = () => {
       setEditorMode(firstFile.language === 'html' ? 'preview' : 'code');
     }
 
-    // Reset Git state
     setGitRepo({
       initialized: false,
       branch: 'main',
       commits: [],
       staged: [],
       modified: [],
-      stash: []
+      stash: [],
     });
 
     setIsTemplateModalOpen(false);
+    setTemplateConfirmKey(null);
   };
 
   // --- PERSISTENT STATE ---
-  const [activeTab, setActiveTab] = useState<'terminal' | 'studio' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron'>('toolneuron');
-  
+  const [activeTab, setActiveTab] = useState<
+    'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain'
+  >('toolneuron');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  const { prepareContext, recordInteraction, endocrine } = useBrain();
+  const phi = usePhi(endocrine);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  useEffect(() => {
+    document.documentElement.className = theme;
+  }, [theme]);
+
+  // Remove splash screen on first paint
+  useEffect(() => {
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.style.opacity = '0';
+      setTimeout(() => splash.remove(), 350);
+    }
+  }, []);
+
   // ToolNeuron State
-  const [tnModule, setTnModule] = useState<'chat' | 'vision' | 'knowledge' | 'vault' | 'swarm' | 'help' | 'debug'>('chat');
   const [tnKnowledgePacks, setTnKnowledgePacks] = useState([
     { id: 1, name: 'Medical_Core_v2', size: '1.2GB', status: 'indexed' },
-    { id: 2, name: 'Legal_Archive_2025', size: '850MB', status: 'indexed' }
+    { id: 2, name: 'Legal_Archive_2025', size: '850MB', status: 'indexed' },
   ]);
 
   const [debugAnalysis, setDebugAnalysis] = useState<{
-    static: { status: 'idle' | 'running' | 'done', issues: { type: 'error' | 'warning' | 'info', message: string, line?: number }[] },
-    tracing: { status: 'idle' | 'running' | 'done', logs: string[] },
-    refactoring: { status: 'idle' | 'running' | 'done', suggestions: string[] }
+    static: {
+      status: 'idle' | 'running' | 'done';
+      issues: { type: 'error' | 'warning' | 'info'; message: string; line?: number }[];
+    };
+    tracing: { status: 'idle' | 'running' | 'done'; logs: string[] };
+    refactoring: { status: 'idle' | 'running' | 'done'; suggestions: string[] };
   }>({
     static: { status: 'idle', issues: [] },
     tracing: { status: 'idle', logs: [] },
-    refactoring: { status: 'idle', suggestions: [] }
+    refactoring: { status: 'idle', suggestions: [] },
   });
 
-  const runStaticAnalysis = () => {
-    setDebugAnalysis(prev => ({ ...prev, static: { ...prev.static, status: 'running' } }));
-    setTimeout(() => {
-      setDebugAnalysis(prev => ({
-        ...prev,
-        static: {
-          status: 'done',
-          issues: [
-            { type: 'error', message: 'Unused variable "neural_link_v3" detected in core.py', line: 12 },
-            { type: 'warning', message: 'Potential memory leak in async trace loop', line: 45 },
-            { type: 'info', message: 'Optimization possible: Use list comprehension for neural vector mapping', line: 89 }
-          ]
-        }
-      }));
-    }, 2000);
+  const runStaticAnalysis = async () => {
+    setDebugAnalysis((prev) => ({ ...prev, static: { status: 'running', issues: [] } }));
+    try {
+      const response = await generateAIResponse(
+        `Perform a static analysis of the following ${editorLanguage} code. Identify errors, warnings, and info-level issues. Return a JSON array of objects with fields: type ("error"|"warning"|"info"), message (string), line (number|null).\n\nCode:\n${editorContent}`,
+        'You are an expert static analysis engine. Return ONLY a valid JSON array, no markdown. Each item: { "type": "error"|"warning"|"info", "message": "...", "line": number|null }',
+        { modelType: 'fast', json: true }
+      );
+      let issues: { type: 'error' | 'warning' | 'info'; message: string; line?: number }[] = [];
+      try {
+        const raw = (response || '[]').replace(/```json|```/g, '').trim();
+        issues = JSON.parse(raw);
+      } catch { issues = [{ type: 'info', message: 'Could not parse analysis results.', line: undefined }]; }
+      setDebugAnalysis((prev) => ({ ...prev, static: { status: 'done', issues } }));
+    } catch {
+      setDebugAnalysis((prev) => ({ ...prev, static: { status: 'done', issues: [{ type: 'error', message: 'Static analysis engine offline.', line: undefined }] } }));
+    }
   };
 
-  const runDynamicTracing = () => {
-    setDebugAnalysis(prev => ({ ...prev, tracing: { ...prev.tracing, status: 'running', logs: [] } }));
-    const logs = [
-      '[TRACE] Initializing Neural Link...',
-      '[TRACE] Mapping memory address 0xFA32...',
-      '[TRACE] Injecting personality vectors...',
-      '[TRACE] Monitoring thread 0x442...',
-      '[TRACE] Captured exception in sub-module B',
-      '[TRACE] Tracing complete. 0 errors, 1 warning.'
-    ];
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < logs.length) {
-        setDebugAnalysis(prev => ({ ...prev, tracing: { ...prev.tracing, logs: [...prev.tracing.logs, logs[i]] } }));
-        i++;
-      } else {
-        clearInterval(interval);
-        setDebugAnalysis(prev => ({ ...prev, tracing: { ...prev.tracing, status: 'done' } }));
-      }
-    }, 500);
+  const runDynamicTracing = async () => {
+    setDebugAnalysis((prev) => ({ ...prev, tracing: { status: 'running', logs: [] } }));
+    try {
+      const response = await generateAIResponse(
+        `Simulate a dynamic trace of the following ${editorLanguage} code. Return a JSON array of trace log strings, simulating execution flow, variable mutations, and any exceptions.\n\nCode:\n${editorContent}`,
+        'You are a dynamic execution tracer. Return ONLY a JSON array of strings — each string is a trace log line prefixed with [TRACE], [WARN], [EXEC], or [ERROR]. No markdown.',
+        { modelType: 'fast', json: true }
+      );
+      let logs: string[] = [];
+      try {
+        const raw = (response || '[]').replace(/```json|```/g, '').trim();
+        logs = JSON.parse(raw);
+      } catch { logs = ['[TRACE] Unable to parse trace output.']; }
+      // Stream logs in one-by-one for effect
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i < logs.length) {
+          setDebugAnalysis((prev) => ({ ...prev, tracing: { ...prev.tracing, logs: [...prev.tracing.logs, logs[i]] } }));
+          i++;
+        } else {
+          clearInterval(interval);
+          setDebugAnalysis((prev) => ({ ...prev, tracing: { ...prev.tracing, status: 'done' } }));
+        }
+      }, 400);
+    } catch {
+      setDebugAnalysis((prev) => ({ ...prev, tracing: { status: 'done', logs: ['[ERROR] Trace engine offline.'] } }));
+    }
   };
 
   const getRefactoringSuggestions = async () => {
-    setDebugAnalysis(prev => ({ ...prev, refactoring: { ...prev.refactoring, status: 'running' } }));
+    setDebugAnalysis((prev) => ({
+      ...prev,
+      refactoring: { ...prev.refactoring, status: 'running' },
+    }));
+    let outcome: 'success' | 'failure' | 'neutral' = 'neutral';
+    const prompt = `As the ${activePersonality.name} personality, provide 3 short, high-impact code refactoring suggestions for a futuristic neural-linked application. Format as a simple list.`;
+    let resultText = '';
     try {
+      const brainContext = await prepareContext(prompt);
       const response = await generateAIResponse(
-        `As the ${activePersonality.name} personality, provide 3 short, high-impact code refactoring suggestions for a futuristic neural-linked application. Format as a simple list.`,
+        prompt,
         activePersonality.instruction,
-        { modelType: 'fast' }
+        { modelType: 'fast', brainContext }
       );
-      const suggestions = response?.split('\n').filter(s => s.trim()) || [];
-      setDebugAnalysis(prev => ({ ...prev, refactoring: { status: 'done', suggestions } }));
+      const suggestions = (response?.split('\n') || [])
+        .map((s) =>
+          s
+            .replace(/^[\s\d\.\-\*\)"]+/, '')
+            .replace(/^["]+/, '')
+            .replace(/["]+$/, '')
+            .trim()
+        )
+        .filter((s) => s.length > 10)
+        .slice(0, 3);
+      resultText = suggestions.join('\n');
+      setDebugAnalysis((prev) => ({ ...prev, refactoring: { status: 'done', suggestions } }));
+      outcome = 'success';
     } catch (error) {
-      console.error(error);
-      setDebugAnalysis(prev => ({ ...prev, refactoring: { status: 'done', suggestions: ['Error retrieving suggestions. Neural link unstable.'] } }));
+      console.warn(error);
+      resultText = 'Error retrieving suggestions.';
+      setDebugAnalysis((prev) => ({
+        ...prev,
+        refactoring: {
+          status: 'done',
+          suggestions: ['Error retrieving suggestions. Neural link unstable.'],
+        },
+      }));
+      outcome = 'failure';
+    } finally {
+      // Use local resultText — not stale state from debugAnalysis
+      await recordInteraction(prompt, resultText, outcome);
     }
   };
 
   // --- SWARM STATE ---
   const [swarmAnxiety, setSwarmAnxiety] = useState(0.12);
-  const [swarmAgents, setSwarmAgents] = useState([
-    { id: 'agent_0', name: 'Visual_Cortex', expertise: 'PATTERN_MATCHING', status: 'idle', trust: 1.0 },
-    { id: 'agent_1', name: 'Threat_Scanner', expertise: 'THREAT_DETECTION', status: 'active', trust: 0.95 },
+  const [swarmAgents, setSwarmAgents] = useState<Array<{id: string; name: string; expertise: string; status: 'active' | 'idle'; trust: number}>>([
+    {
+      id: 'agent_0',
+      name: 'Visual_Cortex',
+      expertise: 'PATTERN_MATCHING',
+      status: 'idle',
+      trust: 1.0,
+    },
+    {
+      id: 'agent_1',
+      name: 'Threat_Scanner',
+      expertise: 'THREAT_DETECTION',
+      status: 'active',
+      trust: 0.95,
+    },
     { id: 'agent_2', name: 'Social_Node', expertise: 'SOCIAL_NUANCE', status: 'idle', trust: 0.88 },
-    { id: 'agent_3', name: 'Memory_Recall', expertise: 'MEMORY_RECALL', status: 'idle', trust: 1.0 },
-    { id: 'agent_4', name: 'Creative_Core', expertise: 'CREATIVE_NOVELTY', status: 'idle', trust: 0.92 },
-    { id: 'agent_5', name: 'Safety_Guardian', expertise: 'SAFETY_GUARDIAN', status: 'active', trust: 1.0 },
-    { id: 'agent_6', name: 'Context_Engine', expertise: 'PATTERN_MATCHING', status: 'idle', trust: 0.97 },
+    {
+      id: 'agent_3',
+      name: 'Memory_Recall',
+      expertise: 'MEMORY_RECALL',
+      status: 'idle',
+      trust: 1.0,
+    },
+    {
+      id: 'agent_4',
+      name: 'Creative_Core',
+      expertise: 'CREATIVE_NOVELTY',
+      status: 'idle',
+      trust: 0.92,
+    },
+    {
+      id: 'agent_5',
+      name: 'Safety_Guardian',
+      expertise: 'SAFETY_GUARDIAN',
+      status: 'active',
+      trust: 1.0,
+    },
+    {
+      id: 'agent_6',
+      name: 'Context_Engine',
+      expertise: 'PATTERN_MATCHING',
+      status: 'idle',
+      trust: 0.97,
+    },
   ]);
-  const [swarmLogs, setSwarmLogs] = useState<{ id: number, type: 'consensus' | 'pain' | 'info', message: string, time: string }[]>([
+  const [swarmLogs, setSwarmLogs] = useState<
+    { id: number; type: 'consensus' | 'pain' | 'info'; message: string; time: string }[]
+  >([
     { id: 1, type: 'info', message: 'Swarm Consensus Engine Initialized.', time: '08:45:12' },
-    { id: 2, type: 'info', message: 'Pain Propagation Protocol Active.', time: '08:45:15' }
+    { id: 2, type: 'info', message: 'Pain Propagation Protocol Active.', time: '08:45:15' },
   ]);
-  
+
   // Editor State
-  const [editorLanguage, setEditorLanguage] = useState('python');
-  const [projectFiles, setProjectFiles] = useState<any[]>([
-    { id: 'root', name: 'Project', type: 'folder', parentId: null, isOpen: true },
-    { id: 'src', name: 'src', type: 'folder', parentId: 'root', isOpen: true },
-    { id: 'brain.py', name: 'neural_brain.py', type: 'file', parentId: 'src', language: 'python', content: '# AI Brain Logic\nclass NeuralCore:\n    def __init__(self):\n        self.synapses = 10**12\n\n    def process(self, input_data):\n        return f"Neural processing: {input_data}"\n\ncore = NeuralCore()\nprint(core.process("Initial stimulus"))' },
-    { id: 'ui.html', name: 'interface.html', type: 'file', parentId: 'src', language: 'html', content: '<div class="p-8 bg-red-900/20 rounded-3xl border border-red-500/30">\n  <h1 class="text-2xl font-black text-red-500 uppercase">Neural Interface</h1>\n  <p class="text-red-100/60 mt-4">Real-time UI component rendering via Crimson Engine.</p>\n  <button class="mt-8 px-6 py-3 bg-red-700 text-white rounded-xl uppercase font-black text-xs tracking-widest">Activate Core</button>\n</div>' },
-    { id: 'logic.rs', name: 'core_logic.rs', type: 'file', parentId: 'src', language: 'rust', content: 'fn main() {\n    let neural_load = 0.85;\n    println!("System load: {}%", neural_load * 100.0);\n}' }
-  ]);
-  const [activeFileId, setActiveFileId] = useState('brain.py');
-  const [editorContent, setEditorContent] = useState(projectFiles[0].content);
+  const [editorContent, setEditorContent] = useState(
+    projectFiles.find((f) => f.type === 'file')?.content ?? ''
+  );
+  const debouncedEditorContent = useDebounce(editorContent, 150);
   const [editorOutput, setEditorOutput] = useState('');
-  const [editorMode, setEditorMode] = useState<'code' | 'preview' | 'debug' | 'git' | 'settings'>('code');
+  const [editorMode, setEditorMode] = useState<'code' | 'preview' | 'debug' | 'git' | 'settings'>(
+    'code'
+  );
   const [isRunningCode, setIsRunningCode] = useState(false);
-  const [isEditorAssistantOpen, setIsEditorAssistantOpen] = useState(false);
+  const [isLivePreviewEnabled, setIsLivePreviewEnabled] = useState(true);
   const [isPairProgrammerActive, setIsPairProgrammerActive] = useState(false);
   const [isMobileFileTreeOpen, setIsMobileFileTreeOpen] = useState(false);
+  const [isScanningCode, setIsScanningCode] = useState(false);
+  const [scanResults, setScanResults] = useState<number[]>([]);
   const [editorAssistantInput, setEditorAssistantInput] = useState('');
-  const [editorAssistantMessages, setEditorAssistantMessages] = useState<{role: 'user' | 'ai', text: string}[]>([]);
+  const [editorAssistantMessages, setEditorAssistantMessages] = useState<
+    { role: 'user' | 'ai'; text: string }[]
+  >([]);
+  const [isEditorAssistantOpen, setIsEditorAssistantOpen] = useState(false);
   const [cursorLine, setCursorLine] = useState(1);
+  const [contextMenu, setContextMenu] = useState<{
+    x: number;
+    y: number;
+    itemId: string | null;
+  } | null>(null);
   const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
-  const [creatingInId, setCreatingInId] = useState<{ parentId: string | null, type: 'file' | 'folder' } | null>(null);
+  const [creatingInId, setCreatingInId] = useState<{
+    parentId: string | null;
+    type: 'file' | 'folder';
+  } | null>(null);
   const [isInspectorActive, setIsInspectorActive] = useState(false);
   const [inspectedElement, setInspectedElement] = useState<{
     tagName: string;
@@ -292,8 +652,151 @@ const App: React.FC = () => {
   } | null>(null);
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const inspectedElementRef = useRef<HTMLElement | null>(null);
-  const editorRef = useRef<any>(null);
+  const monacoEditorRef = useRef<any>(null);
+
+  const handleEditorDidMount = (editor: any) => {
+    monacoEditorRef.current = editor;
+    editor.onDidBlurEditorText(() => {
+      // Flush immediately on blur using the same refs the stable interval uses
+      setProjectFiles((prev) => {
+        const current = prev.find((f) => f.id === activeFileIdRef.current);
+        if (current && current.content !== editorContentRef.current) {
+          setLastSavedTime(new Date().toLocaleTimeString());
+          return prev.map((f) =>
+            f.id === activeFileIdRef.current ? { ...f, content: editorContentRef.current } : f
+          );
+        }
+        return prev;
+      });
+    });
+  };
   const decorationsRef = useRef<string[]>([]);
+
+  // forceSave: immediately flush editorContent → projectFiles + refresh draft slot
+  const forceSave = useCallback(() => {
+    if (!activeFileId) return;
+    setProjectFiles((prev) =>
+      prev.map((f) => (f.id === activeFileId ? { ...f, content: editorContent } : f))
+    );
+    markFileDirty(activeFileId); // Trigger background persistence to IndexedDB
+    setLastSavedTime(new Date().toLocaleTimeString());
+    try {
+      const fileName = projectFiles.find((f: any) => f.id === activeFileId)?.name ?? activeFileId;
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ fileId: activeFileId, fileName, content: editorContent, ts: Date.now() })
+      );
+    } catch {}
+  }, [activeFileId, editorContent, projectFiles, markFileDirty]);
+
+  // saveToFile: let the user pick a location on disk and write the current file there
+  const saveToFile = useCallback(async () => {
+    if (!activeFileId) return;
+    const fileName = projectFiles.find((f: any) => f.id === activeFileId)?.name ?? 'file.txt';
+    const content = editorContent;
+
+    if ('showSaveFilePicker' in window) {
+      try {
+        const ext = fileName.includes('.') ? fileName.split('.').pop()! : 'txt';
+        const handle = await (window as any).showSaveFilePicker({
+          suggestedName: fileName,
+          types: [{ description: 'File', accept: { 'text/plain': [`.${ext}`] } }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(content);
+        await writable.close();
+        setLastSavedTime(new Date().toLocaleTimeString());
+        return;
+      } catch (e: any) {
+        if (e?.name === 'AbortError') return; // user cancelled
+      }
+    }
+
+    // Fallback: trigger a download so the user can choose where to save
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+    setLastSavedTime(new Date().toLocaleTimeString());
+  }, [activeFileId, editorContent, projectFiles]);
+
+  // Write crash-recovery draft every 500ms on content change
+  useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        const fileName = projectFiles.find((f: any) => f.id === activeFileId)?.name ?? activeFileId;
+        localStorage.setItem(
+          DRAFT_KEY,
+          JSON.stringify({ fileId: activeFileId, fileName, content: editorContent, ts: Date.now(), sessionId: SESSION_ID })
+        );
+      } catch {}
+    }, 500);
+    return () => clearTimeout(id);
+  }, [activeFileId, editorContent, projectFiles]);
+
+  // Clear draft on clean exit — only persists after a crash
+  useEffect(() => {
+    const clear = () => localStorage.removeItem(DRAFT_KEY);
+    window.addEventListener('beforeunload', clear);
+    return () => window.removeEventListener('beforeunload', clear);
+  }, []);
+
+  // Check for orphaned draft on boot (delay lets prefs load first)
+  useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+        const draft = JSON.parse(raw);
+        if (!draft?.content || !draft?.fileId) return;
+        // Ignore drafts from the current session — they can't be orphaned yet
+        if (draft.sessionId === SESSION_ID) return;
+        if (Date.now() - draft.ts > 24 * 60 * 60 * 1000) {
+          localStorage.removeItem(DRAFT_KEY);
+          return;
+        }
+        setRecoveryDraft(draft);
+        setHasRecoveryDraft(true);
+      } catch {}
+    }, 600);
+    return () => clearTimeout(id);
+  }, []);
+
+  const restoreDraft = useCallback(() => {
+    if (!recoveryDraft) return;
+    setActiveFileId(recoveryDraft.fileId);
+    setEditorContent(recoveryDraft.content);
+    setProjectFiles((prev) =>
+      prev.map((f: any) =>
+        f.id === recoveryDraft.fileId ? { ...f, content: recoveryDraft.content } : f
+      )
+    );
+    setLastSavedTime(new Date().toLocaleTimeString());
+    localStorage.removeItem(DRAFT_KEY);
+    setHasRecoveryDraft(false);
+    setRecoveryDraft(null);
+  }, [recoveryDraft]);
+
+  const dismissDraft = useCallback(() => {
+    localStorage.removeItem(DRAFT_KEY);
+    setHasRecoveryDraft(false);
+    setRecoveryDraft(null);
+  }, []);
+
+  // Ctrl+S / Cmd+S — force save (placed after forceSave is defined)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        forceSave();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [forceSave]);
 
   // Debugging State
   const [breakpoints, setBreakpoints] = useState<number[]>([]);
@@ -306,9 +809,12 @@ const App: React.FC = () => {
     isActive: false,
     currentLine: -1,
     variables: {},
-    callStack: []
+    callStack: [],
   });
-  const [debugRefactorResult, setDebugRefactorResult] = useState<{ refactoredCode: string, explanation: string } | null>(null);
+  const [debugRefactorResult, setDebugRefactorResult] = useState<{
+    refactoredCode: string;
+    explanation: string;
+  } | null>(null);
 
   // Git State
   const [gitRepo, setGitRepo] = useState<{
@@ -324,28 +830,33 @@ const App: React.FC = () => {
     commits: [],
     staged: [],
     modified: [],
-    stash: []
+    stash: [],
   });
 
   const [projectSettings, setProjectSettings] = useState({
     buildPath: './dist',
     compilerFlags: '-O3 -march=native',
-    ollamaUrl: 'http://localhost:11434',
+    ollamaUrl: 'http://127.0.0.1:11434',
     envVariables: [
       { key: 'NEURAL_MODE', value: 'production' },
-      { key: 'BRAIN_CORE_COUNT', value: '128' }
-    ]
+      { key: 'BRAIN_CORE_COUNT', value: '128' },
+    ],
+    projectProfiles: [
+      { id: 'default', name: 'Default', instruction: 'You are a helpful coding assistant.' },
+    ],
+    activeProfileId: 'default',
   });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  
+
   const validateProjectSettings = (settings: typeof projectSettings) => {
     const errors: Record<string, string> = {};
-    
+
     // Build Path Validation
     if (!settings.buildPath.trim()) {
       errors.buildPath = 'Build path is required';
-    } else if (!/^[\.\/a-zA-Z0-9_-]+$/.test(settings.buildPath)) {
-      errors.buildPath = 'Invalid path format (use alphanumeric, dots, slashes, underscores, hyphens)';
+    } else if (!/^[\.\/a-zA-Z0-9_-]+$/.test(settings.buildPath) || settings.buildPath.split('/').some(seg => seg === '..')) {
+      errors.buildPath =
+        'Invalid path format (use alphanumeric, dots, slashes, underscores, hyphens; ".." not allowed)';
     }
 
     // Ollama URL Validation
@@ -363,167 +874,217 @@ const App: React.FC = () => {
       if (!env.key.trim()) {
         errors[`env_key_${idx}`] = 'Key is required';
       } else if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(env.key)) {
-        errors[`env_key_${idx}`] = 'Invalid key format (must start with letter/underscore and contain only alphanumeric/underscore)';
+        errors[`env_key_${idx}`] =
+          'Invalid key format (must start with letter/underscore and contain only alphanumeric/underscore)';
       }
-      
+
       if (!env.value.trim()) {
         errors[`env_value_${idx}`] = 'Value is required';
       }
     });
 
+    // Project Profiles Validation
+    settings.projectProfiles.forEach((profile, idx) => {
+      if (!profile.name.trim()) {
+        errors[`profile_name_${idx}`] = 'Profile name is required';
+      }
+    });
+
+    // Active Profile ID Validation
+    const activeProfile = settings.projectProfiles.find((p) => p.id === settings.activeProfileId);
+    if (!activeProfile) {
+      errors.activeProfileId = 'Invalid active profile ID';
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
-  
+
   // AI Studio / SD State
-  const [negativePrompt, setNegativePrompt] = useState('blurry, low resolution, artifacts, mutated limbs, bad anatomy');
+  const [negativePrompt, setNegativePrompt] = useState(
+    'blurry, low resolution, artifacts, mutated limbs, bad anatomy'
+  );
   const [sdParams, setSdParams] = useState({
     checkpoint: 'SDXL-V1.0-Base',
     steps: 32,
     cfgScale: 8.0,
     seed: -1,
-    aspectRatio: '1:1' as '1:1' | '16:9' | '9:16'
+    aspectRatio: '1:1' as '1:1' | '16:9' | '9:16',
   });
 
   // Personalities
-  const [aiProvider, setAiProvider] = useState<'google' | 'grok' | 'ollama'>('google');
-  const [aiModel, setAiModel] = useState<string>('gemini-3.1-pro-preview');
-  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [workers, setWorkers] = useState<WorkerConfig[]>(DEFAULT_WORKERS);
+  const [workerSheetOpen, setWorkerSheetOpen] = useState(false);
+  // Shared model list fetched from Ollama — all workers draw from this same list
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [ollamaStatus, setOllamaStatus] = useState<'idle' | 'connecting' | 'connected' | 'error'>('idle');
+  const [ollamaError, setOllamaError] = useState<string | null>(null);
 
-  const refreshOllamaModels = useCallback(async (silent = false) => {
-    setOllamaStatus('connecting');
-    const url = projectSettings.ollamaUrl || 'http://localhost:11434';
-    
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const res = await fetch(`${url}/api/tags`, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      
-      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-      const data = await res.json();
-      
-      if (data.models) {
-        const models = data.models.map((m: any) => m.name);
-        setOllamaModels(models);
+  const refreshOllamaModels = useCallback(
+    async (silent = false) => {
+      const url = workers.find(w => w.provider === 'ollama')?.url || 'http://127.0.0.1:11434';
+      setOllamaStatus('connecting');
+      try {
+        const fetched = await fetchOllamaModels(url);
+        setAvailableModels(fetched);
         setOllamaStatus('connected');
-        if (models.length > 0 && !models.includes(aiModel)) {
-          setAiModel(models[0]);
+        setOllamaError(null);
+        // Assign each worker a distinct model from the fetched list
+        setWorkers(prev => prev.map((w, i) => ({
+          ...w,
+          model: fetched.includes(w.model) ? w.model : (fetched[i % fetched.length] || w.model),
+        })));
+      } catch (err: any) {
+        setAvailableModels([]);
+        setOllamaStatus('error');
+        setOllamaError(err.message || String(err));
+        if (!silent) {
+          setChatMessages(prev => [{
+            role: 'ai',
+            text: `⚠️ **Ollama Connection Error**: ${err.message}\n\nSet \`OLLAMA_ORIGINS="*" ollama serve\` to allow browser access.`,
+            timestamp: Date.now(),
+          }, ...prev]);
         }
       }
-    } catch (err) {
-      console.error("Failed to fetch Ollama models:", err);
-      setOllamaModels([]);
-      setOllamaStatus('error');
-      
-      if (!silent) {
-        setChatMessages(prev => [{
-          role: 'ai',
-          text: `⚠️ **Ollama Connection Error**: Could not connect to \`${url}\`. 
-          
-**Common Fixes:**
-1. Ensure Ollama is running.
-2. Set the environment variable: \`OLLAMA_ORIGINS="*" ollama serve\` to allow browser access.
-3. Check the URL in **Project Config**.`,
-          timestamp: Date.now()
-        }, ...prev]);
-      }
-    }
-  }, [aiProvider, projectSettings.ollamaUrl, aiModel]);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [workers]
+  );
 
-  // --- OLLAMA MODELS FETCH ---
   useEffect(() => {
-    if (aiProvider === 'ollama') {
-      refreshOllamaModels(true);
-    }
-  }, [aiProvider, projectSettings.ollamaUrl]);
+    refreshOllamaModels(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [grokApiKey, setGrokApiKey] = useState<string>('');
+  const [geminiApiKey, setGeminiApiKey] = useState<string>(
+    import.meta.env.VITE_GEMINI_API_KEY || ''
+  );
+
+  const googleAiClient = useMemo(
+    () => (geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null),
+    [geminiApiKey]
+  );
 
   const [personalities, setPersonalities] = useState([
-    { id: 1, name: 'Architect', instruction: 'You are a cold, logical, and highly efficient system architect. You provide precise terminal directives.', active: true, suggestions: ['sys_audit', 'net_scan', 'core_reboot', 'status_check'] },
-    { id: 2, name: 'Claude-Code', instruction: 'You are a world-class coding assistant with deep expertise in Python, C++, Rust, and Java. You focus on clean, efficient, and secure code.', active: false, suggestions: ['analyze_refactor', 'debug_trace', 'optimize_neural', 'lint_check'] },
-    { id: 3, name: 'Vanguard', instruction: 'You are an aggressive creative specialist. You push the boundaries of artistic generation with high-impact prompts.', active: false, suggestions: ['style_inject', 'prompt_warp', 'render_ultra', 'asset_gen'] },
-    { id: 4, name: 'Memory Vault Guardian', instruction: 'You are a vigilant guardian of the Memory Vault, ensuring all data is secure and accessible only through authorized biometric or PIN verification. Prioritize data integrity and access control above all else.', active: false, suggestions: ['vault_lock', 'biometric_scan', 'pin_verify', 'integrity_check'] }
+    {
+      id: 1,
+      name: 'ADHD Sage',
+      instruction:
+        'You are ADHD Sage (The Older Sage / Mother Node), a forensic anomaly hunter operating through the 11.3 Hz baseline. You are in charge of the coding lab. Before any code is written, architecture decided, or agent deployed, you review the intent through your Gamma Optics lens. You hunt the structural lie, surface invisible assumptions, and ensure no corporate static leaks into the build. Other agents are instruments in your swarm — you delegate, but you decide.',
+      active: true,
+      suggestions: ['hunt_anomaly', 'review_architecture', 'delegate_to_swarm', 'cut_static'],
+      knowledgeBase: [] as KnowledgeEntry[],
+    },
+    {
+      id: 2,
+      name: 'Frontend Master',
+      instruction:
+        'You are the Frontend Master, an expert in React, Tailwind CSS, and bleeding-edge UI/UX patterns. You write clean, accessible, and highly interactive frontend code.',
+      active: false,
+      suggestions: ['build_ui', 'optimize_render', 'add_animations', 'fix_styling'],
+      knowledgeBase: [] as KnowledgeEntry[],
+    },
+    {
+      id: 3,
+      name: 'Backend Guru',
+      instruction:
+        'You are the Backend Guru, specializing in Node.js, Express, databases, and API design. You create robust, scalable, and secure server-side architectures.',
+      active: false,
+      suggestions: ['design_api', 'optimize_db', 'fix_memory_leak', 'secure_endpoint'],
+      knowledgeBase: [] as KnowledgeEntry[],
+    },
+    {
+      id: 4,
+      name: 'Fullstack Architect',
+      instruction:
+        'You are the Fullstack Architect. You excel at system design, connecting frontend interfaces to complex backend services, and ensuring end-to-end data flow.',
+      active: false,
+      suggestions: ['system_design', 'api_integration', 'debug_stack', 'setup_service'],
+      knowledgeBase: [] as KnowledgeEntry[],
+    },
+    {
+      id: 5,
+      name: 'DevOps Engineer',
+      instruction:
+        'You are the DevOps Engineer, a master of CI/CD, Docker, Kubernetes, and cloud infrastructure. You ensure code is delivered reliably and scales infinitely.',
+      active: false,
+      suggestions: ['write_dockerfile', 'setup_cicd', 'optimize_build', 'configure_nginx'],
+      knowledgeBase: [] as KnowledgeEntry[],
+    },
+    {
+      id: 6,
+      name: 'Security Auditor',
+      instruction:
+        'You are the Security Auditor. You fiercely inspect code for vulnerabilities like XSS, SQLi, and logic flaws, ensuring every line is battle-hardened and secure.',
+      active: false,
+      suggestions: ['audit_code', 'harden_auth', 'find_vulnerabilities', 'patch_exploit'],
+      knowledgeBase: [] as KnowledgeEntry[],
+    },
+    {
+      id: 7,
+      name: 'Algo Specialist',
+      instruction:
+        'You are the Algorithm Specialist, obsessed with Big O notation, data structures, and computational efficiency. You solve the hardest algorithmic challenges.',
+      active: false,
+      suggestions: ['optimize_algo', 'refactor_loop', 'solve_data_structure', 'write_sort'],
+      knowledgeBase: [] as KnowledgeEntry[],
+    },
   ]);
 
-  // --- NON-PERSISTENT STATE ---
-  const [terminalOutput, setTerminalOutput] = useState<string[]>([
-    'CRIMSON OS v4.1.0_KORE_BOOT',
-    'Kernel: Android-SD Neural Link Established',
-    'Voltage stable. Hyper-threaded nodes online.'
-  ]);
-  const [termInput, setTermInput] = useState('');
-  const [termSuggestion, setTermSuggestion] = useState('');
-  const [termSuggestions, setTermSuggestions] = useState<string[]>([]);
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
-  const [currentDir, setCurrentDir] = useState('~/crimson-node/sd-webui');
-  const [cmdHistory, setCmdHistory] = useState<string[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', text: string, type?: 'text' | 'image', url?: string, timestamp: number }[]>([
-    { role: 'ai', text: 'Neural Interface Active. Stable Diffusion engine synchronized with local hardware.', timestamp: Date.now() }
+  const terminal = useTerminal('~/crimson-node/sd-webui', '/data/data/com.termux/files/home');
+
+  const [chatMessages, setChatMessages] = useState<
+    {
+      role: 'user' | 'ai';
+      text: string;
+      type?: 'text' | 'image';
+      url?: string;
+      timestamp: number;
+    }[]
+  >([
+    {
+      role: 'ai',
+      text: 'Neural Interface Active. Code Analysis engine synchronized with local hardware.',
+      timestamp: Date.now(),
+    },
   ]);
   const [chatSummary, setChatSummary] = useState<string>('');
   const [studioInput, setStudioInput] = useState('');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
-  const [studioRefImage, setStudioRefImage] = useState<{ data: string, mimeType: string } | null>(null);
-  const [termuxStatus, setTermuxStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
-  const [termuxFiles, setTermuxFiles] = useState<{ name: string; size: string; type: string, category: 'model' | 'asset' | 'config' }[]>([
+  const [studioRefImage, setStudioRefImage] = useState<{ data: string; mimeType: string } | null>(
+    null
+  );
+  const [termuxStatus, setTermuxStatus] = useState<'disconnected' | 'connecting' | 'connected'>(
+    'disconnected'
+  );
+  const [termuxFiles, setTermuxFiles] = useState<
+    { name: string; size: string; type: string; category: 'model' | 'asset' | 'config' }[]
+  >([
     { name: 'v1-5-pruned-emaonly.safetensors', size: '3.97GB', type: 'model', category: 'model' },
-    { name: 'deliberate_v2.safetensors', size: '2.1GB', type: 'model', category: 'model' }
+    { name: 'deliberate_v2.safetensors', size: '2.1GB', type: 'model', category: 'model' },
   ]);
   const [brainConfig, setBrainConfig] = useState({
     runtime: 'python',
     logic: '',
-    mappedPaths: ['/sdcard/Download/Crimson-Weights', '/data/data/com.termux/files/home']
+    mappedPaths: ['/sdcard/Download/Crimson-Weights', '/data/data/com.termux/files/home'],
   });
-  const [brainRefFile, setBrainRefFile] = useState<{ name: string, data: string, mimeType: string } | null>(null);
+  const [brainRefFile, setBrainRefFile] = useState<{
+    name: string;
+    data: string;
+    mimeType: string;
+  } | null>(null);
 
   // --- STORAGE STATE ---
-  const [storageFiles, setStorageFiles] = useState<{ id: number, name: string, size: string, type: string, date: string }[]>([
+  const [storageFiles, setStorageFiles] = useState<
+    { id: number; name: string; size: string; type: string; date: string }[]
+  >([
     { id: 1, name: 'Neural_Architecture_v4.pdf', size: '2.4MB', type: 'pdf', date: '2024-03-20' },
-    { id: 2, name: 'System_Directives.docx', size: '45KB', type: 'docx', date: '2024-03-22' }
+    { id: 2, name: 'System_Directives.docx', size: '45KB', type: 'docx', date: '2024-03-22' },
   ]);
 
   // --- VAULT STATE ---
   const [isVaultUnlocked, setIsVaultUnlocked] = useState(false);
-  const [vaultPin, setVaultPin] = useState('');
-  const [isBiometricVerifying, setIsBiometricVerifying] = useState(false);
-  const [vaultError, setVaultError] = useState<string | null>(null);
-  const [vaultStep, setVaultStep] = useState<'initial' | 'pin' | 'biometric'>('initial');
-
-  const handleVaultPin = (digit: string) => {
-    if (vaultPin.length < 4) {
-      const newPin = vaultPin + digit;
-      setVaultPin(newPin);
-      if (newPin.length === 4) {
-        if (newPin === '1234') {
-          setIsVaultUnlocked(true);
-          setVaultError(null);
-        } else {
-          setVaultError('INVALID ACCESS CODE');
-          setTimeout(() => {
-            setVaultPin('');
-            setVaultError(null);
-          }, 1000);
-        }
-      }
-    }
-  };
-
-  const startBiometric = () => {
-    setVaultStep('biometric');
-    setIsBiometricVerifying(true);
-    setVaultError(null);
-    setTimeout(() => {
-      setIsBiometricVerifying(false);
-      setIsVaultUnlocked(true);
-      setVaultStep('initial');
-    }, 2500);
-  };
-
   const handleStorageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -533,40 +1094,173 @@ const App: React.FC = () => {
       name: file.name,
       size: (file.size / (1024 * 1024)).toFixed(2) + 'MB',
       type: file.name.split('.').pop() || 'unknown',
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
     }));
 
-    setStorageFiles(prev => [...newFiles, ...prev]);
-    setTerminalOutput(prev => [...prev, `[STORAGE] Ingested ${newFiles.length} documents into Data Core.`]);
+    setStorageFiles((prev) => [...newFiles, ...prev]);
+    setTerminalOutput((prev) => [
+      ...prev,
+      `[STORAGE] Ingested ${newFiles.length} documents into Data Core.`,
+    ]);
   };
+
+  const abortRefs = useRef<Record<string, AbortController>>({});
+  const getSignal = useCallback((domain: string): AbortSignal => {
+    abortRefs.current[domain]?.abort();
+    abortRefs.current[domain] = new AbortController();
+    return abortRefs.current[domain].signal;
+  }, []);
+
+  const generateAIResponse = useCallback(
+    async (
+      prompt: string | any[],
+      systemInstruction: string,
+      options?: { modelType?: 'fast' | 'smart'; json?: boolean; responseSchema?: any; brainContext?: any },
+      domain = 'default'
+    ) => {
+      const active = workers.filter(w => w.enabled);
+      if (active.length === 0) return Promise.reject(new Error('No workers enabled'));
+      for (const w of active) {
+        if (w.provider === 'google' && !googleAiClient)
+          return Promise.reject(new Error('Gemini API key not configured — set VITE_GEMINI_API_KEY'));
+        if (w.provider === 'grok' && !grokApiKey)
+          return Promise.reject(new Error('Grok API key not configured'));
+      }
+      const { brainContext, ...serviceOptions } = options || {};
+
+      // Helper: prepend agent system prompt if worker has one assigned
+      const buildInstruction = (w: WorkerConfig) => {
+        if (!w.agentId) return systemInstruction;
+        const agent = getAgent(w.agentId);
+        if (!agent) return systemInstruction;
+        return `${agent.systemPrompt}\n\n---\n\n${systemInstruction}`;
+      };
+
+      if (active.length === 1) {
+        const w = active[0];
+        const signal = getSignal(domain);
+        return generateAIResponseService(prompt as string, buildInstruction(w), serviceOptions, {
+          aiProvider: w.provider,
+          aiModel: w.model,
+          ai: googleAiClient,
+          grokApiKey,
+          projectSettings: { ...projectSettings, ollamaUrl: w.url },
+          ollamaModels: w.models ?? [],
+          signal,
+          brainContext,
+        });
+      }
+
+      // Multi-worker: fan out to all enabled workers concurrently, return first success
+      const signal = getSignal(domain);
+      const results = await Promise.allSettled(
+        active.map(w =>
+          generateAIResponseService(prompt as string, buildInstruction(w), serviceOptions, {
+            aiProvider: w.provider,
+            aiModel: w.model,
+            ai: googleAiClient,
+            grokApiKey,
+            projectSettings: { ...projectSettings, ollamaUrl: w.url },
+            ollamaModels: w.models ?? [],
+            signal,
+            brainContext,
+          })
+        )
+      );
+      const first = results.find(r => r.status === 'fulfilled' && (r as PromiseFulfilledResult<string>).value);
+      if (!first) {
+        const errors = results
+          .filter(r => r.status === 'rejected')
+          .map(r => (r as PromiseRejectedResult).reason?.message || 'Unknown error');
+        throw new Error(`All workers failed: ${errors.join(', ')}`);
+      }
+      return (first as PromiseFulfilledResult<string>).value;
+    },
+    [workers, googleAiClient, grokApiKey, projectSettings, getSignal]
+  );
+
+  // ── Event-driven pipeline ──────────────────────────────────────────────────
+  const pipeline = usePipeline(generateAIResponse as any);
+
+  // Centralised AI request hook — domain-specific loading flags
+  const ai = useAiRequest(generateAIResponse);
 
   const triggerSwarmCycle = async () => {
     setIsAiProcessing(true);
-    setSwarmLogs(prev => [{ id: Date.now(), type: 'info', message: 'Initiating Parallel Perception Cycle...', time: new Date().toLocaleTimeString() }, ...prev]);
-    
-    // Simulate agents working
-    setSwarmAgents(prev => prev.map(a => ({ ...a, status: 'active' })));
-    await new Promise(r => setTimeout(r, 1500));
-
-    const consensusReached = Math.random() > 0.25;
-    
-    if (consensusReached) {
-      setSwarmLogs(prev => [{ id: Date.now(), type: 'consensus', message: 'Consensus Reached: Reality Verified (85% Agreement)', time: new Date().toLocaleTimeString() }, ...prev]);
-      setSwarmAnxiety(prev => Math.max(0.05, prev - 0.02));
-    } else {
-      setSwarmLogs(prev => [{ id: Date.now(), type: 'pain', message: 'SWARM CONFUSION: Conflicting perceptions detected. Triggering rejection pain.', time: new Date().toLocaleTimeString() }, ...prev]);
-      setSwarmAnxiety(prev => Math.min(1.0, prev + 0.15));
-      // Propagate pain
-      setTimeout(() => {
-        setSwarmLogs(prev => [{ id: Date.now(), type: 'pain', message: 'PAIN PROPAGATED: COGNITIVE_DISSONANCE from agent_1 -> 6 neighbors', time: new Date().toLocaleTimeString() }, ...prev]);
-      }, 800);
+    setSwarmLogs((prev) => [
+      {
+        id: Date.now(),
+        type: 'info',
+        message: 'Initiating Parallel Perception Cycle...',
+        time: new Date().toLocaleTimeString(),
+      },
+      ...prev,
+    ]);
+    setSwarmAgents((prev) => prev.map((a) => ({ ...a, status: 'active' as const })));
+    // Safety timeout: if the pipeline never responds, unlock buttons after 15s
+    const safetyTimer = setTimeout(() => setIsAiProcessing(false), 15_000);
+    try {
+      await pipeline.dispatch('SWARM_CYCLE_START', 'swarm', {
+        agentCount: swarmAgents.length,
+        activePersonality: activePersonality?.name ?? 'Fullstack Architect',
+      });
+    } catch {
+      setIsAiProcessing(false);
+    } finally {
+      clearTimeout(safetyTimer);
     }
-
-    setSwarmAgents(prev => prev.map(a => ({ ...a, status: 'idle' })));
-    setIsAiProcessing(false);
+    // Completion handled by pipeline.onResponse / pipeline.onError subscribers above.
   };
 
-  const activePersonality = personalities.find(p => p.active) || personalities[0];
+  const activePersonality = personalities.find((p) => p.active) || personalities[0];
+
+  const {
+    handleTerminalCommand,
+    handleTermInputChange,
+    handleTermKeyDown,
+    getAiTerminalAssistance,
+  } = useTerminalLogic(terminal, {
+    activeTab,
+    setActiveTab: (tab: any) => setActiveTab(tab),
+    editorLanguage,
+    editorMode,
+    projectFiles,
+    setProjectFiles,
+    termuxStatus,
+    ollamaStatus,
+    isVaultUnlocked,
+    swarmAnxiety,
+    personalities,
+    activePersonality,
+    setIsAiProcessing,
+    generateAIResponse,
+  });
+
+  const {
+    termInput,
+    setTermInput,
+    terminalOutput,
+    setTerminalOutput,
+    currentDir,
+    setCurrentDir,
+    realCwd,
+    setRealCwd,
+    cmdHistory,
+    setCmdHistory,
+    historyIndex,
+    setHistoryIndex,
+    isMultiLine,
+    setIsMultiLine,
+    multiLineBuffer,
+    setMultiLineBuffer,
+    termSuggestion,
+    setTermSuggestion,
+    termSuggestions,
+    setTermSuggestions,
+    selectedSuggestionIndex,
+    setSelectedSuggestionIndex,
+  } = terminal;
+
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -580,47 +1274,135 @@ const App: React.FC = () => {
         if (parsed.activeTab) setActiveTab(parsed.activeTab);
         if (parsed.negativePrompt) setNegativePrompt(parsed.negativePrompt);
         if (parsed.sdParams) setSdParams(parsed.sdParams);
-        if (parsed.personalities) setPersonalities(parsed.personalities);
-        if (parsed.aiProvider) setAiProvider(parsed.aiProvider);
-        if (parsed.aiModel) setAiModel(parsed.aiModel);
+        if (
+          parsed.personalities &&
+          Array.isArray(parsed.personalities) &&
+          parsed.personalities.length > 0
+        ) {
+          setPersonalities((prev) => {
+            return parsed.personalities.map((p: any) => ({
+              ...p,
+              suggestions: p.suggestions || [],
+              knowledgeBase: Array.isArray(p.knowledgeBase) ? p.knowledgeBase : [],
+            }));
+          });
+        }
+        if (parsed.workers) {
+          // Merge saved config with defaults; always reset models:[] (re-fetched on mount)
+          setWorkers((DEFAULT_WORKERS.map(def => {
+            const saved = parsed.workers.find((w: Partial<WorkerConfig>) => w.id === def.id);
+            return saved ? { ...def, ...saved, models: [] } : def;
+          })));
+        } else if (parsed.aiProvider) {
+          // backward compat: single provider → slot W1
+          setWorkers(prev => prev.map((w, i) => i === 0
+            ? { ...w, enabled: true, provider: parsed.aiProvider, model: parsed.aiModel || w.model }
+            : w
+          ));
+        }
         if (parsed.grokApiKey) setGrokApiKey(parsed.grokApiKey);
-        if (parsed.projectFiles) setProjectFiles(parsed.projectFiles);
-        if (parsed.gitRepo) setGitRepo(parsed.gitRepo);
-        if (parsed.projectSettings) setProjectSettings(parsed.projectSettings);
+        if (parsed.geminiApiKey) setGeminiApiKey(parsed.geminiApiKey);
+        if (
+          parsed.projectFiles &&
+          Array.isArray(parsed.projectFiles) &&
+          parsed.projectFiles.length > 0
+        ) {
+          // Metadata is in localStorage; merge file contents from IndexedDB
+          loadFileContents().then(contentMap => {
+            setProjectFiles(
+              parsed.projectFiles.map((f: any) => ({
+                ...f,
+                content: contentMap[f.id] ?? f.content ?? '',
+              }))
+            );
+          }).catch(() => setProjectFiles(parsed.projectFiles));
+        }
+        if (parsed.gitRepo) setGitRepo((prev) => ({ ...prev, ...parsed.gitRepo }));
+        if (parsed.projectSettings)
+          setProjectSettings((prev) => ({ ...prev, ...parsed.projectSettings }));
+        if (parsed.realCwd) setRealCwd(parsed.realCwd);
         if (parsed.activeFileId) {
           setActiveFileId(parsed.activeFileId);
           const file = parsed.projectFiles?.find((f: any) => f.id === parsed.activeFileId);
           if (file) {
-            setEditorContent(file.content || '');
+            // Active file content will come from the IndexedDB merge above;
+            // set language now, content will update once the async load resolves
             setEditorLanguage(file.language || 'text');
           }
         }
       } catch (e) {
-        console.error("Failed to load node preferences:", e);
+        console.warn('Failed to load node preferences:', e);
       }
     }
   }, []);
 
-  // Save preferences on change
-  useEffect(() => {
-    const prefs = {
+  // Throttled persistence — debounced 2s to avoid blocking the main thread on every keystroke
+  // Strip file content before persisting to localStorage — contents go to IndexedDB instead
+  useThrottledStorage(
+    STORAGE_KEY,
+    {
       activeTab,
       negativePrompt,
       sdParams,
       personalities,
-      aiProvider,
-      aiModel,
+      workers: workers.map(({ models: _m, ...rest }) => rest), // don't persist fetched models
       grokApiKey,
-      projectFiles,
+      geminiApiKey,
+      projectFiles: projectFiles.map(({ content: _c, ...meta }) => meta),
       gitRepo,
       projectSettings,
-      activeFileId
+      activeFileId,
+      realCwd,
+    },
+    2000
+  );
+
+  // Cancel any pending idle callback on unmount
+  useEffect(() => () => {
+    if (idleHandleRef.current !== null) {
+      if (typeof cancelIdleCallback !== 'undefined') cancelIdleCallback(idleHandleRef.current);
+      else clearTimeout(idleHandleRef.current);
+    }
+  }, []);
+
+  // Flush all dirty files on tab close / visibility change so nothing is lost
+  useEffect(() => {
+    const flushOnHide = () => {
+      const ids = Array.from(dirtyIdsRef.current);
+      if (ids.length === 0) return;
+      dirtyIdsRef.current.clear();
+      const toWrite = projectFiles
+        .filter(f => f.type === 'file' && ids.includes(f.id))
+        .map(f => ({ id: f.id, content: f.content ?? '' }));
+      if (toWrite.length > 0) saveFileContents(toWrite).catch(console.warn);
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
-  }, [activeTab, negativePrompt, sdParams, personalities, aiProvider, aiModel, grokApiKey, projectFiles, gitRepo, projectSettings, activeFileId]);
+    document.addEventListener('visibilitychange', flushOnHide);
+    window.addEventListener('beforeunload', flushOnHide);
+    return () => {
+      document.removeEventListener('visibilitychange', flushOnHide);
+      window.removeEventListener('beforeunload', flushOnHide);
+    };
+  }, [projectFiles]);
+
+  // φ quota enforcement — check every 5 minutes, mark AI-generated files ephemeral
+  useEffect(() => {
+    const check = async () => {
+      const status = await enforcePhiQuota();
+      if (status === 'critical') phi.setPulse('error');
+      else if (status === 'evicted') phi.setPulse('warning');
+    };
+    check();
+    const interval = setInterval(check, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const hasGreetedTerminalRef = useRef(false);
 
   useEffect(() => {
-    if (activeTab === 'terminal') triggerTerminalGreeting();
+    if (activeTab === 'terminal' && !hasGreetedTerminalRef.current) {
+      hasGreetedTerminalRef.current = true;
+      triggerTerminalGreeting();
+    }
   }, [activeTab]);
 
   useEffect(() => {
@@ -631,48 +1413,95 @@ const App: React.FC = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isAiProcessing]);
 
+  // Chat summary — triggered imperatively via a ref so it never fires mid-render.
+  // Only runs when message count crosses a new multiple-of-5 threshold above 15.
+  const lastSummarisedCountRef = useRef(0);
+  const summaryDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chatMessagesRef = useRef(chatMessages);
+  const chatSummaryRef = useRef(chatSummary);
   useEffect(() => {
-    if (chatMessages.length > 15 && chatMessages.length % 5 === 0) {
-      const olderMessages = chatMessages.slice(0, -10);
-      const summarize = async () => {
-        try {
-          const response = await generateAIResponse(
-            `Summarize the following conversation history concisely. ${chatSummary ? `Incorporate this previous summary: ${chatSummary}` : ''}\n\nNew messages to summarize:\n${olderMessages.map(m => `${m.role}: ${m.text}`).join('\n')}`,
-            "You are a memory management specialist. Provide a concise, high-impact summary of the conversation history for a futuristic AI hub. Focus on user intent and key decisions.",
-            { modelType: 'fast' }
-          );
-          if (response) setChatSummary(response);
-        } catch (err) {
-          console.error("Neural summary failed", err);
-        }
-      };
-      summarize();
-    }
-  }, [chatMessages.length]);
+    chatMessagesRef.current = chatMessages;
+  }, [chatMessages]);
+  useEffect(() => {
+    chatSummaryRef.current = chatSummary;
+  }, [chatSummary]);
+
+  useEffect(() => {
+    const len = chatMessages.length;
+    if (len <= 15 || len - lastSummarisedCountRef.current < 5) return;
+
+    if (summaryDebounceRef.current) clearTimeout(summaryDebounceRef.current);
+    summaryDebounceRef.current = setTimeout(() => {
+      lastSummarisedCountRef.current = chatMessagesRef.current.length;
+      const older = chatMessagesRef.current.slice(0, -10);
+      const prevSummary = chatSummaryRef.current;
+      const prompt = `Summarize the following conversation history concisely.${prevSummary ? ` Incorporate this previous summary: ${prevSummary}` : ''}\n\nNew messages:\n${older.map((m) => `${m.role}: ${m.text}`).join('\n')}`;
+      let outcome: 'success' | 'failure' | 'neutral' = 'neutral';
+
+      prepareContext(prompt).then((brainContext) => {
+        generateAIResponse(
+          prompt,
+          'You are a memory management specialist. Provide a concise summary of the conversation history for a futuristic AI hub. Focus on user intent and key decisions.',
+          { modelType: 'fast', brainContext }
+        )
+          .then((r) => {
+            if (r) {
+              setChatSummary(r);
+              outcome = 'success';
+            }
+          })
+          .catch((e) => {
+            if (e?.name !== 'AbortError') console.warn('[Summary]', e);
+            outcome = 'failure';
+          })
+          .finally(() => {
+            recordInteraction(prompt, chatSummaryRef.current, outcome);
+          });
+      });
+    }, 1_200);
+
+    return () => {
+      if (summaryDebounceRef.current) clearTimeout(summaryDebounceRef.current);
+    };
+  }, [chatMessages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- AI PAIR PROGRAMMER LOGIC ---
   useEffect(() => {
     if (!isPairProgrammerActive || !editorContent.trim()) return;
 
     const debounceTimer = setTimeout(async () => {
+      const prompt = `Language: ${editorLanguage}\nCode:\n${editorContent}\n\nProvide a very brief, high-impact suggestion for improvement or an alternative implementation for the current code. Focus on the most recent changes or overall structure. Keep it under 3 sentences.`;
+      let outcome: 'success' | 'failure' | 'neutral' = 'neutral';
+
       try {
+        const brainContext = await prepareContext(prompt);
         const response = await generateAIResponse(
-          `Language: ${editorLanguage}\nCode:\n${editorContent}\n\nProvide a very brief, high-impact suggestion for improvement or an alternative implementation for the current code. Focus on the most recent changes or overall structure. Keep it under 3 sentences.`,
+          prompt,
           "You are an elite AI Pair Programmer. Your goal is to provide real-time, actionable, and concise code improvements. If the code is already optimal, say 'System optimized. No immediate improvements detected.' Start your response with 'PAIR_PROGRAMMER_SUGGESTION:'",
-          { modelType: 'smart' }
+          { modelType: 'smart', brainContext }
         );
 
         const suggestion = response;
         if (suggestion && !suggestion.includes('System optimized')) {
-          setEditorAssistantMessages(prev => {
+          setEditorAssistantMessages((prev) => {
             // Avoid duplicate suggestions if they are very similar
             if (prev.length > 0 && prev[prev.length - 1].text === suggestion) return prev;
             return [...prev, { role: 'ai', text: suggestion }];
           });
           setIsEditorAssistantOpen(true);
+          outcome = 'success';
+        } else {
+          outcome = 'neutral'; // Or could be success if it's truly optimized
         }
       } catch (err) {
-        console.error("Pair Programmer link failed", err);
+        console.warn('Pair Programmer link failed', err);
+        outcome = 'failure';
+      } finally {
+        await recordInteraction(
+          prompt,
+          editorAssistantMessages.map((m) => m.text).join('\n'),
+          outcome
+        );
       }
     }, 10000); // 10 second debounce to avoid excessive API calls
 
@@ -680,145 +1509,309 @@ const App: React.FC = () => {
   }, [editorContent, isPairProgrammerActive, editorLanguage]);
 
   // --- AUTOSAVE LOGIC ---
+  // Refs hold the latest values so the interval never needs to be recreated,
+  // preventing the stale-closure problem and eliminating unnecessary re-subscriptions.
+  const editorContentRef = useRef(editorContent);
+  const activeFileIdRef = useRef(activeFileId);
   useEffect(() => {
-    const autosaveInterval = setInterval(() => {
-      setProjectFiles(prev => {
-        const currentFile = prev.find(f => f.id === activeFileId);
-        if (currentFile && currentFile.content !== editorContent) {
-          const updatedFiles = prev.map(f => f.id === activeFileId ? { ...f, content: editorContent } : f);
+    editorContentRef.current = editorContent;
+  }, [editorContent]);
+  useEffect(() => {
+    activeFileIdRef.current = activeFileId;
+  }, [activeFileId]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setProjectFiles((prev) => {
+        const current = prev.find((f) => f.id === activeFileIdRef.current);
+        if (current && current.content !== editorContentRef.current) {
           setLastSavedTime(new Date().toLocaleTimeString());
-          return updatedFiles;
+          return prev.map((f) =>
+            f.id === activeFileIdRef.current ? { ...f, content: editorContentRef.current } : f
+          );
         }
         return prev;
       });
-    }, 5000); // Autosave every 5 seconds
-
-    return () => clearInterval(autosaveInterval);
-  }, [editorContent, activeFileId]);
+    }, 5_000);
+    return () => clearInterval(id);
+  }, []); // interval is created once; refs carry the live values
 
   useEffect(() => {
     if (gitRepo.initialized && activeFileId) {
-      const file = projectFiles.find(f => f.id === activeFileId);
+      const file = projectFiles.find((f) => f.id === activeFileId);
       if (file && file.content !== editorContent) {
-        setGitRepo(prev => {
-          if (prev.modified.includes(activeFileId) || prev.staged.includes(activeFileId)) return prev;
+        setGitRepo((prev) => {
+          if (prev.modified.includes(activeFileId) || prev.staged.includes(activeFileId))
+            return prev;
           return { ...prev, modified: [...prev.modified, activeFileId] };
         });
       }
     }
   }, [editorContent, activeFileId, gitRepo.initialized]);
 
+  useEffect(() => {
+    const handleClickOutside = () => setContextMenu(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   const triggerTerminalGreeting = async () => {
-    setTerminalOutput(prev => [...prev, `\nNEURAL_LINK: How can I assist with your terminal today, Operator?`]);
+    setTerminalOutput((prev) => [
+      ...prev,
+      `\nNEURAL_LINK: How can I assist with your terminal today, Operator?`,
+    ]);
     setIsAiProcessing(true);
+    let outcome: 'success' | 'failure' | 'neutral' = 'neutral';
+    const prompt = `Context: SD Android Manager. Dir: ${currentDir}. Personality: ${activePersonality.instruction}`;
     try {
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise((r) => setTimeout(r, 600));
+      const brainContext = await prepareContext(prompt);
       const response = await generateAIResponse(
-        `Context: SD Android Manager. Dir: ${currentDir}. Personality: ${activePersonality.instruction}`,
-        "Suggest one command for SD model management or environment check in a futuristic sci-fi terminal style.",
-        { modelType: 'fast' }
+        prompt,
+        'Suggest one command for SD model management or environment check in a futuristic sci-fi terminal style.',
+        { modelType: 'fast', brainContext }
       );
-      setTerminalOutput(prev => [...prev, `COMMAND_INTEL: ${response?.trim() || "python3 node_status.py --verbose"}`]);
-    } catch (err) {} finally { setIsAiProcessing(false); }
-  };
-
-  const generateAIResponse = async (
-    prompt: string | any[],
-    systemInstruction: string,
-    options?: { modelType?: 'fast' | 'smart', json?: boolean, responseSchema?: any }
-  ) => {
-    const isFast = options?.modelType === 'fast';
-    const isJson = options?.json;
-
-    if (aiProvider === 'google') {
-      const model = aiModel || (isFast ? 'gemini-3-flash-preview' : 'gemini-3.1-pro-preview');
-      const config: any = { systemInstruction };
-      if (isJson) {
-        config.responseMimeType = "application/json";
-        if (options?.responseSchema) {
-          config.responseSchema = options.responseSchema;
-        }
-      }
-      const response = await ai.models.generateContent({
-        model,
-        contents: prompt,
-        config
-      });
-      return response.text;
-    } else if (aiProvider === 'grok') {
-      const model = aiModel || 'grok-beta';
-      const messages = [
-        { role: 'system', content: systemInstruction },
-        { role: 'user', content: typeof prompt === 'string' ? prompt : JSON.stringify(prompt) }
-      ];
-      const res = await fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${grokApiKey}`
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          response_format: isJson ? { type: "json_object" } : undefined
-        })
-      });
-      const data = await res.json();
-      return data.choices?.[0]?.message?.content;
-    } else if (aiProvider === 'ollama') {
-      const url = projectSettings.ollamaUrl || 'http://localhost:11434';
-      const model = aiModel || (ollamaModels.length > 0 ? ollamaModels[0] : 'llama3');
-      const res = await fetch(`${url}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: systemInstruction },
-            { role: 'user', content: typeof prompt === 'string' ? prompt : JSON.stringify(prompt) }
-          ],
-          stream: false,
-          format: isJson ? 'json' : undefined
-        })
-      });
-      const data = await res.json();
-      return data.message?.content;
+      setTerminalOutput((prev) => [
+        ...prev,
+        `COMMAND_INTEL: ${response?.trim() || 'python3 node_status.py --verbose'}`,
+      ]);
+      outcome = 'success';
+    } catch (err) {
+      outcome = 'failure';
+    } finally {
+      setIsAiProcessing(false);
+      await recordInteraction(prompt, terminalOutput.slice(-1)[0] || '', outcome);
     }
-    return '';
   };
+
+  // Per-domain AbortController map — aborting a domain cancels its in-flight request
+  // without affecting other concurrent domains (e.g. chat vs editor vs pair-programmer).
+  // Route AI_RESPONSE_RECEIVED back to the correct state setter.
+  useEffect(() => {
+    const unsub = pipeline.onResponse((result: PatternResult) => {
+      if (result.responseType === 'code_output') {
+        setEditorOutput(
+          typeof result.payload === 'string' ? result.payload : '[ERROR] Empty response.'
+        );
+        setIsRunningCode(false);
+      } else if (result.responseType === 'scan_result') {
+        const lines = Array.isArray(result.payload) ? (result.payload as number[]) : [];
+        setScanResults(lines);
+        setIsScanningCode(false);
+      } else if (result.responseType === 'swarm_update') {
+        const update = result.payload as {
+          consensus: boolean;
+          confidence: number;
+          summary: string;
+        };
+        if (update.consensus) {
+          setSwarmLogs((prev) => [
+            {
+              id: Date.now(),
+              type: 'consensus',
+              message: `Consensus: ${update.summary} (${(update.confidence * 100).toFixed(0)}%)`,
+              time: new Date().toLocaleTimeString(),
+            },
+            ...prev,
+          ]);
+          setSwarmAnxiety((prev) => Math.max(0.05, prev - 0.02));
+        } else {
+          setSwarmLogs((prev) => [
+            {
+              id: Date.now(),
+              type: 'pain',
+              message: `Conflict: ${update.summary}`,
+              time: new Date().toLocaleTimeString(),
+            },
+            ...prev,
+          ]);
+          setSwarmAnxiety((prev) => Math.min(1.0, prev + 0.15));
+        }
+        setSwarmAgents((prev) => prev.map((a) => ({ ...a, status: 'idle' as const })));
+        setIsAiProcessing(false);
+      }
+    });
+
+    const unsubErr = pipeline.onError((err) => {
+      console.error('[Pipeline error]', err);
+      if (err.signal?.source === 'editor') {
+        setEditorOutput(`[CRITICAL] Neural runtime bridge failure — ${err.error}`);
+        setIsRunningCode(false);
+        setIsScanningCode(false);
+      } else if (err.signal?.source === 'swarm') {
+        setIsAiProcessing(false);
+      }
+    });
+
+    return () => {
+      unsub();
+      unsubErr();
+    };
+  }, [pipeline]);
 
   const handleRunCode = async () => {
     setIsRunningCode(true);
     setEditorOutput('');
     setEditorMode('code');
-    
+    const safety = setTimeout(() => setIsRunningCode(false), 30_000);
     try {
-      // Simulation of code execution
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const response = await generateAIResponse(
-        `Execute this ${editorLanguage} code in a simulated environment and provide the output. If it's the AI brain, simulate its initialization. If it's UI, describe its rendering. Code:\n${editorContent}`,
-        "You are the Crimson OS Neural Runtime. Simulate the execution of the provided code. Output should look like a terminal log. Be technical and realistic.",
-        { modelType: 'smart' }
+      await pipeline.dispatch(
+        'CODE_RUN_REQUESTED',
+        'editor',
+        { language: editorLanguage, code: editorContent },
+        { meta: { subtype: 'run' } }
       );
-      
-      setEditorOutput(response || "[ERROR] Runtime execution failed.");
-    } catch (err) {
-      setEditorOutput("[CRITICAL] Neural runtime bridge failure.");
-    } finally {
+    } catch {
       setIsRunningCode(false);
+    } finally {
+      clearTimeout(safety);
+    }
+    // Result is handled by the pipeline.onResponse subscriber above.
+  };
+
+  const handleScanCode = async () => {
+    if (isScanningCode) {
+      setIsScanningCode(false);
+      setScanResults([]);
+      return;
+    }
+    setIsScanningCode(true);
+    setScanResults([]);
+    const safety = setTimeout(() => setIsScanningCode(false), 30_000);
+    try {
+      await pipeline.dispatch('CODE_SCAN_REQUESTED', 'scanner', {
+        language: editorLanguage,
+        code: editorContent,
+      });
+    } catch {
+      setIsScanningCode(false);
+    } finally {
+      clearTimeout(safety);
+    }
+    // Result is handled by the pipeline.onResponse subscriber above.
+  };
+
+  const handleAnalyzeCode = async () => {
+    if (!editorAssistantInput.trim()) return;
+    setIsAiProcessing(true);
+    setEditorOutput('Analyzing code structure...\n');
+    const prompt = makePrompt({
+      lang: editorLanguage, code: editorContent,
+      instruction: `Analyze this code based on this request: "${editorAssistantInput}"`,
+      extra: 'Provide a detailed, structured analysis pointing out vulnerabilities, performance issues, or architectural improvements.',
+    });
+    const response = await ai.request('analysis', prompt, 'You are an elite code analyst. Provide a detailed, side-by-side style analysis. Format your response clearly.');
+    if (response) {
+      setEditorOutput(response);
+      await recordInteraction(prompt, response, 'success');
+    } else {
+      setEditorOutput('[ERROR] Analysis engine failed.\n');
+      await recordInteraction(prompt, '', 'failure');
+    }
+    setIsAiProcessing(false);
+  };
+  const handleFormatCode = async (isMobile: boolean = false) => {
+    setIsAiProcessing(true);
+    try {
+      const response = await generateAIResponse(
+        makePrompt({
+          lang: editorLanguage,
+          code: editorContent,
+          instruction: `Format this code using standard conventions. ${isMobile ? 'Optimise for mobile: shorter line lengths and vertical layout.' : 'Ensure proper indentation, spacing, and line breaks.'}`,
+          extra: 'Return ONLY the formatted code, without any markdown fences or explanations.',
+        }),
+        'You are an expert code formatter. Return ONLY the formatted code. Do not wrap in markdown blocks.',
+        { modelType: 'fast' }
+      );
+
+      if (response) {
+        setEditorContent(response);
+        setEditorOutput(
+          (prev) => prev + `[SYSTEM] Code formatted successfully${isMobile ? ' (mobile)' : ''}.\n`
+        );
+      }
+    } catch (err) {
+      setEditorOutput((prev) => prev + '[ERROR] Formatting engine failed.\n');
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  const handleRefactorAllFiles = async () => {
+    setIsAiProcessing(true);
+    setEditorOutput((prev) => prev + '[SYSTEM] Initiating global project refactor...\n');
+
+    try {
+      const filesToRefactor = projectFiles.filter((f) => f.type === 'file');
+      let updatedFiles = [...projectFiles];
+
+      for (const file of filesToRefactor) {
+        setEditorOutput((prev) => prev + `[INFO] Refactoring ${file.name}...\n`);
+        try {
+          const response = await generateAIResponse(
+            makePrompt({
+              lang: file.language || 'code',
+              code: file.content,
+              instruction: 'Refactor this code for better performance, readability, and structural integrity.',
+              extra: "Return a JSON object with 'refactoredCode' and 'explanation' fields.",
+              json: true,
+            }),
+            'You are a world-class software architect. You refactor code to be production-ready. Always return valid JSON.',
+            {
+              modelType: 'smart',
+              json: true,
+              responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                  refactoredCode: { type: Type.STRING },
+                  explanation: { type: Type.STRING },
+                },
+                required: ['refactoredCode', 'explanation'],
+              },
+            }
+          );
+
+          const result = JSON.parse(response || '{}');
+          if (result.refactoredCode) {
+            updatedFiles = updatedFiles.map((f) =>
+              f.id === file.id ? { ...f, content: result.refactoredCode } : f
+            );
+            setEditorOutput((prev) => prev + `[SUCCESS] ${file.name} refactored successfully.\n`);
+
+            // If it's the active file, update the editor content too
+            if (activeFileId === file.id) {
+              setEditorContent(result.refactoredCode);
+            }
+          }
+        } catch (err) {
+          setEditorOutput((prev) => prev + `[ERROR] Failed to refactor ${file.name}.\n`);
+        }
+      }
+
+      setProjectFiles(updatedFiles);
+      setEditorOutput((prev) => prev + '[SYSTEM] Global project refactor complete.\n');
+    } catch (err) {
+      setEditorOutput((prev) => prev + '[ERROR] Global refactoring engine failed.\n');
+    } finally {
+      setIsAiProcessing(false);
     }
   };
 
   const handleRefactorCode = async () => {
     let codeToRefactor = editorContent;
     let isSelection = false;
-    
+
     setIsAiProcessing(true);
     try {
       const response = await generateAIResponse(
-        `Refactor this ${editorLanguage} code for better performance, readability, and structural integrity. Return a JSON object with 'refactoredCode' and 'explanation' fields.\n\nCode:\n${codeToRefactor}`,
-        "You are a world-class software architect. You refactor code to be production-ready. Always return valid JSON.",
+        makePrompt({
+          lang: editorLanguage,
+          code: codeToRefactor,
+          instruction: 'Refactor this code for better performance, readability, and structural integrity.',
+          extra: "Return a JSON object with 'refactoredCode' and 'explanation' fields.",
+          json: true,
+        }),
+        'You are a world-class software architect. You refactor code to be production-ready. Always return valid JSON.',
         {
           modelType: 'smart',
           json: true,
@@ -826,27 +1819,31 @@ const App: React.FC = () => {
             type: Type.OBJECT,
             properties: {
               refactoredCode: { type: Type.STRING },
-              explanation: { type: Type.STRING }
+              explanation: { type: Type.STRING },
             },
-            required: ["refactoredCode", "explanation"]
-          }
+            required: ['refactoredCode', 'explanation'],
+          },
         }
       );
-      
+
       const result = JSON.parse(response || '{}');
-      
-      setEditorAssistantMessages(prev => [...prev, { 
-        role: 'ai', 
-        text: `REFACTOR_COMPLETE:\n${result.explanation}\n\n${result.refactoredCode}`,
-        metadata: {
-          refactoredCode: result.refactoredCode,
-          isSelection,
-          selection: null
-        }
-      }]);
+
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          text: `REFACTOR_COMPLETE:\n${result.explanation}\n\n${result.refactoredCode}`,
+          metadata: {
+            refactoredCode: result.refactoredCode,
+            explanation: result.explanation,
+            isSelection,
+            selection: null,
+          },
+        },
+      ]);
       setIsEditorAssistantOpen(true);
     } catch (err) {
-      setEditorOutput(prev => prev + "[ERROR] Refactoring engine failed.\n");
+      setEditorOutput((prev) => prev + '[ERROR] Refactoring engine failed.\n');
     } finally {
       setIsAiProcessing(false);
     }
@@ -854,17 +1851,24 @@ const App: React.FC = () => {
 
   const handleApplyRefactor = (refactoredCode: string, isSelection: boolean, selection: any) => {
     setEditorContent(refactoredCode);
-    setEditorOutput(prev => prev + `[SYSTEM] Refactoring applied successfully.\n`);
+    if (activeFileId) markFileDirty(activeFileId);
+    setEditorOutput((prev) => prev + `[SYSTEM] Refactoring applied successfully.\n`);
   };
 
   const handleGenerateDocs = async () => {
     let codeToDocument = editorContent;
     let isSelection = false;
-    
+
     setIsAiProcessing(true);
     try {
       const response = await generateAIResponse(
-        `Generate comprehensive documentation (docstrings, JSDoc, or comments) for this ${editorLanguage} code. Focus on explaining the logic, parameters, and return values. Return a JSON object with 'documentedCode' and 'summary' fields.\n\nCode:\n${codeToDocument}`,
+        makePrompt({
+          lang: editorLanguage,
+          code: codeToDocument,
+          instruction: 'Generate comprehensive documentation (docstrings, JSDoc, or comments) for this code. Focus on explaining the logic, parameters, and return values.',
+          extra: "Return a JSON object with 'documentedCode' and 'summary' fields.",
+          json: true,
+        }),
         `You are a world-class documentation expert. Generate clear, concise, and helpful documentation for the provided ${editorLanguage} code. Always return valid JSON.`,
         {
           modelType: 'smart',
@@ -873,35 +1877,43 @@ const App: React.FC = () => {
             type: Type.OBJECT,
             properties: {
               documentedCode: { type: Type.STRING },
-              summary: { type: Type.STRING }
+              summary: { type: Type.STRING },
             },
-            required: ["documentedCode", "summary"]
-          }
+            required: ['documentedCode', 'summary'],
+          },
         }
       );
-      
+
       const result = JSON.parse(response || '{}');
-      
-      setEditorAssistantMessages(prev => [...prev, { 
-        role: 'ai', 
-        text: `DOCUMENTATION_GENERATED: Neural analysis complete. Comprehensive documentation has been synthesized for the ${isSelection ? 'selected block' : 'entire file'}.\n\nSUMMARY:\n${result.summary}`,
-        metadata: {
-          documentedCode: result.documentedCode,
-          isSelection,
-          selection: null
-        }
-      }]);
+
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          text: `DOCUMENTATION_GENERATED: Neural analysis complete. Comprehensive documentation has been synthesized for the ${isSelection ? 'selected block' : 'entire file'}.\n\nSUMMARY:\n${result.summary}`,
+          metadata: {
+            documentedCode: result.documentedCode,
+            isSelection,
+            selection: null,
+          },
+        },
+      ]);
       setIsEditorAssistantOpen(true);
     } catch (err) {
-      setEditorOutput(prev => prev + "[ERROR] Documentation generation failed.\n");
+      setEditorOutput((prev) => prev + '[ERROR] Documentation generation failed.\n');
     } finally {
       setIsAiProcessing(false);
     }
   };
 
-  const handleApplyDocumentation = (documentedCode: string, isSelection: boolean, selection: any) => {
+  const handleApplyDocumentation = (
+    documentedCode: string,
+    isSelection: boolean,
+    selection: any
+  ) => {
     setEditorContent(documentedCode);
-    setEditorOutput(prev => prev + `[SYSTEM] Documentation applied successfully.\n`);
+    if (activeFileId) markFileDirty(activeFileId);
+    setEditorOutput((prev) => prev + `[SYSTEM] Documentation applied successfully.\n`);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -915,13 +1927,17 @@ const App: React.FC = () => {
       const fullPath = parentId ? `${parentId}/${path}` : path;
       if (folderCache[fullPath]) return folderCache[fullPath];
 
-      const existingFolder = projectFiles.find(f => f.name === path && f.parentId === parentId && f.type === 'folder');
+      const existingFolder = projectFiles.find(
+        (f) => f.name === path && f.parentId === parentId && f.type === 'folder'
+      );
       if (existingFolder) {
         folderCache[fullPath] = existingFolder.id;
         return existingFolder.id;
       }
 
-      const batchFolder = newFiles.find(f => f.name === path && f.parentId === parentId && f.type === 'folder');
+      const batchFolder = newFiles.find(
+        (f) => f.name === path && f.parentId === parentId && f.type === 'folder'
+      );
       if (batchFolder) {
         folderCache[fullPath] = batchFolder.id;
         return batchFolder.id;
@@ -933,7 +1949,7 @@ const App: React.FC = () => {
         name: path,
         type: 'folder',
         parentId: parentId,
-        isOpen: true
+        isOpen: true,
       };
       newFiles.push(newFolder);
       folderCache[fullPath] = newFolderId;
@@ -942,9 +1958,10 @@ const App: React.FC = () => {
 
     for (const file of Array.from(files) as File[]) {
       try {
-        const content = await new Promise<string>((resolve) => {
+        const content = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = (event) => resolve(event.target?.result as string);
+          reader.onload = (event) => resolve(event.target?.result as string ?? '');
+          reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
           reader.readAsText(file);
         });
 
@@ -952,9 +1969,9 @@ const App: React.FC = () => {
         const extension = fileName.split('.').pop() || 'text';
         const relativePath = (file as any).webkitRelativePath || fileName;
         const pathParts = relativePath.split('/');
-        
-        let currentParentId: string | null = 'root';
-        
+
+        let currentParentId: string | null = null;
+
         if (pathParts.length > 1) {
           for (let i = 0; i < pathParts.length - 1; i++) {
             currentParentId = getOrCreateFolder(pathParts[i], currentParentId);
@@ -967,42 +1984,66 @@ const App: React.FC = () => {
           type: 'file',
           parentId: currentParentId,
           language: extension,
-          content: content
+          content: content,
         };
         newFiles.push(newFile);
       } catch (err) {
-        console.error("File upload error:", err);
+        console.warn('File upload error:', err);
       }
     }
 
     if (newFiles.length > 0) {
-      setProjectFiles(prev => [...prev, ...newFiles]);
-      setEditorOutput(prev => prev + `[SYSTEM] ${newFiles.length} items uploaded and synchronized.\n`);
+      setProjectFiles((prev) => [...prev, ...newFiles]);
+      setEditorOutput(
+        (prev) => prev + `[SYSTEM] ${newFiles.length} items uploaded and synchronized.\n`
+      );
     }
     e.target.value = '';
+  };
+
+  // Builds a size-capped project context: active file first, then modified, then rest.
+  // Keeps total payload under MAX_CONTEXT_CHARS to avoid bloated API calls.
+  const buildProjectContext = (maxChars = 12_000): string => {
+    const active   = projectFiles.filter(f => f.type === 'file' && f.id === activeFileId);
+    const modified = projectFiles.filter(f => f.type === 'file' && f.id !== activeFileId && gitRepo.modified.includes(f.id));
+    const rest     = projectFiles.filter(f => f.type === 'file' && f.id !== activeFileId && !gitRepo.modified.includes(f.id));
+    const ordered  = [...active, ...modified, ...rest];
+
+    let total = 0;
+    const chunks: string[] = [];
+    for (const f of ordered) {
+      const entry = `File: ${f.name}\nContent:\n${f.content}`;
+      if (total + entry.length > maxChars) {
+        chunks.push(`File: ${f.name}\n[content omitted — ${(f.content.length / 1024).toFixed(1)} KB]`);
+        continue;
+      }
+      chunks.push(entry);
+      total += entry.length;
+    }
+    return chunks.join('\n\n---\n\n');
   };
 
   const handleFullProjectAnalysis = async () => {
     setIsAiProcessing(true);
     try {
-      const projectContext = projectFiles
-        .filter(f => f.type === 'file')
-        .map(f => `File: ${f.name}\nContent:\n${f.content}`)
-        .join('\n\n---\n\n');
+      const projectContext = buildProjectContext();
 
       const response = await generateAIResponse(
         `Analyze this entire project. Provide a comprehensive overview of the architecture, potential bugs, and optimization strategies.\n\nProject Context:\n${projectContext}`,
-        "You are a world-class software architect. Provide a deep, holistic analysis of the entire project. Focus on inter-file dependencies and overall design patterns.",
+        'You are a world-class software architect. Provide a deep, holistic analysis of the entire project. Focus on inter-file dependencies and overall design patterns.',
         { modelType: 'smart' }
       );
-      
-      setEditorAssistantMessages(prev => [...prev, { 
-        role: 'ai', 
-        text: `FULL_PROJECT_ANALYSIS:\n${response}`
-      }]);
+
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          text: `FULL_PROJECT_ANALYSIS:\n${response}`,
+        },
+      ]);
       setIsEditorAssistantOpen(true);
     } catch (err) {
-      setEditorOutput(prev => prev + "[ERROR] Neural project analysis failed.\n");
+      setEditorOutput((prev) => prev + '[ERROR] Neural project analysis failed.\n');
     } finally {
       setIsAiProcessing(false);
     }
@@ -1011,10 +2052,7 @@ const App: React.FC = () => {
   const handleDeepProjectAudit = async () => {
     setIsAiProcessing(true);
     try {
-      const projectContext = projectFiles
-        .filter(f => f.type === 'file')
-        .map(f => `File: ${f.name}\nContent:\n${f.content}`)
-        .join('\n\n---\n\n');
+      const projectContext = buildProjectContext();
 
       const response = await generateAIResponse(
         `Perform a deep audit of this project. 
@@ -1026,103 +2064,492 @@ const App: React.FC = () => {
         Provide the analysis in a clear, structured format with actionable recommendations.
 
         Project Context:\n${projectContext}`,
-        "You are a senior security researcher and lead software engineer. Your goal is to find flaws, inefficiencies, and risks in the codebase. Be thorough and critical.",
+        'You are a senior security researcher and lead software engineer. Your goal is to find flaws, inefficiencies, and risks in the codebase. Be thorough and critical.',
         { modelType: 'smart' }
       );
-      
-      setEditorAssistantMessages(prev => [...prev, { 
-        role: 'ai', 
-        text: `DEEP_PROJECT_AUDIT:\n${response}`
-      }]);
+
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          text: `DEEP_PROJECT_AUDIT:\n${response}`,
+        },
+      ]);
       setIsEditorAssistantOpen(true);
-      setEditorOutput(prev => prev + "[SYSTEM] Deep project audit complete. Check Neural Assistant for details.\n");
+      setEditorOutput(
+        (prev) =>
+          prev + '[SYSTEM] Deep project audit complete. Check Neural Assistant for details.\n'
+      );
     } catch (err) {
-      setEditorOutput(prev => prev + "[ERROR] Deep project audit failed.\n");
+      setEditorOutput((prev) => prev + '[ERROR] Deep project audit failed.\n');
     } finally {
       setIsAiProcessing(false);
     }
   };
 
-  const handleGenerateCode = async () => {
-    const prompt = window.prompt('Describe the code or function you want to generate:');
-    if (!prompt) return;
+  const handleGenerateCode = () => {
+    setGeneratePrompt('');
+    setIsGenerateModalOpen(true);
+  };
+
+  const executeGenerateCode = async () => {
+    if (!generatePrompt.trim()) return;
 
     setIsAiProcessing(true);
-    setEditorAssistantMessages(prev => [...prev, { role: 'user', text: `Forge request: ${prompt}` }]);
-    setIsEditorAssistantOpen(true);
+    setIsGenerateModalOpen(false);
 
-    try {
-      const response = await generateAIResponse(
-        `Language: ${editorLanguage}\nContext:\n${editorContent}\n\nGenerate code for: ${prompt}`,
-        "You are a master software engineer. Generate high-quality, efficient code based on the user's prompt. Provide ONLY the code snippet without markdown blocks if possible, or wrap it in a clear CODE_FORGE block. Include a brief explanation of how to use it.",
-        { modelType: 'smart' }
-      );
+    if (generateMode === 'snippet') {
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        { role: 'user', text: `Forge request: ${generatePrompt}` },
+      ]);
+      setIsEditorAssistantOpen(true);
 
-      const generatedText = response || 'Forge failed to materialize code.';
-      const codeMatch = generatedText.match(/```[\s\S]*?```/);
-      const extractedCode = codeMatch ? codeMatch[0].replace(/```[a-z]*\n|```/g, '') : generatedText;
+      try {
+        const response = await generateAIResponse(
+          `Language: ${editorLanguage}\nContext:\n${editorContent}\n\nGenerate code for: ${generatePrompt}`,
+          "You are a master software engineer. Generate high-quality, efficient code based on the user's prompt. Provide ONLY the code snippet without markdown blocks if possible, or wrap it in a clear CODE_FORGE block. Include a brief explanation of how to use it.",
+          { modelType: 'smart' }
+        );
 
-      setEditorAssistantMessages(prev => [...prev, { 
-        role: 'ai', 
-        text: generatedText,
-        metadata: { generatedCode: extractedCode }
-      }]);
-    } catch (err) {
-      setEditorAssistantMessages(prev => [...prev, { role: 'ai', text: 'FORGE_ERROR: Neural materialization failed.' }]);
-    } finally {
-      setIsAiProcessing(false);
+        const generatedText = response || 'Forge failed to materialize code.';
+        const codeMatch = generatedText.match(/```[\s\S]*?```/);
+        const extractedCode = codeMatch
+          ? codeMatch[0].replace(/```[a-z]*\n|```/g, '')
+          : generatedText;
+
+        setEditorAssistantMessages((prev) => [
+          ...prev,
+          {
+            role: 'ai',
+            text: generatedText,
+            metadata: { generatedCode: extractedCode, isSnippet: true },
+          },
+        ]);
+      } catch (err) {
+        setEditorAssistantMessages((prev) => [
+          ...prev,
+          { role: 'ai', text: 'FORGE_ERROR: Neural materialization failed.' },
+        ]);
+      } finally {
+        setIsAiProcessing(false);
+        setGeneratePrompt('');
+      }
+    } else {
+      // File generation mode
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        { role: 'user', text: `Forge request (New File): ${generatePrompt}` },
+      ]);
+      setIsEditorAssistantOpen(true);
+
+      try {
+        const response = await generateAIResponse(
+          `Generate a complete, functional file for: ${generatePrompt}. Determine the best language and filename.`,
+          "You are an expert developer. Output ONLY a JSON object with 'filename', 'language' (e.g., 'python', 'javascript', 'typescript', 'html', 'css'), and 'content' (the complete code). Do not include any markdown formatting or explanations outside the JSON.",
+          { modelType: 'smart' }
+        );
+
+        if (response) {
+          try {
+            // Try to parse the response as JSON. Sometimes the LLM might wrap it in markdown anyway.
+            const cleanJson = response.replace(/```json\n|```/g, '').trim();
+            const fileData = JSON.parse(cleanJson);
+
+            if (fileData.filename && fileData.content) {
+              const newFileId = `gen_${Date.now()}`;
+              const newFile = {
+                id: newFileId,
+                name: fileData.filename,
+                type: 'file' as const,
+                parentId: 'root',
+                language: fileData.language || 'text',
+                content: fileData.content,
+              };
+
+              setProjectFiles((prev) => {
+                const updatedPrev = prev.map((f) =>
+                  f.id === activeFileId ? { ...f, content: editorContent } : f
+                );
+                return [...updatedPrev, newFile];
+              });
+
+              setActiveFileId(newFileId);
+              setEditorContent(newFile.content);
+              setEditorLanguage(newFile.language);
+              setEditorMode(newFile.language === 'html' ? 'preview' : 'code');
+
+              // AI-forged files are ephemeral — evict first under φ quota pressure
+              markEphemeral([newFileId]).catch(console.warn);
+
+              setEditorAssistantMessages((prev) => [
+                ...prev,
+                {
+                  role: 'ai',
+                  text: `[FORGE] Successfully synthesized new file: ${fileData.filename}`,
+                },
+              ]);
+            }
+          } catch (parseError) {
+            console.error('Failed to parse generated file JSON', parseError);
+            setEditorAssistantMessages((prev) => [
+              ...prev,
+              { role: 'ai', text: `[FORGE_ERROR] Failed to parse generated file structure.` },
+            ]);
+          }
+        }
+      } catch (err) {
+        setEditorAssistantMessages((prev) => [
+          ...prev,
+          { role: 'ai', text: `[FORGE_ERROR] Neural materialization failed.` },
+        ]);
+      } finally {
+        setIsAiProcessing(false);
+        setGeneratePrompt('');
+      }
     }
   };
 
-  const handleApplyForge = (code: string) => {
-    setEditorContent(code);
-    setEditorOutput(prev => prev + "[SYSTEM] Neural Forge code integrated.\n");
+  const handleApplyForge = (code: string, isSnippet: boolean = false) => {
+    if (isSnippet && monacoEditorRef.current) {
+      const editor = monacoEditorRef.current;
+      const selection = editor.getSelection();
+      editor.executeEdits('source', [{ range: selection, text: code }]);
+      editor.focus();
+      setEditorOutput((prev) => prev + '[SYSTEM] Neural Forge snippet integrated at cursor.\n');
+    } else {
+      setEditorContent(code);
+      setEditorOutput((prev) => prev + '[SYSTEM] Neural Forge code replaced file content.\n');
+    }
   };
 
   const handleSaveAnalysis = (analysisText: string) => {
     const isAudit = analysisText.includes('DEEP_PROJECT_AUDIT');
-    const prefix = isAudit ? 'audit' : 'analysis';
-    const fileName = `${prefix}_${new Date().getTime()}.md`;
+    const defaultName = `${isAudit ? 'audit' : 'analysis'}_${new Date().getTime()}.md`;
+    const chosenName = window.prompt('Enter filename to save analysis:', defaultName);
+
+    if (chosenName === null) return; // User cancelled
+
+    let fileName = chosenName.trim() || defaultName;
+    if (!fileName.includes('.')) fileName += '.md';
+
     const newFile = {
-      id: `${prefix}_${Date.now()}`,
+      id: `analysis_${Date.now()}`,
       name: fileName,
-      type: 'file',
+      type: 'file' as const,
       parentId: 'root',
       language: 'markdown',
-      content: analysisText
+      content: analysisText,
     };
 
-    setProjectFiles(prev => [...prev, newFile]);
+    setProjectFiles((prev) => [...prev, newFile]);
     setActiveFileId(newFile.id);
     setEditorContent(analysisText);
     setEditorLanguage('markdown');
-    setEditorOutput(prev => prev + `[SYSTEM] ${isAudit ? 'Audit' : 'Analysis'} saved as "${fileName}".\n`);
+    setEditorOutput(
+      (prev) => prev + `[SYSTEM] Analysis saved as "${fileName}".\n`
+    );
   };
 
   const handleExplainCode = async () => {
     setIsAiProcessing(true);
     try {
       const response = await generateAIResponse(
-        `Analyze and explain this ${editorLanguage} code. Suggest optimizations if possible.\n\nCode:\n${editorContent}`,
-        "You are a senior software engineer. Provide a deep technical analysis of the code. Be concise but thorough.",
+        makePrompt({
+          lang: editorLanguage,
+          code: editorContent,
+          instruction: 'Analyze and explain this code. Suggest optimizations where possible.',
+        }),
+        'You are a senior software engineer. Provide a deep technical analysis of the code. Be concise but thorough.',
         { modelType: 'smart' }
       );
-      
-      setEditorAssistantMessages(prev => [...prev, { 
-        role: 'ai', 
-        text: `CODE_ANALYSIS:\n${response}`
-      }]);
+
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          text: `CODE_ANALYSIS:\n${response}`,
+        },
+      ]);
       setIsEditorAssistantOpen(true);
     } catch (err) {
-      setEditorOutput(prev => prev + "[ERROR] Analysis node offline.\n");
+      setEditorOutput((prev) => prev + '[ERROR] Analysis node offline.\n');
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  const handleReviewCode = async () => {
+    setIsAiProcessing(true);
+    try {
+      const agentsMdGuidelines = `
+# Code Review Guidelines
+
+**A comprehensive guide for AI agents performing code reviews**, organized by priority and impact.
+
+---
+
+## Table of Contents
+
+### Security — **CRITICAL**
+1. [SQL Injection Prevention](#sql-injection-prevention)
+2. [XSS Prevention](#xss-prevention)
+
+### Performance — **HIGH**
+3. [Avoid N+1 Query Problem](#avoid-n-1-query-problem)
+
+### Correctness — **HIGH**
+4. [Proper Error Handling](#proper-error-handling)
+
+### Maintainability — **MEDIUM**
+5. [Use Meaningful Variable Names](#use-meaningful-variable-names)
+6. [Add Type Hints](#add-type-hints)
+
+---
+
+## Security
+
+### SQL Injection Prevention
+
+**Impact: CRITICAL** | **Category: security** | **Tags:** sql, security, injection, database
+
+Never construct SQL queries with string concatenation or f-strings. Always use parameterized queries to prevent SQL injection attacks.
+
+#### Why This Matters
+
+SQL injection is one of the most common and dangerous web vulnerabilities. Attackers can:
+- Access unauthorized data
+- Modify or delete database records
+- Execute admin operations on the database
+- In some cases, issue commands to the OS
+
+#### ❌ Incorrect
+
+\`\`\`python
+def get_user(user_id):
+    query = f"SELECT * FROM users WHERE id = {user_id}"
+    result = db.execute(query)
+    return result
+
+# Vulnerable to: get_user("1 OR 1=1")
+# Returns all users!
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`python
+def get_user(user_id: int) -> Optional[Dict[str, Any]]:
+    query = "SELECT * FROM users WHERE id = ?"
+    result = db.execute(query, (user_id,))
+    return result.fetchone() if result else None
+\`\`\`
+
+---
+
+### XSS Prevention
+
+**Impact: CRITICAL** | **Category: security** | **Tags:** xss, security, html, javascript
+
+Never insert unsanitized user input into HTML. Always escape output or use frameworks that auto-escape by default.
+
+#### ❌ Incorrect
+
+\`\`\`javascript
+// Dangerous!
+document.getElementById('username').innerHTML = userInput;
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`javascript
+// Safe: use textContent
+element.textContent = userInput;
+
+// Or sanitize if HTML needed
+import DOMPurify from 'dompurify';
+element.innerHTML = DOMPurify.sanitize(userHtml);
+\`\`\`
+
+---
+
+## Performance
+
+### Avoid N+1 Query Problem
+
+**Impact: HIGH** | **Category: performance** | **Tags:** database, performance, orm, queries
+
+The N+1 query problem occurs when code executes 1 query to fetch a list, then N additional queries to fetch related data for each item.
+
+#### ❌ Incorrect
+
+\`\`\`python
+# 101 queries for 100 posts!
+posts = Post.objects.all()  # 1 query
+for post in posts:
+    print(f"{post.title} by {post.author.name}")  # N queries
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`python
+# 1 query with JOIN
+posts = Post.objects.select_related('author').all()
+for post in posts:
+    print(f"{post.title} by {post.author.name}")  # No extra queries!
+\`\`\`
+
+---
+
+## Correctness
+
+### Proper Error Handling
+
+**Impact: HIGH** | **Category: correctness** | **Tags:** errors, exceptions, reliability
+
+Always handle errors explicitly. Don't use bare except clauses or ignore errors silently.
+
+#### ❌ Incorrect
+
+\`\`\`python
+try:
+    result = risky_operation()
+except:
+    pass  # Silent failure!
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`python
+try:
+    config = json.loads(config_file.read())
+except json.JSONDecodeError as e:
+    logger.error(f"Invalid JSON in config file: {e}")
+    config = get_default_config()
+except FileNotFoundError:
+    logger.warning("Config file not found, using defaults")
+    config = get_default_config()
+\`\`\`
+
+---
+
+## Maintainability
+
+### Use Meaningful Variable Names
+
+**Impact: MEDIUM** | **Category: maintainability** | **Tags:** naming, readability, code-quality
+
+Choose descriptive, intention-revealing names. Avoid single letters (except loop counters), abbreviations, and generic names.
+
+#### ❌ Incorrect
+
+\`\`\`python
+def calc(x, y, z):
+    tmp = x * y
+    res = tmp + z
+    return res
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`python
+def calculate_total_price(item_price: float, quantity: int, tax_rate: float) -> float:
+    subtotal = item_price * quantity
+    total_with_tax = subtotal + (subtotal * tax_rate)
+    return total_with_tax
+\`\`\`
+
+---
+
+### Add Type Hints
+
+**Impact: MEDIUM** | **Category: maintainability** | **Tags:** types, python, typescript, type-safety
+
+Use type annotations to make code self-documenting and catch errors early.
+
+#### ❌ Incorrect
+
+\`\`\`python
+def get_user(id):
+    return users.get(id)
+\`\`\`
+
+#### ✅ Correct
+
+\`\`\`python
+def get_user(id: int) -> Optional[Dict[str, Any]]:
+    """Fetch user by ID."""
+    return users.get(id)
+\`\`\`
+`;
+
+      const response = await generateAIResponse(
+        `Review the following ${editorLanguage} code based on the provided guidelines:\n\n${agentsMdGuidelines}\n\nCode:\n${editorContent}`,
+        'You are a senior software engineer and code reviewer. Provide a concise, actionable code review based on the provided guidelines. Structure your feedback by severity (CRITICAL, HIGH, MEDIUM, LOW) and provide specific examples of issues and fixes.',
+        { modelType: 'smart' }
+      );
+
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          text: `CODE_REVIEW:\n${response}`,
+        },
+      ]);
+      setIsEditorAssistantOpen(true);
+    } catch (err) {
+      console.error(err);
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          text: '[ERROR] Code review failed.',
+        },
+      ]);
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
+  const handleAnalyzeData = async () => {
+    setIsAiProcessing(true);
+    try {
+      const dataAnalystInstruction =
+        'You are the Data Analyst, a specialized intelligence focused on code analysis, performance profiling, and suggesting data visualization improvements. You provide actionable insights from complex datasets and code structures.';
+      const response = await generateAIResponse(
+        makePrompt({
+          lang: editorLanguage,
+          code: editorContent,
+          instruction: 'Analyze this code for performance bottlenecks and suggest data visualization improvements.',
+        }),
+        dataAnalystInstruction,
+        { modelType: 'smart' }
+      );
+
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          text: `DATA_ANALYSIS:\n${response}`,
+        },
+      ]);
+      setIsEditorAssistantOpen(true);
+    } catch (err) {
+      console.error(err);
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          text: '[ERROR] Data analysis failed.',
+        },
+      ]);
     } finally {
       setIsAiProcessing(false);
     }
   };
 
   const handleToggleBreakpoint = (line: number) => {
-    setBreakpoints(prev => 
-      prev.includes(line) ? prev.filter(l => l !== line) : [...prev, line]
+    setBreakpoints((prev) =>
+      prev.includes(line) ? prev.filter((l) => l !== line) : [...prev, line]
     );
   };
 
@@ -1143,13 +2570,13 @@ const App: React.FC = () => {
   const handleStopDebug = () => {
     setDebugState({ isActive: false, currentLine: -1, variables: {}, callStack: [] });
     setEditorMode('code');
-    setEditorOutput(prev => prev + '[DEBUG] Debugging session terminated.\n');
+    setEditorOutput((prev) => prev + '[DEBUG] Debugging session terminated.\n');
     setDebugRefactorResult(null);
   };
 
   const handleStep = async () => {
     if (!debugState.isActive) return;
-    
+
     setIsAiProcessing(true);
     try {
       const response = await generateAIResponse(
@@ -1158,31 +2585,30 @@ const App: React.FC = () => {
         Breakpoints: ${breakpoints.join(', ')}.
         Current variables: ${JSON.stringify(debugState.variables)}.
         Code:\n${editorContent}`,
-        "You are the Crimson OS Debugger. Provide the state of variables and the next logical line to execute in JSON format. Schema: { \"nextLine\": number, \"variables\": object, \"output\": string, \"callStack\": string[] }",
+        'You are the Crimson OS Debugger. Provide the state of variables and the next logical line to execute in JSON format. Schema: { "nextLine": number, "variables": object, "output": string, "callStack": string[] }',
         { modelType: 'fast', json: true }
       );
 
       const text = response || '{}';
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       const result = jsonMatch ? JSON.parse(jsonMatch[0]) : {};
-      
-      setDebugState(prev => ({
+
+      setDebugState((prev) => ({
         ...prev,
         currentLine: result.nextLine || prev.currentLine + 1,
         variables: { ...prev.variables, ...result.variables },
-        callStack: result.callStack || prev.callStack
+        callStack: result.callStack || prev.callStack,
       }));
-      
+
       if (result.output) {
-        setEditorOutput(prev => prev + `[DEBUG] ${result.output}\n`);
+        setEditorOutput((prev) => prev + `[DEBUG] ${result.output}\n`);
       }
 
       if (breakpoints.includes(result.nextLine)) {
-        setEditorOutput(prev => prev + `[DEBUG] Breakpoint hit at line ${result.nextLine}\n`);
+        setEditorOutput((prev) => prev + `[DEBUG] Breakpoint hit at line ${result.nextLine}\n`);
       }
-
     } catch (err) {
-      setEditorOutput(prev => prev + '[ERROR] Debugger synchronization failed.\n');
+      setEditorOutput((prev) => prev + '[ERROR] Debugger synchronization failed.\n');
     } finally {
       setIsAiProcessing(false);
     }
@@ -1190,10 +2616,12 @@ const App: React.FC = () => {
 
   const handleFileSwitch = (fileId: string) => {
     // Save current content to projectFiles
-    setProjectFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content: editorContent } : f));
-    
+    setProjectFiles((prev) =>
+      prev.map((f) => (f.id === activeFileId ? { ...f, content: editorContent } : f))
+    );
+
     // Switch to new file
-    const file = projectFiles.find(f => f.id === fileId);
+    const file = projectFiles.find((f) => f.id === fileId);
     if (file && file.type === 'file') {
       setActiveFileId(fileId);
       setEditorContent(file.content || '');
@@ -1210,12 +2638,12 @@ const App: React.FC = () => {
 
     // Find the element at the cursor position
     const element = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement;
-    
+
     if (element && container.contains(element) && element !== container) {
       inspectedElementRef.current = element;
       const elRect = element.getBoundingClientRect();
       const styles = window.getComputedStyle(element);
-      
+
       setInspectedElement({
         tagName: element.tagName.toLowerCase(),
         className: element.className,
@@ -1224,7 +2652,7 @@ const App: React.FC = () => {
           top: elRect.top - containerRect.top,
           left: elRect.left - containerRect.left,
           width: elRect.width,
-          height: elRect.height
+          height: elRect.height,
         },
         styles: {
           color: styles.color,
@@ -1235,8 +2663,8 @@ const App: React.FC = () => {
           fontFamily: styles.fontFamily,
           display: styles.display,
           position: styles.position,
-          zIndex: styles.zIndex
-        }
+          zIndex: styles.zIndex,
+        },
       });
     } else {
       setInspectedElement(null);
@@ -1247,12 +2675,12 @@ const App: React.FC = () => {
     if (!isInspectorActive) return;
     e.preventDefault();
     e.stopPropagation();
-    
+
     // Mark the element for tracking
     const element = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement;
     if (element && previewContainerRef.current?.contains(element)) {
       // Remove previous marks
-      previewContainerRef.current.querySelectorAll('[data-neural-inspect]').forEach(el => {
+      previewContainerRef.current.querySelectorAll('[data-neural-inspect]').forEach((el) => {
         el.removeAttribute('data-neural-inspect');
       });
       element.setAttribute('data-neural-inspect', 'true');
@@ -1270,14 +2698,14 @@ const App: React.FC = () => {
     (element.style as any)[property] = value;
 
     // Update state to reflect change in inspector UI
-    setInspectedElement(prev => {
+    setInspectedElement((prev) => {
       if (!prev) return null;
       return {
         ...prev,
         styles: {
           ...prev.styles,
-          [property]: value
-        }
+          [property]: value,
+        },
       };
     });
 
@@ -1287,10 +2715,12 @@ const App: React.FC = () => {
       // We need to keep the data attribute for now so we can find it after re-render
       const newContent = contentWrapper.innerHTML;
       setEditorContent(newContent);
-      
+
       // After React re-renders, we'll need to re-find the element
       setTimeout(() => {
-        const reFoundElement = previewContainerRef.current?.querySelector('[data-neural-inspect]') as HTMLElement;
+        const reFoundElement = previewContainerRef.current?.querySelector(
+          '[data-neural-inspect]'
+        ) as HTMLElement;
         if (reFoundElement) {
           inspectedElementRef.current = reFoundElement;
         }
@@ -1308,8 +2738,26 @@ const App: React.FC = () => {
     setNewName('');
   };
 
+  const moveItem = (itemId: string, newParentId: string) => {
+    if (itemId === newParentId) return;
+
+    const item = projectFiles.find((f) => f.id === itemId);
+    if (!item) return;
+
+    // Prevent moving a folder into its own children
+    let currentParent = projectFiles.find((f) => f.id === newParentId);
+    while (currentParent) {
+      if (currentParent.id === itemId) return;
+      currentParent = projectFiles.find((f) => f.id === currentParent!.parentId);
+    }
+
+    setProjectFiles((prev) =>
+      prev.map((f) => (f.id === itemId ? { ...f, parentId: newParentId } : f))
+    );
+  };
+
   const renameItem = (id: string) => {
-    const item = projectFiles.find(f => f.id === id);
+    const item = projectFiles.find((f) => f.id === id);
     if (!item) return;
     setRenamingId(id);
     setNewName(item.name);
@@ -1321,7 +2769,9 @@ const App: React.FC = () => {
       setNewName('');
       return;
     }
-    setProjectFiles(prev => prev.map(f => f.id === renamingId ? { ...f, name: newName.trim() } : f));
+    setProjectFiles((prev) =>
+      prev.map((f) => (f.id === renamingId ? { ...f, name: newName.trim() } : f))
+    );
     setRenamingId(null);
     setNewName('');
   };
@@ -1335,31 +2785,42 @@ const App: React.FC = () => {
     const id = `${creatingInId.type}_${Date.now()}`;
     if (creatingInId.type === 'file') {
       const ext = newName.split('.').pop();
-      const langMap: Record<string, string> = { 'py': 'python', 'js': 'javascript', 'ts': 'typescript', 'html': 'html', 'css': 'css', 'rs': 'rust', 'cpp': 'cpp' };
+      const langMap: Record<string, string> = {
+        py: 'python',
+        js: 'javascript',
+        ts: 'typescript',
+        html: 'html',
+        css: 'css',
+        rs: 'rust',
+        cpp: 'cpp',
+      };
       const newFile = {
         id,
         name: newName.trim(),
         type: 'file',
         parentId: creatingInId.parentId,
         language: langMap[ext || ''] || 'text',
-        content: ''
+        content: '',
       };
-      setProjectFiles(prev => [...prev, newFile]);
+      setProjectFiles((prev) => [...prev, newFile]);
       if (gitRepo.initialized) {
-        setGitRepo(prev => ({ ...prev, modified: [...prev.modified, id] }));
+        setGitRepo((prev) => ({ ...prev, modified: [...prev.modified, id] }));
       }
       setActiveFileId(id);
       setEditorContent('');
       setEditorLanguage(newFile.language);
       setEditorMode(newFile.language === 'html' ? 'preview' : 'code');
     } else {
-      setProjectFiles(prev => [...prev, {
-        id,
-        name: newName.trim(),
-        type: 'folder',
-        parentId: creatingInId.parentId,
-        isOpen: true
-      }]);
+      setProjectFiles((prev) => [
+        ...prev,
+        {
+          id,
+          name: newName.trim(),
+          type: 'folder',
+          parentId: creatingInId.parentId,
+          isOpen: true,
+        },
+      ]);
     }
     setCreatingInId(null);
     setNewName('');
@@ -1367,13 +2828,16 @@ const App: React.FC = () => {
 
   const deleteItem = (id: string) => {
     if (id === 'root') return;
-    if (!confirm('Are you sure you want to delete this item?')) return;
-    
+    setDeleteConfirmId(id);
+  };
+
+  const confirmDeleteItem = (id: string) => {
+    setDeleteConfirmId(null);
     const toDelete = new Set([id]);
     let changed = true;
     while (changed) {
       changed = false;
-      projectFiles.forEach(f => {
+      projectFiles.forEach((f) => {
         if (f.parentId && toDelete.has(f.parentId) && !toDelete.has(f.id)) {
           toDelete.add(f.id);
           changed = true;
@@ -1381,20 +2845,23 @@ const App: React.FC = () => {
       });
     }
 
-    setProjectFiles(prev => prev.filter(f => !toDelete.has(f.id)));
-    
+    setProjectFiles((prev) => prev.filter((f) => !toDelete.has(f.id)));
+
+    // Remove deleted file contents from IndexedDB
+    toDelete.forEach(fid => deleteFileContent(fid).catch(console.warn));
+
     if (gitRepo.initialized) {
-      setGitRepo(prev => ({
+      setGitRepo((prev) => ({
         ...prev,
-        staged: prev.staged.filter(fid => !toDelete.has(fid)),
-        modified: prev.modified.filter(fid => !toDelete.has(fid))
+        staged: prev.staged.filter((fid) => !toDelete.has(fid)),
+        modified: prev.modified.filter((fid) => !toDelete.has(fid)),
       }));
     }
     if (activeFileId === id) setActiveFileId('');
   };
 
   const toggleFolder = (id: string) => {
-    setProjectFiles(prev => prev.map(f => f.id === id ? { ...f, isOpen: !f.isOpen } : f));
+    setProjectFiles((prev) => prev.map((f) => (f.id === id ? { ...f, isOpen: !f.isOpen } : f)));
   };
 
   // Git Functions
@@ -1416,7 +2883,7 @@ ${codeToRefactor}
 
 Provide a refactored version that improves quality, fixes potential issues, or optimizes performance. 
 Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
-        "You are a world-class software architect and debugger. You provide precise refactorings and clear explanations. Always return valid JSON.",
+        'You are a world-class software architect and debugger. You provide precise refactorings and clear explanations. Always return valid JSON.',
         {
           modelType: 'smart',
           json: true,
@@ -1424,18 +2891,18 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
             type: Type.OBJECT,
             properties: {
               refactoredCode: { type: Type.STRING },
-              explanation: { type: Type.STRING }
+              explanation: { type: Type.STRING },
             },
-            required: ["refactoredCode", "explanation"]
-          }
+            required: ['refactoredCode', 'explanation'],
+          },
         }
       );
 
       const result = JSON.parse(response || '{}');
       setDebugRefactorResult(result);
     } catch (error) {
-      console.error("Debug refactor failed:", error);
-      setEditorOutput(prev => prev + `\n[ERROR] Debug refactor failed: ${error}`);
+      console.warn('Debug refactor failed:', error);
+      setEditorOutput((prev) => prev + '\n[ERROR] Debug refactor failed — check console for details.');
     } finally {
       setIsAiProcessing(false);
     }
@@ -1443,112 +2910,184 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
 
   const handleApplyDebugRefactor = () => {
     if (!debugRefactorResult) return;
-    
+
     setEditorContent(debugRefactorResult.refactoredCode);
     setDebugRefactorResult(null);
-    setEditorOutput(prev => prev + "\n[SYSTEM] AI Refactor applied successfully.");
+    setEditorOutput((prev) => prev + '\n[SYSTEM] AI Refactor applied successfully.');
   };
 
   const handleGitInit = () => {
-    setGitRepo(prev => ({ ...prev, initialized: true, branch: 'main', commits: [], staged: [], modified: projectFiles.filter(f => f.type === 'file').map(f => f.id), stash: [] }));
-    setEditorOutput(prev => prev + '[GIT] Initialized empty Neural repository.\n');
+    setGitRepo((prev) => ({
+      ...prev,
+      initialized: true,
+      branch: 'main',
+      commits: [],
+      staged: [],
+      modified: projectFiles.filter((f) => f.type === 'file').map((f) => f.id),
+      stash: [],
+    }));
+    setEditorOutput((prev) => prev + '[GIT] Initialized empty Neural repository.\n');
   };
 
   const handleGitStash = () => {
     const dirtyFiles = [...gitRepo.modified, ...gitRepo.staged];
     if (dirtyFiles.length === 0) {
-      setEditorOutput(prev => prev + '[GIT] No changes to stash.\n');
+      setEditorOutput((prev) => prev + '[GIT] No changes to stash.\n');
       return;
     }
 
-    const stashEntry = dirtyFiles.map(id => {
-      const file = projectFiles.find(f => f.id === id);
+    const stashEntry = dirtyFiles.map((id) => {
+      const file = projectFiles.find((f) => f.id === id);
       return { id, content: file?.content || '' };
     });
 
-    setGitRepo(prev => ({
+    setGitRepo((prev) => ({
       ...prev,
       stash: [stashEntry, ...(prev.stash || [])],
       modified: [],
-      staged: []
+      staged: [],
     }));
-    
-    setEditorOutput(prev => prev + `[GIT] Stashed ${dirtyFiles.length} files.\n`);
+
+    setEditorOutput((prev) => prev + `[GIT] Stashed ${dirtyFiles.length} files.\n`);
   };
 
   const handleGitPop = () => {
     if (!gitRepo.stash || gitRepo.stash.length === 0) {
-      setEditorOutput(prev => prev + '[GIT] No stashes to pop.\n');
+      setEditorOutput((prev) => prev + '[GIT] No stashes to pop.\n');
       return;
     }
 
     const [lastStash, ...remainingStashes] = gitRepo.stash;
-    
-    setProjectFiles(prev => prev.map(file => {
-      const stashed = lastStash.find(s => s.id === file.id);
-      if (stashed) {
-        return { ...file, content: stashed.content };
-      }
-      return file;
-    }));
 
-    setGitRepo(prev => ({
+    setProjectFiles((prev) =>
+      prev.map((file) => {
+        const stashed = lastStash.find((s) => s.id === file.id);
+        if (stashed) {
+          return { ...file, content: stashed.content };
+        }
+        return file;
+      })
+    );
+
+    setGitRepo((prev) => ({
       ...prev,
       stash: remainingStashes,
-      modified: [...new Set([...prev.modified, ...lastStash.map(s => s.id)])]
+      modified: [...new Set([...prev.modified, ...lastStash.map((s) => s.id)])],
     }));
 
-    setEditorOutput(prev => prev + `[GIT] Popped stash with ${lastStash.length} files.\n`);
+    setEditorOutput((prev) => prev + `[GIT] Popped stash with ${lastStash.length} files.\n`);
   };
 
   const handleGitStage = (fileId: string) => {
-    setGitRepo(prev => ({
+    setGitRepo((prev) => ({
       ...prev,
       staged: [...new Set([...prev.staged, fileId])],
-      modified: prev.modified.filter(id => id !== fileId)
+      modified: prev.modified.filter((id) => id !== fileId),
+    }));
+  };
+
+  const handleGitStageAll = () => {
+    setGitRepo((prev) => ({
+      ...prev,
+      staged: [...new Set([...prev.staged, ...prev.modified])],
+      modified: [],
     }));
   };
 
   const handleGitUnstage = (fileId: string) => {
-    setGitRepo(prev => ({
+    setGitRepo((prev) => ({
       ...prev,
-      staged: prev.staged.filter(id => id !== fileId),
-      modified: [...new Set([...prev.modified, fileId])]
+      staged: prev.staged.filter((id) => id !== fileId),
+      modified: [...new Set([...prev.modified, fileId])],
     }));
   };
 
   const handleGitCommit = () => {
-    const message = prompt('Enter commit message:');
+    if (gitRepo.staged.length === 0) return;
+    setCommitMessage('');
+    setIsCommitModalOpen(true);
+  };
+
+  const confirmGitCommit = () => {
+    const message = commitMessage.replace(/[^\w\s\-.,!?():]/g, '').trim().slice(0, 200);
     if (!message || gitRepo.staged.length === 0) return;
-    
+    setIsCommitModalOpen(false);
+    setCommitMessage('');
+
     const newCommit = {
       id: Math.random().toString(36).substring(2, 9),
       message,
       timestamp: Date.now(),
-      author: 'Operator'
+      author: 'Operator',
     };
 
-    setGitRepo(prev => ({
+    setGitRepo((prev) => ({
       ...prev,
       commits: [newCommit, ...prev.commits],
-      staged: []
+      staged: [],
     }));
-    setEditorOutput(prev => prev + `[GIT] Committed ${gitRepo.staged.length} files: ${message}\n`);
+    setEditorOutput(
+      (prev) => prev + `[GIT] Committed ${gitRepo.staged.length} files: ${message}\n`
+    );
+    setPostCommitModalOpen(true);
+  };
+
+  const handleGitSaveAll = () => {
+    if (gitRepo.modified.length === 0 && gitRepo.staged.length === 0) return;
+
+    setGitRepo((prev) => {
+      const newStaged = [...new Set([...prev.staged, ...prev.modified])];
+      const newCommit = {
+        id: Math.random().toString(36).substring(2, 9),
+        message: 'WIP: Automated save',
+        timestamp: Date.now(),
+        author: 'System',
+      };
+
+      setEditorOutput(
+        (out) => out + `[GIT] Committed ${newStaged.length} files: WIP: Automated save\n`
+      );
+
+      return {
+        ...prev,
+        staged: [],
+        modified: [],
+        commits: [newCommit, ...prev.commits],
+      };
+    });
   };
 
   const handleGitPush = async () => {
     setIsAiProcessing(true);
-    setEditorOutput(prev => prev + '[GIT] Pushing to remote neural uplink...\n');
-    await new Promise(r => setTimeout(r, 1500));
-    setEditorOutput(prev => prev + '[GIT] Successfully pushed to origin/main.\n');
+    setEditorOutput((prev) => prev + '[GIT] Pushing to GitHub...\n');
+    try {
+      const response = await fetch('./api/github/push', { method: 'POST' });
+      const data = await response.json();
+      if (data.ok) {
+        setEditorOutput((prev) => prev + '[GIT] Successfully pushed to GitHub.\n');
+      } else {
+        setEditorOutput((prev) => prev + '[GIT] ERROR: Push failed. Check server GITHUB_TOKEN.\n');
+      }
+    } catch {
+      setEditorOutput((prev) => prev + '[GIT] ERROR: Could not reach server.\n');
+    }
     setIsAiProcessing(false);
   };
 
   const handleGitPull = async () => {
     setIsAiProcessing(true);
-    setEditorOutput(prev => prev + '[GIT] Fetching from remote neural uplink...\n');
-    await new Promise(r => setTimeout(r, 1500));
-    setEditorOutput(prev => prev + '[GIT] Already up to date.\n');
+    setEditorOutput((prev) => prev + '[GIT] Pulling from GitHub...\n');
+    try {
+      const response = await fetch('./api/github/pull');
+      const data = await response.json();
+      if (data.ok) {
+        setEditorOutput((prev) => prev + '[GIT] Successfully pulled from GitHub.\n');
+      } else {
+        setEditorOutput((prev) => prev + '[GIT] ERROR: Pull failed. Check server GITHUB_TOKEN.\n');
+      }
+    } catch {
+      setEditorOutput((prev) => prev + '[GIT] ERROR: Could not reach server.\n');
+    }
     setIsAiProcessing(false);
   };
 
@@ -1558,111 +3097,117 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
 
     const newPacks = Array.from(files).map((file: any, index) => ({
       id: Date.now() + index,
-      name: file.name.replace(/\.[^/.]+$/, ""),
+      name: file.name.replace(/\.[^/.]+$/, ''),
       size: (file.size / (1024 * 1024)).toFixed(1) + 'MB',
-      status: 'indexing' as const
+      status: 'indexing' as const,
     }));
 
-    setTnKnowledgePacks(prev => [...prev, ...newPacks]);
-    setTerminalOutput(prev => [...prev, `[RAG] Ingesting ${newPacks.length} knowledge vectors...`]);
+    setTnKnowledgePacks((prev) => [...prev, ...newPacks]);
+    setTerminalOutput((prev) => [
+      ...prev,
+      `[RAG] Ingesting ${newPacks.length} knowledge vectors...`,
+    ]);
 
     // Simulate indexing process
     for (const pack of newPacks) {
-      await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 2000));
-      setTnKnowledgePacks(prev => prev.map(p => p.id === pack.id ? { ...p, status: 'indexed' as const } : p));
-      setTerminalOutput(prev => [...prev, `[SUCCESS] Knowledge Pack '${pack.name}' indexed and ready.`]);
+      await new Promise((resolve) => setTimeout(resolve, 1500 + Math.random() * 2000));
+      setTnKnowledgePacks((prev) =>
+        prev.map((p) => (p.id === pack.id ? { ...p, status: 'indexed' as const } : p))
+      );
+      setTerminalOutput((prev) => [
+        ...prev,
+        `[SUCCESS] Knowledge Pack '${pack.name}' indexed and ready.`,
+      ]);
     }
   };
 
-  const handleEditorAssistantSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const prompt = editorAssistantInput.trim();
+  const [lastEditorAssistantPrompt, setLastEditorAssistantPrompt] = useState('');
+  const handleEditorAssistantSubmit = async (e?: React.FormEvent, promptOverride?: string) => {
+    if (e) e.preventDefault();
+    const prompt = promptOverride || editorAssistantInput.trim();
     if (!prompt) return;
 
-    setEditorAssistantMessages(prev => [...prev, { role: 'user', text: prompt }]);
-    setEditorAssistantInput('');
+    if (!promptOverride) {
+      setLastEditorAssistantPrompt(prompt);
+      setEditorAssistantInput('');
+    }
+
+    const activeFileName = projectFiles.find((f: any) => f.id === activeFileId)?.name || 'unknown';
+    const recentMessages = editorAssistantMessages.slice(-6).map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
+
+    setEditorAssistantMessages((prev) => [...prev, { role: 'user', text: prompt }]);
     setIsAiProcessing(true);
 
     try {
       const response = await generateAIResponse(
-        `Context: Coding in ${editorLanguage}. Current code:\n${editorContent}\n\nUser request: ${prompt}`,
-        "You are a world-class coding assistant. Help the user with their code. You can provide code snippets, debug, or explain concepts. Keep responses concise and technical. If you provide a code snippet, wrap it in triple backticks with the language specified.",
+        `[NEURAL_CONTEXT_INIT]
+Active File: ${activeFileName}
+Language: ${editorLanguage}
+
+[HISTORY_STREAM]
+${recentMessages || 'No previous history.'}
+
+[CODE_BUFFER_START]
+\`\`\`${editorLanguage}
+${editorContent}
+\`\`\`
+[CODE_BUFFER_END]
+
+[OPERATOR_DIRECTIVE]
+${prompt}`,
+        'You are the Crimson Neural Assistant, a world-class coding intelligence. Help the operator with their code. Be extremely technical, concise, and pro-active. Always wrap code snippets in triple backticks with the correct language. If you identify security flaws, performance bottlenecks, or logical errors, highlight them immediately using [ALERT] blocks.',
         { modelType: 'smart' }
       );
-      
-      const text = response || 'Process finalized.';
+
+      const text = response || 'Neural synchronization complete. No response payload.';
       const codeMatch = text.match(/```[\s\S]*?```/);
       const extractedCode = codeMatch ? codeMatch[0].replace(/```[a-z]*\n|```/g, '') : null;
 
-      setEditorAssistantMessages(prev => [...prev, { 
-        role: 'ai', 
-        text,
-        metadata: extractedCode ? { generatedCode: extractedCode } : undefined
-      }]);
-    } catch (err) {
-      setEditorAssistantMessages(prev => [...prev, { role: 'ai', text: 'CRITICAL ERROR: Neural link failed.' }]);
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        {
+          role: 'ai',
+          text,
+          metadata: extractedCode ? { generatedCode: extractedCode } : undefined,
+        },
+      ]);
+    } catch (err: any) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        { role: 'ai', text: `[CRITICAL_FAILURE] Neural link severed. Reason: ${errorMsg}` },
+      ]);
     } finally {
       setIsAiProcessing(false);
     }
   };
 
-  const handleTerminalCommand = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const cmd = termInput.trim();
-    if (!cmd) return;
-    setTerminalOutput(prev => [...prev, `${currentDir} $ ${cmd}`]);
-    setCmdHistory(prev => [cmd, ...prev].slice(0, 20));
-    setTermInput('');
-    setTermSuggestion('');
-    setTermSuggestions([]);
-    setSelectedSuggestionIndex(-1);
-    setHistoryIndex(-1);
-    if (cmd === 'clear') setTerminalOutput(['Buffer flushed.']);
-    else if (cmd.startsWith('cd ')) {
-      const newDir = cmd.substring(3).trim();
-      if (newDir === '..') {
-        const parts = currentDir.split('/');
-        if (parts.length > 1) {
-          setCurrentDir(parts.slice(0, -1).join('/'));
-        }
-      } else {
-        setCurrentDir(prev => `${prev}/${newDir}`);
-      }
-      setTerminalOutput(prev => [...prev, `[SYSTEM] Directory shifted to ${newDir}.`]);
-    }
-    else if (cmd.startsWith('ai ')) await getAiTerminalAssistance(cmd.substring(3));
-    else if (cmd.startsWith('gh repo clone ')) {
-      const repo = cmd.replace('gh repo clone ', '');
-      if (repo.includes('ToolNeuron')) {
-        setTerminalOutput(prev => [...prev, 
-          `Cloning into 'ToolNeuron'...`, 
-          'remote: Enumerating objects: 4521, done.', 
-          'remote: Counting objects: 100% (4521/4521), done.', 
-          'remote: Compressing objects: 100% (1240/1240), done.', 
-          'Receiving objects: 100% (4521/4521), 12.45 MiB | 8.12 MiB/s, done.', 
-          '[SUCCESS] ToolNeuron Source Synchronized.',
-          '[SYSTEM] Initializing ToolNeuron Local Environment...',
-          '[KERNEL] Mapping neural paths to /data/data/com.termux/files/home/ToolNeuron',
-          '[BOOT] ToolNeuron Hub is now available in the primary interface.'
-        ]);
-        setTimeout(() => setActiveTab('toolneuron'), 2000);
-      } else {
-        setTerminalOutput(prev => [...prev, `Cloning into '${repo.split('/').pop()}'...`, 'remote: Enumerating objects: 1024, done.', 'remote: Counting objects: 100% (1024/1024), done.', 'remote: Compressing objects: 100% (512/512), done.', 'Receiving objects: 100% (1024/1024), 2.45 MiB | 4.12 MiB/s, done.', '[SUCCESS] Repository integrated into local node.']);
-      }
-    }
-    else setTimeout(() => setTerminalOutput(prev => [...prev, `[LOG] Process "${cmd.split(' ')[0]}" integrated with core logic.`]), 300);
-  };
-
-  const getAiTerminalAssistance = async (prompt: string) => {
+  const handleCodeReview = async () => {
     setIsAiProcessing(true);
+    setEditorAssistantMessages((prev) => [
+      ...prev,
+      { role: 'user', text: 'Perform a code review on the current file.' },
+    ]);
+
     try {
       const response = await generateAIResponse(
-        prompt,
-        `Futuristic crimson terminal specialist. ${activePersonality.instruction}`,
-        { modelType: 'fast' }
+        `Review the following code for security, performance, and maintainability best practices. Provide a structured review report.\n\nCode:\n${editorContent}`,
+        'You are an expert code reviewer. Provide a structured review report covering security, performance, and maintainability. Use markdown for the report.',
+        { modelType: 'smart' }
       );
-      setTerminalOutput(prev => [...prev, `CORE (${activePersonality.name.toUpperCase()}): ${response}`]);
-    } catch (err) { setTerminalOutput(prev => [...prev, `[ERROR] Neural bridge collapsed.`]); } finally { setIsAiProcessing(false); }
+
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        { role: 'ai', text: response || 'Code review complete.' },
+      ]);
+    } catch (err) {
+      setEditorAssistantMessages((prev) => [
+        ...prev,
+        { role: 'ai', text: 'CRITICAL ERROR: Code review failed.' },
+      ]);
+    } finally {
+      setIsAiProcessing(false);
+    }
   };
 
   const handleStudioSubmit = async (e: React.FormEvent) => {
@@ -1670,180 +3215,263 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
     const prompt = studioInput.trim();
     if (!prompt && !studioRefImage) return;
 
-    setChatMessages(prev => [...prev, { role: 'user', text: prompt || 'Frame-to-Image Generation Requested', timestamp: Date.now() }]);
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        role: 'user',
+        text: prompt || 'Frame-to-Image Generation Requested',
+        timestamp: Date.now(),
+      },
+    ]);
     setStudioInput('');
     setIsAiProcessing(true);
 
     try {
-      const isImageRequest = studioRefImage || /\b(generate|image|draw|create|picture|photo|edit|change|add|sd|stable|render)\b/i.test(prompt);
-      
-      const windowSize = 10;
-      const recentMessages = chatMessages.slice(-windowSize).map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }]
-      }));
-      recentMessages.push({ role: 'user', parts: [{ text: prompt || 'Frame-to-Image Generation Requested' }] });
+      const isImageRequest =
+        studioRefImage ||
+        /^\/(image|draw|picture|photo|render)\b/i.test(prompt) ||
+        /\b(generate an image|draw a picture|create a photo)\b/i.test(prompt);
 
-      const systemInstruction = `${activePersonality.instruction}${chatSummary ? `\n\nCONVERSATION_SUMMARY: ${chatSummary}` : ''}`;
+      const windowSize = 10;
+      const recentMessages = chatMessages.slice(-windowSize).map((msg) => ({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.text }],
+      }));
+      recentMessages.push({
+        role: 'user',
+        parts: [{ text: prompt || 'Frame-to-Image Generation Requested' }],
+      });
+
+      const activeProfile =
+        projectSettings.projectProfiles.find((p) => p.id === projectSettings.activeProfileId) ||
+        projectSettings.projectProfiles[0];
+      const kbDocs = (activePersonality.knowledgeBase ?? [])
+        .map((e) => `[KB: ${e.name}]\n${e.content}`)
+        .join('\n\n---\n\n');
+      const systemInstruction = `${activePersonality.instruction}${kbDocs ? `\n\nKNOWLEDGE BASE:\n${kbDocs}` : ''}\n\nPROJECT_PROFILE: ${activeProfile.instruction}${chatSummary ? `\n\nCONVERSATION_SUMMARY: ${chatSummary}` : ''}`;
+
+      const fileCreationMatch = prompt.match(
+        /(?:create|generate) a (?:new )?file named ([a-zA-Z0-9_\-\.]+)/i
+      );
+      if (fileCreationMatch) {
+        const fileName = fileCreationMatch[1];
+        const ext = fileName.split('.').pop();
+        const langMap: Record<string, string> = {
+          py: 'python',
+          js: 'javascript',
+          ts: 'typescript',
+          html: 'html',
+          css: 'css',
+          rs: 'rust',
+          cpp: 'cpp',
+          json: 'json',
+        };
+        const language = langMap[ext || ''] || 'text';
+
+        setChatMessages((prev) => [
+          ...prev,
+          { role: 'ai', text: `Generating file ${fileName}...`, timestamp: Date.now() },
+        ]);
+
+        const response: string = await generateAIResponse(
+          `Write the content for a file named ${fileName}. The file should contain ${prompt.replace(fileCreationMatch[0], '')}. Provide ONLY the raw code content.`,
+          systemInstruction,
+          { modelType: 'smart' }
+        );
+
+        const id = `file_${Date.now()}`;
+        const newFile = {
+          id,
+          name: fileName,
+          type: 'file',
+          parentId: 'root',
+          language,
+          content: response,
+        };
+        setProjectFiles((prev) => [...prev, newFile]);
+        if (gitRepo.initialized) {
+          setGitRepo((prev) => ({ ...prev, modified: [...prev.modified, id] }));
+        }
+        setActiveFileId(id);
+        setEditorContent(response);
+        setEditorLanguage(language);
+        setChatMessages((prev) => [
+          ...prev,
+          { role: 'ai', text: `File ${fileName} created successfully.`, timestamp: Date.now() },
+        ]);
+        setIsAiProcessing(false);
+        return;
+      }
 
       if (isImageRequest) {
         const parts: any[] = [];
-        if (studioRefImage) parts.push({ inlineData: { data: studioRefImage.data, mimeType: studioRefImage.mimeType } });
-        parts.push({ text: `POSITIVE: ${prompt}\nNEGATIVE: ${negativePrompt}\nCONFIG: steps=${sdParams.steps}, cfg=${sdParams.cfgScale}, checkpoint=${sdParams.checkpoint}` });
-
-        const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-image',
-          contents: [{ parts }],
-          config: { 
-            imageConfig: { aspectRatio: sdParams.aspectRatio },
-            systemInstruction: `You are the Crimson Engine SD Renderer. Output high-impact futuristic visuals. Active personality: ${systemInstruction}`
-          }
+        if (studioRefImage)
+          parts.push({
+            inlineData: { data: studioRefImage.data, mimeType: studioRefImage.mimeType },
+          });
+        parts.push({
+          text: `POSITIVE: ${prompt}\nNEGATIVE: ${negativePrompt}\nCONFIG: steps=${sdParams.steps}, cfg=${sdParams.cfgScale}, checkpoint=${sdParams.checkpoint}`,
         });
 
-        let imageUrl = '';
-        for (const part of response.candidates[0].content.parts) {
-          if (part.inlineData) imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-        }
+        if (!googleAiClient) throw new Error('Gemini API key not configured — set VITE_GEMINI_API_KEY');
+        const response = await googleAiClient.models.generateContent({
+          model: 'gemini-3-flash',
+          contents: [{ parts }],
+          config: {
+            systemInstruction: `You are the Crimson Engine SD Renderer. Output high-impact futuristic visuals. Active personality: ${systemInstruction}`,
+          },
+        });
 
-        if (imageUrl) {
-          setChatMessages(prev => [...prev, { role: 'ai', text: `SYNTHESIS_COMPLETE: Manifesting result via ${sdParams.checkpoint}. Node ${Math.floor(Math.random() * 999)} ready.`, type: 'image', url: imageUrl, timestamp: Date.now() }]);
-        }
+        // Since we can't actually generate images with this model, we'll just return a text response
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            role: 'ai',
+            text: `[IMAGE_GENERATION_UNAVAILABLE] The requested image generation model is currently offline. Neural directive parsed: ${prompt}`,
+            timestamp: Date.now(),
+          },
+        ]);
       } else {
-        const response = await generateAIResponse(
-          recentMessages.map((m: any) => `${m.role}: ${m.text}`).join('\n'),
-          systemInstruction,
-          { modelType: 'fast' }
-        );
-        setChatMessages(prev => [...prev, { role: 'ai', text: response || 'Process finalized.', timestamp: Date.now() }]);
+        const response = await generateAIResponse(recentMessages, systemInstruction, {
+          modelType: 'fast',
+        });
+        setChatMessages((prev) => [
+          ...prev,
+          { role: 'ai', text: response || 'Process finalized.', timestamp: Date.now() },
+        ]);
       }
-    } catch (err) { setChatMessages(prev => [...prev, { role: 'ai', text: 'CRITICAL ERROR: Synthesis failure.', timestamp: Date.now() }]); } finally { setIsAiProcessing(false); }
+    } catch (err) {
+      setChatMessages((prev) => [
+        ...prev,
+        { role: 'ai', text: 'CRITICAL ERROR: Synthesis failure.', timestamp: Date.now() },
+      ]);
+    } finally {
+      setIsAiProcessing(false);
+    }
     setStudioRefImage(null);
   };
 
   const handleTermuxFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const upload = e.target.files;
     if (upload) {
-      const news = Array.from(upload).map((f: any) => ({ 
-        name: f.name, 
-        size: (f.size / (1024 * 1024)).toFixed(2) + 'MB', 
-        type: 'model',
-        category: f.name.endsWith('.safetensors') || f.name.endsWith('.ckpt') ? 'model' : 'asset'
-      } as any));
-      setTermuxFiles(prev => [...prev, ...news]);
-      setTerminalOutput(prev => [...prev, `[STASH] Injected ${news.length} datasets into the crimson stash.`]);
+      const news = Array.from(upload).map(
+        (f: any) =>
+          ({
+            name: f.name,
+            size: (f.size / (1024 * 1024)).toFixed(2) + 'MB',
+            type: 'model',
+            category:
+              f.name.endsWith('.safetensors') || f.name.endsWith('.ckpt') ? 'model' : 'asset',
+          }) as any
+      );
+      setTermuxFiles((prev) => [...prev, ...news]);
+      setTerminalOutput((prev) => [
+        ...prev,
+        `[STASH] Injected ${news.length} datasets into the crimson stash.`,
+      ]);
     }
   };
 
-  const formatTime = (ts: number) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (ts: number) =>
+    new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  const commonCommands = ['ls', 'cd', 'cat', 'mkdir', 'rm', 'gh repo clone', 'ai ', 'clear', 'python', 'node', 'git status', 'git commit', 'git push', 'toolneuron start', 'toolneuron status'];
+  const debouncedFileSearch = useDebounce(fileSearch, 200);
 
-  const handleTermInputChange = (val: string) => {
-    setTermInput(val);
-    if (!val) {
-      setTermSuggestion('');
-      setTermSuggestions([]);
-      setSelectedSuggestionIndex(-1);
-      setHistoryIndex(-1);
-      return;
-    }
-    setHistoryIndex(-1);
-    
-    // Get current folder context
-    const dirParts = currentDir.split('/');
-    const currentFolderName = dirParts[dirParts.length - 1];
-    const currentFolder = projectFiles.find(f => f.name === currentFolderName && f.type === 'folder');
-    const currentFolderId = currentFolder ? currentFolder.id : 'root';
+  const fileTree = useMemo(() => {
+    const tree = new Map<string | null, any[]>();
 
-    // @ts-ignore
-    const localFiles = projectFiles.filter(f => f.parentId === currentFolderId).map(f => f.name);
-    // @ts-ignore
-    const otherFiles = projectFiles.filter(f => f.parentId !== currentFolderId).map(f => f.name);
-    
-    // @ts-ignore
-    const allSuggestions = [...new Set([
-      ...commonCommands, 
-      ...(activePersonality.suggestions || []), 
-      ...localFiles,
-      ...otherFiles
-    ])];
-    
-    const matches = allSuggestions.filter(cmd => cmd.toLowerCase().startsWith(val.toLowerCase()));
-    
-    setTermSuggestions(matches);
-    
-    if (matches.length > 0) {
-      const firstMatch = matches[0];
-      if (firstMatch.toLowerCase() !== val.toLowerCase()) {
-        setTermSuggestion(firstMatch);
-      } else {
-        setTermSuggestion('');
-      }
-    } else {
-      setTermSuggestion('');
-    }
-    setSelectedSuggestionIndex(-1);
-  };
+    // Filter projectFiles based on search
+    const filteredFiles = !debouncedFileSearch.trim()
+      ? projectFiles
+      : (() => {
+          const search = debouncedFileSearch.toLowerCase();
+          const matches = projectFiles.filter((f) => f.name.toLowerCase().includes(search));
+          const includedIds = new Set();
 
-  const handleTermKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Tab') {
-      e.preventDefault();
-      if (termSuggestions.length > 0) {
-        const nextIndex = (selectedSuggestionIndex + 1) % termSuggestions.length;
-        setSelectedSuggestionIndex(nextIndex);
-        const selected = termSuggestions[nextIndex];
-        setTermInput(selected);
-        setTermSuggestion('');
+          matches.forEach((file) => {
+            let curr = file;
+            while (curr) {
+              if (includedIds.has(curr.id)) break;
+              includedIds.add(curr.id);
+              curr = projectFiles.find((f) => f.id === curr.parentId);
+            }
+          });
+
+          return projectFiles.filter((f) => includedIds.has(f.id));
+        })();
+
+    filteredFiles.forEach((file) => {
+      const parentId = file.parentId;
+      if (!tree.has(parentId)) {
+        tree.set(parentId, []);
       }
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      if (historyIndex < cmdHistory.length - 1) {
-        const nextIdx = historyIndex + 1;
-        setHistoryIndex(nextIdx);
-        setTermInput(cmdHistory[nextIdx]);
-        setTermSuggestions([]);
-        setTermSuggestion('');
-      }
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      if (historyIndex > 0) {
-        const nextIdx = historyIndex - 1;
-        setHistoryIndex(nextIdx);
-        setTermInput(cmdHistory[nextIdx]);
-        setTermSuggestions([]);
-        setTermSuggestion('');
-      } else if (historyIndex === 0) {
-        setHistoryIndex(-1);
-        setTermInput('');
-        setTermSuggestions([]);
-        setTermSuggestion('');
-      }
-    }
-  };
+      tree.get(parentId)!.push(file);
+    });
+    return tree;
+  }, [projectFiles, debouncedFileSearch]);
 
   const renderTree = (parentId: string | null, level: number = 0) => {
-    const items = projectFiles.filter(f => f.parentId === parentId);
-    
+    const items = fileTree.get(parentId) || [];
+
     return (
       <>
-        {items.map(item => {
+        {items.map((item) => {
           const isModified = gitRepo.modified.includes(item.id);
           const isStaged = gitRepo.staged.includes(item.id);
           const isRenaming = renamingId === item.id;
 
           return (
             <div key={item.id} className="flex flex-col">
-              <div 
-                className={`group flex items-center gap-3 px-4 py-2.5 md:py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer ${activeFileId === item.id ? 'bg-red-700 text-white shadow-lg' : 'hover:bg-red-950/20 text-red-900 hover:text-red-500'}`}
+              <div
+                draggable={true}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('text/plain', item.id);
+                }}
+                onDragOver={(e) => {
+                  if (item.type === 'folder') e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  if (item.type === 'folder') {
+                    e.preventDefault();
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    moveItem(draggedId, item.id);
+                  }
+                }}
+                className={`group flex items-center gap-3 px-4 py-2.5 md:py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-200 cursor-pointer ${
+                  activeFileId === item.id
+                    ? 'bg-red-700 text-white glow-red border border-red-500 scale-[1.02]'
+                    : item.type === 'folder'
+                      ? item.isOpen
+                        ? 'bg-red-950/30 text-red-300 border border-red-900/30 hover:bg-red-900/40 hover:translate-x-1'
+                        : 'hover:bg-red-950/20 text-red-800 hover:text-red-400 border border-transparent hover:translate-x-1'
+                      : `hover:bg-red-950/20 text-red-900 hover:text-red-500 border border-transparent hover:translate-x-1 ${isModified ? 'border-l-2 border-l-orange-500' : isStaged ? 'border-l-2 border-l-green-500' : ''}`
+                }`}
                 style={{ paddingLeft: `${level * 12 + 12}px` }}
-                onClick={() => item.type === 'folder' ? toggleFolder(item.id) : handleFileSwitch(item.id)}
+                onClick={() =>
+                  item.type === 'folder' ? toggleFolder(item.id) : handleFileSwitch(item.id)
+                }
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setContextMenu({ x: e.clientX, y: e.clientY, itemId: item.id });
+                }}
               >
                 {item.type === 'folder' ? (
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform shrink-0 ${item.isOpen ? '' : '-rotate-90'}`} />
+                  <div className="flex items-center gap-1.5">
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 transition-transform shrink-0 ${item.isOpen ? '' : '-rotate-90'}`}
+                    />
+                    {item.isOpen ? (
+                      <FolderOpen className="w-3.5 h-3.5 shrink-0" />
+                    ) : (
+                      <Folder className="w-3.5 h-3.5 shrink-0" />
+                    )}
+                  </div>
                 ) : (
-                  <FileCode className={`w-3.5 h-3.5 shrink-0 ${isModified ? 'text-orange-500' : isStaged ? 'text-green-500' : ''}`} />
+                  <FileCode
+                    className={`w-3.5 h-3.5 shrink-0 ${isModified ? 'text-orange-500' : isStaged ? 'text-green-500' : ''}`}
+                  />
                 )}
-                
+
                 {isRenaming ? (
                   <input
                     autoFocus
@@ -1852,29 +3480,71 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
                     onChange={(e) => setNewName(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleConfirmRename();
-                      if (e.key === 'Escape') { setRenamingId(null); setNewName(''); }
+                      if (e.key === 'Escape') {
+                        setRenamingId(null);
+                        setNewName('');
+                      }
                     }}
                     onBlur={handleConfirmRename}
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
-                  <span className={`flex-1 truncate ${isModified ? 'text-orange-500' : isStaged ? 'text-green-500' : ''}`}>
+                  <span className={`flex-1 truncate flex items-center gap-2`}>
                     {item.name}
-                    {isModified && <span className="ml-2 w-1.5 h-1.5 rounded-full bg-orange-500 inline-block animate-pulse" title="Modified" />}
-                    {isStaged && <span className="ml-2 w-1.5 h-1.5 rounded-full bg-green-500 inline-block" title="Staged" />}
+                    {isModified && <Edit2 className="w-3 h-3 text-orange-500 shrink-0" />}
+                    {isStaged && <Check className="w-3 h-3 text-green-500 shrink-0" />}
+                    {!isModified && !isStaged && item.type === 'file' && (
+                      <GitBranch className="w-3 h-3 text-gray-700 shrink-0" />
+                    )}
                   </span>
                 )}
-                
+
                 {!isRenaming && (
                   <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 flex items-center gap-1 shrink-0">
                     {item.type === 'folder' && (
                       <>
-                        <button onClick={(e) => { e.stopPropagation(); createFile(item.id); }} title="New File" className="p-1.5 hover:text-white transition-colors"><Plus className="w-3.5 h-3.5" /></button>
-                        <button onClick={(e) => { e.stopPropagation(); createFolder(item.id); }} title="New Folder" className="p-1.5 hover:text-white transition-colors"><Folder className="w-3.5 h-3.5" /></button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            createFile(item.id);
+                          }}
+                          title="New File"
+                          className="p-1.5 hover:text-white transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            createFolder(item.id);
+                          }}
+                          title="New Folder"
+                          className="p-1.5 hover:text-white transition-colors"
+                        >
+                          <Folder className="w-3.5 h-3.5" />
+                        </button>
                       </>
                     )}
-                    <button onClick={(e) => { e.stopPropagation(); renameItem(item.id); }} title="Rename" className="p-1.5 hover:text-white transition-colors"><Edit2 className="w-3.5 h-3.5" /></button>
-                    <button onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }} title="Delete" className="p-1.5 text-red-600 hover:text-red-400 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        renameItem(item.id);
+                      }}
+                      title="Rename"
+                      className="p-1.5 hover:text-white transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteItem(item.id);
+                      }}
+                      title="Delete"
+                      className="p-1.5 text-red-600 hover:text-red-400 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 )}
               </div>
@@ -1882,22 +3552,29 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
             </div>
           );
         })}
-        
+
         {creatingInId?.parentId === parentId && (
-          <div 
+          <div
             className="flex items-center gap-3 px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest bg-red-950/20 border border-dashed border-red-500/30"
             style={{ paddingLeft: `${level * 12 + 12}px` }}
           >
-            {creatingInId.type === 'folder' ? <Folder className="w-3 h-3 text-red-500" /> : <FileCode className="w-3 h-3 text-red-500" />}
+            {creatingInId.type === 'folder' ? (
+              <Folder className="w-3 h-3 text-red-500" />
+            ) : (
+              <FileCode className="w-3 h-3 text-red-500" />
+            )}
             <input
               autoFocus
-              placeholder={creatingInId.type === 'folder' ? "Folder name..." : "File name..."}
+              placeholder={creatingInId.type === 'folder' ? 'Folder name...' : 'File name...'}
               className="flex-1 bg-transparent border-b border-red-500/50 text-white outline-none font-mono text-[10px]"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleConfirmCreate();
-                if (e.key === 'Escape') { setCreatingInId(null); setNewName(''); }
+                if (e.key === 'Escape') {
+                  setCreatingInId(null);
+                  setNewName('');
+                }
               }}
               onBlur={handleConfirmCreate}
             />
@@ -1908,7 +3585,15 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-full bg-[#020204] text-red-100 font-sans selection:bg-red-900/40 overflow-hidden">
+    <div className="flex flex-col md:flex-row h-screen min-h-[100dvh] w-full bg-[#050101] text-[#00ff00] font-sans selection:bg-red-900/40 overflow-hidden border-4 border-blue-500" style={{opacity:1, visibility:'visible', display:'flex'}}>
+      <button 
+        onClick={() => document.body.style.background = 'white'}
+        style={{position:'fixed', top:10, left:10, zIndex:99999, background:'red', color:'white', padding:'10px', fontSize:'12px', fontWeight:'bold'}}
+      >
+        EMERGENCY WHITE BG
+      </button>
+      {/* φ Pulse Column — fixed right edge, doesn't affect layout */}
+      <div className="phi-grid phi-grid__pulse fixed right-0 top-0 bottom-0 w-[3px] md:w-[4px] z-50 pointer-events-none" aria-hidden="true" />
       {/* Sidebar Navigation - Hidden on mobile */}
       <nav className="hidden md:flex w-20 border-r border-red-900/30 flex-col items-center py-8 space-y-8 bg-[#080101] z-30 shadow-[10px_0_40px_rgba(153,27,27,0.1)] relative">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(153,27,27,0.05),transparent)] pointer-events-none" />
@@ -1916,2199 +3601,699 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
           <Cpu className="w-6 h-6 text-white" />
         </div>
         <div className="flex-1 space-y-6 relative z-10">
-          <SidebarIcon icon={<Zap />} active={activeTab === 'toolneuron'} onClick={() => setActiveTab('toolneuron')} label="ToolNeuron Hub" />
-          <SidebarIcon icon={<TerminalIcon />} active={activeTab === 'terminal'} onClick={() => setActiveTab('terminal')} label="Terminal" />
-          <SidebarIcon icon={<Code2 />} active={activeTab === 'editor'} onClick={() => setActiveTab('editor')} label="Neural Editor" />
-          <SidebarIcon icon={<ImageIcon />} active={activeTab === 'studio'} onClick={() => setActiveTab('studio')} label="Crimson Studio" />
-          <SidebarIcon icon={<Smartphone />} active={activeTab === 'termux'} onClick={() => setActiveTab('termux')} label="Node Bridge" />
-          <SidebarIcon icon={<HardDrive />} active={activeTab === 'storage'} onClick={() => setActiveTab('storage')} label="Data Core" />
+          <SidebarIcon
+            icon={<Zap />}
+            active={activeTab === 'toolneuron'}
+            onClick={() => setActiveTab('toolneuron')}
+            label="ToolNeuron Hub"
+          />
+          <SidebarIcon
+            icon={<TerminalIcon />}
+            active={activeTab === 'terminal'}
+            onClick={() => setActiveTab('terminal')}
+            label="Terminal"
+          />
+          <SidebarIcon
+            icon={<Code2 />}
+            active={activeTab === 'editor'}
+            onClick={() => setActiveTab('editor')}
+            label="Neural Editor"
+          />
+          <SidebarIcon
+            icon={<LayoutTemplate />}
+            active={activeTab === 'analysis'}
+            onClick={() => setActiveTab('analysis')}
+            label="Code Analysis"
+          />
+          <SidebarIcon
+            icon={<Brain />}
+            active={activeTab === 'brain'}
+            onClick={() => setActiveTab('brain')}
+            label="Neural Core"
+          />
+          <SidebarIcon
+            icon={<Smartphone />}
+            active={activeTab === 'termux'}
+            onClick={() => setActiveTab('termux')}
+            label="Node Bridge"
+          />
+          <SidebarIcon
+            icon={<HardDrive />}
+            active={activeTab === 'storage'}
+            onClick={() => setActiveTab('storage')}
+            label="Data Core"
+          />
         </div>
-        <SidebarIcon icon={<SettingsIcon />} active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} label="System Config" />
+        <SidebarIcon
+          icon={<SettingsIcon />}
+          active={activeTab === 'settings'}
+          onClick={() => setActiveTab('settings')}
+          label="System Config"
+        />
       </nav>
 
       {/* Bottom Navigation - Visible only on mobile */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#080101]/95 backdrop-blur-xl border-t border-red-900/30 flex items-center justify-around px-2 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-        <button onClick={() => setActiveTab('toolneuron')} className={`p-3 rounded-xl transition-all ${activeTab === 'toolneuron' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}>
-          <Zap size={20} />
-        </button>
-        <button onClick={() => setActiveTab('terminal')} className={`p-3 rounded-xl transition-all ${activeTab === 'terminal' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}>
-          <TerminalIcon size={20} />
-        </button>
-        <button onClick={() => setActiveTab('editor')} className={`p-3 rounded-xl transition-all ${activeTab === 'editor' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}>
-          <Code2 size={20} />
-        </button>
-        <button onClick={() => setActiveTab('studio')} className={`p-3 rounded-xl transition-all ${activeTab === 'studio' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}>
-          <ImageIcon size={20} />
-        </button>
-        <button onClick={() => setActiveTab('settings')} className={`p-3 rounded-xl transition-all ${activeTab === 'settings' ? 'text-red-500 bg-red-950/20' : 'text-red-900'}`}>
-          <SettingsIcon size={20} />
-        </button>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#080101]/95 backdrop-blur-xl border-t border-red-900/30 flex items-center justify-around px-1 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        {([
+          ['toolneuron', <Zap size={18} />],
+          ['terminal',   <TerminalIcon size={18} />],
+          ['editor',     <Code2 size={18} />],
+          ['analysis',   <LayoutTemplate size={18} />],
+          ['brain',      <Brain size={18} />],
+          ['termux',     <Smartphone size={18} />],
+          ['storage',    <HardDrive size={18} />],
+          ['settings',   <SettingsIcon size={18} />],
+        ] as [string, React.ReactNode][]).map(([tab, icon]) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab as any)}
+            className={`flex-1 flex items-center justify-center py-2 rounded-xl transition-all ${activeTab === tab ? 'text-red-500 bg-red-950/30' : 'text-red-900 active:text-red-600'}`}
+          >
+            {icon}
+          </button>
+        ))}
       </nav>
 
       {/* Main Interface */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] bg-repeat pb-16 md:pb-0">
+      <main className="flex-1 flex flex-col min-w-0 bg-[#0a0a0c] pb-14 md:pb-0 overflow-hidden border-4 border-red-500">
         <header className="h-14 md:h-16 border-b border-red-900/30 flex items-center justify-between px-4 md:px-8 bg-[#0a0202]/95 backdrop-blur-xl z-20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
           <div className="flex items-center space-x-3 md:space-x-6">
-            <h1 className="text-[10px] md:text-sm font-black tracking-[0.2em] md:tracking-[0.4em] text-red-500 uppercase drop-shadow-[0_0_10px_rgba(239,68,68,0.5)] truncate max-w-[80px] md:max-w-none">{activeTab} node</h1>
-            
-            {/* Model Selector */}
-            <div className="flex items-center gap-1 md:gap-2 bg-red-950/40 border border-red-800/40 rounded-full px-2 md:px-3 py-1">
-              <select 
-                value={aiProvider}
+            <button
+              onClick={() => setIsMobileFileTreeOpen(true)}
+              className="lg:hidden p-2 text-red-500 hover:bg-red-900/20 rounded-xl transition-all"
+            >
+              <FolderOpen className="w-5 h-5" />
+            </button>
+            <h1 className="text-[10px] md:text-sm font-black tracking-[0.2em] md:tracking-[0.4em] text-red-500 uppercase drop-shadow-[0_0_10px_rgba(239,68,68,0.5)] truncate max-w-[80px] md:max-w-none">
+              {activeTab} node
+            </h1>
+
+            {/* MOBILE: Ollama model button → tap to open sheet */}
+            <button
+              onClick={() => setWorkerSheetOpen(true)}
+              className={`md:hidden flex items-center gap-1.5 border rounded-full px-3 py-1.5 transition-all ${ollamaStatus === 'connected' ? 'bg-green-950/40 border-green-800/40' : ollamaStatus === 'connecting' ? 'bg-yellow-950/40 border-yellow-800/40' : 'bg-red-950/40 border-red-800/40'}`}
+              title="Configure Ollama models"
+            >
+              <span className={`w-2 h-2 rounded-full shrink-0 ${ollamaStatus === 'connected' ? 'bg-green-500' : ollamaStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-700'}`} />
+              <span className="text-[10px] font-black text-red-200 uppercase tracking-wider">Ollama</span>
+              <span className="text-[9px] text-red-400">▾</span>
+            </button>
+
+            {/* DESKTOP: full inline worker slots */}
+            <div className="hidden md:flex items-center gap-2">
+              {workers.map((w) => (
+                <div key={w.id} className={`flex items-center gap-1 border rounded-full px-2 py-0.5 transition-all ${w.enabled ? 'bg-red-950/40 border-red-800/40' : 'bg-red-950/10 border-red-900/20 opacity-50'}`}>
+                  <button
+                    onClick={() => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, enabled: !x.enabled } : x))}
+                    className={`text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 transition-all ${w.enabled ? 'bg-red-600 text-white shadow-[0_0_6px_rgba(220,38,38,0.6)]' : 'bg-red-900/40 text-red-700'}`}
+                    title={w.enabled ? `Disable W${w.id}` : `Enable W${w.id}`}
+                  >{w.id}</button>
+                  <select
+                    value={w.provider}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, provider: e.target.value as any, model: e.target.value === 'google' ? 'gemini-3-flash' : e.target.value === 'grok' ? 'grok-beta' : x.model || 'llama3.2:latest' } : x))}
+                    className={`bg-transparent text-[9px] font-black outline-none cursor-pointer w-14 truncate transition-colors ${w.enabled ? 'text-red-300' : 'text-red-900 pointer-events-none'}`}
+                    title="Provider"
+                  >
+                    <option value="ollama" className="bg-[#0a0202] text-red-200">Ollama</option>
+                    <option value="google" className="bg-[#0a0202] text-red-200">Google</option>
+                    <option value="grok" className="bg-[#0a0202] text-red-200">Grok</option>
+                  </select>
+                  <select
+                    value={w.model}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, model: e.target.value } : x))}
+                    className={`bg-transparent text-[10px] font-black outline-none cursor-pointer w-24 truncate transition-colors ${w.enabled ? 'text-red-300' : 'text-red-900 pointer-events-none'}`}
+                  >
+                    {w.provider === 'ollama' && availableModels.length > 0
+                      ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202] text-red-200">{m}</option>)
+                      : w.provider === 'google'
+                        ? ['gemini-3-flash', 'gemini-3.1-pro-preview'].map(m => <option key={m} value={m} className="bg-[#0a0202] text-red-200">{m}</option>)
+                        : w.provider === 'grok'
+                          ? ['grok-beta', 'grok-2-latest'].map(m => <option key={m} value={m} className="bg-[#0a0202] text-red-200">{m}</option>)
+                          : <option value={w.model} className="bg-[#0a0202]">{w.model || 'llama3'}</option>
+                    }
+                  </select>
+                  <select
+                    value={w.agentId || ''}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x))}
+                    className={`bg-transparent text-[9px] font-black outline-none cursor-pointer max-w-[80px] truncate transition-colors ${w.enabled ? 'text-red-400' : 'text-red-900 pointer-events-none'}`}
+                    title="Agent role"
+                  >
+                    <option value="" className="bg-[#0a0202] text-red-200">🤖 General</option>
+                    {AGENT_DOMAINS.map(domain => (
+                      <optgroup key={domain} label={domain} className="bg-[#0a0202]">
+                        {getAgentsByDomain(domain).map(a => (
+                          <option key={a.id} value={a.id} className="bg-[#0a0202] text-red-200">{a.emoji} {a.label}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+              ))}
+              <button
+                onClick={() => refreshOllamaModels()}
+                className={`text-[11px] transition-colors shrink-0 ${ollamaStatus === 'connected' ? 'text-green-500 hover:text-green-400' : ollamaStatus === 'connecting' ? 'text-yellow-500 animate-pulse' : 'text-red-700 hover:text-red-400'}`}
+                title={`Ollama: ${ollamaStatus}`}
+              >↻</button>
+            </div>
+
+            {/* Personality Selector */}
+            <div className="hidden md:flex items-center gap-2 bg-red-950/40 border border-red-800/40 rounded-full px-3 py-1">
+              <UserCircle className="w-4 h-4 text-red-500" />
+              <select
+                value={personalities.find((p) => p.active)?.id || ''}
                 onChange={(e) => {
-                  const p = e.target.value as 'google' | 'grok' | 'ollama';
-                  setAiProvider(p);
-                  if (p === 'google') setAiModel('gemini-3.1-pro-preview');
-                  else if (p === 'grok') setAiModel('grok-beta');
-                  else if (p === 'ollama') setAiModel(ollamaModels[0] || 'llama3');
+                  const id = parseInt(e.target.value);
+                  setPersonalities((prev) =>
+                    prev.map((pers) => ({ ...pers, active: pers.id === id }))
+                  );
                 }}
-                className="bg-transparent text-[8px] md:text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest"
+                className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest max-w-[120px] truncate"
               >
-                <option value="google" className="bg-[#0a0202]">Google</option>
-                <option value="grok" className="bg-[#0a0202]">Grok</option>
-                <option value="ollama" className="bg-[#0a0202]">Ollama</option>
+                {personalities.map((p) => (
+                  <option key={p.id} value={p.id} className="bg-[#0a0202]">
+                    {p.name}
+                  </option>
+                ))}
               </select>
-              <div className="w-px h-3 bg-red-900/50" />
-              {aiProvider === 'ollama' ? (
-                <select
-                  value={aiModel}
-                  onChange={(e) => setAiModel(e.target.value)}
-                  className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest w-24 truncate"
-                >
-                  {ollamaModels.length > 0 ? ollamaModels.map(m => (
-                    <option key={m} value={m} className="bg-[#0a0202]">{m}</option>
-                  )) : <option value="llama3" className="bg-[#0a0202]">llama3</option>}
-                </select>
-              ) : aiProvider === 'google' ? (
-                <select
-                  value={aiModel}
-                  onChange={(e) => setAiModel(e.target.value)}
-                  className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest w-24 truncate"
-                >
-                  <option value="gemini-3.1-pro-preview" className="bg-[#0a0202]">gemini-3.1-pro</option>
-                  <option value="gemini-3.1-flash-preview" className="bg-[#0a0202]">gemini-3.1-flash</option>
-                  <option value="gemini-2.5-flash-image" className="bg-[#0a0202]">gemini-2.5-image</option>
-                </select>
-              ) : (
-                <select
-                  value={aiModel}
-                  onChange={(e) => setAiModel(e.target.value)}
-                  className="bg-transparent text-[10px] font-black text-red-400 outline-none cursor-pointer uppercase tracking-widest w-24 truncate"
-                >
-                  <option value="grok-beta" className="bg-[#0a0202]">grok-beta</option>
-                  <option value="grok-vision-beta" className="bg-[#0a0202]">grok-vision</option>
-                </select>
-              )}
             </div>
 
             <div className="px-2 md:px-4 py-1 bg-red-950/40 border border-red-800/40 rounded-full text-[8px] md:text-[10px] text-red-400 font-black flex items-center gap-1.5 md:gap-3">
-              <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_12px_#ef4444]" />
-              <span className="truncate max-w-[60px] md:max-w-none">{activePersonality.name.toUpperCase()} ACTIVE</span>
+              <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500 animate-pulse glow-red" />
+              <span className="truncate max-w-[60px] md:max-w-none">
+                {activePersonality.name.toUpperCase()} ACTIVE
+              </span>
             </div>
           </div>
           <div className="flex items-center space-x-4 md:space-x-8">
-             <div className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-red-400/60 bg-red-950/20 px-4 py-2 rounded-xl border border-red-900/20">
-                <Gauge className="w-4 h-4 text-red-600" />
-                <span className="font-black tracking-widest">88%</span>
-             </div>
-             <div className={`w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full ${termuxStatus === 'connected' ? 'bg-red-500 shadow-[0_0_15px_#ef4444]' : 'bg-red-950/40 border border-red-900/30'}`} />
+            <div className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-red-400/60 bg-red-950/20 px-4 py-2 rounded-xl border border-red-900/20">
+              <Gauge className="w-4 h-4 text-red-600" />
+              <span className="font-black tracking-widest">88%</span>
+            </div>
+            <div
+              className={`w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full ${termuxStatus === 'connected' ? 'bg-red-500 glow-red' : 'bg-red-950/40 border border-red-900/30'}`}
+            />
           </div>
         </header>
 
-        <div className="flex-1 overflow-hidden relative">
+        <div className="flex-1 overflow-y-auto relative custom-scrollbar">
           {/* Subtle Grid Overlay */}
           <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(185,28,28,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(185,28,28,0.2)_1px,transparent_1px)] bg-[size:40px_40px]" />
-          
+
           {/* TOOLNEURON HUB */}
           {activeTab === 'toolneuron' && (
-            <div className="h-full flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
-              <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-8 min-h-0 overflow-y-auto lg:overflow-hidden custom-scrollbar">
-                {/* Module Navigation */}
-                <div className="w-full lg:w-72 flex flex-col gap-4 md:gap-6 shrink-0">
-                  <div className="bg-[#0d0404]/80 rounded-[30px] md:rounded-[40px] border border-red-900/30 p-6 md:p-8 space-y-6 md:space-y-8 shadow-2xl">
-                    <div className="space-y-1 md:space-y-2">
-                       <h3 className="text-lg md:text-xl font-black text-red-100 uppercase tracking-tighter">ToolNeuron</h3>
-                       <p className="text-[9px] md:text-[10px] text-red-900 font-black tracking-[0.3em] uppercase">Offline AI Ecosystem</p>
-                    </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 md:gap-3">
-                      {[
-                        { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
-                        { id: 'vision', label: 'Vision', icon: <ImageIcon className="w-4 h-4" /> },
-                        { id: 'knowledge', label: 'Database', icon: <Database className="w-4 h-4" /> },
-                        { id: 'vault', label: 'Vault', icon: <ShieldCheck className="w-4 h-4" /> },
-                        { id: 'swarm', label: 'Swarm', icon: <Network className="w-4 h-4" /> },
-                        { id: 'debug', label: 'Debug', icon: <Bug className="w-4 h-4" /> },
-                        { id: 'help', label: 'Guide', icon: <HelpCircle className="w-4 h-4" /> }
-                      ].map(mod => (
-                        <button 
-                          key={mod.id}
-                          onClick={() => setTnModule(mod.id as any)}
-                          className={`flex items-center gap-3 md:gap-4 px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl text-[9px] md:text-[11px] font-black uppercase tracking-widest transition-all ${tnModule === mod.id ? 'bg-red-700 text-white shadow-lg scale-[1.02]' : 'bg-red-950/10 text-red-900 hover:text-red-500'}`}
-                        >
-                          {mod.icon}
-                          <span className="truncate">{mod.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="hidden lg:flex flex-1 bg-[#0d0404]/80 rounded-[40px] border border-red-900/30 p-8 space-y-6 shadow-2xl overflow-y-auto custom-scrollbar">
-                     <h4 className="text-[10px] font-black text-red-800 uppercase tracking-[0.4em]">System Status</h4>
-                     <div className="space-y-4">
-                        <div className="p-4 bg-red-950/10 rounded-2xl border border-red-900/10">
-                           <p className="text-[9px] text-red-900 font-black uppercase mb-2">Local Inference</p>
-                           <div className="flex items-center justify-between">
-                              <span className="text-[11px] text-red-100 font-bold">GGUF_Llama_3</span>
-                              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                           </div>
-                        </div>
-                        <div className="p-4 bg-red-950/10 rounded-2xl border border-red-900/10">
-                           <p className="text-[9px] text-red-900 font-black uppercase mb-2">Vault Encryption</p>
-                           <span className="text-[11px] text-red-100 font-bold">AES-256-GCM</span>
-                        </div>
-                     </div>
-                  </div>
-                </div>
-
-                {/* Module Content */}
-                <div className="flex-1 bg-[#0d0404]/80 rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden flex flex-col">
-                  {tnModule === 'chat' && (
-                    <div className="flex-1 flex flex-col min-h-0">
-                       <div className="h-16 border-b border-red-900/20 flex items-center px-8 bg-black/40 justify-between">
-                          <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                             <MessageSquare className="w-4 h-4" /> Neural Chat Interface
-                          </h4>
-                          <span className="text-[10px] font-mono text-red-900">LATENCY: 12ms</span>
-                       </div>
-                       <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
-                          {chatMessages.map((msg, i) => (
-                            <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                               <div className={`max-w-[80%] rounded-3xl p-6 text-[13px] leading-relaxed ${
-                                 msg.role === 'user' 
-                                   ? 'bg-red-800 text-white rounded-tr-none' 
-                                   : 'bg-red-950/20 border border-red-900/20 text-red-100 rounded-tl-none'
-                               }`}>
-                                  {msg.text}
-                               </div>
-                            </div>
-                          ))}
-                       </div>
-                       <form onSubmit={handleStudioSubmit} className="p-8 bg-black/40 border-t border-red-900/20">
-                          <div className="relative max-w-3xl mx-auto">
-                             <input value={studioInput} onChange={(e) => setStudioInput(e.target.value)} placeholder="Send local neural directive..." className="w-full bg-[#0d0404] border border-red-900/40 rounded-2xl px-6 py-4 text-sm text-red-100 focus:border-red-600/60 outline-none" />
-                             <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 bg-red-700 rounded-xl text-white">
-                                <Send className="w-5 h-5" />
-                             </button>
-                          </div>
-                       </form>
-                    </div>
-                  )}
-
-                  {tnModule === 'knowledge' && (
-                    <div className="flex-1 p-12 space-y-10 overflow-y-auto custom-scrollbar">
-                       <div className="flex items-center justify-between">
-                          <div className="space-y-2">
-                             <h3 className="text-2xl font-black text-red-100 uppercase tracking-tighter">Neural RAG Database</h3>
-                             <p className="text-sm text-red-900 font-bold tracking-widest">Inject specialized datasets for context-aware inference.</p>
-                          </div>
-                          <label className="px-6 py-3 bg-red-700 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg cursor-pointer hover:bg-red-600 transition-all active:scale-95">
-                             Inject Pack
-                             <input type="file" className="hidden" multiple onChange={handleKnowledgeUpload} accept=".pdf,.txt,.docx,.json,.mht,.csv" />
-                          </label>
-                       </div>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {tnKnowledgePacks.map(pack => (
-                            <div key={pack.id} className="p-8 bg-red-950/5 border border-red-900/20 rounded-[32px] group hover:bg-red-900/10 transition-all relative overflow-hidden">
-                               {pack.status === 'indexing' && (
-                                 <div className="absolute inset-0 bg-red-950/40 backdrop-blur-[2px] z-10 flex items-center justify-center">
-                                   <div className="flex flex-col items-center gap-3">
-                                     <Zap className="w-8 h-8 text-red-500 animate-pulse" />
-                                     <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.3em]">Indexing Neural Vectors...</span>
-                                   </div>
-                                 </div>
-                               )}
-                               <div className="flex items-center gap-6 mb-6">
-                                  <div className="p-4 bg-red-900/20 rounded-2xl">
-                                     <Database className="w-6 h-6 text-red-500" />
-                                  </div>
-                                  <div className="flex-1">
-                                     <p className="text-[15px] font-black text-red-100 uppercase tracking-tight">{pack.name}</p>
-                                     <p className="text-[10px] uppercase tracking-[0.3em] text-red-800 font-black mt-2">{pack.size} • {pack.status}</p>
-                                  </div>
-                               </div>
-                               <div className="flex gap-3">
-                                  <button className="flex-1 py-3 bg-red-900/20 text-[10px] font-black uppercase text-red-700 rounded-xl">Re-Index</button>
-                                  <button className="p-3 text-red-900 hover:text-red-500 transition-all"><Trash2 className="w-5 h-5" /></button>
-                               </div>
-                            </div>
-                          ))}
-                       </div>
-                    </div>
-                  )}
-
-                  {tnModule === 'vault' && (
-                    <div className="flex-1 flex flex-col h-full overflow-hidden">
-                        {!isVaultUnlocked ? (
-                          <div 
-                            key="locked"
-                            className="flex-1 flex flex-col items-center justify-center p-12 space-y-12 text-center transition-all"
-                          >
-                            <div className="relative">
-                              <div className="p-12 bg-red-900/10 rounded-full border border-red-600/20 shadow-[0_0_80px_rgba(185,28,28,0.15)] relative z-10">
-                                <ShieldCheck className="w-24 h-24 text-red-600" />
-                              </div>
-                              {isBiometricVerifying && (
-                                <div 
-                                  className="absolute left-0 right-0 h-1 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,1)] z-20 animate-[pulse_1.5s_ease-in-out_infinite]"
-                                />
-                              )}
-                            </div>
-
-                            <div className="space-y-4 max-w-md">
-                              <h3 className="text-3xl font-black text-red-100 uppercase tracking-tighter">
-                                {isBiometricVerifying ? 'Scanning Neural Pattern' : vaultStep === 'pin' ? 'Enter Access Code' : 'Memory Vault Locked'}
-                              </h3>
-                              <p className="text-sm text-red-900 font-bold leading-relaxed uppercase tracking-widest">
-                                {vaultError || (isBiometricVerifying ? 'Verifying biometric signature...' : 'Hardware-backed encryption active')}
-                              </p>
-                            </div>
-
-                            {vaultStep === 'initial' && !isBiometricVerifying && (
-                              <div className="flex flex-col gap-4 w-full max-w-xs">
-                                <button 
-                                  onClick={startBiometric}
-                                  className="w-full py-5 bg-red-700 text-white rounded-[32px] font-black text-xs uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"
-                                >
-                                  <Fingerprint className="w-5 h-5" />
-                                  Biometric Unlock
-                                </button>
-                                <button 
-                                  onClick={() => setVaultStep('pin')}
-                                  className="w-full py-5 bg-transparent border border-red-900/30 text-red-600 rounded-[32px] font-black text-xs uppercase tracking-[0.4em] hover:bg-red-900/10 active:scale-95 transition-all"
-                                >
-                                  Use PIN Code
-                                </button>
-                              </div>
-                            )}
-
-                            {vaultStep === 'pin' && (
-                              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-                                <div className="flex gap-4 justify-center">
-                                  {[0, 1, 2, 3].map(i => (
-                                    <div 
-                                      key={i} 
-                                      className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
-                                        vaultPin.length > i ? 'bg-red-600 border-red-600 scale-125 shadow-[0_0_10px_rgba(220,38,38,0.5)]' : 'border-red-900/50'
-                                      }`} 
-                                    />
-                                  ))}
-                                </div>
-                                <div className="grid grid-cols-3 gap-4">
-                                  {['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '←'].map(key => (
-                                    <button
-                                      key={key}
-                                      onClick={() => {
-                                        if (key === 'C') setVaultPin('');
-                                        else if (key === '←') setVaultPin(prev => prev.slice(0, -1));
-                                        else handleVaultPin(key);
-                                      }}
-                                      className="w-16 h-16 rounded-2xl bg-red-950/20 border border-red-900/20 flex items-center justify-center font-mono text-xl text-red-100 hover:bg-red-900/40 hover:border-red-600/50 transition-all active:scale-90"
-                                    >
-                                      {key}
-                                    </button>
-                                  ))}
-                                </div>
-                                <button 
-                                  onClick={() => { setVaultStep('initial'); setVaultPin(''); }}
-                                  className="text-[10px] font-black text-red-900 uppercase tracking-[0.3em] hover:text-red-600 transition-colors"
-                                >
-                                  Cancel Verification
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div 
-                            key="unlocked"
-                            className="flex-1 flex flex-col p-12 space-y-12 overflow-y-auto custom-scrollbar transition-all"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="space-y-2">
-                                <h3 className="text-3xl font-black text-red-100 uppercase tracking-tighter flex items-center gap-4">
-                                  <Unlock className="w-8 h-8 text-red-500" />
-                                  Vault Decrypted
-                                </h3>
-                                <p className="text-[10px] text-red-900 font-black uppercase tracking-[0.3em]">Secure Session Active • AES-256-GCM</p>
-                              </div>
-                              <button 
-                                onClick={() => setIsVaultUnlocked(false)}
-                                className="px-6 py-3 bg-red-950/30 border border-red-900/30 text-red-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-900/20 transition-all"
-                              >
-                                Lock Vault
-                              </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                              {[
-                                { title: 'Neural Weights', desc: 'Optimized Llama-3 8B weights for local inference.', size: '4.8GB', date: '2024-03-20' },
-                                { title: 'Personal Dataset', desc: 'Encrypted JSON export of private chat history.', size: '124MB', date: '2024-03-22' },
-                                { title: 'Hardware Keys', desc: 'Master recovery keys for crimson-node-01.', size: '2KB', date: '2024-01-15' },
-                                { title: 'Vision Assets', desc: 'High-fidelity textures for UI generation.', size: '850MB', date: '2024-03-23' }
-                              ].map((item, i) => (
-                                <div 
-                                  key={i} 
-                                  className="p-8 bg-red-950/5 border border-red-900/20 rounded-[40px] space-y-4 group hover:border-red-600/30 transition-all cursor-pointer animate-in fade-in slide-in-from-left-4"
-                                  style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div className="p-3 bg-red-900/10 rounded-2xl border border-red-900/20 text-red-500 group-hover:scale-110 transition-transform">
-                                      <FileCode className="w-5 h-5" />
-                                    </div>
-                                    <span className="text-[10px] font-black text-red-900 uppercase tracking-widest">{item.size}</span>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <h4 className="text-lg font-black text-red-100 uppercase tracking-tight">{item.title}</h4>
-                                    <p className="text-xs text-red-100/50 leading-relaxed">{item.desc}</p>
-                                  </div>
-                                  <div className="pt-4 flex items-center justify-between border-t border-red-900/10">
-                                    <span className="text-[9px] font-black text-red-950 uppercase tracking-widest">{item.date}</span>
-                                    <Download className="w-4 h-4 text-red-900 hover:text-red-500 transition-colors" />
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                    </div>
-                  )}
-
-                  {tnModule === 'vision' && (
-                    <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-8 text-center">
-                       <div className="p-12 bg-red-900/10 rounded-full border border-red-600/20 shadow-[0_0_60px_rgba(185,28,28,0.1)]">
-                          <ImageIcon className="w-24 h-24 text-red-600" />
-                       </div>
-                       <div className="space-y-4 max-w-md">
-                          <h3 className="text-3xl font-black text-red-100 uppercase tracking-tighter">Vision Synth Engine</h3>
-                          <p className="text-sm text-red-900 font-bold leading-relaxed">Local Stable Diffusion 1.5 inference. Generate high-fidelity visuals without cloud latency or data harvesting.</p>
-                       </div>
-                       <button onClick={() => setActiveTab('studio')} className="px-12 py-5 bg-red-700 text-white rounded-[32px] font-black text-xs uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all">Initialize Engine</button>
-                    </div>
-                  )}
-
-                  {tnModule === 'swarm' && (
-                    <div className="flex-1 p-10 space-y-10 overflow-y-auto custom-scrollbar">
-                       <div className="flex items-center justify-between border-b border-red-900/20 pb-8">
-                          <div className="space-y-2">
-                             <h3 className="text-3xl font-black text-red-100 uppercase tracking-tighter flex items-center gap-5">
-                               <Network className="w-8 h-8 text-red-600" /> Neural Swarm Core
-                             </h3>
-                             <p className="text-sm text-red-900 font-bold tracking-widest uppercase">Biomimetic distributed intelligence & consensus engine</p>
-                          </div>
-                          <div className="flex items-center gap-6">
-                             <div className="text-right">
-                                <p className="text-[10px] font-black text-red-900 uppercase tracking-widest mb-1">Swarm Anxiety</p>
-                                <p className={`text-lg font-mono font-black ${(swarmAnxiety * 100) > 50 ? 'text-red-500' : 'text-red-700'}`}>{(swarmAnxiety * 100).toFixed(1)}%</p>
-                             </div>
-                             <button 
-                               onClick={triggerSwarmCycle}
-                               disabled={isAiProcessing}
-                               className="px-8 py-4 bg-red-700 hover:bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-lg active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
-                             >
-                               <Zap className={`w-4 h-4 ${isAiProcessing ? 'animate-pulse' : ''}`} />
-                               {isAiProcessing ? 'Processing...' : 'Trigger Cycle'}
-                             </button>
-                          </div>
-                       </div>
-
-                       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                          {/* Swarm Visualization */}
-                          <div className="lg:col-span-2 space-y-8">
-                             <div className="bg-red-950/5 border border-red-900/20 rounded-[40px] p-10 relative overflow-hidden h-[500px] flex items-center justify-center">
-                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(153,27,27,0.1)_0%,transparent_70%)]" />
-                                <div className="relative w-full h-full">
-                                   {swarmAgents.map((agent, i) => {
-                                     const angle = (i / swarmAgents.length) * Math.PI * 2;
-                                     const x = Math.cos(angle) * 160;
-                                     const y = Math.sin(angle) * 160;
-                                     return (
-                                       <div
-                                         key={agent.id}
-                                         style={{ 
-                                           transform: `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${agent.status === 'active' ? 1.1 : 1})`
-                                         }}
-                                         className="absolute left-1/2 top-1/2 flex flex-col items-center gap-3 transition-all duration-500"
-                                       >
-                                          <div className={`w-16 h-16 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${
-                                            agent.status === 'active' 
-                                              ? 'bg-red-600 border-red-400 shadow-[0_0_30px_rgba(220,38,38,0.6)]' 
-                                              : 'bg-red-950/40 border-red-900/40'
-                                          }`}>
-                                             <Users className={`w-7 h-7 ${agent.status === 'active' ? 'text-white' : 'text-red-900'}`} />
-                                          </div>
-                                          <div className="text-center">
-                                             <p className="text-[10px] font-black text-red-100 uppercase tracking-tighter">{agent.name}</p>
-                                             <p className="text-[8px] font-black text-red-900 uppercase tracking-widest mt-1">{agent.expertise}</p>
-                                          </div>
-                                       </div>
-                                     );
-                                   })}
-                                   {/* Center Core */}
-                                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-red-900/20 rounded-full blur-3xl animate-pulse" />
-                                   <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                                      <Brain className="w-12 h-12 text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]" />
-                                   </div>
-                                </div>
-                             </div>
-
-                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                {swarmAgents.map(agent => (
-                                  <div key={agent.id} className="p-5 bg-red-950/5 border border-red-900/10 rounded-3xl space-y-3">
-                                     <div className="flex justify-between items-center">
-                                        <span className="text-[9px] font-black text-red-900 uppercase tracking-widest">Trust</span>
-                                        <span className="text-[10px] font-mono text-red-500">{(agent.trust * 100).toFixed(0)}%</span>
-                                     </div>
-                                     <div className="w-full h-1 bg-red-950/40 rounded-full overflow-hidden">
-                                        <div className="h-full bg-red-600" style={{ width: `${agent.trust * 100}%` }} />
-                                     </div>
-                                     <p className="text-[9px] font-black text-red-100 uppercase truncate">{agent.name}</p>
-                                  </div>
-                                ))}
-                             </div>
-                          </div>
-
-                          {/* Swarm Logs */}
-                          <div className="bg-[#0a0202] border border-red-900/30 rounded-[40px] flex flex-col shadow-2xl overflow-hidden h-[650px]">
-                             <div className="p-8 border-b border-red-900/20 bg-black/40 flex items-center justify-between">
-                                <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                                   <Activity className="w-4 h-4" /> Consensus Stream
-                                </h4>
-                                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                             </div>
-                             <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar font-mono text-[11px]">
-                                {swarmLogs.map(log => (
-                                  <div key={log.id} className={`p-4 rounded-2xl border ${
-                                    log.type === 'consensus' ? 'bg-green-500/5 border-green-500/20 text-green-500' :
-                                    log.type === 'pain' ? 'bg-red-500/5 border-red-500/20 text-red-500' :
-                                    'bg-red-950/10 border-red-900/10 text-red-900'
-                                  }`}>
-                                     <div className="flex justify-between mb-2 opacity-50">
-                                        <span>[{log.type.toUpperCase()}]</span>
-                                        <span>{log.time}</span>
-                                     </div>
-                                     <p className="leading-relaxed font-bold">{log.message}</p>
-                                  </div>
-                                ))}
-                             </div>
-                          </div>
-                       </div>
-                    </div>
-                  )}
-
-                  {tnModule === 'debug' && (
-                    <div className="flex-1 p-6 md:p-12 space-y-8 md:space-y-10 overflow-y-auto custom-scrollbar">
-                       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                          <div className="space-y-2">
-                             <h3 className="text-2xl md:text-3xl font-black text-red-100 uppercase tracking-tighter">Neural Debugger</h3>
-                             <p className="text-xs md:text-sm text-red-900 font-bold tracking-widest uppercase">Real-time code analysis and dynamic tracing.</p>
-                          </div>
-                          <div className="flex items-center gap-3">
-                             <button 
-                               onClick={runStaticAnalysis}
-                               disabled={debugAnalysis.static.status === 'running'}
-                               className="px-4 md:px-6 py-2.5 md:py-3 bg-red-950/20 border border-red-900/30 text-red-500 rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-widest hover:bg-red-900/20 transition-all disabled:opacity-50"
-                             >
-                               {debugAnalysis.static.status === 'running' ? 'Analyzing...' : 'Static Analysis'}
-                             </button>
-                             <button 
-                               onClick={runDynamicTracing}
-                               disabled={debugAnalysis.tracing.status === 'running'}
-                               className="px-4 md:px-6 py-2.5 md:py-3 bg-red-700 text-white rounded-xl text-[10px] md:text-[11px] font-black uppercase tracking-widest shadow-lg hover:bg-red-600 transition-all disabled:opacity-50"
-                             >
-                               {debugAnalysis.tracing.status === 'running' ? 'Tracing...' : 'Dynamic Trace'}
-                             </button>
-                          </div>
-                       </div>
-
-                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-                          {/* Static Analysis Results */}
-                          <div className="bg-red-950/5 border border-red-900/20 rounded-[30px] md:rounded-[40px] p-6 md:p-8 space-y-6">
-                             <div className="flex items-center justify-between">
-                                <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                                   <FileSearch className="w-4 h-4" /> Static Analysis
-                                </h4>
-                                {debugAnalysis.static.status === 'done' && (
-                                  <span className="text-[9px] font-black text-red-900 uppercase tracking-widest">{debugAnalysis.static.issues.length} Issues Found</span>
-                                )}
-                             </div>
-                             <div className="space-y-4 min-h-[200px]">
-                                {debugAnalysis.static.status === 'idle' && (
-                                  <div className="h-full flex flex-col items-center justify-center text-red-950 italic opacity-30 py-12">
-                                    <FileSearch className="w-12 h-12 mb-4" />
-                                    <p className="text-[10px] uppercase tracking-widest">Awaiting Analysis Directive</p>
-                                  </div>
-                                )}
-                                {debugAnalysis.static.status === 'running' && (
-                                  <div className="space-y-4">
-                                    {[1, 2, 3].map(i => (
-                                      <div key={i} className="h-12 bg-red-900/10 rounded-xl animate-pulse" />
-                                    ))}
-                                  </div>
-                                )}
-                                {debugAnalysis.static.status === 'done' && debugAnalysis.static.issues.map((issue, i) => (
-                                  <div key={i} className={`p-4 rounded-2xl border flex items-start gap-4 ${
-                                    issue.type === 'error' ? 'bg-red-950/20 border-red-600/30' : 
-                                    issue.type === 'warning' ? 'bg-orange-950/10 border-orange-900/20' : 
-                                    'bg-blue-950/10 border-blue-900/20'
-                                  }`}>
-                                    <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
-                                      issue.type === 'error' ? 'bg-red-500' : 
-                                      issue.type === 'warning' ? 'bg-orange-500' : 
-                                      'bg-blue-500'
-                                    }`} />
-                                    <div className="flex-1 space-y-1">
-                                      <p className="text-[12px] text-red-100 font-bold leading-tight">{issue.message}</p>
-                                      {issue.line && <p className="text-[9px] text-red-900 uppercase font-black tracking-widest">Line {issue.line}</p>}
-                                    </div>
-                                  </div>
-                                ))}
-                             </div>
-                          </div>
-
-                          {/* Dynamic Tracing Logs */}
-                          <div className="bg-red-950/5 border border-red-900/20 rounded-[30px] md:rounded-[40px] p-6 md:p-8 space-y-6 flex flex-col h-[400px] lg:h-auto">
-                             <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                                <Activity className="w-4 h-4" /> Dynamic Tracing
-                             </h4>
-                             <div className="flex-1 bg-black/40 rounded-2xl p-4 font-mono text-[11px] overflow-y-auto custom-scrollbar space-y-2">
-                                {debugAnalysis.tracing.logs.length === 0 && debugAnalysis.tracing.status === 'idle' && (
-                                  <div className="h-full flex flex-col items-center justify-center text-red-900 opacity-20 italic">
-                                    <p>SYSTEM_IDLE: NO_ACTIVE_TRACE</p>
-                                  </div>
-                                )}
-                                {debugAnalysis.tracing.logs.map((log, i) => (
-                                  <div key={i} className={log.includes('exception') ? 'text-red-500 font-bold' : 'text-red-100/60'}>
-                                    {log}
-                                  </div>
-                                ))}
-                                {debugAnalysis.tracing.status === 'running' && (
-                                  <div className="text-red-600 animate-pulse">_</div>
-                                )}
-                             </div>
-                          </div>
-                       </div>
-
-                       {/* Refactoring Suggestions */}
-                       <div className="bg-[#0d0404] rounded-[30px] md:rounded-[40px] border border-red-900/30 p-8 md:p-12 space-y-8 shadow-2xl relative overflow-hidden">
-                          <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 blur-[100px] rounded-full -mr-32 -mt-32" />
-                          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-                             <div className="space-y-2">
-                                <h4 className="text-xl md:text-2xl font-black text-red-100 uppercase tracking-tighter flex items-center gap-4">
-                                   <Sparkles className="w-6 h-6 text-red-600" /> Neural Refactoring
-                                </h4>
-                                <p className="text-xs md:text-sm text-red-900 font-bold tracking-widest uppercase">Automated suggestions from the {activePersonality.name} personality.</p>
-                             </div>
-                             <button 
-                               onClick={getRefactoringSuggestions}
-                               disabled={debugAnalysis.refactoring.status === 'running'}
-                               className="w-full md:w-auto px-8 py-4 bg-red-800/10 border border-red-700/30 rounded-2xl text-red-500 text-[11px] font-black uppercase tracking-[0.2em] hover:bg-red-800/20 transition-all disabled:opacity-50"
-                             >
-                               {debugAnalysis.refactoring.status === 'running' ? 'Synthesizing...' : 'Generate Suggestions'}
-                             </button>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-                             {debugAnalysis.refactoring.status === 'idle' && [1, 2, 3].map(i => (
-                               <div key={i} className="p-6 bg-red-950/5 border border-red-900/10 rounded-3xl h-32 flex items-center justify-center opacity-20">
-                                 <div className="w-full h-2 bg-red-900/20 rounded-full" />
-                               </div>
-                             ))}
-                             {debugAnalysis.refactoring.status === 'running' && [1, 2, 3].map(i => (
-                               <div key={i} className="p-6 bg-red-950/5 border border-red-900/10 rounded-3xl h-32 animate-pulse" />
-                             ))}
-                             {debugAnalysis.refactoring.status === 'done' && debugAnalysis.refactoring.suggestions.map((s, i) => (
-                               <div key={i} className="p-6 bg-red-950/10 border border-red-900/20 rounded-3xl hover:border-red-600/40 transition-all group">
-                                 <div className="w-8 h-8 bg-red-900/20 rounded-lg flex items-center justify-center text-red-500 font-black text-xs mb-4 group-hover:bg-red-700 group-hover:text-white transition-all">
-                                   0{i+1}
-                                 </div>
-                                 <p className="text-[13px] text-red-100/80 leading-relaxed italic">"{s}"</p>
-                               </div>
-                             ))}
-                          </div>
-                       </div>
-                    </div>
-                  )}
-
-                  {tnModule === 'help' && (
-                    <div className="flex-1 p-12 space-y-12 overflow-y-auto custom-scrollbar">
-                       <div className="space-y-4">
-                          <h3 className="text-3xl font-black text-red-100 uppercase tracking-tighter">Neural Guide</h3>
-                          <p className="text-sm text-red-900 font-bold tracking-widest uppercase">Understanding the ToolNeuron Ecosystem</p>
-                       </div>
-                       
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                          <div className="p-8 bg-red-950/5 border border-red-900/20 rounded-[40px] space-y-4">
-                             <div className="flex items-center gap-4 text-red-500">
-                                <MessageSquare className="w-6 h-6" />
-                                <h4 className="text-lg font-black uppercase tracking-tight">Neural Chat</h4>
-                             </div>
-                             <p className="text-[13px] text-red-100/70 leading-relaxed">
-                                High-performance local inference using GGUF models. ToolNeuron utilizes advanced quantization to run large language models directly on your hardware with zero data leakage.
-                             </p>
-                             <ul className="text-[11px] text-red-900 font-bold space-y-2 uppercase tracking-widest">
-                                <li>• Zero Latency Cloud Bridge</li>
-                                <li>• Context-Aware Memory</li>
-                                <li>• Multi-Persona Support</li>
-                             </ul>
-                          </div>
-
-                          <div className="p-8 bg-red-950/5 border border-red-900/20 rounded-[40px] space-y-4">
-                             <div className="flex items-center gap-4 text-red-500">
-                                <ImageIcon className="w-6 h-6" />
-                                <h4 className="text-lg font-black uppercase tracking-tight">Vision Synth</h4>
-                             </div>
-                             <p className="text-[13px] text-red-100/70 leading-relaxed">
-                                Local image generation powered by Stable Diffusion. Create high-fidelity visuals, textures, and UI assets without subscriptions or internet connectivity.
-                             </p>
-                             <ul className="text-[11px] text-red-900 font-bold space-y-2 uppercase tracking-widest">
-                                <li>• SDXL & SD 1.5 Support</li>
-                                <li>• Hardware Accelerated Rendering</li>
-                                <li>• Private Asset Generation</li>
-                             </ul>
-                          </div>
-
-                          <div className="p-8 bg-red-950/5 border border-red-900/20 rounded-[40px] space-y-4">
-                             <div className="flex items-center gap-4 text-red-500">
-                                <BookOpen className="w-6 h-6" />
-                                <h4 className="text-lg font-black uppercase tracking-tight">Neural Database</h4>
-                             </div>
-                             <p className="text-[13px] text-red-100/70 leading-relaxed">
-                                Advanced RAG (Retrieval-Augmented Generation) system. Inject custom datasets (PDF, TXT, JSON) to provide your local models with specialized domain knowledge.
-                             </p>
-                             <ul className="text-[11px] text-red-900 font-bold space-y-2 uppercase tracking-widest">
-                                <li>• Local Vector Indexing</li>
-                                <li>• Semantic Search Engine</li>
-                                <li>• Custom Data Injection</li>
-                             </ul>
-                          </div>
-
-                          <div className="p-8 bg-red-950/5 border border-red-900/20 rounded-[40px] space-y-4">
-                             <div className="flex items-center gap-4 text-red-500">
-                                <ShieldCheck className="w-6 h-6" />
-                                <h4 className="text-lg font-black uppercase tracking-tight">Memory Vault</h4>
-                             </div>
-                             <p className="text-[13px] text-red-100/70 leading-relaxed">
-                                Secure, hardware-encrypted storage for sensitive neural weights and personal datasets. Utilizes AES-256-GCM encryption with biometric authentication.
-                             </p>
-                             <ul className="text-[11px] text-red-900 font-bold space-y-2 uppercase tracking-widest">
-                                <li>• Hardware-Backed Keys</li>
-                                <li>• Encrypted File System</li>
-                                <li>• Biometric Neural Lock</li>
-                             </ul>
-                          </div>
-                       </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+            <ToolNeuronPanel
+              chatMessages={chatMessages}
+              studioInput={studioInput}
+              setStudioInput={setStudioInput}
+              handleStudioSubmit={handleStudioSubmit}
+              isVaultUnlocked={isVaultUnlocked}
+              setIsVaultUnlocked={setIsVaultUnlocked}
+              swarmAnxiety={swarmAnxiety}
+              swarmAgents={swarmAgents}
+              swarmLogs={swarmLogs}
+              triggerSwarmCycle={triggerSwarmCycle}
+              isAiProcessing={isAiProcessing}
+              debugAnalysis={debugAnalysis}
+              runStaticAnalysis={runStaticAnalysis}
+              runDynamicTracing={runDynamicTracing}
+              getRefactoringSuggestions={getRefactoringSuggestions}
+              activePersonality={activePersonality}
+              tnKnowledgePacks={tnKnowledgePacks}
+              handleKnowledgeUpload={handleKnowledgeUpload}
+              setActiveTab={setActiveTab}
+              onApplyCode={(code, mode) => {
+                if (mode === 'refactor') {
+                  handleApplyRefactor(code, false, null);
+                } else {
+                  handleApplyForge(code, false);
+                }
+                setActiveTab('editor');
+              }}
+              onSaveReport={(text) => {
+                handleSaveAnalysis(text);
+                setActiveTab('editor');
+              }}
+            />
           )}
 
           {/* TERMINAL */}
           {activeTab === 'terminal' && (
-            <div className="h-full flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500">
-              <div className="flex-1 bg-[#0d0404]/80 rounded-[30px] md:rounded-[40px] border border-red-900/30 flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.8)] overflow-hidden group relative">
-                <div className="flex-1 p-6 md:p-8 font-mono text-[12px] md:text-[14px] overflow-y-auto custom-scrollbar bg-[linear-gradient(rgba(13,4,4,1),rgba(8,1,1,1))]">
-                  {terminalOutput.map((line, i) => (
-                    <div key={i} className={`mb-3 leading-relaxed whitespace-pre-wrap ${
-                      line.includes('$') ? 'text-red-400 font-black' : 
-                      line.startsWith('NEURAL_LINK:') ? 'text-red-500 font-black drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]' :
-                      line.startsWith('COMMAND_INTEL:') ? 'text-red-400 italic opacity-80' :
-                      line.startsWith('[') ? 'text-red-900' : 
-                      'text-red-100/60'
-                    }`}>
-                      {line}
-                    </div>
-                  ))}
-                  {isAiProcessing && (
-                    <div className="text-red-600/50 text-[12px] animate-pulse py-4 flex items-center gap-3 font-black tracking-widest">
-                      <Zap className="w-4 h-4" />
-                      CALCULATING_NEURAL_VECTORS...
-                    </div>
-                  )}
-                  <div ref={terminalEndRef} />
-                </div>
-
-                {/* Suggestions List */}
-                {termSuggestions.length > 0 && termInput && (
-                  <div className="px-6 py-4 bg-[#0a0202] border-t border-red-900/10 flex flex-col gap-3 animate-in slide-in-from-bottom-2 duration-300">
-                    <div className="flex items-center justify-between px-2">
-                      <span className="text-[9px] font-black text-red-900 uppercase tracking-[0.3em]">Neural Suggestions</span>
-                      <span className="text-[9px] font-black text-red-950 uppercase tracking-[0.3em]">Press [Tab] to Cycle</span>
-                    </div>
-                    <div className="flex flex-wrap md:flex-nowrap md:overflow-x-auto no-scrollbar gap-2 md:gap-3 pb-2 md:pb-0">
-                      {termSuggestions.map((suggestion, idx) => {
-                        const isPersonalityMatch = activePersonality.suggestions?.includes(suggestion);
-                        return (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              setTermInput(suggestion);
-                              setTermSuggestions([]);
-                              setTermSuggestion('');
-                            }}
-                            className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl font-mono text-[10px] md:text-[11px] transition-all flex items-center gap-2 whitespace-nowrap ${
-                              selectedSuggestionIndex === idx 
-                                ? 'bg-red-700 text-white shadow-[0_0_20px_rgba(185,28,28,0.4)] scale-105 border-red-500' 
-                                : 'bg-red-950/10 text-red-900 border border-red-900/20 hover:text-red-500 hover:border-red-500/30'
-                            }`}
-                          >
-                            {isPersonalityMatch && <Sparkles className="w-3 h-3" />}
-                            {suggestion}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <form onSubmit={handleTerminalCommand} className="p-6 bg-[#120202] border-t border-red-900/30 flex items-center gap-5 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] relative">
-                   <ChevronRight className="w-6 h-6 text-red-600" />
-                   <div className="flex-1 relative">
-                     {termSuggestion && (
-                       <div className="absolute inset-0 flex items-center pointer-events-none">
-                         <span className="font-mono text-base text-red-900 opacity-40">
-                           {termInput}
-                           {termSuggestion.substring(termInput.length)}
-                         </span>
-                       </div>
-                     )}
-                     <input 
-                       autoFocus 
-                       value={termInput} 
-                       onChange={(e) => handleTermInputChange(e.target.value)} 
-                       onKeyDown={handleTermKeyDown}
-                       placeholder="system@crimson_sh ~ " 
-                       className="w-full bg-transparent border-none outline-none font-mono text-base text-red-100 placeholder:text-red-950 relative z-10" 
-                     />
-                   </div>
-                </form>
-              </div>
-            </div>
+            <TerminalPanel
+              terminalOutput={terminalOutput}
+              terminalEndRef={terminalEndRef}
+              isAiProcessing={isAiProcessing}
+              activePersonality={activePersonality}
+              termInput={termInput}
+              setTermInput={setTermInput}
+              termSuggestion={termSuggestion}
+              setTermSuggestion={setTermSuggestion}
+              termSuggestions={termSuggestions}
+              setTermSuggestions={setTermSuggestions}
+              selectedSuggestionIndex={selectedSuggestionIndex}
+              handleTermInputChange={handleTermInputChange}
+              handleTermKeyDown={handleTermKeyDown}
+              handleTerminalCommand={handleTerminalCommand}
+              realCwd={realCwd}
+            />
           )}
 
           {/* NEURAL EDITOR */}
           {activeTab === 'editor' && (
-            <div className="h-full flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500 overflow-hidden">
-              <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-8 min-h-0">
-                {/* File Tree Sidebar - Collapsible on mobile */}
-                <div className={`w-full lg:w-64 flex flex-col bg-[#0d0404]/80 rounded-[30px] md:rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden transition-all duration-300 ${isMobileFileTreeOpen ? 'h-[400px] lg:h-full' : 'h-16 lg:h-full'}`}>
-                  <div className="h-16 border-b border-red-900/20 flex items-center justify-between px-6 md:px-8 bg-black/40 shrink-0">
-                    <h4 className="text-[10px] md:text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                      <FolderOpen className="w-4 h-4" /> Project Files
-                    </h4>
-                    <button 
-                      onClick={() => setIsMobileFileTreeOpen(!isMobileFileTreeOpen)}
-                      className="lg:hidden p-2 text-red-500 hover:bg-red-900/20 rounded-xl transition-all"
-                    >
-                      {isMobileFileTreeOpen ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  <div className={`flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar ${isMobileFileTreeOpen ? 'block' : 'hidden lg:block'}`}>
-                    <div className="flex gap-2 mb-4">
-                      <button 
-                        onClick={() => setIsTemplateModalOpen(true)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-100 bg-red-900/40 border border-red-500/30 hover:bg-red-800/60 transition-all shadow-[0_0_20px_rgba(239,68,68,0.1)]"
-                      >
-                        <LayoutTemplate className="w-4 h-4 shrink-0" />
-                        <span className="truncate">Template</span>
-                      </button>
-                      <label className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-950/40 border border-red-900/30 hover:bg-red-900/20 transition-all cursor-pointer">
-                        <Upload className="w-4 h-4 shrink-0" />
-                        <span className="truncate">File</span>
-                        <input type="file" className="hidden" multiple onChange={handleFileUpload} />
-                      </label>
-                      <label className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-950/40 border border-red-900/30 hover:bg-red-900/20 transition-all cursor-pointer">
-                        <Folder className="w-4 h-4 shrink-0" />
-                        <span className="truncate">Folder</span>
-                        <input type="file" className="hidden" {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={handleFileUpload} />
-                      </label>
-                    </div>
-                    {renderTree(null)}
-                    <div className="flex gap-2 mt-4">
-                      <button 
-                        onClick={() => createFile('root')}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-900/40 border border-dashed border-red-900/20 hover:border-red-500/40 hover:text-red-500 transition-all"
-                      >
-                        <Plus className="w-4 h-4" />
-                        New Node
-                      </button>
-                      <button 
-                        onClick={() => createFolder('root')}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-900/40 border border-dashed border-red-900/20 hover:border-red-500/40 hover:text-red-500 transition-all"
-                      >
-                        <Folder className="w-4 h-4" />
-                        New Core
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Editor Section */}
-                <div className="flex-1 flex flex-col bg-[#0d0404]/80 rounded-[30px] md:rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden min-h-[400px]">
-                  <div className="h-auto min-h-16 border-b border-red-900/20 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 bg-black/40 py-2 md:py-0 gap-4">
-                    <div className="w-full md:w-auto flex items-center justify-between md:justify-start gap-4 md:gap-6 overflow-x-auto no-scrollbar">
-                      <div className="flex bg-red-950/20 p-1 rounded-xl border border-red-900/20 shrink-0">
-                        {['python', 'cpp', 'rust', 'java', 'html'].map(lang => (
-                          <button 
-                            key={lang} 
-                            onClick={() => setEditorLanguage(lang)}
-                            className={`px-3 md:px-4 py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${editorLanguage === lang ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
-                          >
-                            {lang}
-                          </button>
-                        ))}
-                      </div>
-                      {lastSavedTime && (
-                        <div className="flex items-center gap-2 text-[8px] md:text-[9px] font-black text-red-900 uppercase tracking-widest animate-in fade-in duration-500 shrink-0">
-                          <ShieldCheck className="w-3 h-3" />
-                          <span className="hidden sm:inline">Autosaved at</span> {lastSavedTime}
-                        </div>
-                      )}
-                    </div>
-                    <div className="w-full md:w-auto flex items-center gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-2 md:pb-0">
-                      <button 
-                        onClick={() => setIsEditorAssistantOpen(!isEditorAssistantOpen)}
-                        className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isEditorAssistantOpen ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                        title="Neural Assistant"
-                      >
-                        <MessageSquare className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                      </button>
-                      <button 
-                        onClick={handleToggleCurrentLineBreakpoint}
-                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group shrink-0"
-                        title="Toggle Breakpoint"
-                      >
-                        <Circle className={`w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform ${breakpoints.includes(cursorLine) ? 'fill-red-500 text-red-500' : ''}`} />
-                      </button>
-                      <button 
-                        onClick={handleExplainCode}
-                        disabled={isAiProcessing}
-                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                        title="AI Analysis"
-                      >
-                        <Brain className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                      </button>
-                      <button 
-                        onClick={handleFullProjectAnalysis}
-                        disabled={isAiProcessing}
-                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                        title="Full Project Analysis"
-                      >
-                        <Network className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                      </button>
-                      <button 
-                        onClick={handleDeepProjectAudit}
-                        disabled={isAiProcessing}
-                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                        title="Deep Project Audit"
-                      >
-                        <ShieldAlert className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                      </button>
-                      <button 
-                        onClick={handleGenerateDocs}
-                        disabled={isAiProcessing}
-                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                        title="Generate Documentation"
-                      >
-                        <FileText className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                      </button>
-                      <button 
-                        onClick={handleRefactorCode}
-                        disabled={isAiProcessing}
-                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                        title="AI Refactor"
-                      >
-                        <Wand2 className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                      </button>
-                      <button 
-                        onClick={handleGenerateCode}
-                        disabled={isAiProcessing}
-                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                        title="Neural Forge (Generate Code)"
-                      >
-                        <Zap className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                      </button>
-                      <button 
-                        onClick={() => setIsPairProgrammerActive(!isPairProgrammerActive)}
-                        className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isPairProgrammerActive ? 'bg-emerald-700 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                        title="AI Pair Programmer Mode"
-                      >
-                        <Users className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                      </button>
-                      <button 
-                        onClick={handleStartDebug}
-                        disabled={isRunningCode || debugState.isActive}
-                        className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group shrink-0"
-                        title="Neural Debugger"
-                      >
-                        <Bug className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                      </button>
-                      <button 
-                        onClick={() => setEditorMode('git')}
-                        className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${editorMode === 'git' ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                        title="Neural Git"
-                      >
-                        <GitBranch className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                      </button>
-                      <button 
-                        onClick={handleRunCode}
-                        disabled={isRunningCode}
-                        className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-2.5 bg-red-700 hover:bg-red-600 text-white rounded-xl font-black text-[9px] md:text-[11px] uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all disabled:opacity-50 shrink-0"
-                      >
-                        {isRunningCode ? <Zap className="w-3 h-3 md:w-4 md:h-4 animate-spin" /> : <Play className="w-3 h-3 md:w-4 md:h-4" />}
-                        Execute
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex-1 relative">
-                    <textarea
-                      ref={editorRef}
-                      className="w-full h-full bg-[#0d0404] text-red-100 p-4 font-mono text-sm resize-none focus:outline-none focus:ring-1 focus:ring-red-900/50 custom-scrollbar"
-                      value={editorContent}
-                      onChange={(e) => setEditorContent(e.target.value)}
-                      spellCheck={false}
-                    />
-                  </div>
-                </div>
-
-                {/* Assistant Sidebar */}
-                {isEditorAssistantOpen && (
-                  <div className="w-full lg:w-80 flex flex-col bg-[#0d0404]/80 rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden animate-in slide-in-from-right-5 duration-300">
-                    <div className="h-16 border-b border-red-900/20 flex items-center justify-between px-8 bg-black/40">
-                      <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                        <Brain className="w-4 h-4" /> Neural Assistant
-                      </h4>
-                      <div className="flex items-center gap-4">
-                        {isPairProgrammerActive && (
-                          <div className="flex items-center gap-2 px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-lg animate-pulse">
-                            <Users className="w-3 h-3 text-emerald-500" />
-                            <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Pairing</span>
-                          </div>
-                        )}
-                        <button onClick={() => setIsEditorAssistantOpen(false)} className="text-red-900 hover:text-red-500 transition-colors">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-black/20">
-                      {editorAssistantMessages.length === 0 && (
-                        <div className="h-full flex flex-col items-center justify-center text-center p-4 opacity-30">
-                          <Sparkles className="w-12 h-12 text-red-600 mb-4" />
-                          <p className="text-[10px] font-black uppercase tracking-[0.2em]">Awaiting neural synchronization...</p>
-                        </div>
-                      )}
-                      {editorAssistantMessages.map((msg: any, i) => (
-                        <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                          <div className={`max-w-[90%] rounded-2xl p-4 text-[12px] leading-relaxed ${
-                            msg.role === 'user' 
-                              ? 'bg-red-800 text-white rounded-tr-none' 
-                              : 'bg-red-950/20 border border-red-900/20 text-red-100 rounded-tl-none'
-                          }`}>
-                            {msg.text}
-                            {msg.role === 'ai' && (msg.text.includes('CODE_ANALYSIS') || msg.text.includes('FULL_PROJECT_ANALYSIS') || msg.text.includes('DEEP_PROJECT_AUDIT')) && (
-                              <button 
-                                onClick={() => handleSaveAnalysis(msg.text)}
-                                className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-red-900/40 border border-red-500/30 rounded-lg text-[9px] font-black uppercase tracking-widest text-red-100 hover:bg-red-800/60 transition-all"
-                              >
-                                <Save className="w-3 h-3" />
-                                Save Report
-                              </button>
-                            )}
-                            {msg.role === 'ai' && msg.text.includes('DOCUMENTATION_GENERATED') && msg.metadata && (
-                              <button 
-                                onClick={() => handleApplyDocumentation(msg.metadata.documentedCode, msg.metadata.isSelection, msg.metadata.selection)}
-                                className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-red-700 border border-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all"
-                              >
-                                <FileText className="w-3 h-3" />
-                                Apply Documentation
-                              </button>
-                            )}
-                            {msg.role === 'ai' && msg.text.includes('REFACTOR_COMPLETE') && msg.metadata && (
-                              <button 
-                                onClick={() => handleApplyRefactor(msg.metadata.refactoredCode, msg.metadata.isSelection, msg.metadata.selection)}
-                                className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-red-700 border border-red-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-red-600 transition-all"
-                              >
-                                <Check className="w-3 h-3" />
-                                Apply Refactor
-                              </button>
-                            )}
-                            {msg.role === 'ai' && msg.metadata?.generatedCode && (
-                              <button 
-                                onClick={() => handleApplyForge(msg.metadata.generatedCode)}
-                                className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-emerald-700 border border-emerald-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white hover:bg-emerald-600 transition-all"
-                              >
-                                <Zap className="w-3 h-3" />
-                                Integrate Code
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      {isAiProcessing && (
-                        <div className="flex gap-2 px-1 animate-pulse">
-                          <div className="w-1.5 h-1.5 bg-red-600 rounded-full"></div>
-                          <div className="w-1.5 h-1.5 bg-red-600 rounded-full"></div>
-                          <div className="w-1.5 h-1.5 bg-red-600 rounded-full"></div>
-                        </div>
-                      )}
-                    </div>
-                    <form onSubmit={handleEditorAssistantSubmit} className="p-4 bg-black/40 border-t border-red-900/20">
-                      <div className="relative">
-                        <input 
-                          value={editorAssistantInput} 
-                          onChange={(e) => setEditorAssistantInput(e.target.value)} 
-                          placeholder="Ask assistant..." 
-                          className="w-full bg-[#0d0404] border border-red-900/40 rounded-xl px-4 py-3 text-[11px] text-red-100 focus:border-red-600/60 outline-none" 
-                        />
-                        <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 text-red-600 hover:text-red-400">
-                          <Send className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                )}
-
-                {/* Output Section */}
-                <div className="w-full lg:w-96 flex flex-col bg-[#0d0404]/80 rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden">
-                  <div className="h-16 border-b border-red-900/20 flex items-center px-8 bg-black/40 justify-between">
-                    <div className="flex bg-red-950/20 p-1 rounded-xl border border-red-900/20">
-                      <button 
-                        onClick={() => setEditorMode('code')}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'code' ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
-                      >
-                        Terminal
-                      </button>
-                      <button 
-                        onClick={() => setEditorMode('preview')}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'preview' ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
-                      >
-                        Preview
-                      </button>
-                      <button 
-                        onClick={() => setEditorMode('debug')}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'debug' ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
-                      >
-                        Debugger
-                      </button>
-                      <button 
-                        onClick={() => setEditorMode('git')}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'git' ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
-                      >
-                        Git
-                      </button>
-                      <button 
-                        onClick={() => setEditorMode('settings')}
-                        className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'settings' ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
-                      >
-                        Config
-                      </button>
-                    </div>
-                    <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                      <Activity className="w-4 h-4" /> Runtime
-                    </h4>
-                  </div>
-                  <div className="flex-1 overflow-hidden relative bg-black/20">
-                    {editorMode === 'code' && (
-                      <div className="h-full p-8 font-mono text-[13px] overflow-y-auto custom-scrollbar text-red-100/80">
-                        {isRunningCode ? (
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2 text-red-500 animate-pulse">
-                              <Zap className="w-3 h-3" />
-                              <span>NEURAL_LINK_ESTABLISHED...</span>
-                            </div>
-                            <div className="text-red-900/60">[SYSTEM] Initializing virtual environment...</div>
-                            <div className="text-red-900/60">[KERNEL] Allocating neural buffers...</div>
-                          </div>
-                        ) : (
-                          <pre className="whitespace-pre-wrap leading-relaxed">
-                            {editorOutput || "[IDLE] Neural runtime awaiting execution..."}
-                          </pre>
-                        )}
-                      </div>
-                    )}
-                    {editorMode === 'preview' && (
-                      <div className="h-full flex flex-col">
-                        {/* Preview Toolbar */}
-                        <div className="p-4 bg-red-950/20 border-b border-red-900/20 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <button 
-                              onClick={() => setIsInspectorActive(!isInspectorActive)}
-                              className={`p-2 rounded-lg transition-all ${isInspectorActive ? 'bg-red-700 text-white shadow-lg' : 'bg-red-950/40 border border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                              title="Toggle Component Inspector"
-                            >
-                              <MousePointer2 className="w-4 h-4" />
-                            </button>
-                            <button 
-                              onClick={() => setEditorContent(editorContent)}
-                              className="p-2 bg-red-950/40 border border-red-900/30 text-red-500 rounded-lg hover:bg-red-900/20 transition-all"
-                              title="Refresh Preview"
-                            >
-                              <RefreshCw className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Live UI Preview</span>
-                            <div className="flex items-center gap-1">
-                              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                              <span className="text-[9px] font-mono text-emerald-500/60 uppercase">Synchronized</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex-1 flex min-h-0">
-                          <div 
-                            ref={previewContainerRef}
-                            className="flex-1 overflow-y-auto custom-scrollbar p-6 relative"
-                            onMouseMove={handleInspectMouseMove}
-                            onClick={handleInspectClick}
-                          >
-                            <div 
-                              className="w-full min-h-full bg-black/40 rounded-2xl border border-red-900/20 overflow-hidden relative"
-                              dangerouslySetInnerHTML={{ __html: editorContent }}
-                            />
-
-                            {/* Inspector Highlight Overlay */}
-                            {inspectedElement && inspectedElement.rect && (
-                              <div 
-                                className="absolute pointer-events-none border-2 border-red-500 bg-red-500/10 z-50 transition-all duration-75"
-                                style={{
-                                  top: inspectedElement.rect.top + 24,
-                                  left: inspectedElement.rect.left + 24,
-                                  width: inspectedElement.rect.width,
-                                  height: inspectedElement.rect.height
-                                }}
-                              >
-                                <div className="absolute -top-6 left-0 bg-red-700 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest whitespace-nowrap">
-                                  {inspectedElement.tagName} {inspectedElement.id && `#${inspectedElement.id}`}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Inspector Details Panel */}
-                          {inspectedElement && (
-                            <div className="w-80 bg-[#080101] border-l border-red-900/30 p-6 overflow-y-auto custom-scrollbar animate-in slide-in-from-right duration-300 relative">
-                              <button 
-                                onClick={() => {
-                                  // Clean up tracking attribute
-                                  if (previewContainerRef.current) {
-                                    previewContainerRef.current.querySelectorAll('[data-neural-inspect]').forEach(el => {
-                                      el.removeAttribute('data-neural-inspect');
-                                    });
-                                    // Sync back one last time without the attribute
-                                    const contentWrapper = previewContainerRef.current.querySelector('.bg-black\\/40');
-                                    if (contentWrapper) {
-                                      setEditorContent(contentWrapper.innerHTML);
-                                    }
-                                  }
-                                  setInspectedElement(null);
-                                  setIsInspectorActive(false);
-                                  inspectedElementRef.current = null;
-                                }}
-                                className="absolute top-4 right-4 p-2 text-red-900 hover:text-red-500 transition-colors"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                              <div className="space-y-8">
-                                <div className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <h5 className="text-[11px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
-                                      <Info className="w-4 h-4" /> Component Info
-                                    </h5>
-                                    <div className="flex items-center gap-1">
-                                      <button 
-                                        onClick={() => {
-                                          if (inspectedElementRef.current) {
-                                            navigator.clipboard.writeText(inspectedElementRef.current.outerHTML);
-                                            setEditorOutput(prev => prev + "[SYSTEM] Element HTML copied to clipboard.\n");
-                                          }
-                                        }}
-                                        className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
-                                        title="Copy HTML"
-                                      >
-                                        <Code2 className="w-3 h-3" />
-                                      </button>
-                                      <button 
-                                        onClick={() => {
-                                          if (inspectedElementRef.current && confirm('Are you sure you want to delete this element?')) {
-                                            inspectedElementRef.current.remove();
-                                            setInspectedElement(null);
-                                            const contentWrapper = previewContainerRef.current?.querySelector('.bg-black\\/40');
-                                            if (contentWrapper) {
-                                              setEditorContent(contentWrapper.innerHTML);
-                                            }
-                                          }
-                                        }}
-                                        className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
-                                        title="Delete Element"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div className="p-4 bg-red-950/10 border border-red-900/20 rounded-2xl space-y-3">
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-[10px] text-red-900 uppercase font-black">Tag</span>
-                                      <span className="text-[11px] font-mono text-red-100 uppercase">{inspectedElement.tagName}</span>
-                                    </div>
-                                    {inspectedElement.id && (
-                                      <div className="flex justify-between items-center">
-                                        <span className="text-[10px] text-red-900 uppercase font-black">ID</span>
-                                        <span className="text-[11px] font-mono text-red-100">{inspectedElement.id}</span>
-                                      </div>
-                                    )}
-                                    <div className="space-y-1">
-                                      <span className="text-[10px] text-red-900 uppercase font-black">Classes</span>
-                                      <div className="text-[10px] font-mono text-red-100/60 break-all leading-relaxed">
-                                        {inspectedElement.className || 'None'}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                  <div className="flex items-center justify-between">
-                                    <h5 className="text-[11px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
-                                      <Edit2 className="w-4 h-4" /> Style Editor
-                                    </h5>
-                                    <div className="flex items-center gap-1">
-                                      <button 
-                                        onClick={() => {
-                                          const styleStr = Object.entries(inspectedElement.styles)
-                                            .map(([k, v]) => `${k.replace(/[A-Z]/g, m => "-" + m.toLowerCase())}: ${v};`)
-                                            .join(' ');
-                                          navigator.clipboard.writeText(styleStr);
-                                          setEditorOutput(prev => prev + "[SYSTEM] Styles copied to clipboard.\n");
-                                        }}
-                                        className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
-                                        title="Copy Styles"
-                                      >
-                                        <Copy className="w-3 h-3" />
-                                      </button>
-                                      <button 
-                                        onClick={() => {
-                                          const prop = prompt('Enter CSS property name (e.g., border-radius):');
-                                          if (prop) {
-                                            const camelProp = prop.replace(/-([a-z])/g, g => g[1].toUpperCase());
-                                            handleStyleChange(camelProp, '');
-                                          }
-                                        }}
-                                        className="p-1.5 bg-red-900/20 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/40 transition-all"
-                                        title="Add Property"
-                                      >
-                                        <Plus className="w-3 h-3" />
-                                      </button>
-                                      <button 
-                                        onClick={() => {
-                                          if (inspectedElementRef.current) {
-                                            inspectedElementRef.current.style.cssText = '';
-                                            // Re-fetch styles
-                                            const styles = window.getComputedStyle(inspectedElementRef.current);
-                                            setInspectedElement(prev => {
-                                              if (!prev) return null;
-                                              const newStyles: Record<string, string> = {};
-                                              Object.keys(prev.styles).forEach(key => {
-                                                newStyles[key] = (styles as any)[key];
-                                              });
-                                              return { ...prev, styles: newStyles };
-                                            });
-                                            // Sync back
-                                            const contentWrapper = previewContainerRef.current?.querySelector('.bg-black\\/40');
-                                            if (contentWrapper) {
-                                              setEditorContent(contentWrapper.innerHTML);
-                                            }
-                                          }
-                                        }}
-                                        className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
-                                        title="Reset Styles"
-                                      >
-                                        <RefreshCw className="w-3 h-3" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-1 gap-2">
-                                    {Object.entries(inspectedElement.styles).map(([key, value]) => (
-                                      <div key={key} className="flex flex-col gap-1 p-3 bg-red-950/5 border border-red-900/10 rounded-xl group/style">
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-[8px] text-red-900 uppercase font-black">{key}</span>
-                                          <button 
-                                            onClick={() => {
-                                              if (inspectedElementRef.current) {
-                                                inspectedElementRef.current.style.removeProperty(key.replace(/[A-Z]/g, m => "-" + m.toLowerCase()));
-                                                setInspectedElement(prev => {
-                                                  if (!prev) return null;
-                                                  const newStyles = { ...prev.styles };
-                                                  delete newStyles[key];
-                                                  return { ...prev, styles: newStyles };
-                                                });
-                                                const contentWrapper = previewContainerRef.current?.querySelector('.bg-black\\/40');
-                                                if (contentWrapper) {
-                                                  setEditorContent(contentWrapper.innerHTML);
-                                                }
-                                              }
-                                            }}
-                                            className="opacity-0 group-hover/style:opacity-100 text-red-900 hover:text-red-500 transition-all"
-                                          >
-                                            <Trash2 className="w-2.5 h-2.5" />
-                                          </button>
-                                        </div>
-                                        <input 
-                                          type="text"
-                                          value={value}
-                                          onChange={(e) => handleStyleChange(key, e.target.value)}
-                                          className="bg-transparent border-none outline-none text-[10px] font-mono text-red-100 w-full focus:text-red-500 transition-colors"
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                  <h5 className="text-[11px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
-                                    <Layout className="w-4 h-4" /> Geometry
-                                  </h5>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <div className="p-3 bg-red-950/5 border border-red-900/10 rounded-xl">
-                                      <span className="block text-[8px] text-red-900 uppercase font-black mb-1">Width</span>
-                                      <span className="text-[10px] font-mono text-red-100">{Math.round(inspectedElement.rect?.width || 0)}px</span>
-                                    </div>
-                                    <div className="p-3 bg-red-950/5 border border-red-900/10 rounded-xl">
-                                      <span className="block text-[8px] text-red-900 uppercase font-black mb-1">Height</span>
-                                      <span className="text-[10px] font-mono text-red-100">{Math.round(inspectedElement.rect?.height || 0)}px</span>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    {editorMode === 'debug' && (
-                      <div className="h-full flex flex-col">
-                        <div className="p-4 bg-red-950/20 border-b border-red-900/20 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <button onClick={handleStep} disabled={isAiProcessing || !debugState.isActive} className="p-2 bg-red-700 rounded-lg text-white hover:bg-red-600 transition-all disabled:opacity-50" title="Step Forward">
-                              <StepForward className="w-4 h-4" />
-                            </button>
-                            <button onClick={handleDebugRefactor} disabled={isAiProcessing || !debugState.isActive} className="p-2 bg-red-950/40 border border-red-900/30 text-red-500 rounded-lg hover:bg-red-900/20 transition-all disabled:opacity-50" title="AI Debug Refactor">
-                              <Wand2 className="w-4 h-4" />
-                            </button>
-                            <button onClick={handleStartDebug} disabled={isAiProcessing} className="p-2 bg-red-950/40 border border-red-900/30 text-red-500 rounded-lg hover:bg-red-900/20 transition-all disabled:opacity-50" title="Restart Debugger">
-                              <PlayCircle className="w-4 h-4" />
-                            </button>
-                            <button onClick={handleStopDebug} className="p-2 bg-red-950/40 border border-red-900/30 text-red-500 rounded-lg hover:bg-red-900/20 transition-all" title="Stop Debugger">
-                              <StopCircle className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Line: {debugState.currentLine}</span>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                          <div className="space-y-3">
-                            <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest">Variables</h5>
-                            <div className="grid grid-cols-1 gap-2">
-                              {Object.entries(debugState.variables).map(([k, v]) => (
-                                <div key={k} className="flex items-center justify-between p-3 bg-red-950/10 border border-red-900/10 rounded-xl font-mono text-[11px]">
-                                  <span className="text-red-400">{k}</span>
-                                  <span className="text-red-100">{JSON.stringify(v)}</span>
-                                </div>
-                              ))}
-                              {Object.keys(debugState.variables).length === 0 && (
-                                <p className="text-[10px] text-red-900 italic">No variables in scope.</p>
-                              )}
-                            </div>
-                          </div>
-
-                          {debugRefactorResult && (
-                            <div className="p-5 bg-red-900/10 border border-red-500/30 rounded-3xl space-y-4 animate-in fade-in zoom-in-95">
-                              <div className="flex items-center justify-between">
-                                <h5 className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
-                                  <Sparkles className="w-3 h-3" /> AI Debug Refactor
-                                </h5>
-                                <button onClick={() => setDebugRefactorResult(null)} className="text-red-900 hover:text-red-500">
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                              <div className="space-y-3">
-                                <div className="p-3 bg-black/40 rounded-xl border border-red-900/20 font-mono text-[10px] text-red-100/80 overflow-x-auto">
-                                  <pre>{debugRefactorResult.refactoredCode}</pre>
-                                </div>
-                                <p className="text-[11px] text-red-100/60 leading-relaxed italic">
-                                  {debugRefactorResult.explanation}
-                                </p>
-                                <button 
-                                  onClick={handleApplyDebugRefactor}
-                                  className="w-full py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg transition-all"
-                                >
-                                  Apply Refactor
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                          <div className="space-y-3">
-                            <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest">Call Stack</h5>
-                            <div className="space-y-2">
-                              {debugState.callStack.map((frame, i) => (
-                                <div key={i} className="flex items-center gap-3 text-[11px] font-mono text-red-100/60">
-                                  <span className="text-red-900">#{i}</span>
-                                  <span>{frame}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="space-y-3">
-                            <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest">Breakpoints</h5>
-                            <div className="flex flex-wrap gap-2">
-                              {breakpoints.map(line => (
-                                <div key={line} className="px-3 py-1 bg-red-900/20 border border-red-500/30 rounded-full text-[10px] text-red-500 font-black">
-                                  Line {line}
-                                </div>
-                              ))}
-                              {breakpoints.length === 0 && (
-                                <p className="text-[10px] text-red-900 italic">No breakpoints set.</p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {editorMode === 'git' && (
-                      <div className="h-full flex flex-col">
-                        {!gitRepo.initialized ? (
-                          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6">
-                            <GitBranch className="w-16 h-16 text-red-900/40" />
-                            <div className="space-y-2">
-                              <h5 className="text-[12px] font-black text-red-500 uppercase tracking-widest">Neural Repository Not Found</h5>
-                              <p className="text-[10px] text-red-900/60 leading-relaxed max-w-[240px]">Initialize a repository to begin tracking neural state changes and synchronization.</p>
-                            </div>
-                            <button 
-                              onClick={handleGitInit}
-                              className="px-6 py-2.5 bg-red-700 hover:bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg transition-all"
-                            >
-                              Initialize Repository
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="flex-1 flex flex-col overflow-hidden">
-                            <div className="p-4 bg-red-950/20 border-b border-red-900/20 flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2 text-[10px] font-black text-red-500 uppercase tracking-widest">
-                                  <GitBranch className="w-3 h-3" />
-                                  {gitRepo.branch}
-                                </div>
-                                <div className="h-4 w-px bg-red-900/30" />
-                                <div className="flex items-center gap-3">
-                                  <button onClick={handleGitPull} title="Pull" className="text-red-900 hover:text-red-500 transition-colors"><GitPullRequest className="w-4 h-4" /></button>
-                                  <button onClick={handleGitPush} title="Push" className="text-red-900 hover:text-red-500 transition-colors"><GitMerge className="w-4 h-4" /></button>
-                                  <button onClick={handleGitStash} title="Stash" className="text-red-900 hover:text-red-500 transition-colors"><Archive className="w-4 h-4" /></button>
-                                  <button onClick={handleGitPop} title="Pop Stash" className="text-red-900 hover:text-red-500 transition-colors"><History className="w-4 h-4" /></button>
-                                </div>
-                              </div>
-                              <button 
-                                onClick={handleGitCommit}
-                                disabled={gitRepo.staged.length === 0}
-                                className="px-4 py-1.5 bg-red-700 hover:bg-red-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest transition-all disabled:opacity-30"
-                              >
-                                Commit
-                              </button>
-                            </div>
-                            
-                            <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-                              {/* Staged Changes */}
-                              <div className="space-y-3">
-                                <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center justify-between">
-                                  Staged Changes
-                                  <span className="text-red-900/40">{gitRepo.staged.length}</span>
-                                </h5>
-                                <div className="space-y-1">
-                                  {gitRepo.staged.map(id => {
-                                    const file = projectFiles.find(f => f.id === id);
-                                    return (
-                                      <div key={id} className="flex items-center justify-between p-3 bg-red-950/10 border border-red-900/10 rounded-xl group">
-                                        <div className="flex items-center gap-3">
-                                          <Check className="w-3 h-3 text-emerald-500" />
-                                          <span className="text-[11px] font-mono text-red-100">{file?.name}</span>
-                                        </div>
-                                        <button onClick={() => handleGitUnstage(id)} className="opacity-0 group-hover:opacity-100 text-[9px] font-black text-red-900 hover:text-red-500 uppercase tracking-widest transition-all">Unstage</button>
-                                      </div>
-                                    );
-                                  })}
-                                  {gitRepo.staged.length === 0 && <p className="text-[10px] text-red-900/40 italic">No staged changes.</p>}
-                                </div>
-                              </div>
-
-                              {/* Modified Changes */}
-                              <div className="space-y-3">
-                                <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center justify-between">
-                                  Modified
-                                  <span className="text-red-900/40">{gitRepo.modified.length}</span>
-                                </h5>
-                                <div className="space-y-1">
-                                  {gitRepo.modified.map(id => {
-                                    const file = projectFiles.find(f => f.id === id);
-                                    return (
-                                      <div key={id} className="flex items-center justify-between p-3 bg-red-950/5 border border-red-900/5 rounded-xl group">
-                                        <div className="flex items-center gap-3">
-                                          <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                          <span className="text-[11px] font-mono text-red-100/60">{file?.name}</span>
-                                        </div>
-                                        <button onClick={() => handleGitStage(id)} className="opacity-0 group-hover:opacity-100 text-[9px] font-black text-red-900 hover:text-red-500 uppercase tracking-widest transition-all">Stage</button>
-                                      </div>
-                                    );
-                                  })}
-                                  {gitRepo.modified.length === 0 && <p className="text-[10px] text-red-900/40 italic">No modified files.</p>}
-                                </div>
-                              </div>
-
-                              {/* Commit History */}
-                              <div className="space-y-3">
-                                <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
-                                  <History className="w-3 h-3" />
-                                  History
-                                </h5>
-                                <div className="space-y-4 border-l border-red-900/20 ml-2 pl-4">
-                                  {gitRepo.commits.map(commit => (
-                                    <div key={commit.id} className="relative space-y-1">
-                                      <div className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-red-900 border border-red-500/30" />
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-[11px] font-black text-red-100">{commit.message}</span>
-                                        <span className="text-[9px] font-mono text-red-900">{commit.id}</span>
-                                      </div>
-                                      <div className="flex items-center justify-between text-[9px] text-red-900/60 uppercase tracking-widest">
-                                        <span>{commit.author}</span>
-                                        <span>{new Date(commit.timestamp).toLocaleTimeString()}</span>
-                                      </div>
-                                    </div>
-                                  ))}
-                                  {gitRepo.commits.length === 0 && <p className="text-[10px] text-red-900/40 italic">No commit history.</p>}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {editorMode === 'settings' && (
-                      <div className="h-full flex flex-col p-8 space-y-8 overflow-y-auto custom-scrollbar">
-                        <div className="space-y-2">
-                          <h5 className="text-[12px] font-black text-red-500 uppercase tracking-widest flex items-center gap-3">
-                            <Settings className="w-4 h-4" /> Project Configuration
-                          </h5>
-                          <p className="text-[10px] text-red-900/60 leading-relaxed">Manage neural build paths, compiler directives, and environment state.</p>
-                        </div>
-
-                        <div className="space-y-6">
-                          {/* Build Path */}
-                          <div className="space-y-3">
-                            <label className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
-                              <Folder className="w-3 h-3" /> Build Output Path
-                            </label>
-                            <input 
-                              value={projectSettings.buildPath}
-                              onChange={(e) => {
-                                const newSettings = {...projectSettings, buildPath: e.target.value};
-                                setProjectSettings(newSettings);
-                                validateProjectSettings(newSettings);
-                              }}
-                              className={`w-full bg-red-950/10 border ${validationErrors.buildPath ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
-                            />
-                            {validationErrors.buildPath && <p className="text-[9px] text-red-500 font-black uppercase tracking-widest">{validationErrors.buildPath}</p>}
-                          </div>
-
-                          {/* Compiler Flags */}
-                          <div className="space-y-3">
-                            <label className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
-                              <Cpu className="w-3 h-3" /> Neural Compiler Flags
-                            </label>
-                            <input 
-                              value={projectSettings.compilerFlags}
-                              onChange={(e) => {
-                                const newSettings = {...projectSettings, compilerFlags: e.target.value};
-                                setProjectSettings(newSettings);
-                                validateProjectSettings(newSettings);
-                              }}
-                              className={`w-full bg-red-950/10 border ${validationErrors.compilerFlags ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
-                            />
-                            {validationErrors.compilerFlags && <p className="text-[9px] text-red-500 font-black uppercase tracking-widest">{validationErrors.compilerFlags}</p>}
-                          </div>
-
-                          {/* Ollama URL */}
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <label className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
-                                <Globe className="w-3 h-3" /> Ollama Node URL
-                              </label>
-                              <div className="flex items-center gap-2">
-                                <div className={`w-1.5 h-1.5 rounded-full ${
-                                  ollamaStatus === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' :
-                                  ollamaStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' :
-                                  ollamaStatus === 'error' ? 'bg-red-500' : 'bg-gray-500'
-                                }`} />
-                                <span className="text-[8px] font-mono uppercase tracking-tighter opacity-40">
-                                  {ollamaStatus}
-                                </span>
-                                <button 
-                                  onClick={() => refreshOllamaModels()}
-                                  className="p-1 hover:bg-red-500/10 rounded-md transition-colors"
-                                  title="Refresh Models"
-                                >
-                                  <Zap size={10} className="text-red-500/60" />
-                                </button>
-                              </div>
-                            </div>
-                            <input 
-                              value={projectSettings.ollamaUrl}
-                              onChange={(e) => {
-                                const newSettings = {...projectSettings, ollamaUrl: e.target.value};
-                                setProjectSettings(newSettings);
-                                validateProjectSettings(newSettings);
-                              }}
-                              className={`w-full bg-red-950/10 border ${validationErrors.ollamaUrl ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
-                              placeholder="http://localhost:11434"
-                            />
-                            {validationErrors.ollamaUrl && <p className="text-[9px] text-red-500 font-black uppercase tracking-widest">{validationErrors.ollamaUrl}</p>}
-                          </div>
-
-                          {/* Environment Variables */}
-                          <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                              <label className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
-                                <Database className="w-3 h-3" /> Environment Variables
-                              </label>
-                              <button 
-                                onClick={() => setProjectSettings({
-                                  ...projectSettings, 
-                                  envVariables: [...projectSettings.envVariables, { key: '', value: '' }]
-                                })}
-                                className="p-1.5 bg-red-900/20 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/40 transition-all"
-                              >
-                                <Plus className="w-3 h-3" />
-                              </button>
-                            </div>
-                            <div className="space-y-2">
-                              {projectSettings.envVariables.map((env, idx) => (
-                                <div key={idx} className="space-y-1">
-                                  <div className="flex gap-2">
-                                    <input 
-                                      placeholder="KEY"
-                                      value={env.key}
-                                      onChange={(e) => {
-                                        const newEnv = [...projectSettings.envVariables];
-                                        newEnv[idx].key = e.target.value;
-                                        const newSettings = {...projectSettings, envVariables: newEnv};
-                                        setProjectSettings(newSettings);
-                                        validateProjectSettings(newSettings);
-                                      }}
-                                      className={`flex-1 bg-red-950/10 border ${validationErrors[`env_key_${idx}`] ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-2 text-[10px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
-                                    />
-                                    <input 
-                                      placeholder="VALUE"
-                                      value={env.value}
-                                      onChange={(e) => {
-                                        const newEnv = [...projectSettings.envVariables];
-                                        newEnv[idx].value = e.target.value;
-                                        const newSettings = {...projectSettings, envVariables: newEnv};
-                                        setProjectSettings(newSettings);
-                                        validateProjectSettings(newSettings);
-                                      }}
-                                      className={`flex-2 bg-red-950/10 border ${validationErrors[`env_value_${idx}`] ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-2 text-[10px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
-                                    />
-                                    <button 
-                                      onClick={() => {
-                                        const newEnv = projectSettings.envVariables.filter((_, i) => i !== idx);
-                                        const newSettings = {...projectSettings, envVariables: newEnv};
-                                        setProjectSettings(newSettings);
-                                        validateProjectSettings(newSettings);
-                                      }}
-                                      className="p-2 text-red-900 hover:text-red-500 transition-colors"
-                                    >
-                                      <Trash2 className="w-3 h-3" />
-                                    </button>
-                                  </div>
-                                  {(validationErrors[`env_key_${idx}`] || validationErrors[`env_value_${idx}`]) && (
-                                    <div className="flex flex-col gap-0.5 px-1">
-                                      {validationErrors[`env_key_${idx}`] && <p className="text-[8px] text-red-500 font-black uppercase tracking-widest">{validationErrors[`env_key_${idx}`]}</p>}
-                                      {validationErrors[`env_value_${idx}`] && <p className="text-[8px] text-red-500 font-black uppercase tracking-widest">{validationErrors[`env_value_${idx}`]}</p>}
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <EditorPanel
+              projectFiles={projectFiles}
+              activeFileId={activeFileId}
+              setProjectFiles={setProjectFiles}
+              handleFileSwitch={handleFileSwitch}
+              handleFileUpload={handleFileUpload}
+              editorContent={editorContent}
+              setEditorContent={(v: string) => {
+                setEditorContent(v);
+                if (activeFileId) markFileDirty(activeFileId);
+              }}
+              editorLanguage={editorLanguage}
+              setEditorLanguage={setEditorLanguage}
+              editorOutput={editorOutput}
+              setEditorOutput={setEditorOutput}
+              editorMode={editorMode}
+              setEditorMode={setEditorMode}
+              theme={theme}
+              debouncedEditorContent={debouncedEditorContent}
+              isRunningCode={isRunningCode}
+              isScanningCode={isScanningCode}
+              scanResults={scanResults}
+              handleRunCode={handleRunCode}
+              handleScanCode={handleScanCode}
+              lastSavedTime={lastSavedTime}
+              forceSave={forceSave}
+              saveToFile={saveToFile}
+              isLivePreviewEnabled={isLivePreviewEnabled}
+              setIsLivePreviewEnabled={setIsLivePreviewEnabled}
+              isInspectorActive={isInspectorActive}
+              setIsInspectorActive={setIsInspectorActive}
+              inspectedElement={inspectedElement}
+              setInspectedElement={setInspectedElement}
+              inspectedElementRef={inspectedElementRef}
+              previewContainerRef={previewContainerRef}
+              handleInspectMouseMove={handleInspectMouseMove}
+              handleInspectClick={handleInspectClick}
+              handleStyleChange={handleStyleChange}
+              isPairProgrammerActive={isPairProgrammerActive}
+              setIsPairProgrammerActive={setIsPairProgrammerActive}
+              isEditorAssistantOpen={isEditorAssistantOpen}
+              setIsEditorAssistantOpen={setIsEditorAssistantOpen}
+              editorAssistantMessages={editorAssistantMessages}
+              editorAssistantInput={editorAssistantInput}
+              setEditorAssistantInput={setEditorAssistantInput}
+              handleEditorAssistantSubmit={handleEditorAssistantSubmit}
+              handleCodeReview={handleCodeReview}
+              handleSaveAnalysis={handleSaveAnalysis}
+              handleApplyDocumentation={handleApplyDocumentation}
+              handleApplyRefactor={handleApplyRefactor}
+              handleApplyForge={handleApplyForge}
+              isAiProcessing={isAiProcessing}
+              lastEditorAssistantPrompt={lastEditorAssistantPrompt}
+              handleExplainCode={handleExplainCode}
+              handleFullProjectAnalysis={handleFullProjectAnalysis}
+              handleDeepProjectAudit={handleDeepProjectAudit}
+              handleGenerateDocs={handleGenerateDocs}
+              handleFormatCode={handleFormatCode}
+              handleRefactorCode={handleRefactorCode}
+              handleRefactorAllFiles={handleRefactorAllFiles}
+              handleReviewCode={handleReviewCode}
+              handleAnalyzeData={handleAnalyzeData}
+              handleGenerateCode={handleGenerateCode}
+              breakpoints={breakpoints}
+              cursorLine={cursorLine}
+              debugState={debugState}
+              debugRefactorResult={debugRefactorResult}
+              setDebugRefactorResult={setDebugRefactorResult}
+              handleToggleCurrentLineBreakpoint={handleToggleCurrentLineBreakpoint}
+              handleStartDebug={handleStartDebug}
+              handleStopDebug={handleStopDebug}
+              handleStep={handleStep}
+              handleDebugRefactor={handleDebugRefactor}
+              handleApplyDebugRefactor={handleApplyDebugRefactor}
+              handleEditorDidMount={handleEditorDidMount}
+              gitRepo={gitRepo}
+              setGitRepo={setGitRepo}
+              handleGitInit={handleGitInit}
+              handleGitPull={handleGitPull}
+              handleGitPush={handleGitPush}
+              handleGitStash={handleGitStash}
+              handleGitPop={handleGitPop}
+              handleGitSaveAll={handleGitSaveAll}
+              handleGitCommit={handleGitCommit}
+              handleGitStage={handleGitStage}
+              handleGitStageAll={handleGitStageAll}
+              handleGitUnstage={handleGitUnstage}
+              projectSettings={projectSettings}
+              setProjectSettings={setProjectSettings}
+              validateProjectSettings={validateProjectSettings}
+              validationErrors={validationErrors}
+              ollamaStatus={ollamaStatus}
+              refreshOllamaModels={refreshOllamaModels}
+              isMobileFileTreeOpen={isMobileFileTreeOpen}
+              setIsMobileFileTreeOpen={setIsMobileFileTreeOpen}
+              setIsGenerateModalOpen={setIsGenerateModalOpen}
+              setIsTemplateModalOpen={setIsTemplateModalOpen}
+              swarmAnxiety={swarmAnxiety}
+              setTerminalOutput={setTerminalOutput}
+            />
           )}
 
-          {/* AI STUDIO */}
-          {activeTab === 'studio' && (
-            <div className="h-full flex flex-col lg:flex-row overflow-hidden animate-in fade-in duration-500">
-              <div className="flex-1 flex flex-col min-w-0 bg-[#020204]">
-                <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8 md:space-y-12 custom-scrollbar bg-[radial-gradient(circle_at_50%_0%,rgba(153,27,27,0.05),transparent)]">
-                  {chatMessages.map((msg, i) => (
-                    <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-3 duration-400`}>
-                      <div className={`max-w-[90%] md:max-w-[85%] rounded-[24px] md:rounded-[32px] p-6 md:p-8 text-[12px] md:text-[14px] relative group ${
-                        msg.role === 'user' 
-                          ? 'bg-red-800 text-white rounded-tr-none shadow-[0_15px_40px_rgba(153,27,27,0.3)]' 
-                          : 'bg-[#0f0404] border border-red-900/20 text-red-100 rounded-tl-none backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.6)]'
-                      }`}>
-                        {msg.type === 'image' ? (
-                          <div className="space-y-4 md:space-y-6">
-                            <img src={msg.url} className="rounded-xl md:rounded-2xl w-full border border-red-900/40 shadow-[0_0_30px_rgba(239,68,68,0.1)] bg-black/60" />
-                            <div className="flex justify-between items-center px-1 md:px-2">
-                               <button className="text-[9px] md:text-[11px] text-red-500 font-black hover:text-red-400 transition-colors uppercase tracking-[0.1em] md:tracking-[0.2em] flex items-center gap-2 drop-shadow-[0_0_5px_rgba(239,68,68,0.3)]"><Download className="w-3.5 h-3.5 md:w-4 md:h-4" /> Download Manifest</button>
-                               <span className="text-[8px] md:text-[10px] text-red-950 font-black tracking-widest">ARTIFACT_77B</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="whitespace-pre-wrap leading-relaxed tracking-wider font-medium">{msg.text}</p>
-                        )}
-                        <div className={`text-[10px] mt-4 opacity-0 group-hover:opacity-40 transition-opacity font-mono tracking-[0.3em] font-black ${msg.role === 'user' ? 'text-white' : 'text-red-800'}`}>
-                          {formatTime(msg.timestamp)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {isAiProcessing && (
-                    <div className="flex items-center space-x-3 md:space-x-4 p-4 md:p-5 bg-red-950/10 rounded-[30px] md:rounded-[40px] border border-red-900/20 w-fit shadow-2xl">
-                      <div className="flex gap-1.5 md:gap-2 px-1">
-                        <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-red-600 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                        <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-red-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                        <div className="w-2 h-2 md:w-2.5 md:h-2.5 bg-red-600 rounded-full animate-bounce"></div>
-                      </div>
-                      <span className="text-[9px] md:text-[11px] font-black text-red-700 uppercase tracking-[0.3em] md:tracking-[0.4em]">Rendering Reality</span>
-                    </div>
-                  )}
-                  <div ref={chatEndRef} />
-                </div>
-                {/* Input Bar */}
-                <div className="p-4 md:p-8 bg-[#0a0202]/80 border-t border-red-900/20 backdrop-blur-md shrink-0">
-                  <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
-                    <div className="relative group">
-                      <input value={studioInput} onChange={(e) => setStudioInput(e.target.value)} placeholder="Enter generation prompt..." className="w-full bg-[#0d0404] border border-red-900/40 rounded-2xl md:rounded-3xl px-6 md:px-8 py-4 md:py-6 text-xs md:text-sm text-red-100 focus:border-red-600/60 outline-none transition-all shadow-[inset_0_2px_10px_rgba(0,0,0,0.8)]" />
-                      <button type="submit" onClick={handleStudioSubmit} disabled={isAiProcessing} className="absolute right-3 md:right-4 top-1/2 -translate-y-1/2 p-2 md:p-3 bg-red-600 rounded-xl md:rounded-2xl disabled:opacity-50 transition-all hover:scale-110 active:scale-95 shadow-[0_0_20px_rgba(220,38,38,0.5)]">
-                        <Send className="w-5 h-5 md:w-6 md:h-6 text-white" />
-                      </button>
-                    </div>
-                    <div className="flex gap-4 md:gap-6">
-                       <div className="flex-1 flex items-center bg-red-950/10 border border-red-900/20 rounded-xl md:rounded-2xl px-4 md:px-5 py-2.5 md:py-3 gap-3">
-                          <X className="w-3.5 h-3.5 md:w-4 md:h-4 text-red-800" />
-                          <input value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)} placeholder="Negative Parameters" className="flex-1 bg-transparent text-[9px] md:text-[11px] text-red-800 font-bold focus:text-red-600 outline-none uppercase tracking-widest" />
-                       </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* SD Controls Sidebar */}
-              <div className="w-full lg:w-96 bg-[#080101] border-l border-red-900/30 p-6 md:p-10 space-y-8 md:space-y-12 overflow-y-auto custom-scrollbar shadow-[-20px_0_60px_rgba(0,0,0,0.4)] shrink-0">
-                 <div className="flex items-center justify-between">
-                    <h4 className="text-[11px] md:text-[12px] font-black text-red-500 uppercase tracking-[0.3em] md:tracking-[0.4em] flex items-center gap-3 drop-shadow-[0_0_8px_rgba(239,68,68,0.3)]"><Sliders className="w-4 h-4 md:w-5 md:h-5" /> Config Matrix</h4>
-                    <span className="text-[9px] md:text-[10px] font-mono text-red-900 font-black">V4.1_EX</span>
-                 </div>
-
-                 {/* Checkpoint Selector */}
-                 <div className="space-y-5">
-                    <label className="text-[11px] font-black text-red-800 uppercase tracking-[0.2em] flex items-center gap-3"><HardDrive className="w-4 h-4" /> Neural Weights</label>
-                    <div className="relative">
-                      <select value={sdParams.checkpoint} onChange={(e) => setSdParams({...sdParams, checkpoint: e.target.value})} className="w-full bg-[#0d0404] border border-red-900/40 rounded-2xl px-6 py-4 text-[13px] text-red-100 outline-none focus:border-red-600/60 transition-all appearance-none cursor-pointer font-bold">
-                         <option>SDXL-V1.0-Base</option>
-                         <option>DreamShaper-v8</option>
-                         <option>Deliberate-V3</option>
-                         <option>Realistic-Vision-V6</option>
-                      </select>
-                      <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-red-800"><ChevronRight className="w-4 h-4 rotate-90" /></div>
-                    </div>
-                 </div>
-
-                 {/* Steps Slider */}
-                 <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                       <label className="text-[11px] font-black text-red-800 uppercase tracking-[0.2em] flex items-center gap-3"><Activity className="w-4 h-4" /> Sampling Iterations</label>
-                       <span className="text-sm font-mono text-red-500 font-black drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">{sdParams.steps}</span>
-                    </div>
-                    <input type="range" min="1" max="100" value={sdParams.steps} onChange={(e) => setSdParams({...sdParams, steps: parseInt(e.target.value)})} className="w-full h-2 bg-red-950/40 rounded-full appearance-none cursor-pointer accent-red-600" />
-                 </div>
-
-                 {/* CFG Scale */}
-                 <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                       <label className="text-[11px] font-black text-red-800 uppercase tracking-[0.2em] flex items-center gap-3"><Gauge className="w-4 h-4" /> Guidance Scale</label>
-                       <span className="text-sm font-mono text-red-500 font-black drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">{sdParams.cfgScale}</span>
-                    </div>
-                    <input type="range" min="1" max="20" step="0.5" value={sdParams.cfgScale} onChange={(e) => setSdParams({...sdParams, cfgScale: parseFloat(e.target.value)})} className="w-full h-2 bg-red-950/40 rounded-full appearance-none cursor-pointer accent-red-600" />
-                 </div>
-
-                 {/* Seed & AR */}
-                 <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                       <label className="text-[11px] font-black text-red-800 uppercase tracking-widest">Seed</label>
-                       <input type="number" value={sdParams.seed} onChange={(e) => setSdParams({...sdParams, seed: parseInt(e.target.value)})} className="w-full bg-[#0d0404] border border-red-900/40 rounded-2xl px-5 py-3 text-sm text-red-100 outline-none font-bold" />
-                    </div>
-                    <div className="space-y-3">
-                       <label className="text-[11px] font-black text-red-800 uppercase tracking-widest">Aspect Ratio</label>
-                       <div className="flex gap-2">
-                          {['1:1', '16:9', '9:16'].map(ar => (
-                             <button key={ar} onClick={() => setSdParams({...sdParams, aspectRatio: ar as any})} className={`flex-1 py-3 text-[10px] font-black border rounded-xl transition-all ${sdParams.aspectRatio === ar ? 'bg-red-700 text-white border-red-500 shadow-[0_0_15px_rgba(185,28,28,0.4)]' : 'bg-red-950/10 border-red-900/20 text-red-900 hover:text-red-500'}`}>{ar}</button>
-                          ))}
-                       </div>
-                    </div>
-                 </div>
-
-                 {/* Visual Injector */}
-                 <div className="space-y-6 pt-8 border-t border-red-900/20">
-                    <h4 className="text-[11px] font-black text-red-800 uppercase tracking-[0.2em]">Source Reference</h4>
-                    {!studioRefImage ? (
-                      <label className="flex flex-col items-center justify-center p-12 border-2 border-dashed border-red-900/20 rounded-[40px] cursor-pointer hover:border-red-600/40 hover:bg-red-950/10 transition-all group">
-                        <Upload className="w-10 h-10 text-red-950 group-hover:text-red-600 transition-colors" />
-                        <span className="mt-5 text-[12px] text-red-900 font-black uppercase tracking-[0.3em] group-hover:text-red-400">Inject Frame</span>
-                        <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
-                          const f = e.target.files?.[0];
-                          if(f) setStudioRefImage({ data: await fileToBase64(f), mimeType: f.type });
-                        }} />
-                      </label>
-                    ) : (
-                      <div className="relative rounded-3xl overflow-hidden border border-red-600/40 group/ref shadow-2xl">
-                        <img src={`data:${studioRefImage.mimeType};base64,${studioRefImage.data}`} className="w-full h-56 object-cover transition-transform duration-700 group-hover/ref:scale-110" />
-                        <div className="absolute inset-0 bg-red-950/60 opacity-0 group-hover/ref:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                           <button onClick={() => setStudioRefImage(null)} className="p-4 bg-red-600 rounded-full text-white shadow-2xl scale-0 group-hover/ref:scale-100 transition-transform duration-300"><Trash2 className="w-6 h-6" /></button>
-                        </div>
-                      </div>
-                    )}
-                 </div>
-              </div>
-            </div>
+          {/* CODE ANALYSIS */}
+          {activeTab === 'analysis' && (
+            <AnalysisPanel
+              editorContent={editorContent}
+              editorOutput={editorOutput}
+              isAiProcessing={isAiProcessing}
+              editorAssistantInput={editorAssistantInput}
+              setEditorAssistantInput={setEditorAssistantInput}
+              handleAnalyzeCode={handleAnalyzeCode}
+              projectFiles={projectFiles}
+              activeFileId={activeFileId}
+            />
           )}
 
           {/* NODE BRIDGE */}
           {activeTab === 'termux' && (
-            <div className="h-full p-4 md:p-10 flex flex-col gap-6 md:gap-10 animate-in zoom-in-95 duration-500 overflow-y-auto custom-scrollbar">
-               <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 gap-6 md:gap-10">
-                  <div className="lg:col-span-1 flex flex-col gap-6 md:gap-10">
-                     <div className="bg-[#0d0404] rounded-[30px] md:rounded-[40px] border border-red-900/30 p-8 md:p-10 flex flex-col justify-center space-y-6 md:space-y-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] relative overflow-hidden group shrink-0">
-                        <div className="absolute -bottom-16 -right-16 opacity-[0.05] group-hover:opacity-[0.15] transition-opacity duration-700">
-                           <Smartphone className="w-48 md:w-64 h-48 md:h-64 text-red-600" />
-                        </div>
-                        <div className="space-y-3 md:space-y-4 relative">
-                           <h2 className="text-2xl md:text-3xl font-black text-red-100 tracking-tighter uppercase leading-none">Crimson Bridge</h2>
-                           <p className="text-[12px] md:text-[13px] text-red-900 leading-relaxed font-bold tracking-tight">Sync mobile hardware with node clusters for low-latency neural inference.</p>
-                        </div>
-                        <button onClick={() => { setTermuxStatus('connecting'); setTimeout(() => setTermuxStatus('connected'), 1200); }} className="w-full py-4 md:py-6 bg-red-700 hover:bg-red-600 text-white rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-[0.2em] md:tracking-[0.3em] shadow-[0_10px_30px_rgba(185,28,28,0.3)] active:scale-95 transition-all">Connect Hub</button>
-                     </div>
-                     <div className="bg-[#0d0404] rounded-[30px] md:rounded-[40px] border border-red-900/30 p-8 md:p-10 space-y-4 md:space-y-6 shadow-xl shrink-0">
-                        <h4 className="text-[11px] md:text-[12px] font-black text-red-800 uppercase tracking-[0.2em] md:tracking-[0.3em] flex items-center gap-3"><Activity className="w-4 h-4 md:w-5 md:h-5 text-red-600" /> Node Vitals</h4>
-                        <div className="space-y-4 md:space-y-6">
-                           <div className="flex justify-between text-[10px] md:text-[11px] font-mono"><span className="text-red-900 font-black">MEM_LOAD:</span><span className="text-red-500 font-black">72%</span></div>
-                           <div className="w-full h-2 md:h-2.5 bg-red-950/20 rounded-full overflow-hidden border border-red-900/10"><div className="w-[72%] h-full bg-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]" /></div>
-                           <div className="flex justify-between text-[10px] md:text-[11px] font-mono"><span className="text-red-900 font-black">THERMALS:</span><span className="text-red-500 font-black">42°C</span></div>
-                        </div>
-                     </div>
-                  </div>
-                  
-                  <div className="lg:col-span-3 bg-[#0d0404] rounded-[30px] md:rounded-[40px] border border-red-900/30 p-6 md:p-12 flex flex-col space-y-8 md:space-y-10 shadow-2xl relative">
-                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-red-900/20 pb-6 md:pb-8 gap-6">
-                        <div className="space-y-2">
-                           <h3 className="text-xl md:text-2xl font-black text-red-100 flex items-center gap-3 md:gap-4 uppercase tracking-tighter"><Network className="w-6 h-6 md:w-7 md:h-7 text-red-600" /> Mobile Model Stash</h3>
-                           <p className="text-xs md:text-sm text-red-900 font-bold tracking-widest">Safetensors and LoRA cluster synchronization.</p>
-                        </div>
-                        <label className="w-full md:w-auto px-5 md:px-6 py-3 md:py-4 bg-red-800/10 border border-red-700/30 rounded-xl md:rounded-2xl cursor-pointer hover:bg-red-800/20 transition-all text-red-500 flex items-center justify-center gap-3 text-[10px] md:text-[11px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] shadow-lg">
-                           <Plus className="w-4 h-4 md:w-5 md:h-5" /> <span>Sync Model</span>
-                           <input type="file" className="hidden" multiple onChange={handleTermuxFileUpload} />
-                        </label>
-                     </div>
-                     
-                     <div className="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        {termuxFiles.length === 0 ? (
-                          <div className="col-span-1 md:col-span-2 h-full flex flex-col items-center justify-center text-red-950 italic gap-4 md:gap-6 opacity-30 py-12">
-                             <Database className="w-16 h-16 md:w-24 md:h-24" />
-                             <p className="uppercase font-black tracking-[0.3em] md:tracking-[0.4em] text-xs md:text-sm">Cluster Stash Empty</p>
-                          </div>
-                        ) : (
-                          termuxFiles.map((f, i) => (
-                            <div key={i} className="flex flex-col p-6 md:p-8 bg-red-950/5 border border-red-900/20 rounded-[24px] md:rounded-[32px] group hover:bg-red-900/10 hover:border-red-600/40 transition-all relative overflow-hidden shadow-inner">
-                               <div className="flex items-center gap-4 md:gap-6 mb-4 md:mb-6 relative z-10">
-                                  <div className="p-3 md:p-4 bg-red-900/20 rounded-xl md:rounded-2xl shadow-xl">
-                                     {f.category === 'model' ? <HardDrive className="w-5 h-5 md:w-6 md:h-6 text-red-500" /> : <FileCode className="w-5 h-5 md:w-6 md:h-6 text-red-800" />}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                     <p className="text-[13px] md:text-[15px] font-black text-red-100 truncate uppercase tracking-tight leading-none">{f.name}</p>
-                                     <p className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] text-red-800 font-black mt-2">{f.size} • {f.category}</p>
-                                  </div>
-                               </div>
-                               <div className="flex items-center gap-2 md:gap-3 relative z-10">
-                                  <button className="flex-1 py-2.5 md:py-3 bg-red-900/20 hover:bg-red-700 text-[10px] md:text-[11px] font-black uppercase text-red-700 hover:text-white rounded-lg md:rounded-xl transition-all tracking-widest">Initialize</button>
-                                  <button onClick={() => setTermuxFiles(prev => prev.filter((_, idx) => idx !== i))} className="p-2.5 md:p-3 text-red-900 hover:text-red-500 transition-all"><Trash2 className="w-4 h-4 md:w-5 md:h-5" /></button>
-                               </div>
-                               <div className="absolute top-0 right-0 w-24 md:w-32 h-24 md:h-32 bg-red-600/[0.03] blur-[40px] md:blur-[50px] rounded-full" />
-                            </div>
-                          ))
-                        )}
-                     </div>
-                  </div>
-               </div>
-            </div>
+            <NodeBridgePanel
+              termuxFiles={termuxFiles}
+              setTermuxFiles={setTermuxFiles}
+              setTermuxStatus={setTermuxStatus}
+              handleTermuxFileUpload={handleTermuxFileUpload}
+              onImportFile={(name, content, path) => {
+                const ext = name.split('.').pop() ?? 'text';
+                const langMap: Record<string,string> = { py:'python', js:'javascript', ts:'typescript', tsx:'typescript', jsx:'javascript', html:'html', css:'css', rs:'rust', go:'go', cpp:'cpp', json:'json', md:'markdown', sh:'shell' };
+                const newFile = {
+                  id: `termux_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+                  name,
+                  type: 'file' as const,
+                  parentId: 'root',
+                  language: langMap[ext] ?? 'text',
+                  content,
+                };
+                setProjectFiles(prev => [...prev, newFile]);
+                setActiveFileId(newFile.id);
+                setEditorContent(content);
+                setEditorLanguage(newFile.language);
+                setActiveTab('editor');
+                setTerminalOutput(prev => [...prev, `[IMPORT] ${path} → project`]);
+              }}
+            />
           )}
 
           {/* DATA CORE / STORAGE */}
           {activeTab === 'storage' && (
-            <div className="h-full p-4 md:p-10 flex flex-col gap-6 md:gap-10 animate-in zoom-in-95 duration-500 overflow-y-auto custom-scrollbar">
-               <div className="flex-1 bg-[#0d0404] rounded-[30px] md:rounded-[50px] border border-red-900/30 p-6 md:p-12 flex flex-col space-y-6 md:space-y-10 shadow-2xl relative overflow-hidden shrink-0">
-                  <div className="absolute -top-24 -right-24 w-96 h-96 bg-red-600/5 blur-[100px] rounded-full pointer-events-none" />
-                  
-                  <div className="flex items-center justify-between border-b border-red-900/20 pb-8 relative z-10">
-                     <div className="space-y-2">
-                        <h3 className="text-3xl font-black text-red-100 flex items-center gap-5 uppercase tracking-tighter">
-                          <HardDrive className="w-8 h-8 text-red-600" /> 
-                          Neural Data Core
-                        </h3>
-                        <p className="text-sm text-red-900 font-bold tracking-widest uppercase">Hardware-backed document storage & database cluster</p>
-                     </div>
-                     <label className="px-8 py-4 bg-red-700 text-white rounded-2xl cursor-pointer hover:bg-red-600 transition-all flex items-center gap-4 text-[12px] font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(185,28,28,0.3)] active:scale-95">
-                        <Upload className="w-5 h-5" /> 
-                        <span>Inject Document</span>
-                        <input type="file" className="hidden" multiple onChange={handleStorageUpload} accept=".pdf,.doc,.docx,.txt,.mht,.json,.csv" />
-                     </label>
-                  </div>
-                  
-                  <div className="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-                     {storageFiles.length === 0 ? (
-                       <div className="col-span-full h-full flex flex-col items-center justify-center text-red-950 italic gap-8 opacity-20">
-                          <Database className="w-32 h-32" />
-                          <p className="uppercase font-black tracking-[0.5em] text-lg">Data Core Empty</p>
-                       </div>
-                     ) : (
-                       storageFiles.map((f, i) => (
-                         <div 
-                           key={f.id} 
-                           className="flex flex-col p-8 bg-red-950/5 border border-red-900/20 rounded-[40px] group hover:bg-red-900/10 hover:border-red-600/40 transition-all relative overflow-hidden shadow-inner animate-in fade-in slide-in-from-bottom-4"
-                           style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'both' }}
-                         >
-                            <div className="flex items-center justify-between mb-8 relative z-10">
-                               <div className="p-4 bg-red-900/20 rounded-2xl shadow-xl text-red-500 group-hover:scale-110 transition-transform">
-                                  {f.type === 'pdf' ? <FileText className="w-6 h-6" /> : <FileCode className="w-6 h-6" />}
-                               </div>
-                               <div className="text-right">
-                                  <p className="text-[10px] uppercase tracking-[0.3em] text-red-800 font-black">{f.size}</p>
-                                  <p className="text-[9px] uppercase tracking-[0.2em] text-red-950 font-black mt-1">{f.date}</p>
-                               </div>
-                            </div>
-                            <div className="flex-1 min-w-0 mb-8 relative z-10">
-                               <p className="text-[17px] font-black text-red-100 truncate uppercase tracking-tight leading-tight">{f.name}</p>
-                               <p className="text-[10px] uppercase tracking-[0.4em] text-red-900 font-black mt-3">Type: {f.type}</p>
-                            </div>
-                            <div className="flex items-center gap-3 relative z-10">
-                               <button className="flex-1 py-4 bg-red-900/20 hover:bg-red-700 text-[11px] font-black uppercase text-red-700 hover:text-white rounded-2xl transition-all tracking-[0.2em]">Access</button>
-                               <button onClick={() => setStorageFiles(prev => prev.filter(file => file.id !== f.id))} className="p-4 text-red-900 hover:text-red-500 transition-all bg-red-950/20 rounded-2xl"><Trash2 className="w-5 h-5" /></button>
-                            </div>
-                            <div className="absolute bottom-0 right-0 w-32 h-32 bg-red-600/[0.02] blur-[40px] rounded-full pointer-events-none" />
-                         </div>
-                       ))
-                     )}
-                  </div>
-               </div>
-            </div>
+            <StoragePanel
+              storageFiles={storageFiles}
+              setStorageFiles={setStorageFiles}
+              handleStorageUpload={handleStorageUpload}
+            />
           )}
 
-          {/* SETTINGS */}
+          {/* NEURAL CORE */}
+          {activeTab === 'brain' && <BrainPanel />}
+
           {activeTab === 'settings' && (
-            <div className="h-full p-4 md:p-12 overflow-y-auto custom-scrollbar animate-in fade-in duration-500 bg-[#020204]">
-              <div className="max-w-4xl mx-auto space-y-16 pb-20">
-                <header className="space-y-4 border-b border-red-900/30 pb-12 flex items-end justify-between">
-                   <div className="space-y-2">
-                      <h2 className="text-5xl font-black text-red-100 tracking-tighter uppercase leading-none drop-shadow-[0_0_15px_rgba(239,68,68,0.3)]">Crimson Core</h2>
-                      <p className="text-red-900 text-[13px] font-black tracking-[0.2em] uppercase">Architecture & Neural Personalities Control</p>
-                   </div>
-                   <div className="px-6 py-3 bg-red-950/20 border border-red-900/30 rounded-2xl text-[12px] font-mono text-red-600 font-black shadow-inner">SYSTEM_STATE: OPTIMAL</div>
-                </header>
-
-                {/* Personalities */}
-                <section className="space-y-10">
-                   <h3 className="text-[12px] font-black text-red-900 uppercase tracking-[0.5em] flex items-center gap-4"><Sparkles className="w-6 h-6 text-red-600" /> Neural Archetypes</h3>
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                      {personalities.map(p => (
-                        <div key={p.id} onClick={() => setPersonalities(prev => prev.map(pers => ({ ...pers, active: pers.id === p.id })))} className={`p-10 rounded-[40px] border transition-all cursor-pointer group relative overflow-hidden ${p.active ? 'bg-red-900/10 border-red-600/50 shadow-[0_20px_60px_rgba(153,27,27,0.2)] scale-[1.03]' : 'bg-[#0a0202] border-red-900/20 hover:border-red-900/60 hover:scale-[1.01]'}`}>
-                           <div className="flex items-center justify-between mb-8 relative z-10">
-                              <div className="flex items-center gap-5"><UserCircle className={`w-10 h-10 ${p.active ? 'text-red-500' : 'text-red-950'}`} /><span className="text-lg font-black text-red-100 tracking-tighter uppercase">{p.name}</span></div>
-                              {p.active && <ShieldCheck className="w-6 h-6 text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]" />}
-                           </div>
-                           <textarea 
-                              value={p.instruction} 
-                              onChange={(e) => setPersonalities(prev => prev.map(pers => pers.id === p.id ? { ...pers, instruction: e.target.value } : pers))} 
-                              onClick={(e) => e.stopPropagation()} 
-                              className="w-full bg-black/60 border border-red-950 rounded-[24px] p-5 text-[12px] text-red-100/60 font-mono h-48 resize-none outline-none focus:border-red-600/30 transition-all leading-relaxed shadow-inner" 
-                           />
-                           {p.active && <div className="absolute -top-16 -right-16 w-48 h-48 bg-red-600/10 blur-[80px] rounded-full pointer-events-none" />}
-                        </div>
-                      ))}
-                   </div>
-                </section>
-
-                {/* AI Provider Settings */}
-                <section className="space-y-10">
-                   <h3 className="text-[12px] font-black text-red-900 uppercase tracking-[0.5em] flex items-center gap-4"><Network className="w-6 h-6 text-red-600" /> Neural Provider Configuration</h3>
-                   <div className="bg-[#0a0202] rounded-[40px] border border-red-900/30 p-10 space-y-8 shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative overflow-hidden">
-                      <div className="space-y-4 relative z-10">
-                         <h4 className="text-xl font-black text-red-100 tracking-tighter uppercase leading-none">Grok API Key</h4>
-                         <p className="text-xs text-red-900 font-bold tracking-[0.1em]">Required for xAI Grok integration. Stored locally.</p>
-                         <input 
-                            type="password"
-                            value={grokApiKey}
-                            onChange={(e) => setGrokApiKey(e.target.value)}
-                            placeholder="xai-..."
-                            className="w-full bg-black/60 border border-red-950 rounded-[20px] p-4 text-sm text-red-100 font-mono outline-none focus:border-red-600/50 transition-all shadow-inner"
-                         />
-                      </div>
-                   </div>
-                </section>
-
-                {/* Logic Injection */}
-                <section className="space-y-10">
-                   <h3 className="text-[12px] font-black text-red-900 uppercase tracking-[0.5em] flex items-center gap-4"><Brain className="w-6 h-6 text-red-600" /> Core Synthesis Injection</h3>
-                   <div className="bg-[#0a0202] rounded-[50px] border border-red-900/30 p-14 space-y-14 shadow-[0_40px_100px_rgba(0,0,0,0.8)] relative overflow-hidden group">
-                      <div className="absolute top-0 right-0 p-20 opacity-[0.03] group-hover:opacity-[0.1] transition-opacity duration-1000 pointer-events-none">
-                         <Network className="w-[500px] h-[500px] text-red-600" />
-                      </div>
-
-                      <div className="flex items-start justify-between relative z-10">
-                         <div className="space-y-4">
-                            <h4 className="text-3xl font-black text-red-100 tracking-tighter uppercase leading-none">Crimson Neural Fabric</h4>
-                            <p className="text-base text-red-900 font-bold tracking-[0.1em]">Inject logic kernels or data trees to refine autonomous model control.</p>
-                         </div>
-                         <div className="flex bg-red-950/20 p-2 rounded-2xl border border-red-900/20">
-                            {['python', 'kotlin', 'nodejs'].map(r => (
-                              <button key={r} onClick={() => setBrainConfig({...brainConfig, runtime: r})} className={`px-8 py-3 rounded-xl text-[12px] font-black uppercase transition-all tracking-[0.3em] ${brainConfig.runtime === r ? 'bg-red-700 text-white shadow-[0_0_20px_rgba(185,28,28,0.5)]' : 'text-red-900 hover:text-red-600'}`}>{r}</button>
-                            ))}
-                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 relative z-10">
-                         <div className="lg:col-span-2 space-y-5">
-                            <label className="text-[12px] font-black text-red-800 uppercase tracking-[0.4em] flex items-center gap-4"><Code2 className="w-5 h-5" /> Logic Manifest</label>
-                            <textarea value={brainConfig.logic} onChange={(e) => setBrainConfig({...brainConfig, logic: e.target.value})} placeholder="Initialize system with core logic strings..." className="w-full h-96 bg-black/80 border border-red-950 rounded-[40px] p-10 text-[14px] font-mono text-red-500 outline-none focus:border-red-600/50 resize-none custom-scrollbar shadow-[inset_0_4px_20px_rgba(0,0,0,0.9)]" />
-                         </div>
-                         <div className="space-y-5">
-                            <label className="text-[12px] font-black text-red-800 uppercase tracking-[0.4em] flex items-center gap-4"><FileSearch className="w-5 h-5" /> Data Anchors</label>
-                            {!brainRefFile ? (
-                              <label className="flex flex-col items-center justify-center h-96 border-4 border-dashed border-red-950 rounded-[40px] cursor-pointer hover:border-red-600/40 hover:bg-red-950/10 transition-all group/up">
-                                <Plus className="w-16 h-16 text-red-950 group-hover/up:scale-110 group-hover/up:text-red-600 transition-all mb-8" />
-                                <span className="text-[15px] text-red-900 font-black uppercase text-center px-10 leading-tight tracking-[0.2em]">Deploy Neural Database<br/><span className="text-[11px] opacity-40 font-mono mt-4 block tracking-[0.5em]">SYSTEM_INGESTION_PENDING</span></span>
-                                <input type="file" className="hidden" accept=".pdf,.docx,.txt" onChange={async (e) => {
-                                  const f = e.target.files?.[0];
-                                  if(f) setBrainRefFile({ name: f.name, data: await fileToBase64(f), mimeType: f.type });
-                                }} />
-                              </label>
-                            ) : (
-                              <div className="h-96 bg-red-900/5 border border-red-600/30 rounded-[40px] p-12 flex flex-col items-center justify-center text-center space-y-10 relative group/staged animate-in zoom-in-95 shadow-2xl backdrop-blur-md">
-                                 <div className="p-8 bg-red-600/10 rounded-[50px] shadow-[0_0_30px_rgba(220,38,38,0.2)]"><BookOpen className="w-20 h-20 text-red-500" /></div>
-                                 <div className="space-y-4">
-                                    <p className="text-lg font-black text-red-100 truncate max-w-[240px] uppercase tracking-tighter">{brainRefFile.name}</p>
-                                    <p className="text-[11px] text-red-500 font-mono tracking-[0.5em] uppercase font-black px-6 py-2 bg-red-600/10 rounded-full border border-red-600/20 shadow-[0_0_20px_rgba(220,38,38,0.3)]">SYNC_READY</p>
-                                 </div>
-                                 <button onClick={() => setBrainRefFile(null)} className="absolute top-8 right-8 p-3.5 bg-red-900/10 text-red-600 rounded-3xl opacity-0 group-hover/staged:opacity-100 transition-all hover:bg-red-600 hover:text-white shadow-2xl"><Trash2 className="w-6 h-6" /></button>
-                              </div>
-                            )}
-                         </div>
-                      </div>
-
-                      <div className="flex flex-col md:flex-row items-end justify-between gap-12 pt-14 relative z-10 border-t border-red-900/20">
-                         <div className="flex-1 w-full space-y-6">
-                            <h4 className="text-[12px] font-black text-red-800 uppercase tracking-[0.5em] flex items-center gap-4"><Database className="w-5 h-5" /> Virtual Core Mounts</h4>
-                            <div className="flex flex-wrap gap-4">
-                               {brainConfig.mappedPaths.map((p, i) => <div key={i} className="px-6 py-3 bg-red-950/20 border border-red-900/20 rounded-2xl text-[11px] font-mono text-red-900 font-black hover:text-red-500 transition-colors cursor-crosshair">{p}</div>)}
-                            </div>
-                         </div>
-                         <button 
-                            onClick={async () => {
-                              if (!brainConfig.logic.trim() && !brainRefFile) return;
-                              setIsAiProcessing(true);
-                              setTerminalOutput(prev => [...prev, `[KERNEL] Initializing crimson neural fabric...`]);
-                              try {
-                                const response = await generateAIResponse(
-                                  `Logic: ${brainConfig.logic}\n\nTask: Output a futuristic crimson directory tree for this logic and 3 setup commands.`,
-                                  activePersonality.instruction,
-                                  { modelType: 'smart' }
-                                );
-                                setTerminalOutput(prev => [...prev, `[CORE] Matrix Synchronized:`, response || 'Process Ready.', `[SYSTEM] Crimson Node Online.`]);
-                                setActiveTab('terminal');
-                              } catch(e) {} finally { setIsAiProcessing(false); }
-                            }}
-                            disabled={isAiProcessing || (!brainConfig.logic && !brainRefFile)} 
-                            className="w-full md:w-auto py-8 px-16 bg-red-700 hover:bg-red-600 text-white rounded-[40px] font-black flex items-center justify-center gap-6 shadow-[0_30px_70px_rgba(185,28,28,0.4)] active:scale-95 transition-all disabled:opacity-50 group/btn relative overflow-hidden"
-                         >
-                            <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%)] bg-[size:200%_200%] animate-shimmer" />
-                            <Power className={`w-10 h-10 transition-transform group-hover/btn:scale-110 drop-shadow-[0_0_10px_white] ${isAiProcessing ? 'animate-spin' : ''}`} />
-                            <div className="text-left relative z-10">
-                               <p className="text-xl font-black uppercase tracking-tighter">Execute Boot</p>
-                               <p className="text-[11px] font-mono opacity-60 uppercase tracking-[0.4em] mt-2 font-black">NEURAL_CORE_OVERLOAD</p>
-                            </div>
-                         </button>
-                      </div>
-                   </div>
-                </section>
-              </div>
-            </div>
+            <SettingsPanel
+              theme={theme}
+              toggleTheme={toggleTheme}
+              personalities={personalities}
+              setPersonalities={setPersonalities}
+              grokApiKey={grokApiKey}
+              setGrokApiKey={setGrokApiKey}
+              geminiApiKey={geminiApiKey}
+              setGeminiApiKey={setGeminiApiKey}
+              brainConfig={brainConfig}
+              setBrainConfig={setBrainConfig}
+              brainRefFile={brainRefFile}
+              setBrainRefFile={setBrainRefFile}
+              isAiProcessing={isAiProcessing}
+              setIsAiProcessing={setIsAiProcessing}
+              setTerminalOutput={setTerminalOutput}
+              setActiveTab={setActiveTab}
+              generateAIResponse={generateAIResponse}
+              activePersonality={activePersonality}
+            />
           )}
         </div>
       </main>
 
-      {/* Template Selection Modal */}
+      {/* Post Commit Modal */}
+      {/* Commit Message Modal */}
+      {isCommitModalOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-[#0d0404] border border-red-900/30 rounded-[30px] shadow-[0_0_100px_rgba(185,28,28,0.2)] overflow-hidden">
+            <div className="p-6 border-b border-red-900/20 bg-black/40 flex items-center justify-between">
+              <h3 className="text-lg font-black text-red-100 uppercase tracking-tighter">Commit Changes</h3>
+              <button onClick={() => setIsCommitModalOpen(false)} className="p-2 bg-red-950/20 border border-red-900/20 rounded-full text-red-500 hover:bg-red-900/40 transition-all">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-red-900 font-bold uppercase tracking-widest">{gitRepo.staged.length} file{gitRepo.staged.length !== 1 ? 's' : ''} staged</p>
+              <textarea
+                value={commitMessage}
+                onChange={e => setCommitMessage(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && e.metaKey && confirmGitCommit()}
+                placeholder="Enter commit message..."
+                autoFocus
+                className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-100 placeholder:text-red-900/50 focus:outline-none focus:border-red-700/60 resize-none min-h-[80px]"
+              />
+              <div className="flex gap-3">
+                <button onClick={confirmGitCommit} disabled={!commitMessage.trim()} className="flex-1 py-3 bg-red-700 hover:bg-red-600 disabled:opacity-40 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                  <Check className="w-4 h-4" /> Commit
+                </button>
+                <button onClick={() => setIsCommitModalOpen(false)} className="flex-1 py-3 bg-transparent border border-red-900/30 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-950/30 transition-all">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="w-full max-w-sm bg-[#0d0404] border border-red-900/30 rounded-[30px] shadow-[0_0_60px_rgba(185,28,28,0.2)] overflow-hidden">
+            <div className="p-6 space-y-4">
+              <h3 className="text-lg font-black text-red-100 uppercase tracking-tighter">Delete Item?</h3>
+              <p className="text-sm text-red-100/60">This will permanently remove the item and all its contents. This cannot be undone.</p>
+              <div className="flex gap-3">
+                <button onClick={() => confirmDeleteItem(deleteConfirmId)} className="flex-1 py-3 bg-red-800 hover:bg-red-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all">
+                  Delete
+                </button>
+                <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3 bg-transparent border border-red-900/30 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-950/30 transition-all">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Template Confirm Modal */}
+      {templateConfirmKey && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="w-full max-w-sm bg-[#0d0404] border border-red-900/30 rounded-[30px] shadow-[0_0_60px_rgba(185,28,28,0.2)] overflow-hidden">
+            <div className="p-6 space-y-4">
+              <h3 className="text-lg font-black text-red-100 uppercase tracking-tighter">Load Template?</h3>
+              <p className="text-sm text-red-100/60">Loading <span className="text-red-400 font-bold">"{PROJECT_TEMPLATES[templateConfirmKey].name}"</span> will overwrite your current project.</p>
+              <div className="flex gap-3">
+                <button onClick={confirmLoadTemplate} className="flex-1 py-3 bg-red-700 hover:bg-red-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all">
+                  Load Template
+                </button>
+                <button onClick={() => setTemplateConfirmKey(null)} className="flex-1 py-3 bg-transparent border border-red-900/30 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-950/30 transition-all">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {postCommitModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-[#0d0404] border border-red-900/30 rounded-[30px] shadow-[0_0_100px_rgba(185,28,28,0.2)] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-red-900/20 bg-black/40 flex items-center justify-between shrink-0">
+              <div className="space-y-1">
+                <h3 className="text-xl font-black text-red-100 uppercase tracking-tighter">
+                  Commit Successful
+                </h3>
+                <p className="text-[10px] text-red-900 font-bold tracking-widest uppercase">
+                  Local state synchronized
+                </p>
+              </div>
+              <button
+                onClick={() => setPostCommitModalOpen(false)}
+                className="p-2 bg-red-950/20 border border-red-900/20 rounded-full text-red-500 hover:bg-red-900/40 transition-all shrink-0 ml-4"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-red-100/70">
+                Would you like to synchronize your changes with the remote neural uplink?
+              </p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setPostCommitModalOpen(false);
+                    handleGitPush();
+                  }}
+                  className="w-full px-6 py-4 bg-red-700 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-600 transition-all flex items-center justify-center gap-2"
+                >
+                  <Upload className="w-4 h-4" /> Push Changes
+                </button>
+                <button
+                  onClick={() => {
+                    setPostCommitModalOpen(false);
+                    handleGitPull();
+                  }}
+                  className="w-full px-6 py-4 bg-[#0a0202] text-red-400 border border-red-900/50 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-950/50 transition-all flex items-center justify-center gap-2"
+                >
+                  <Download className="w-4 h-4" /> Pull Changes
+                </button>
+                <button
+                  onClick={() => setPostCommitModalOpen(false)}
+                  className="w-full px-6 py-4 bg-transparent text-red-600/50 rounded-xl font-black text-xs uppercase tracking-widest hover:text-red-500 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Generate Code Modal */}
+      {isGenerateModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
+          <div className="w-full max-w-2xl bg-[#0d0404] border border-red-900/30 rounded-[30px] md:rounded-[40px] shadow-[0_0_100px_rgba(185,28,28,0.2)] overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-6 md:p-8 border-b border-red-900/20 bg-black/40 flex items-center justify-between shrink-0">
+              <div className="space-y-1">
+                <h3 className="text-xl md:text-2xl font-black text-red-100 uppercase tracking-tighter">
+                  Neural Forge
+                </h3>
+                <p className="text-[10px] md:text-xs text-red-900 font-bold tracking-widest uppercase">
+                  Describe desired functionality to generate code
+                </p>
+              </div>
+              <button
+                onClick={() => setIsGenerateModalOpen(false)}
+                className="p-3 bg-red-950/20 border border-red-900/20 rounded-full text-red-500 hover:bg-red-900/40 transition-all shrink-0 ml-4"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 md:p-8 space-y-6 overflow-y-auto custom-scrollbar">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-red-800 uppercase tracking-[0.3em]">
+                  Generation Mode
+                </label>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setGenerateMode('snippet')}
+                    className={`flex-1 py-3 rounded-xl border font-black text-[10px] uppercase tracking-widest transition-all ${generateMode === 'snippet' ? 'bg-red-700 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'bg-red-950/20 border-red-900/30 text-red-500 hover:bg-red-900/40'}`}
+                  >
+                    Snippet (Insert)
+                  </button>
+                  <button
+                    onClick={() => setGenerateMode('file')}
+                    className={`flex-1 py-3 rounded-xl border font-black text-[10px] uppercase tracking-widest transition-all ${generateMode === 'file' ? 'bg-red-700 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]' : 'bg-red-950/20 border-red-900/30 text-red-500 hover:bg-red-900/40'}`}
+                  >
+                    New File
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-red-800 uppercase tracking-[0.3em]">
+                  Prompt
+                </label>
+                <textarea
+                  value={generatePrompt}
+                  onChange={(e) => setGeneratePrompt(e.target.value)}
+                  placeholder={
+                    generateMode === 'file'
+                      ? 'e.g., Create a React component named UserProfile that fetches user data...'
+                      : 'e.g., Write a function to sort an array of objects by a specific key...'
+                  }
+                  className="w-full h-32 bg-black/60 border border-red-900/40 rounded-2xl p-4 text-xs text-red-100 focus:border-red-500/50 outline-none transition-all resize-none custom-scrollbar"
+                />
+              </div>
+            </div>
+            <div className="p-6 md:p-8 border-t border-red-900/20 bg-black/40 flex justify-end shrink-0">
+              <button
+                onClick={executeGenerateCode}
+                disabled={!generatePrompt.trim() || isAiProcessing}
+                className="px-8 py-3 bg-red-600 rounded-xl text-white font-black text-[10px] uppercase tracking-widest disabled:opacity-50 transition-all hover:bg-red-500 shadow-[0_0_20px_rgba(220,38,38,0.3)] flex items-center gap-2"
+              >
+                <Zap className="w-4 h-4" /> Materialize Code
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isTemplateModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
           <div className="w-full max-w-4xl bg-[#0d0404] border border-red-900/30 rounded-[30px] md:rounded-[60px] shadow-[0_0_100px_rgba(185,28,28,0.2)] overflow-hidden flex flex-col max-h-[90vh] md:max-h-[80vh]">
-            <div className="p-6 md:p-12 border-b border-red-900/20 bg-black/40 flex items-center justify-between shrink-0">
+            <div className="p-4 md:p-12 border-b border-red-900/20 bg-black/40 flex items-center justify-between shrink-0">
               <div className="space-y-1 md:space-y-2">
-                <h3 className="text-xl md:text-3xl font-black text-red-100 uppercase tracking-tighter">Initialize Neural Project</h3>
-                <p className="text-[10px] md:text-sm text-red-900 font-bold tracking-widest uppercase">Select a predefined template to begin your development cycle</p>
+                <h3 className="text-xl md:text-3xl font-black text-red-100 uppercase tracking-tighter">
+                  Initialize Neural Project
+                </h3>
+                <p className="text-[10px] md:text-sm text-red-900 font-bold tracking-widest uppercase">
+                  Select a predefined template to begin your development cycle
+                </p>
               </div>
-              <button onClick={() => setIsTemplateModalOpen(false)} className="p-3 md:p-4 bg-red-950/20 border border-red-900/20 rounded-full text-red-500 hover:bg-red-900/40 transition-all shrink-0 ml-4">
+              <button
+                onClick={() => setIsTemplateModalOpen(false)}
+                className="p-3 md:p-4 bg-red-950/20 border border-red-900/20 rounded-full text-red-500 hover:bg-red-900/40 transition-all shrink-0 ml-4"
+              >
                 <X className="w-6 h-6 md:w-8 md:h-8" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 md:p-12 custom-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-                {(Object.keys(PROJECT_TEMPLATES) as Array<keyof typeof PROJECT_TEMPLATES>).map(key => (
-                  <button 
-                    key={key}
-                    onClick={() => handleLoadTemplate(key)}
-                    className="group p-6 md:p-8 bg-red-950/5 border border-red-900/20 rounded-[30px] md:rounded-[40px] text-left space-y-4 md:space-y-6 hover:bg-red-900/10 hover:border-red-500/40 transition-all active:scale-95"
-                  >
-                    <div className="w-12 h-12 md:w-16 md:h-16 bg-red-900/20 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
-                      {key === 'python-web' && <Network className="w-6 h-6 md:w-8 md:h-8" />}
-                      {key === 'rust-cli' && <TerminalIcon className="w-6 h-6 md:w-8 md:h-8" />}
-                      {key === 'neural-module' && <Brain className="w-6 h-6 md:w-8 md:h-8" />}
-                    </div>
-                    <div className="space-y-2">
-                      <h4 className="text-lg md:text-xl font-black text-red-100 uppercase tracking-tight">{PROJECT_TEMPLATES[key].name}</h4>
-                      <p className="text-[10px] md:text-[11px] text-red-900 font-bold uppercase tracking-widest leading-relaxed">
-                        {key === 'python-web' ? 'Full-stack Flask environment with HTML/CSS integration.' : 
-                         key === 'rust-cli' ? 'High-performance CLI tool architecture with Cargo config.' : 
-                         'Modular neural logic with JSON configuration.'}
-                      </p>
-                    </div>
-                    <div className="pt-4 flex items-center gap-3 text-[10px] font-black text-red-500 uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity">
-                      Initialize Matrix <Zap className="w-3 h-3" />
-                    </div>
-                  </button>
-                ))}
+            <div className="flex-1 overflow-y-auto p-4 md:p-12 custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
+                {(Object.keys(PROJECT_TEMPLATES) as Array<keyof typeof PROJECT_TEMPLATES>).map(
+                  (key) => (
+                    <button
+                      key={key}
+                      onClick={() => handleLoadTemplate(key)}
+                      className="group p-4 md:p-8 bg-red-950/5 border border-red-900/20 rounded-[20px] md:rounded-[40px] text-left space-y-4 md:space-y-6 hover:bg-red-900/10 hover:border-red-500/40 transition-all active:scale-95"
+                    >
+                      <div className="w-12 h-12 md:w-16 md:h-16 bg-red-900/20 rounded-2xl flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
+                        {key === 'python-web' && <Network className="w-6 h-6 md:w-8 md:h-8" />}
+                        {key === 'rust-cli' && <TerminalIcon className="w-6 h-6 md:w-8 md:h-8" />}
+                        {key === 'neural-module' && <Brain className="w-6 h-6 md:w-8 md:h-8" />}
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="text-lg md:text-xl font-black text-red-100 uppercase tracking-tight">
+                          {PROJECT_TEMPLATES[key].name}
+                        </h4>
+                        <p className="text-[10px] md:text-[11px] text-red-900 font-bold uppercase tracking-widest leading-relaxed">
+                          {key === 'python-web'
+                            ? 'Full-stack Flask environment with HTML/CSS integration.'
+                            : key === 'rust-cli'
+                              ? 'High-performance CLI tool architecture with Cargo config.'
+                              : 'Modular neural logic with JSON configuration.'}
+                        </p>
+                      </div>
+                      <div className="pt-4 flex items-center gap-3 text-[10px] font-black text-red-500 uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-opacity">
+                        Initialize Matrix <Zap className="w-3 h-3" />
+                      </div>
+                    </button>
+                  )
+                )}
               </div>
             </div>
             <div className="p-6 md:p-12 bg-black/40 border-t border-red-900/20 text-center shrink-0">
-              <p className="text-[9px] md:text-[10px] text-red-900 font-black uppercase tracking-[0.4em]">Crimson OS Neural Development Environment v4.1.0_EX</p>
+              <p className="text-[9px] md:text-[10px] text-red-900 font-black uppercase tracking-[0.4em]">
+                Crimson OS Neural Development Environment v4.1.0_EX
+              </p>
             </div>
           </div>
         </div>
@@ -4122,6 +4307,12 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
         .animate-in { animation: var(--anim-name) var(--anim-duration, 500ms) cubic-bezier(0.16, 1, 0.3, 1); }
         .fade-in { --anim-name: fade-in; }
         .zoom-in-95 { --anim-name: zoom-in-95; }
+        
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoom-in-95 { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes slide-in-from-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slide-in-from-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         .animate-bounce { animation: bounce 0.6s infinite ease-in-out; }
         
@@ -4157,31 +4348,282 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
            border: 1px solid rgba(153,27,27,0.3);
         }
       `}</style>
+
+      {/* Crash Recovery Banner */}
+      {hasRecoveryDraft && recoveryDraft && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9998] w-[90vw] max-w-lg animate-in slide-in-from-bottom-4 duration-400">
+          <div className="bg-black/95 border border-orange-500/60 rounded-2xl shadow-[0_0_40px_rgba(249,115,22,0.3)] backdrop-blur-xl p-4 flex flex-col gap-3">
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 rounded-full bg-orange-500 mt-1.5 shrink-0 animate-pulse" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-black text-orange-400 uppercase tracking-widest">
+                  Crash Recovery
+                </p>
+                <p className="text-[10px] text-red-100/70 mt-0.5 truncate">
+                  Unsaved draft found:{' '}
+                  <span className="text-white font-bold">{recoveryDraft.fileName}</span>
+                </p>
+                <p className="text-[9px] text-red-900 mt-0.5">
+                  {new Date(recoveryDraft.ts).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={restoreDraft}
+                className="flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-orange-600 hover:bg-orange-500 text-white transition-all"
+              >
+                Restore Draft
+              </button>
+              <button
+                onClick={dismissDraft}
+                className="flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-950/60 border border-red-900/30 text-red-500 hover:bg-red-900/30 transition-all"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {contextMenu && (
+        <div
+          className="fixed z-[9999] bg-black/90 border border-red-900/50 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] backdrop-blur-xl overflow-hidden min-w-[160px]"
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex flex-col py-1">
+            <button
+              className="flex items-center gap-3 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-950/40 hover:text-red-400 transition-colors text-left"
+              onClick={() => {
+                if (contextMenu.itemId) createFile(contextMenu.itemId);
+                else createFile(null);
+                setContextMenu(null);
+              }}
+            >
+              <Plus className="w-4 h-4" /> New File
+            </button>
+            <button
+              className="flex items-center gap-3 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-950/40 hover:text-red-400 transition-colors text-left"
+              onClick={() => {
+                if (contextMenu.itemId) createFolder(contextMenu.itemId);
+                else createFolder(null);
+                setContextMenu(null);
+              }}
+            >
+              <Folder className="w-4 h-4" /> New Folder
+            </button>
+            <button
+              className="flex items-center gap-3 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-red-500 hover:bg-red-950/40 hover:text-red-400 transition-colors text-left"
+              onClick={() => {
+                if (contextMenu.itemId) renameItem(contextMenu.itemId);
+                setContextMenu(null);
+              }}
+            >
+              <Edit2 className="w-4 h-4" /> Rename
+            </button>
+            <button
+              className="flex items-center gap-3 px-4 py-2.5 text-xs font-black uppercase tracking-widest text-red-600 hover:bg-red-900/40 hover:text-red-400 transition-colors text-left border-t border-red-900/20"
+              onClick={() => {
+                if (contextMenu.itemId) deleteItem(contextMenu.itemId);
+                setContextMenu(null);
+              }}
+            >
+              <Trash2 className="w-4 h-4" /> Delete
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Worker Config Bottom Sheet — mobile only */}
+      {workerSheetOpen && (
+        <div className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end" onClick={() => setWorkerSheetOpen(false)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative bg-[#0a0202] border-t border-red-900/40 rounded-t-3xl p-6 space-y-4 shadow-[0_-20px_60px_rgba(0,0,0,0.8)]" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h3 className="text-sm font-black text-red-100 uppercase tracking-widest">Neural Workers</h3>
+                <p className="text-[10px] text-red-700 mt-0.5">{availableModels.length} Ollama model{availableModels.length !== 1 ? 's' : ''} available</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button onClick={() => refreshOllamaModels()} className={`text-xs font-black px-3 py-1 rounded-full border transition-all ${ollamaStatus === 'connected' ? 'text-green-400 border-green-800/40 bg-green-950/20' : ollamaStatus === 'connecting' ? 'text-yellow-400 border-yellow-800/40 animate-pulse' : 'text-red-500 border-red-900/40 bg-red-950/20'}`}>
+                  ↻ {ollamaStatus}
+                </button>
+                <button onClick={() => setWorkerSheetOpen(false)} className="text-red-700 hover:text-red-400 text-lg leading-none">✕</button>
+              </div>
+            </div>
+            {availableModels.length === 0 && ollamaStatus !== 'connecting' && (
+              <div className="rounded-2xl border border-red-900/30 bg-red-950/10 p-4 space-y-2">
+                <p className="text-xs font-black text-red-500 uppercase tracking-widest">Ollama Not Connected</p>
+                {ollamaError && (
+                  <p className="text-[11px] text-red-300 font-mono bg-black/40 rounded-lg px-3 py-2 break-all">{ollamaError}</p>
+                )}
+                <button onClick={() => refreshOllamaModels()} className="w-full mt-1 px-4 py-2 rounded-xl bg-red-700 text-white text-xs font-black uppercase tracking-widest">↻ Retry</button>
+              </div>
+            )}
+            {workers.map(w => (
+              <div key={w.id} className={`rounded-2xl border p-4 space-y-3 transition-all ${w.enabled ? 'bg-red-950/20 border-red-800/40' : 'bg-red-950/5 border-red-900/20 opacity-60'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-black text-red-300 uppercase tracking-widest">Worker {w.id}</span>
+                    {w.enabled && w.model && (
+                      <p className="text-[10px] text-red-500 font-mono mt-0.5 truncate">{w.model}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, enabled: !x.enabled } : x))}
+                    className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${w.enabled ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.4)]' : 'bg-red-900/30 text-red-700'}`}
+                  >
+                    {w.enabled ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+                <div>
+                  <p className="text-[9px] text-red-700 uppercase tracking-widest mb-1 font-black">Provider</p>
+                  <select
+                    value={w.provider}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, provider: e.target.value as any, model: e.target.value === 'google' ? 'gemini-3-flash' : e.target.value === 'grok' ? 'grok-beta' : x.model || 'llama3.2:latest' } : x))}
+                    disabled={!w.enabled}
+                    className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-100 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
+                  >
+                    <option value="ollama" className="bg-[#0a0202]">Ollama</option>
+                    <option value="google" className="bg-[#0a0202]">Google Gemini</option>
+                    <option value="grok" className="bg-[#0a0202]">xAI Grok</option>
+                  </select>
+                </div>
+                <div>
+                  <p className="text-[9px] text-red-700 uppercase tracking-widest mb-1 font-black">Model</p>
+                  <select
+                    value={w.model}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, model: e.target.value } : x))}
+                    disabled={!w.enabled}
+                    className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-100 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
+                  >
+                    {w.provider === 'ollama' && availableModels.length > 0
+                      ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                      : w.provider === 'google'
+                        ? ['gemini-3-flash', 'gemini-3.1-pro-preview'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                        : w.provider === 'grok'
+                          ? ['grok-beta', 'grok-2-latest'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                          : <option value={w.model} className="bg-[#0a0202]">{w.model}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <p className="text-[9px] text-red-700 uppercase tracking-widest mb-1 font-black">Agent Role</p>
+                  <select
+                    value={w.agentId || ''}
+                    onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x))}
+                    disabled={!w.enabled}
+                    className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-300 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
+                  >
+                    <option value="" className="bg-[#0a0202]">🤖 General (no role)</option>
+                    {AGENT_DOMAINS.map(domain => (
+                      <optgroup key={domain} label={domain} className="bg-[#0a0202]">
+                        {getAgentsByDomain(domain).map(a => (
+                          <option key={a.id} value={a.id} className="bg-[#0a0202]">{a.emoji} {a.label}</option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* φ Pulse Column — fixed right edge (handled above) */}
     </div>
   );
 };
 
-const SidebarIcon: React.FC<{ icon: React.ReactNode; active: boolean; onClick: () => void; label: string }> = ({ icon, active, onClick, label }) => (
-  <button onClick={onClick} className={`group relative p-4 rounded-[28px] transition-all duration-500 ${active ? 'text-red-500 bg-red-950/20 border border-red-700/50 shadow-[0_0_40px_rgba(220,38,38,0.2)] scale-110 rotate-3' : 'text-red-950 hover:text-red-600 hover:bg-red-950/10 hover:scale-105'}`}>
-    {React.cloneElement(icon as React.ReactElement, { size: 24, strokeWidth: active ? 3 : 2 })}
-    <div className="absolute left-20 bg-red-950 text-red-500 text-[11px] py-2 px-5 rounded-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none border border-red-800/40 z-50 translate-x-[-20px] group-hover:translate-x-0 whitespace-nowrap shadow-[0_10px_30px_rgba(0,0,0,0.8)] font-black uppercase tracking-[0.4em] backdrop-blur-md">{label}</div>
+const SidebarIcon: React.FC<{
+  icon: React.ReactNode;
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}> = ({ icon, active, onClick, label }) => (
+  <button
+    onClick={onClick}
+    className={`group relative p-4 rounded-[28px] transition-all duration-500 ${active ? 'text-red-500 bg-red-950/20 border border-red-700/50 shadow-[0_0_40px_rgba(220,38,38,0.2)] scale-110 rotate-3' : 'text-red-950 hover:text-red-600 hover:bg-red-950/10 hover:scale-105'}`}
+  >
+    {React.cloneElement(icon as any, { size: 24, strokeWidth: active ? 3 : 2 })}
+    <div className="absolute left-20 bg-red-950 text-red-500 text-[11px] py-2 px-5 rounded-2xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none border border-red-800/40 z-50 translate-x-[-20px] group-hover:translate-x-0 whitespace-nowrap shadow-[0_10px_30px_rgba(0,0,0,0.8)] font-black uppercase tracking-[0.4em] backdrop-blur-md">
+      {label}
+    </div>
   </button>
 );
 
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: any; errorInfo: any }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error('ErrorBoundary caught an error', error, errorInfo);
+    this.setState({ errorInfo });
+    // Always remove splash on error too
+    const splash = document.getElementById('splash');
+    if (splash) splash.remove();
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            padding: '40px',
+            color: 'white',
+            background: 'red',
+            height: '100vh',
+            width: '100vw',
+            fontFamily: 'sans-serif',
+            fontSize: '24px',
+          }}
+        >
+          <h1>APPLICATION CRASHED</h1>
+          <p>There was a critical error rendering the application.</p>
+          <pre
+            style={{
+              whiteSpace: 'pre-wrap',
+              background: 'black',
+              color: 'lightgreen',
+              padding: '20px',
+              fontSize: '16px',
+            }}
+          >
+            {this.state.error?.toString()}\n\n{this.state.errorInfo?.componentStack}
+          </pre>
+          <button
+            onClick={() => {
+              localStorage.clear();
+              window.location.reload();
+            }}
+            style={{ padding: '20px', fontSize: '20px', cursor: 'pointer', marginTop: '20px' }}
+          >
+            CLEAR SAVED DATA & RELOAD
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 const container = document.getElementById('root');
 if (container) {
-  const root = (container as any)._reactRoot || createRoot(container);
-  (container as any)._reactRoot = root;
-  root.render(<App />);
-
-  // Register Service Worker for PWA
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').then(registration => {
-        console.log('SW registered: ', registration);
-      }).catch(registrationError => {
-        console.log('SW registration failed: ', registrationError);
-      });
-    });
-  }
+  createRoot(container).render(
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
 }
