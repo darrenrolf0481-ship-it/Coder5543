@@ -24,6 +24,7 @@
     "@types/express": "^5.0.6",
     "@types/react-window": "^2.0.0",
     "better-sqlite3": "^12.10.0",
+    "dep": "^0.18.3",
     "dompurify": "^3.4.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",

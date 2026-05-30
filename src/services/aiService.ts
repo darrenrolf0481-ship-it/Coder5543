@@ -9,7 +9,10 @@ export const fetchOllamaModels = async (_ollamaUrl: string): Promise<string[]> =
   try {
     // Use the server-side proxy to avoid CORS issues
     const response = await fetch('./api/ollama/tags');
-    if (!response.ok) throw new Error('Failed to fetch Ollama models');
+    if (!response.ok) {
+      if (response.status === 502) throw new Error('Ollama service is currently offline (502)');
+      throw new Error(`Failed to fetch Ollama models: ${response.statusText}`);
+    }
     const data = await response.json();
     if (data.error) throw new Error(data.error);
     return data.models.map((m: any) => m.name);
@@ -263,6 +266,13 @@ const generateOllamaResponse = async (
     }),
     signal,
   });
+
+  if (!res.ok) {
+    if (res.status === 502) throw new Error('Ollama service is currently offline (502)');
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(`Ollama error (${res.status}): ${errorData.error || res.statusText}`);
+  }
+
   const data = await res.json();
   const text = data.message?.content;
   if (text === undefined) {

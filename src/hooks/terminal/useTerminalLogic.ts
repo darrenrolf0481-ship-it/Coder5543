@@ -16,6 +16,8 @@ export function useTerminalLogic(
     personalities: any[];
     activePersonality: any;
     setIsAiProcessing: (processing: boolean) => void;
+    prepareContext: (prompt: string) => Promise<any>;
+    recordInteraction: (intent: string, response: string, outcome: 'success' | 'failure' | 'neutral') => Promise<void>;
     generateAIResponse: (
       prompt: string | any[],
       systemInstruction: string,
@@ -52,6 +54,8 @@ export function useTerminalLogic(
     isVaultUnlocked, swarmAnxiety,
     personalities, activePersonality,
     setIsAiProcessing,
+    prepareContext,
+    recordInteraction,
     generateAIResponse
   } = deps;
 
@@ -64,6 +68,7 @@ export function useTerminalLogic(
   const getAiTerminalAssistance = async (prompt: string) => {
     setIsAiProcessing(true);
     try {
+      const brainContext = await prepareContext(prompt);
       const systemState = `
 Current System State:
 - Active Tab: ${activeTab}
@@ -79,13 +84,14 @@ Current System State:
       const response = await generateAIResponse(
         `${systemState}\n\nUser Request: ${prompt}`,
         `Futuristic crimson terminal specialist. ${activePersonality.instruction}${(activePersonality.knowledgeBase ?? []).length ? `\n\nKNOWLEDGE BASE:\n${(activePersonality.knowledgeBase ?? []).map((e: any) => `[KB: ${e.name}]\n${e.content}`).join('\n\n---\n\n')}` : ''}. Provide concise, terminal-style responses in simple, easy-to-understand English so that non-experts can easily follow. If the user asks for general help or just types 'ai', suggest relevant commands based on the current system state.`,
-        { modelType: 'fast' }
+        { modelType: 'fast', brainContext }
       );
 
       setTerminalOutput((prev: string[]) => [
         ...prev,
         { role: 'ai', text: response || 'No response from Neural Link.' } as any,
       ]);
+      await recordInteraction(prompt, response || '', 'success');
     } catch {
       setTerminalOutput((prev: string[]) => [
         ...prev,

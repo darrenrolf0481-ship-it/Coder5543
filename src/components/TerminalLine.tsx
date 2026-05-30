@@ -55,7 +55,7 @@ const renderContent = (line: string): React.ReactNode => {
 };
 
 export const TerminalLine = React.memo(({ line }: { line: string }) => (
-  <div className="mb-3 leading-relaxed whitespace-pre-wrap">
+  <div className="mb-3 leading-relaxed whitespace-pre-wrap phosphor-text terminal-line-glow">
     {renderContent(line)}
   </div>
 ));
