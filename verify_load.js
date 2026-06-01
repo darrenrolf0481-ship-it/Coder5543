@@ -6,9 +6,9 @@ import puppeteer from 'puppeteer';
   });
   const page = await browser.newPage();
   
-  console.log('Loading http://localhost:3001...');
+  console.log('Loading http://localhost:3000...');
   try {
-    await page.goto('http://localhost:3001', { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto('http://localhost:3000', { waitUntil: 'networkidle2', timeout: 30000 });
     
     // Wait for splash screen to be removed (React useEffect removes it)
     console.log('Waiting for splash screen removal...');

@@ -17,7 +17,7 @@ import puppeteer from 'puppeteer';
   });
 
   try {
-    await page.goto('http://localhost:3001', { waitUntil: 'networkidle0' });
+    await page.goto('http://localhost:3000', { waitUntil: 'networkidle0' });
     const dimensions = await page.evaluate(() => {
       const root = document.getElementById('root');
       const firstChild = root ? root.firstElementChild : null;

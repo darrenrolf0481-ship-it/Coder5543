@@ -36,6 +36,7 @@ describe('generateAIResponse', () => {
 
   it('should call Grok API', async () => {
     (fetch as any).mockResolvedValue({
+      ok: true,
       json: vi.fn().mockResolvedValue({ choices: [{ message: { content: 'Grok response' } }] })
     });
     
@@ -59,6 +60,7 @@ describe('generateAIResponse', () => {
 
   it('should call Ollama API', async () => {
     (fetch as any).mockResolvedValue({
+      ok: true,
       json: vi.fn().mockResolvedValue({ message: { content: 'Ollama response' } })
     });
     

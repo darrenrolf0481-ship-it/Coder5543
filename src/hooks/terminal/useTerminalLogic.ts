@@ -63,6 +63,7 @@ export function useTerminalLogic(
     'ls', 'cd', 'cat', 'mkdir', 'rm', 'gh repo clone', 'ai ', 'clear',
     'python', 'node', 'git status', 'git commit', 'git push',
     'toolneuron start', 'toolneuron status',
+    'mcp list', 'mcp call ', 'mcp info ', 'mcp enable ', 'mcp disable ',
   ];
 
   const getAiTerminalAssistance = async (prompt: string) => {
@@ -165,9 +166,165 @@ Current System State:
         '  clear            - Clear the terminal buffer',
         '  ai               - Get AI assistance',
         '  ai <prompt>      - Get AI assistance with a prompt',
+        '  mcp              - Open the MCP Interactive Hub helper',
+        '  mcp list         - List all registered MCP tools and their status',
+        '  mcp info <tool>  - Show detailed input schema for a tool',
+        '  mcp call <tool>  - Call an MCP tool directly with JSON args',
+        '  mcp enable/disable <tool> - Enable or disable an MCP tool',
         'All other commands execute in the Termux shell.',
       ]);
       return;
+    } else if (finalCmd.startsWith('mcp ') || finalCmd === 'mcp') {
+      const args = finalCmd.trim().split(' ').filter(Boolean);
+      const action = args[1];
+      
+      if (!action || action === 'help') {
+        setTerminalOutput((prev: string[]) => [
+          ...prev,
+          '====================================================',
+          '  🐦 SAGE MICROPORT (MCP) INTERACTIVE HUB 🐦',
+          '====================================================',
+          'Usage:',
+          '  mcp list                       - List all registered MCP tools and their status',
+          '  mcp info <tool>                - Show detailed input schema for a tool',
+          '  mcp call <tool> [json_args]    - Call an MCP tool with JSON arguments',
+          '  mcp enable <tool>              - Enable an MCP tool',
+          '  mcp disable <tool>             - Disable an MCP tool',
+          '====================================================',
+        ]);
+        return;
+      }
+      
+      if (action === 'list') {
+        setIsAiProcessing(true);
+        try {
+          const res = await fetch('./api/mcp/list');
+          const data = await res.json();
+          if (data.success && Array.isArray(data.tools)) {
+            const lines = [
+              'Registered MCP Tools:',
+              '----------------------------------------------------'
+            ];
+            data.tools.forEach((t: any) => {
+              const status = t.enabled ? '[ENABLED] ' : '[DISABLED]';
+              lines.push(`${status} ${t.name.padEnd(25)} - ${t.description}`);
+            });
+            lines.push('----------------------------------------------------');
+            setTerminalOutput((prev: string[]) => [...prev, ...lines]);
+          } else {
+            setTerminalOutput((prev: string[]) => [...prev, `[ERROR] Failed to fetch tools: ${data.error || 'Unknown error'}`]);
+          }
+        } catch {
+          setTerminalOutput((prev: string[]) => [...prev, '[ERROR] MCP service unreachable.']);
+        } finally {
+          setIsAiProcessing(false);
+        }
+        return;
+      }
+      
+      if (action === 'info') {
+        const toolName = args[2];
+        if (!toolName) {
+          setTerminalOutput((prev: string[]) => [...prev, '[ERROR] Usage: mcp info <tool_name>']);
+          return;
+        }
+        setIsAiProcessing(true);
+        try {
+          const res = await fetch('./api/mcp/list');
+          const data = await res.json();
+          if (data.success && Array.isArray(data.tools)) {
+            const tool = data.tools.find((t: any) => t.name === toolName);
+            if (tool) {
+              const lines = [
+                `Tool: ${tool.name}`,
+                `Status: ${tool.enabled ? 'ENABLED' : 'DISABLED'}`,
+                `Description: ${tool.description}`,
+                'Input Schema:',
+                JSON.stringify(tool.inputSchema, null, 2)
+              ];
+              setTerminalOutput((prev: string[]) => [...prev, ...lines]);
+            } else {
+              setTerminalOutput((prev: string[]) => [...prev, `[ERROR] Tool '${toolName}' not found.`]);
+            }
+          } else {
+            setTerminalOutput((prev: string[]) => [...prev, `[ERROR] Failed to fetch tools: ${data.error || 'Unknown error'}`]);
+          }
+        } catch {
+          setTerminalOutput((prev: string[]) => [...prev, '[ERROR] MCP service unreachable.']);
+        } finally {
+          setIsAiProcessing(false);
+        }
+        return;
+      }
+      
+      if (action === 'enable' || action === 'disable') {
+        const toolName = args[2];
+        if (!toolName) {
+          setTerminalOutput((prev: string[]) => [...prev, `[ERROR] Usage: mcp ${action} <tool_name>`]);
+          return;
+        }
+        setIsAiProcessing(true);
+        try {
+          const res = await fetch('./api/mcp/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: toolName, enabled: action === 'enable' })
+          });
+          const data = await res.json();
+          if (data.success) {
+            setTerminalOutput((prev: string[]) => [...prev, `[OK] Tool '${toolName}' successfully ${action}d.`]);
+          } else {
+            setTerminalOutput((prev: string[]) => [...prev, `[ERROR] Failed to toggle tool: ${data.error || 'Unknown error'}`]);
+          }
+        } catch {
+          setTerminalOutput((prev: string[]) => [...prev, '[ERROR] MCP service unreachable.']);
+        } finally {
+          setIsAiProcessing(false);
+        }
+        return;
+      }
+      
+      if (action === 'call') {
+        const toolName = args[2];
+        if (!toolName) {
+          setTerminalOutput((prev: string[]) => [...prev, '[ERROR] Usage: mcp call <tool_name> [json_arguments]']);
+          return;
+        }
+        const jsonStr = args.slice(3).join(' ').trim();
+        let callArgs = {};
+        if (jsonStr) {
+          try {
+            callArgs = JSON.parse(jsonStr);
+          } catch {
+            setTerminalOutput((prev: string[]) => [...prev, '[ERROR] Invalid JSON arguments provided.']);
+            return;
+          }
+        }
+        
+        setIsAiProcessing(true);
+        try {
+          const res = await fetch('./api/mcp/call', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: toolName, arguments: callArgs })
+          });
+          const data = await res.json();
+          if (data.success) {
+            const lines = [
+              `[OK] Response from ${toolName}:`,
+              JSON.stringify(data.result, null, 2)
+            ];
+            setTerminalOutput((prev: string[]) => [...prev, ...lines]);
+          } else {
+            setTerminalOutput((prev: string[]) => [...prev, `[ERROR] Tool call failed: ${data.error || 'Unknown error'}`]);
+          }
+        } catch {
+          setTerminalOutput((prev: string[]) => [...prev, '[ERROR] MCP service unreachable.']);
+        } finally {
+          setIsAiProcessing(false);
+        }
+        return;
+      }
     } else if (finalCmd === 'ai')
       await getAiTerminalAssistance(
         'Analyze current system state and suggest relevant commands or actions.'

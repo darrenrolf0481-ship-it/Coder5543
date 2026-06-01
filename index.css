@@ -55,11 +55,11 @@
     background-color: #0a0a0c;
     color: white;
     overscroll-behavior-y: contain;
-    transition: filter 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
     position: relative;
   }
 
-  /* CRT Scanline Overlay */
+  /* Optimized CRT Scanline Overlay with Hardware Promotion */
   body::after {
     content: " ";
     display: block;
@@ -68,15 +68,18 @@
     left: 0;
     bottom: 0;
     right: 0;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), 
-                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.005), rgba(0, 0, 255, 0.02));
     z-index: 9999;
     background-size: 100% 4px, 3px 100%;
     pointer-events: none;
-    opacity: 0.4;
+    opacity: 0.25;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    will-change: transform;
   }
 
-  /* Subtle CRT Flicker */
+  /* Premium High-Performance Static CRT Tint & Subtle Glow (No Repaint Cost) */
   body::before {
     content: " ";
     display: block;
@@ -85,11 +88,12 @@
     left: 0;
     bottom: 0;
     right: 0;
-    background: rgba(18, 16, 16, 0.1);
-    opacity: 0;
+    background: rgba(18, 16, 16, 0.03);
+    opacity: 1;
     z-index: 9998;
     pointer-events: none;
-    animation: crt-flicker 0.1s infinite;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
   }
 }
 
@@ -224,10 +228,15 @@
 
 .light {
   filter: invert(1) hue-rotate(180deg);
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: filter;
 }
 
 .light img, .light video {
   filter: invert(1) hue-rotate(180deg);
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
 }
 
 .code-editor-bg {
