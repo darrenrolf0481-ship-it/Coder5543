@@ -1,0 +1,16 @@
+{
+  "ignore": [
+    "assets/**",
+    "dist/**",
+    "dist-ssr/**",
+    "projscan/**",
+    "tests/aiService.test.ts",
+    "src/data/agents.json",
+    "python-backend/brain_cli.py"
+  ],
+  "disableRules": [
+    "unused-dependency-tailwindcss",
+    "unused-dependency-@typescript-eslint/eslint-plugin",
+    "unused-dependency-@typescript-eslint/parser"
+  ]
+}
