@@ -10,14 +10,31 @@ const __dirname = path.dirname(__filename);
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
     return {
+      base: './',
       server: {
-        port: 3000,
+        port: 3003,
         host: '0.0.0.0',
+        allowedHosts: true,
       },
       plugins: [react(), tailwindcss()],
+      build: {
+        crossOriginLoading: false,
+        modulePreload: { polyfill: false },
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              'vendor-react': ['react', 'react-dom'],
+              'vendor-monaco': ['@monaco-editor/react'],
+              'vendor-ai': ['@google/genai'],
+              'vendor-ui': ['lucide-react', 'dompurify', 'react-markdown', 'remark-gfm'],
+            },
+          },
+        },
+      },
       define: {
-        'import.meta.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'import.meta.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'import.meta.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
+        'import.meta.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
+        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
       },
       resolve: {
         alias: {
@@ -26,3 +43,4 @@ export default defineConfig(({ mode }) => {
       }
     };
 });
+
