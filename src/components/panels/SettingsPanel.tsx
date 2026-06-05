@@ -23,6 +23,7 @@ export interface Personality {
   instruction: string;
   active: boolean;
   suggestions: string[];
+  mcpTools?: string[];
   knowledgeBase: KnowledgeEntry[];
 }
 

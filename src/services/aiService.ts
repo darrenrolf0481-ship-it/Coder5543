@@ -53,22 +53,111 @@ const generateGoogleResponse = async (
 
   const isFast = options?.modelType === 'fast';
   const isJson = options?.json;
+  const mcpToolFilters = options?.mcpTools || [];
 
   const model = aiModel || (isFast ? 'gemini-3-flash' : 'gemini-3.1-pro-preview');
   const config: any = { systemInstruction: enrichedSystemInstruction };
+  
+  // ── MCP Tool Integration ───────────────────────────────────────────────────
+  if (mcpToolFilters.length > 0) {
+    try {
+      // 1. Fetch tool definitions from our MCP bridge
+      const mcpRes = await fetch('./api/mcp/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 'tools_list', method: 'tools/list' }),
+      });
+      if (mcpRes.ok) {
+        const mcpData = await mcpRes.json();
+        const allTools = mcpData.result?.tools || [];
+        
+        // 2. Filter tools based on agent personality
+        const filteredTools = allTools.filter((t: any) => 
+          mcpToolFilters.includes('*') || mcpToolFilters.includes(t.name)
+        );
+
+        if (filteredTools.length > 0) {
+          // 3. Map MCP tools to Gemini function declarations
+          config.tools = [{
+            functionDeclarations: filteredTools.map((t: any) => ({
+              name: t.name,
+              description: t.description,
+              parameters: t.inputSchema,
+            }))
+          }];
+        }
+      }
+    } catch (err) {
+      console.warn('[AI Service] MCP tool discovery failed:', err);
+    }
+  }
+
   if (isJson) {
     config.responseMimeType = "application/json";
     if (options?.responseSchema) {
       config.responseSchema = options.responseSchema;
     }
   }
-  const response = await ai.models.generateContent({
-    model,
-    contents: finalPrompt,
-    config
-  });
-  // Defensive: .text getter returns undefined when the model emits non-text parts
-  // (e.g. function calls, unexpected finish reasons) or empty candidates.
+
+  // Handle multi-turn tool calling
+  let contents = Array.isArray(finalPrompt) ? [...finalPrompt] : [{ role: 'user', parts: [{ text: finalPrompt }] }];
+  let response = await ai.models.generateContent({ model, contents, config });
+
+  // Loop to handle potential tool calls (maximum 5 turns to prevent runaway)
+  for (let turn = 0; turn < 5; turn++) {
+    const functionCalls = response.functionCalls();
+    if (!functionCalls || functionCalls.length === 0) break;
+
+    const functionResponses = [];
+    for (const call of functionCalls) {
+      try {
+        const mcpExecRes = await fetch('./api/mcp/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: `call_${Date.now()}`,
+            method: 'tools/call',
+            params: { name: call.name, arguments: call.args }
+          }),
+        });
+        
+        if (mcpExecRes.ok) {
+          const mcpResult = await mcpExecRes.json();
+          // Projscan returns { content: [{ type: 'text', text: '...' }] }
+          const textResult = mcpResult.result?.content?.[0]?.text || JSON.stringify(mcpResult.result);
+          functionResponses.push({
+            functionResponse: {
+              name: call.name,
+              response: { content: textResult }
+            }
+          });
+        } else {
+          functionResponses.push({
+            functionResponse: {
+              name: call.name,
+              response: { error: `MCP execution failed with status ${mcpExecRes.status}` }
+            }
+          });
+        }
+      } catch (err: any) {
+        functionResponses.push({
+          functionResponse: {
+            name: call.name,
+            response: { error: err.message }
+          }
+        });
+      }
+    }
+
+    // Update history with the function calls and their responses
+    contents.push(response.candidates[0].content);
+    contents.push({ role: 'user', parts: functionResponses });
+
+    // Generate next response
+    response = await ai.models.generateContent({ model, contents, config });
+  }
+
   const text = response.text;
   if (text === undefined) {
     const finishReason = response.candidates?.[0]?.finishReason;

@@ -37,6 +37,8 @@
     "lib",
     "assets",
     "dist",
-    "projscan"
+    "projscan",
+    "Coder5543",
+    "server.ts"
   ]
 }

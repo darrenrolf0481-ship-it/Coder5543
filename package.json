@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.40.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@monaco-editor/react": "^4.7.0",
     "@tailwindcss/vite": "^4.2.2",
     "@types/dompurify": "^3.0.5",

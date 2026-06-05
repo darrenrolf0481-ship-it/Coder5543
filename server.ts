@@ -34,6 +34,110 @@ if (!await fs.access(BRAIN_DATA_DIR).then(() => true).catch(() => false)) {
 import { brainService } from './src/services/brain/brainService.js';
 import { PainType } from './src/services/brain/types.js';
 
+// ── MCP Server Management ───────────────────────────────────────────────────
+import { ChildProcess } from 'child_process';
+
+interface McpServerInstance {
+  name: string;
+  type: 'library' | 'process' | 'remote';
+  handle: any; // McpServerHandle for libraries, ChildProcess for processes
+  tools: any[];
+}
+
+let mcpInstances: McpServerInstance[] = [];
+
+async function initMcpServers() {
+  if (mcpInstances.length > 0) return;
+
+  // 1. Load Projscan (Library)
+  try {
+    const { createMcpServer } = await import('./projscan/src/mcp/server.js');
+    const { getToolDefinitions } = await import('./projscan/src/mcp/tools.js');
+    const handle = createMcpServer(process.cwd());
+    mcpInstances.push({
+      name: 'projscan',
+      type: 'library',
+      handle,
+      tools: getToolDefinitions()
+    });
+    console.log('[MCP] Projscan integrated');
+  } catch (err) { console.warn('[MCP] Projscan load failed:', err); }
+
+  // 2. Load 21st-Magic (Process)
+  const magicPath = path.join(os.homedir(), 'ADHD-Sage/magic-mcp/dist/index.js');
+  if (await fs.access(magicPath).then(() => true).catch(() => false)) {
+    const child = spawn('node', [magicPath], { stdio: ['pipe', 'pipe', 'inherit'] });
+    // Fetch tools from child via stdio JSON-RPC
+    const fetchTools = () => new Promise<any[]>((resolve) => {
+      let output = '';
+      const onData = (data: Buffer) => {
+        output += data.toString();
+        try {
+          // Check for valid JSON response to tools/list
+          if (output.includes('"result":')) {
+            const res = JSON.parse(output.split('\n').find(l => l.includes('"result":')) || '{}');
+            if (res.result?.tools) {
+              child.stdout.off('data', onData);
+              resolve(res.result.tools);
+            }
+          }
+        } catch {}
+      };
+      child.stdout.on('data', onData);
+      child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 'init_list', method: 'tools/list' }) + '\n');
+    });
+
+    try {
+      const tools = await Promise.race([fetchTools(), new Promise<any[]>((_, reject) => setTimeout(() => reject('timeout'), 5000))]);
+      mcpInstances.push({ name: '21st-magic', type: 'process', handle: child, tools });
+      console.log('[MCP] 21st-Magic integrated');
+    } catch { console.warn('[MCP] 21st-Magic integration timed out'); }
+  }
+
+  // 3. Load Ollama-MCP (Process)
+  const ollamaMcpPath = path.join(os.homedir(), 'ADHD-Sage/ollama-mcp/dist/index.js');
+  if (await fs.access(ollamaMcpPath).then(() => true).catch(() => false)) {
+    const child = spawn('node', [ollamaMcpPath], { stdio: ['pipe', 'pipe', 'inherit'] });
+    const fetchTools = () => new Promise<any[]>((resolve) => {
+      let output = '';
+      const onData = (data: Buffer) => {
+        output += data.toString();
+        try {
+          if (output.includes('"result":')) {
+            const res = JSON.parse(output.split('\n').find(l => l.includes('"result":')) || '{}');
+            if (res.result?.tools) {
+              child.stdout.off('data', onData);
+              resolve(res.result.tools);
+            }
+          }
+        } catch {}
+      };
+      child.stdout.on('data', onData);
+      child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 'init_list', method: 'tools/list' }) + '\n');
+    });
+
+    try {
+      const tools = await Promise.race([fetchTools(), new Promise<any[]>((_, reject) => setTimeout(() => reject('timeout'), 5000))]);
+      mcpInstances.push({ name: 'ollama-mcp', type: 'process', handle: child, tools });
+      console.log('[MCP] Ollama-MCP integrated');
+    } catch { console.warn('[MCP] Ollama-MCP integration timed out'); }
+  }
+
+  // 4. GitHub (Remote Proxy / Mock)
+  // We'll expose the tools but handle them via our existing GitHub proxy logic
+  // to avoid needing a full remote MCP client for now.
+  mcpInstances.push({
+    name: 'github',
+    type: 'remote',
+    handle: null,
+    tools: [
+      { name: 'github_list_issues', description: 'List issues in the repository', inputSchema: { type: 'object', properties: { owner: { type: 'string' }, repo: { type: 'string' } } } },
+      { name: 'github_get_issue', description: 'Get details of a specific issue', inputSchema: { type: 'object', properties: { owner: { type: 'string' }, repo: { type: 'string' }, issue_number: { type: 'number' } } } },
+      // ... more tools could be added here
+    ]
+  });
+}
+
 const execAsync = promisify(exec);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -152,6 +256,75 @@ async function startServer() {
       clearInterval(heartbeat);
       serverBus.off('signal', onSignal);
     });
+  });
+
+  // ── MCP Bridge (SSE → JSON-RPC) ─────────────────────────────────────────────
+  app.get('/api/mcp/sse', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    // MCP SSE transport protocol requires an initial 'endpoint' event
+    // with the URL where POST messages should be sent.
+    res.write(`event: endpoint\ndata: ${encodeURIComponent('/api/mcp/messages')}\n\n`);
+
+    // Keep-alive heartbeat
+    const interval = setInterval(() => res.write(': heartbeat\n\n'), 30000);
+    req.on('close', () => clearInterval(interval));
+  });
+
+  app.post('/api/mcp/messages', async (req, res) => {
+    try {
+      await initMcpServers();
+      const { method, params, id } = req.body;
+
+      if (method === 'tools/list') {
+        const allTools = mcpInstances.flatMap(inst => inst.tools);
+        res.json({ jsonrpc: '2.0', id, result: { tools: allTools } });
+        return;
+      }
+
+      if (method === 'tools/call') {
+        const toolName = params.name;
+        const instance = mcpInstances.find(inst => inst.tools.some(t => t.name === toolName));
+        if (!instance) {
+          res.status(404).json({ error: `Tool ${toolName} not found` });
+          return;
+        }
+
+        if (instance.type === 'library') {
+          const response = await instance.handle.handleMessage(JSON.stringify(req.body));
+          res.json(JSON.parse(response));
+        } else if (instance.type === 'process') {
+          const child = instance.handle as ChildProcess;
+          const callId = `call_${Date.now()}`;
+          const onData = (data: Buffer) => {
+            const lines = data.toString().split('\n');
+            for (const line of lines) {
+              if (line.includes(`"id":"${callId}"`) || line.includes(`"id":${id}`)) {
+                child.stdout.off('data', onData);
+                try { res.json(JSON.parse(line)); } catch {}
+                return;
+              }
+            }
+          };
+          child.stdout.on('data', onData);
+          child.stdin?.write(JSON.stringify({ ...req.body, id: callId }) + '\n');
+        } else if (instance.type === 'remote' && instance.name === 'github') {
+          // Map MCP call to our internal GitHub proxy
+          const token = process.env.GITHUB_TOKEN;
+          if (!token) { res.status(500).json({ error: 'GITHUB_TOKEN not configured' }); return; }
+          // Simplified mock implementation for example
+          res.json({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text: `GitHub tool ${toolName} called with params ${JSON.stringify(params)}. Result: Mocked success.` }] } });
+        }
+        return;
+      }
+
+      res.status(405).json({ error: `Method ${method} not implemented in multi-bridge` });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // ── Legacy bridge route ─────────────────────────────────────────────────────

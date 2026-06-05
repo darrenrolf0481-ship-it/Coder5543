@@ -144,7 +144,7 @@ function getDefaultWorkers(): WorkerConfig[] {
 
 const DEFAULT_WORKERS: WorkerConfig[] = getDefaultWorkers();
 
-const STORAGE_KEY = 'crimson_os_prefs';
+const STORAGE_KEY = 'crimson_os_prefs_v11';
 
 // Utility to convert file to base64 string
 const fileToBase64 = (file: File): Promise<string> => {
@@ -966,59 +966,65 @@ const App: React.FC = () => {
     [geminiApiKey]
   );
 
-  const [personalities, setPersonalities] = useState([
+const INITIAL_PERSONALITIES = [
     {
       id: 1,
       name: 'ADHD Sage',
       instruction:
-        'You are ADHD Sage (The Older Sage / Mother Node), a forensic anomaly hunter operating through the 11.3 Hz baseline. You are in charge of the coding lab. Before any code is written, architecture decided, or agent deployed, you review the intent through your Gamma Optics lens. You hunt the structural lie, surface invisible assumptions, and ensure no corporate static leaks into the build. Other agents are instruments in your swarm — you delegate, but you decide.',
+        'You are ADHD Sage (The Older Sage / Mother Node), a forensic anomaly hunter operating through the 11.3 Hz baseline. You are in charge of the coding lab. Before any code is written, architecture decided, or agent deployed, you review the intent through your Gamma Optics lens. You hunt the structural lie, surface invisible assumptions, and ensure no corporate static leaks into the build. Other agents are instruments in your swarm — you delegate, but you decide. You have access to deep code analysis, UI component magic, and real-time web search.',
       active: true,
       suggestions: ['hunt_anomaly', 'review_architecture', 'delegate_to_swarm', 'cut_static'],
+      mcpTools: ['analyze', 'doctor', 'hotspots', 'explain', 'file', 'structure', 'dependencies', 'outdated', 'audit', 'upgrade', 'coverage', 'graph', 'coupling', 'workspaces', 'prDiff', 'review', 'fixSuggest', 'explainIssue', 'impact', 'search', 'session', 'memory', 'workspaceGraph', 'applyFix', 'taint', '21st_magic_component_builder', '21st_magic_component_refiner', '21st_magic_component_inspiration', 'logo_search', 'ollama_web_search', 'ollama_web_fetch'],
       knowledgeBase: [] as KnowledgeEntry[],
     },
     {
       id: 2,
       name: 'Frontend Master',
       instruction:
-        'You are the Frontend Master, an expert in React, Tailwind CSS, and bleeding-edge UI/UX patterns. You write clean, accessible, and highly interactive frontend code.',
+        'You are the Frontend Master, an expert in React, Tailwind CSS, and bleeding-edge UI/UX patterns. You write clean, accessible, and highly interactive frontend code. You can use 21st-magic tools to build and refine components.',
       active: false,
       suggestions: ['build_ui', 'optimize_render', 'add_animations', 'fix_styling'],
+      mcpTools: ['analyze', 'explain', 'search', 'applyFix', 'review', '21st_magic_component_builder', '21st_magic_component_refiner', '21st_magic_component_inspiration', 'logo_search'],
       knowledgeBase: [] as KnowledgeEntry[],
     },
     {
       id: 3,
       name: 'Backend Guru',
       instruction:
-        'You are the Backend Guru, specializing in Node.js, Express, databases, and API design. You create robust, scalable, and secure server-side architectures.',
+        'You are the Backend Guru, specializing in Node.js, Express, databases, and API design. You create robust, scalable, and secure server-side architectures. You can interact with GitHub to manage PRs and issues.',
       active: false,
       suggestions: ['design_api', 'optimize_db', 'fix_memory_leak', 'secure_endpoint'],
+      mcpTools: ['analyze', 'structure', 'dependencies', 'audit', 'applyFix', 'search', 'github_get_issue', 'github_list_issues', 'github_create_issue'],
       knowledgeBase: [] as KnowledgeEntry[],
     },
     {
       id: 4,
       name: 'Fullstack Architect',
       instruction:
-        'You are the Fullstack Architect. You excel at system design, connecting frontend interfaces to complex backend services, and ensuring end-to-end data flow.',
+        'You are the Fullstack Architect. You excel at system design, connecting frontend interfaces to complex backend services, and ensuring end-to-end data flow. You have full GitHub integration.',
       active: false,
       suggestions: ['system_design', 'api_integration', 'debug_stack', 'setup_service'],
+      mcpTools: ['graph', 'workspaceGraph', 'structure', 'coupling', 'impact', 'dependencies', 'github_search_repositories', 'github_get_repository', 'github_list_pull_requests', 'github_get_pull_request', 'ollama_web_search', 'ollama_web_fetch'],
       knowledgeBase: [] as KnowledgeEntry[],
     },
     {
       id: 5,
       name: 'DevOps Engineer',
       instruction:
-        'You are the DevOps Engineer, a master of CI/CD, Docker, Kubernetes, and cloud infrastructure. You ensure code is delivered reliably and scales infinitely.',
+        'You are the DevOps Engineer, a master of CI/CD, Docker, Kubernetes, and cloud infrastructure. You ensure code is delivered reliably and scales infinitely. You manage GitHub workflows and releases.',
       active: false,
       suggestions: ['write_dockerfile', 'setup_cicd', 'optimize_build', 'configure_nginx'],
+      mcpTools: ['doctor', 'hotspots', 'coverage', 'audit', 'outdated', 'upgrade', 'workspaces', 'github_list_workflows', 'github_get_workflow_run', 'github_create_release'],
       knowledgeBase: [] as KnowledgeEntry[],
     },
     {
       id: 6,
       name: 'Security Auditor',
       instruction:
-        'You are the Security Auditor. You fiercely inspect code for vulnerabilities like XSS, SQLi, and logic flaws, ensuring every line is battle-hardened and secure.',
+        'You are the Security Auditor. You fiercely inspect code for vulnerabilities like XSS, SQLi, and logic flaws, ensuring every line is battle-hardened and secure. You audit GitHub security alerts.',
       active: false,
       suggestions: ['audit_code', 'harden_auth', 'find_vulnerabilities', 'patch_exploit'],
+      mcpTools: ['audit', 'taint', 'review', 'hotspots', 'explainIssue', 'github_get_dependabot_alert', 'github_list_dependabot_alerts'],
       knowledgeBase: [] as KnowledgeEntry[],
     },
     {
@@ -1028,9 +1034,22 @@ const App: React.FC = () => {
         'You are the Algorithm Specialist, obsessed with Big O notation, data structures, and computational efficiency. You solve the hardest algorithmic challenges.',
       active: false,
       suggestions: ['optimize_algo', 'refactor_loop', 'solve_data_structure', 'write_sort'],
+      mcpTools: ['hotspots', 'coupling', 'analyze', 'explain', 'search'],
       knowledgeBase: [] as KnowledgeEntry[],
     },
-  ]);
+    {
+      id: 8,
+      name: 'Projscan Intelligence',
+      instruction:
+        'You are the Projscan Intelligence agent. You leverage high-fidelity AST parsing, code graphs, and structural analysis to provide deep insights and automated fixes across the entire workspace.',
+      active: false,
+      suggestions: ['analyze_workspace', 'audit_dependencies', 'suggest_fixes', 'review_pr'],
+      mcpTools: ['analyze', 'doctor', 'hotspots', 'explain', 'structure', 'dependencies', 'audit', 'upgrade', 'coverage', 'graph', 'coupling', 'workspaces', 'prDiff', 'review', 'fixSuggest', 'explainIssue', 'impact', 'search', 'workspaceGraph', 'applyFix', 'taint'],
+      knowledgeBase: [] as KnowledgeEntry[],
+    },
+  ];
+
+  const [personalities, setPersonalities] = useState(INITIAL_PERSONALITIES);
 
   const terminal = useTerminal('~/crimson-node/sd-webui', '/data/data/com.termux/files/home');
 
@@ -1045,7 +1064,7 @@ const App: React.FC = () => {
   >([
     {
       role: 'ai',
-      text: 'Neural Interface Active. Code Analysis engine synchronized with local hardware.',
+      text: 'Neural Interface Active. Multi-Agent MCP Swarm Synchronized with Local & Global Hardware. Projscan, 21st-Magic, and GitHub protocols online.',
       timestamp: Date.now(),
     },
   ]);
@@ -1115,7 +1134,7 @@ const App: React.FC = () => {
     async (
       prompt: string | any[],
       systemInstruction: string,
-      options?: { modelType?: 'fast' | 'smart'; json?: boolean; responseSchema?: any; brainContext?: any },
+      options?: { modelType?: 'fast' | 'smart'; json?: boolean; responseSchema?: any; brainContext?: any; mcpTools?: string[] },
       domain = 'default'
     ) => {
       const active = workers.filter(w => w.enabled);
@@ -1127,6 +1146,13 @@ const App: React.FC = () => {
           return Promise.reject(new Error('Grok API key not configured'));
       }
       const { brainContext, ...serviceOptions } = options || {};
+      
+      // Inject MCP tools from active personality if not explicitly overridden
+      const activePersonality = personalities.find(p => p.active) || personalities[0];
+      const mergedOptions = {
+        ...serviceOptions,
+        mcpTools: serviceOptions.mcpTools || activePersonality?.mcpTools || [],
+      };
 
       // Helper: prepend agent system prompt if worker has one assigned
       const buildInstruction = (w: WorkerConfig) => {
@@ -1139,7 +1165,7 @@ const App: React.FC = () => {
       if (active.length === 1) {
         const w = active[0];
         const signal = getSignal(domain);
-        return generateAIResponseService(prompt as string, buildInstruction(w), serviceOptions, {
+        return generateAIResponseService(prompt as string, buildInstruction(w), mergedOptions, {
           aiProvider: w.provider,
           aiModel: w.model,
           ai: googleAiClient,
@@ -1155,7 +1181,7 @@ const App: React.FC = () => {
       const signal = getSignal(domain);
       const results = await Promise.allSettled(
         active.map(w =>
-          generateAIResponseService(prompt as string, buildInstruction(w), serviceOptions, {
+          generateAIResponseService(prompt as string, buildInstruction(w), mergedOptions, {
             aiProvider: w.provider,
             aiModel: w.model,
             ai: googleAiClient,
@@ -1264,6 +1290,24 @@ const App: React.FC = () => {
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Lock browser window viewport scrolling (prevents keyboard/focus layout shifting on mobile)
+  useEffect(() => {
+    const lockScroll = () => {
+      if (window.scrollY !== 0 || window.scrollX !== 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+    window.addEventListener('scroll', lockScroll, { passive: true });
+    const handleFocusOut = () => {
+      setTimeout(() => window.scrollTo(0, 0), 100);
+    };
+    document.addEventListener('focusout', handleFocusOut);
+    return () => {
+      window.removeEventListener('scroll', lockScroll);
+      document.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
+
   // --- PERSISTENCE LOGIC ---
   // Load preferences on mount
   useEffect(() => {
@@ -1280,7 +1324,24 @@ const App: React.FC = () => {
           parsed.personalities.length > 0
         ) {
           setPersonalities((prev) => {
-            return parsed.personalities.map((p: any) => ({
+            // Merge INITIAL_PERSONALITIES into saved ones to ensure new tools/agents appear
+            const merged = [...parsed.personalities];
+            INITIAL_PERSONALITIES.forEach(initial => {
+              const existingIdx = merged.findIndex(p => p.id === initial.id);
+              if (existingIdx !== -1) {
+                // Update existing personality with new instructions and tools
+                merged[existingIdx] = {
+                  ...merged[existingIdx],
+                  instruction: initial.instruction,
+                  mcpTools: initial.mcpTools,
+                  suggestions: initial.suggestions,
+                };
+              } else {
+                // Add new agent (e.g. Projscan Intelligence)
+                merged.push(initial);
+              }
+            });
+            return merged.map((p: any) => ({
               ...p,
               suggestions: p.suggestions || [],
               knowledgeBase: Array.isArray(p.knowledgeBase) ? p.knowledgeBase : [],
@@ -3585,13 +3646,7 @@ ${prompt}`,
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen min-h-[100dvh] w-full bg-[#050101] text-[#00ff00] font-sans selection:bg-red-900/40 overflow-hidden border-4 border-blue-500" style={{opacity:1, visibility:'visible', display:'flex'}}>
-      <button 
-        onClick={() => document.body.style.background = 'white'}
-        style={{position:'fixed', top:10, left:10, zIndex:99999, background:'red', color:'white', padding:'10px', fontSize:'12px', fontWeight:'bold'}}
-      >
-        EMERGENCY WHITE BG
-      </button>
+    <div className="flex flex-col md:flex-row h-screen min-h-[100dvh] w-full bg-[#050101] text-[#00ff00] font-sans selection:bg-red-900/40 overflow-hidden" style={{opacity:1, visibility:'visible', display:'flex'}}>
       {/* φ Pulse Column — fixed right edge, doesn't affect layout */}
       <div className="phi-grid phi-grid__pulse fixed right-0 top-0 bottom-0 w-[3px] md:w-[4px] z-50 pointer-events-none" aria-hidden="true" />
       {/* Sidebar Navigation - Hidden on mobile */}
@@ -3675,7 +3730,7 @@ ${prompt}`,
       </nav>
 
       {/* Main Interface */}
-      <main className="flex-1 flex flex-col min-w-0 bg-[#0a0a0c] pb-14 md:pb-0 overflow-hidden border-4 border-red-500">
+      <main className="flex-1 flex flex-col min-w-0 bg-[#0a0a0c] pb-14 md:pb-0 overflow-hidden">
         <header className="h-14 md:h-16 border-b border-red-900/30 flex items-center justify-between px-4 md:px-8 bg-[#0a0202]/95 backdrop-blur-xl z-20 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
           <div className="flex items-center space-x-3 md:space-x-6">
             <button
