@@ -25,7 +25,6 @@ export default defineConfig(({ mode }) => {
             manualChunks: {
               'vendor-react': ['react', 'react-dom'],
               'vendor-monaco': ['@monaco-editor/react'],
-              'vendor-ai': ['@google/genai'],
               'vendor-ui': ['lucide-react', 'dompurify', 'react-markdown', 'remark-gfm'],
             },
           },
@@ -35,6 +34,7 @@ export default defineConfig(({ mode }) => {
         'import.meta.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
         'import.meta.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
         'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
+        'import.meta.env.VITE_OPENROUTER_API_KEY': JSON.stringify(env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY),
       },
       resolve: {
         alias: {

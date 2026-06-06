@@ -52,11 +52,12 @@ export interface PhiController {
 /**
  * @param endocrine  Live endocrine state from useBrain()
  */
-export function usePhi(endocrine: EndocrineState): PhiController {
+export function usePhi(endocrine: EndocrineState | null): PhiController {
   const commitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Translate endocrine → pulse state whenever it changes ────────────────
   useEffect(() => {
+    if (!endocrine) return;
     const { cortisol, dopamine } = endocrine;
 
     if (cortisol >= 0.8) {
@@ -69,7 +70,7 @@ export function usePhi(endocrine: EndocrineState): PhiController {
       // Neither stressed nor rewarded — idle sync colour
       setPulse('sync');
     }
-  }, [endocrine.cortisol, endocrine.dopamine, endocrine.lastUpdated]);
+  }, [endocrine?.cortisol, endocrine?.dopamine, endocrine?.lastUpdated]);
 
   // ── Transaction lifecycle ────────────────────────────────────────────────
   const beginTx = useCallback(() => {

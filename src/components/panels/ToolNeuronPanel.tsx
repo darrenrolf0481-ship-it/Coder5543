@@ -116,13 +116,13 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
   // ── Render ─────────────────────────────────────────────────────────────
 
   const modules = [
-    { id: 'chat',      label: 'Chat',     icon: <MessageSquare className="w-4 h-4" /> },
-    { id: 'vision',    label: 'Vision',   icon: <ImageIcon className="w-4 h-4" /> },
-    { id: 'knowledge', label: 'Database', icon: <Database className="w-4 h-4" /> },
-    { id: 'vault',     label: 'Vault',    icon: <ShieldCheck className="w-4 h-4" /> },
-    { id: 'swarm',     label: 'Swarm',    icon: <Network className="w-4 h-4" /> },
-    { id: 'debug',     label: 'Debug',    icon: <Bug className="w-4 h-4" /> },
-    { id: 'help',      label: 'Guide',    icon: <HelpCircle className="w-4 h-4" /> },
+    { id: 'chat',      label: 'Neural Chat',   icon: <MessageSquare className="w-4 h-4" /> },
+    { id: 'vision',    label: 'Code Analysis', icon: <LayoutTemplate className="w-4 h-4" /> },
+    { id: 'knowledge', label: 'Knowledge RAG', icon: <Database className="w-4 h-4" /> },
+    { id: 'vault',     label: 'Memory Vault',  icon: <ShieldCheck className="w-4 h-4" /> },
+    { id: 'swarm',     label: 'Swarm Core',    icon: <Network className="w-4 h-4" /> },
+    { id: 'debug',     label: 'Debugger',      icon: <Bug className="w-4 h-4" /> },
+    { id: 'help',      label: 'Guide',         icon: <HelpCircle className="w-4 h-4" /> },
   ] as const;
 
   return (
@@ -144,45 +144,49 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
 
       <div className="flex-1 flex flex-col lg:flex-row gap-4 md:gap-8 min-h-0 overflow-hidden p-4 md:p-8">
         {/* DESKTOP: sidebar module navigation */}
-        <div className="hidden lg:flex w-72 flex-col gap-6 shrink-0">
-          <div className="code-editor-bg rounded-[40px] border border-red-900/30 p-8 space-y-8 shadow-2xl">
-            <div className="space-y-2">
+        <div className="hidden lg:flex w-72 flex-col shrink-0">
+          <div className="flex-1 code-editor-bg rounded-[40px] border border-red-900/30 p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar shadow-2xl">
+            <div className="space-y-1">
               <h3 className="text-xl font-black text-red-100 uppercase tracking-tighter">ToolNeuron</h3>
-              <p className="text-[10px] text-red-900 font-black tracking-[0.3em] uppercase">Offline AI Ecosystem</p>
+              <p className="text-[9px] text-red-900 font-black tracking-[0.3em] uppercase">Offline AI Ecosystem</p>
             </div>
-            <div className="flex flex-col gap-3">
+            
+            <div className="flex flex-col gap-2">
               {modules.map(mod => (
                 <button
                   key={mod.id}
                   onClick={() => setTnModule(mod.id as any)}
-                  className={`flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${tnModule === mod.id ? 'bg-red-700 text-white shadow-lg scale-[1.02]' : 'bg-red-950/10 text-red-900 hover:text-red-500'}`}
+                  className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all ${tnModule === mod.id ? 'bg-red-700 text-white shadow-lg scale-[1.01]' : 'bg-red-950/10 text-red-900 hover:text-red-500'}`}
                 >
                   {mod.icon}
                   <span className="truncate">{mod.label}</span>
                 </button>
               ))}
             </div>
-          </div>
-          <div className="flex-1 code-editor-bg rounded-[40px] border border-red-900/30 p-8 space-y-6 shadow-2xl overflow-y-auto custom-scrollbar">
-            <h4 className="text-[10px] font-black text-red-800 uppercase tracking-[0.4em]">System Status</h4>
+
+            <hr className="border-red-900/20" />
+
             <div className="space-y-4">
-              <div className="p-4 bg-red-950/10 rounded-2xl border border-red-900/10">
-                <p className="text-[9px] text-red-900 font-black uppercase mb-2">Local Inference</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-red-100 font-bold">GGUF_Llama_3</span>
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <h4 className="text-[10px] font-black text-red-800 uppercase tracking-[0.4em]">System Status</h4>
+              <div className="space-y-3">
+                <div className="p-4 bg-red-950/10 rounded-2xl border border-red-900/10">
+                  <p className="text-[9px] text-red-900 font-black uppercase mb-2">Local Inference</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-red-100 font-bold">GGUF_Llama_3</span>
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  </div>
                 </div>
-              </div>
-              <div className="p-4 bg-red-950/10 rounded-2xl border border-red-900/10">
-                <p className="text-[9px] text-red-900 font-black uppercase mb-2">Vault Encryption</p>
-                <span className="text-[11px] text-red-100 font-bold">AES-256-GCM</span>
+                <div className="p-4 bg-red-950/10 rounded-2xl border border-red-900/10">
+                  <p className="text-[9px] text-red-900 font-black uppercase mb-2">Vault Encryption</p>
+                  <span className="text-[11px] text-red-100 font-bold">AES-256-GCM</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Module Content */}
-        <div className="flex-1 code-editor-bg rounded-[20px] md:rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 code-editor-bg rounded-[20px] md:rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden flex flex-col">
 
           {/* CHAT */}
           {tnModule === 'chat' && (
@@ -259,13 +263,13 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
                                         <ActionButton
                                           onClick={() => onApplyCode(block.code, 'refactor')}
                                           icon={Sparkles}
-                                          label="Refactor"
+                                          label="Apply Refactor"
                                           activeLabel="Applied!"
                                         />
                                         <ActionButton
                                           onClick={() => onApplyCode(block.code, 'replace')}
                                           icon={FileCode}
-                                          label="Replace"
+                                          label="Apply to File"
                                           activeLabel="Applied!"
                                         />
                                       </div>
@@ -347,7 +351,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
           {tnModule === 'vault' && (
             <div className="flex-1 flex flex-col h-full overflow-hidden">
               {!isVaultUnlocked ? (
-                <div key="locked" className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 space-y-8 md:space-y-12 text-center transition-all">
+                <div key="locked" className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 space-y-8 md:space-y-12 text-center transition-all overflow-y-auto custom-scrollbar">
                   <div className="relative">
                     <div className="p-6 md:p-12 bg-red-900/10 rounded-full border border-red-600/20 shadow-[0_0_80px_rgba(185,28,28,0.15)] relative z-10">
                       <ShieldCheck className="w-24 h-24 text-red-600" />
@@ -452,7 +456,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
 
           {/* VISION */}
           {tnModule === 'vision' && (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 space-y-6 md:space-y-8 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 space-y-6 md:space-y-8 text-center overflow-y-auto custom-scrollbar">
               <div className="p-6 md:p-12 bg-red-900/10 rounded-full border border-red-600/20 shadow-[0_0_60px_rgba(185,28,28,0.1)]">
                 <LayoutTemplate className="w-24 h-24 text-red-600" />
               </div>

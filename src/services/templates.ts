@@ -1,6 +1,8 @@
 export const PROJECT_TEMPLATES = {
   'python-web': {
     name: 'Python Web App',
+    description: 'Web application powered by Flask and HTML5 template.',
+    tags: ['python', 'flask', 'web'],
     files: [
       { id: 'root', name: 'Python_Web_Project', type: 'folder', parentId: null, isOpen: true },
       {
@@ -35,6 +37,8 @@ export const PROJECT_TEMPLATES = {
   },
   'rust-cli': {
     name: 'Rust CLI Tool',
+    description: 'A command-line interface tool implemented in Rust.',
+    tags: ['rust', 'cli', 'system'],
     files: [
       { id: 'root', name: 'Rust_CLI_Project', type: 'folder', parentId: null, isOpen: true },
       { id: 'src', name: 'src', type: 'folder', parentId: 'root', isOpen: true },
@@ -60,6 +64,8 @@ export const PROJECT_TEMPLATES = {
   },
   'neural-module': {
     name: 'Neural Module',
+    description: 'Pre-configured template for developing neural brain modules.',
+    tags: ['python', 'neural', 'brain'],
     files: [
       { id: 'root', name: 'Neural_Module', type: 'folder', parentId: null, isOpen: true },
       {

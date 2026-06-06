@@ -187,8 +187,13 @@
   100% { top: 100%; opacity: 0; }
 }
 
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(239, 68, 68, 0.45) transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -196,10 +201,18 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(185, 28, 28, 0.2);
+  background: rgba(239, 68, 68, 0.45);
   border-radius: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(185, 28, 28, 0.4);
+  background: rgba(239, 68, 68, 0.8);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

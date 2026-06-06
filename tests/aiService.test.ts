@@ -9,7 +9,10 @@ describe('generateAIResponse', () => {
   it('should call Google Gemini API', async () => {
     const mockAi = {
       models: {
-        generateContent: vi.fn().mockResolvedValue({ text: 'Google response' })
+        generateContent: vi.fn().mockResolvedValue({
+          text: () => 'Google response',
+          functionCalls: () => []
+        })
       }
     };
     
@@ -80,7 +83,10 @@ describe('generateAIResponse', () => {
   it('should fill prompt template', async () => {
     const mockAi = {
       models: {
-        generateContent: vi.fn().mockResolvedValue({ text: 'Template response' })
+        generateContent: vi.fn().mockResolvedValue({
+          text: () => 'Template response',
+          functionCalls: () => []
+        })
       }
     };
     
@@ -100,7 +106,7 @@ describe('generateAIResponse', () => {
     
     expect(response).toBe('Template response');
     expect(mockAi.models.generateContent).toHaveBeenCalledWith(expect.objectContaining({
-      contents: 'Hello World'
+      contents: [{ role: 'user', parts: [{ text: 'Hello World' }] }]
     }));
   });
 });

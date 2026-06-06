@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI } from './googleGenAiStub';
 import type { BrainContext } from './brain/types';
 
 export const fillTemplate = (template: string, data: Record<string, string>): string => {
@@ -55,7 +55,7 @@ const generateGoogleResponse = async (
   const isJson = options?.json;
   const mcpToolFilters = options?.mcpTools || [];
 
-  const model = aiModel || (isFast ? 'gemini-3-flash' : 'gemini-3.1-pro-preview');
+  const model = aiModel || (isFast ? 'gemini-2.5-flash' : 'gemini-2.5-pro');
   const config: any = { systemInstruction: enrichedSystemInstruction };
   
   // ── MCP Tool Integration ───────────────────────────────────────────────────
@@ -158,7 +158,7 @@ const generateGoogleResponse = async (
     response = await ai.models.generateContent({ model, contents, config });
   }
 
-  const text = response.text;
+  const text = response.text();
   if (text === undefined) {
     const finishReason = response.candidates?.[0]?.finishReason;
     const nonTextParts = response.candidates?.[0]?.content?.parts
@@ -271,22 +271,131 @@ const generateOllamaResponse = async (
   return text;
 };
 
+const generateOpenRouterResponse = async (
+  finalPrompt: string | any[],
+  systemInstruction: string,
+  options: any,
+  dependencies: any
+) => {
+  const { aiModel, openrouterApiKey, signal, brainContext } = dependencies;
+  const isJson = options?.json;
+
+  let enrichedSystemInstruction = systemInstruction;
+  if (brainContext) {
+    enrichedSystemInstruction += formatNeuralContext(brainContext);
+  }
+
+  const model = aiModel || 'meta-llama/llama-3.3-70b-instruct:free';
+  let messages: any[] = [{ role: 'system', content: enrichedSystemInstruction }];
+  
+  if (Array.isArray(finalPrompt)) {
+    messages = [
+      ...messages,
+      ...finalPrompt.map(p => ({
+        role: p.role === 'model' ? 'assistant' : 'user',
+        content: p.parts[0].text
+      }))
+    ];
+  } else {
+    messages.push({ role: 'user', content: finalPrompt });
+  }
+
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${openrouterApiKey || ''}`,
+      'HTTP-Referer': window.location.origin,
+      'X-Title': 'Crimson OS'
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      response_format: isJson ? { type: "json_object" } : undefined
+    }),
+    signal,
+  });
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content;
+  if (text === undefined) {
+    throw new Error(`OpenRouter API returned empty response: ${data.error?.message || JSON.stringify(data).slice(0, 200)}`);
+  }
+  return text;
+};
+
 export const generateAIResponse = async (
     prompt: string | any[],
     systemInstruction: string,
-    options: { modelType?: 'fast' | 'smart', json?: boolean, responseSchema?: any, template?: { content: string, data: Record<string, string> } },
-    dependencies: {
-        aiProvider: string,
-        aiModel: string,
-        ai: any,
-        grokApiKey: string,
-        projectSettings: any,
-        ollamaModels: string[],
+    options?: { modelType?: 'fast' | 'smart', json?: boolean, responseSchema?: any, template?: { content: string, data: Record<string, string> } },
+    dependencies?: {
+        aiProvider?: string,
+        aiModel?: string,
+        ai?: any,
+        grokApiKey?: string,
+        openrouterApiKey?: string,
+        projectSettings?: any,
+        ollamaModels?: string[],
         signal?: AbortSignal,
         brainContext?: BrainContext;
     }
 ) => {
-    const { aiProvider } = dependencies;
+    let resolvedProvider = dependencies?.aiProvider;
+    let resolvedModel = dependencies?.aiModel;
+    let resolvedAi = dependencies?.ai;
+    let resolvedGrokKey = dependencies?.grokApiKey;
+    let resolvedOpenRouterKey = dependencies?.openrouterApiKey;
+    let resolvedSettings = dependencies?.projectSettings;
+    let resolvedOllamaModels = dependencies?.ollamaModels || [];
+    const signal = dependencies?.signal;
+    const brainContext = dependencies?.brainContext;
+
+    if (!resolvedProvider || !resolvedOpenRouterKey) {
+      try {
+        const stored = localStorage.getItem('node_preferences');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed.aiProvider === 'google' || parsed.aiProvider === 'openrouter' || parsed.aiModel?.includes('gemini-3')) {
+            parsed.aiProvider = 'ollama';
+            parsed.aiModel = 'llama3.2:latest';
+          }
+          if (!resolvedProvider) {
+            resolvedProvider = parsed.aiProvider;
+          }
+          if (!resolvedModel) {
+            resolvedModel = parsed.aiModel;
+          }
+          if (!resolvedGrokKey) {
+            resolvedGrokKey = parsed.grokApiKey;
+          }
+          if (!resolvedOpenRouterKey) {
+            resolvedOpenRouterKey = parsed.openrouterApiKey;
+          }
+          if (!resolvedSettings) {
+            resolvedSettings = parsed.projectSettings;
+          }
+          if (parsed.geminiApiKey && !resolvedAi) {
+            resolvedAi = new GoogleGenAI({ apiKey: parsed.geminiApiKey });
+          }
+        }
+      } catch (err) {
+        console.warn('[aiService] Fallback config load failed:', err);
+      }
+    }
+
+    resolvedProvider = resolvedProvider || 'ollama';
+    resolvedSettings = resolvedSettings || { ollamaUrl: 'http://127.0.0.1:11434' };
+
+    const resolvedDeps = {
+      aiProvider: resolvedProvider,
+      aiModel: resolvedModel,
+      ai: resolvedAi,
+      grokApiKey: resolvedGrokKey,
+      openrouterApiKey: resolvedOpenRouterKey,
+      projectSettings: resolvedSettings,
+      ollamaModels: resolvedOllamaModels,
+      signal,
+      brainContext,
+    };
 
     let finalPrompt = prompt;
     if (options?.template) {
@@ -305,15 +414,17 @@ export const generateAIResponse = async (
         }
     }
 
-    if (dependencies.signal?.aborted) return '';
+    if (signal?.aborted) return '';
 
-    switch (aiProvider) {
+    switch (resolvedProvider) {
       case 'google':
-        return generateGoogleResponse(finalPrompt, systemInstruction, options, dependencies);
+        return generateGoogleResponse(finalPrompt, systemInstruction, options, resolvedDeps);
       case 'grok':
-        return generateGrokResponse(finalPrompt, systemInstruction, options, dependencies);
+        return generateGrokResponse(finalPrompt, systemInstruction, options, resolvedDeps);
+      case 'openrouter':
+        return generateOpenRouterResponse(finalPrompt, systemInstruction, options, resolvedDeps);
       case 'ollama':
-        return generateOllamaResponse(finalPrompt, systemInstruction, options, dependencies);
+        return generateOllamaResponse(finalPrompt, systemInstruction, options, resolvedDeps);
       default:
         return '';
     }

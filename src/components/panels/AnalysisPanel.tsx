@@ -31,7 +31,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     <div className="h-full flex flex-col overflow-hidden animate-in fade-in duration-500 bg-[#020204]">
       <div className="flex-1 flex flex-col md:flex-row min-h-0">
         {/* Left Pane: Current Code */}
-        <div className="flex-1 flex flex-col border-r border-red-900/30">
+        <div className="flex-1 min-h-0 flex flex-col border-r border-red-900/30">
           <div className="h-12 border-b border-red-900/30 flex items-center px-4 bg-[#0a0202]">
             <span className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
               <FileCode className="w-3.5 h-3.5" /> Original: {projectFiles.find(f => f.id === activeFileId)?.name || 'No file'}
@@ -45,7 +45,7 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         </div>
 
         {/* Right Pane: Analysis / Refactored */}
-        <div className="flex-1 flex flex-col bg-[#050101]">
+        <div className="flex-1 min-h-0 flex flex-col bg-[#050101]">
           <div className="h-12 border-b border-red-900/30 flex items-center px-4 bg-[#0a0202]">
             <span className="text-[10px] font-black text-red-400 uppercase tracking-widest flex items-center gap-2">
               <Sparkles className="w-3.5 h-3.5" /> AI Analysis

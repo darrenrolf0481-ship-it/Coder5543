@@ -38,6 +38,8 @@ interface SettingsPanelProps {
   setGrokApiKey: (v: string) => void;
   geminiApiKey: string;
   setGeminiApiKey: (v: string) => void;
+  openrouterApiKey: string;
+  setOpenrouterApiKey: (v: string) => void;
   brainConfig: { logic: string; runtime: string; mappedPaths: string[] };
   setBrainConfig: (v: any) => void;
   brainRefFile: { name: string; data: string; mimeType: string } | null;
@@ -69,6 +71,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   personalities, setPersonalities,
   grokApiKey, setGrokApiKey,
   geminiApiKey, setGeminiApiKey,
+  openrouterApiKey, setOpenrouterApiKey,
   brainConfig, setBrainConfig,
   brainRefFile, setBrainRefFile,
   isAiProcessing, setIsAiProcessing,
@@ -325,6 +328,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 <h4 className="text-lg md:text-xl font-black text-red-100 tracking-tighter uppercase leading-none">Grok API Key</h4>
                 <p className="text-[10px] md:text-xs text-red-900 font-bold tracking-[0.1em]">Required for xAI Grok integration. Stored locally.</p>
                 <input type="password" value={grokApiKey} onChange={(e) => setGrokApiKey(e.target.value)} placeholder="xai-..."
+                  className="w-full bg-black/60 border border-red-950 rounded-[16px] md:rounded-[20px] p-3 md:p-4 text-xs md:text-sm text-red-100 font-mono outline-none focus:border-red-600/50 transition-all shadow-inner"
+                />
+              </div>
+              <div className="space-y-4 relative z-10 pt-6 border-t border-red-900/20">
+                <h4 className="text-lg md:text-xl font-black text-red-100 tracking-tighter uppercase leading-none">OpenRouter API Key</h4>
+                <p className="text-[10px] md:text-xs text-red-900 font-bold tracking-[0.1em]">Required for OpenRouter integration. Stored locally.</p>
+                <input type="password" value={openrouterApiKey} onChange={(e) => setOpenrouterApiKey(e.target.value)} placeholder="sk-or-..."
                   className="w-full bg-black/60 border border-red-950 rounded-[16px] md:rounded-[20px] p-3 md:p-4 text-xs md:text-sm text-red-100 font-mono outline-none focus:border-red-600/50 transition-all shadow-inner"
                 />
               </div>

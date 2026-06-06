@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { ChevronRight, Sparkles, Zap } from 'lucide-react';
 import { TerminalLine } from '../TerminalLine';
 import { Personality } from './SettingsPanel';
 
 interface TerminalPanelProps {
   terminalOutput: string[];
-  terminalEndRef: React.RefObject<HTMLDivElement>;
   isAiProcessing: boolean;
   activePersonality: Personality;
   termInput: string;
@@ -22,25 +21,32 @@ interface TerminalPanelProps {
 }
 
 export const TerminalPanel: React.FC<TerminalPanelProps> = ({
-  terminalOutput, terminalEndRef, isAiProcessing, activePersonality,
+  terminalOutput, isAiProcessing, activePersonality,
   termInput, setTermInput, termSuggestion, setTermSuggestion,
   termSuggestions, setTermSuggestions, selectedSuggestionIndex,
   handleTermInputChange, handleTermKeyDown, handleTerminalCommand, realCwd,
-}) => (
-  <div className="h-full flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500">
-    <div className="flex-1 code-editor-bg rounded-[30px] md:rounded-[40px] border border-red-900/30 flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.8)] overflow-hidden group relative">
-      <div className="flex-1 p-6 md:p-8 font-mono text-[12px] md:text-[14px] overflow-y-auto custom-scrollbar bg-[linear-gradient(rgba(13,4,4,1),rgba(8,1,1,1))]">
-        {terminalOutput.map((line, i) => (
-          <TerminalLine key={i} line={line} />
-        ))}
-        {isAiProcessing && (
-          <div className="text-red-600/50 text-[12px] animate-pulse py-4 flex items-center gap-3 font-black tracking-widest">
-            <Zap className="w-4 h-4" />
-            CALCULATING_NEURAL_VECTORS...
-          </div>
-        )}
-        <div ref={terminalEndRef} />
-      </div>
+}) => {
+  const terminalEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [terminalOutput, isAiProcessing]);
+
+  return (
+    <div className="h-full flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500">
+      <div className="flex-1 min-h-0 code-editor-bg rounded-[30px] md:rounded-[40px] border border-red-900/30 flex flex-col shadow-[0_0_60px_rgba(0,0,0,0.8)] overflow-hidden group relative">
+        <div className="flex-1 p-6 md:p-8 font-mono text-[12px] md:text-[14px] overflow-y-auto custom-scrollbar bg-[linear-gradient(rgba(13,4,4,1),rgba(8,1,1,1))]">
+          {terminalOutput.map((line, i) => (
+            <TerminalLine key={i} line={line} />
+          ))}
+          {isAiProcessing && (
+            <div className="text-red-600/50 text-[12px] animate-pulse py-4 flex items-center gap-3 font-black tracking-widest">
+              <Zap className="w-4 h-4" />
+              CALCULATING_NEURAL_VECTORS...
+            </div>
+          )}
+          <div ref={terminalEndRef} />
+        </div>
 
       {termSuggestions.length > 0 && termInput && (
         <div className="px-6 py-4 bg-[#0a0202] border-t border-red-900/10 flex flex-col gap-3 animate-in slide-in-from-bottom-2 duration-300">
@@ -98,4 +104,5 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
       </form>
     </div>
   </div>
-);
+  );
+};

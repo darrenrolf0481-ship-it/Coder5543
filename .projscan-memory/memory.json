@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "lastUpdatedAt": "2026-05-28T21:01:21.154Z",
+  "lastUpdatedAt": "2026-06-06T02:21:27.775Z",
   "rules": {
     "hardcoded-secret": {
       "ruleId": "hardcoded-secret",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-05-28T20:21:10.816Z",
-      "runCount": 13,
-      "fixedCount": 15,
+      "lastSeenAt": "2026-06-06T02:20:29.052Z",
+      "runCount": 16,
+      "fixedCount": 17,
       "suppressedInConfig": false
     },
     "missing-eslint": {
@@ -53,8 +53,8 @@
     "unused-dependency-tailwindcss": {
       "ruleId": "unused-dependency-tailwindcss",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-05-28T21:01:21.152Z",
-      "runCount": 28,
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 33,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
@@ -117,9 +117,9 @@
     "unused-exports-neural_brain.py": {
       "ruleId": "unused-exports-neural_brain.py",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-05-28T20:21:10.816Z",
-      "runCount": 15,
-      "fixedCount": 13,
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 19,
+      "fixedCount": 14,
       "suppressedInConfig": false
     },
     "unused-exports-sdk_bridge.js": {
@@ -127,7 +127,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-components/FileTree.tsx": {
@@ -135,7 +135,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-components/TerminalLine.tsx": {
@@ -143,7 +143,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-context/AppState.tsx": {
@@ -151,7 +151,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-hooks/useBrain.ts": {
@@ -159,7 +159,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-hooks/usePipeline.ts": {
@@ -167,7 +167,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-hooks/useThrottledStorage.ts": {
@@ -175,7 +175,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-pipeline/filteringService.ts": {
@@ -183,7 +183,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-pipeline/ingestionService.ts": {
@@ -191,7 +191,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-pipeline/patternInjectionService.ts": {
@@ -199,7 +199,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-services/aiService.ts": {
@@ -207,7 +207,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-services/fileStore.ts": {
@@ -215,7 +215,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-src/context/AppState.tsx": {
@@ -223,7 +223,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/usePhi.ts": {
@@ -231,22 +231,22 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-05-28T20:22:36.006Z",
       "runCount": 22,
-      "fixedCount": 6,
+      "fixedCount": 7,
       "suppressedInConfig": false
     },
     "unused-dependency-@typescript-eslint/eslint-plugin": {
       "ruleId": "unused-dependency-@typescript-eslint/eslint-plugin",
       "firstSeenAt": "2026-05-26T16:02:13.662Z",
-      "lastSeenAt": "2026-05-28T21:01:21.152Z",
-      "runCount": 23,
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 28,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
     "unused-dependency-@typescript-eslint/parser": {
       "ruleId": "unused-dependency-@typescript-eslint/parser",
       "firstSeenAt": "2026-05-26T16:02:13.662Z",
-      "lastSeenAt": "2026-05-28T21:01:21.152Z",
-      "runCount": 23,
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 28,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
@@ -255,7 +255,7 @@
       "firstSeenAt": "2026-05-26T19:15:45.850Z",
       "lastSeenAt": "2026-05-28T20:21:10.816Z",
       "runCount": 5,
-      "fixedCount": 11,
+      "fixedCount": 12,
       "suppressedInConfig": false
     },
     "unused-exports-src/services/brain_old/brainService.ts": {
@@ -263,7 +263,1039 @@
       "firstSeenAt": "2026-05-28T21:00:38.551Z",
       "lastSeenAt": "2026-05-28T21:00:38.551Z",
       "runCount": 1,
-      "fixedCount": 1,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-@modelcontextprotocol/sdk": {
+      "ruleId": "unused-dependency-@modelcontextprotocol/sdk",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "cycle-detected-1": {
+      "ruleId": "cycle-detected-1",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "cycle-detected-2": {
+      "ruleId": "cycle-detected-2",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-inject_node_bridge.py": {
+      "ruleId": "unused-exports-inject_node_bridge.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-refactor_settings.py": {
+      "ruleId": "unused-exports-refactor_settings.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/sync.py": {
+      "ruleId": "unused-exports-serena/sync.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useDebugging.ts": {
+      "ruleId": "unused-exports-src/hooks/useDebugging.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useEditorHandlers.ts": {
+      "ruleId": "unused-exports-src/hooks/useEditorHandlers.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useThrottledStorage.ts": {
+      "ruleId": "unused-exports-src/hooks/useThrottledStorage.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/docs/autogen_docs.py": {
+      "ruleId": "unused-exports-serena/docs/autogen_docs.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/docs/create_toc.py": {
+      "ruleId": "unused-exports-serena/docs/create_toc.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/agno_agent.py": {
+      "ruleId": "unused-exports-serena/scripts/agno_agent.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/build_news_json.py": {
+      "ruleId": "unused-exports-serena/scripts/build_news_json.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/bump_version.py": {
+      "ruleId": "unused-exports-serena/scripts/bump_version.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/demo_cli_call.py": {
+      "ruleId": "unused-exports-serena/scripts/demo_cli_call.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/demo_diagnostics.py": {
+      "ruleId": "unused-exports-serena/scripts/demo_diagnostics.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/demo_find_defining_symbol.py": {
+      "ruleId": "unused-exports-serena/scripts/demo_find_defining_symbol.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/demo_find_implementing_symbol.py": {
+      "ruleId": "unused-exports-serena/scripts/demo_find_implementing_symbol.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/demo_progressive_tool_shortening.py": {
+      "ruleId": "unused-exports-serena/scripts/demo_progressive_tool_shortening.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/demo_run_tools.py": {
+      "ruleId": "unused-exports-serena/scripts/demo_run_tools.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/gen_prompt_factory.py": {
+      "ruleId": "unused-exports-serena/scripts/gen_prompt_factory.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/mcp_server.py": {
+      "ruleId": "unused-exports-serena/scripts/mcp_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/print_language_list.py": {
+      "ruleId": "unused-exports-serena/scripts/print_language_list.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/print_mode_context_options.py": {
+      "ruleId": "unused-exports-serena/scripts/print_mode_context_options.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/print_tool_overview.py": {
+      "ruleId": "unused-exports-serena/scripts/print_tool_overview.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/scripts/profile_tool_call.py": {
+      "ruleId": "unused-exports-serena/scripts/profile_tool_call.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/editor/useFileSystem.ts": {
+      "ruleId": "unused-exports-src/hooks/editor/useFileSystem.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/serena/util/thread.py": {
+      "ruleId": "unused-exports-serena/src/serena/util/thread.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/ada_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/ada_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/angular_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/angular_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/ansible_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/ansible_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/bash_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/bash_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/bsl_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/bsl_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/ccls_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/ccls_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/crystal_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/crystal_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/cue_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/cue_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/dart_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/dart_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/elm_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/elm_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/erlang_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/erlang_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/fortran_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/fortran_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/fsharp_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/fsharp_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/godot_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/godot_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/gopls.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/gopls.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/groovy_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/groovy_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/haskell_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/haskell_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/haxe_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/haxe_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/hlsl_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/hlsl_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/intelephense.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/intelephense.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/jedi_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/jedi_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/json_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/json_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/julia_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/julia_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/kotlin_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/kotlin_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/lean4_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/lean4_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/lua_ls.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/lua_ls.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/marksman.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/marksman.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/matlab_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/matlab_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/msl_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/msl_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/msl_lsp_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/msl_lsp_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/nixd_ls.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/nixd_ls.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/omnisharp.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/omnisharp.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/perl_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/perl_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/phpactor.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/phpactor.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/powershell_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/powershell_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/pyright_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/pyright_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/r_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/r_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/regal_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/regal_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/ruby_lsp.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/ruby_lsp.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/rust_analyzer.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/rust_analyzer.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/solargraph.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/solargraph.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/solidity_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/solidity_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/some_sass_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/some_sass_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/sourcekit_lsp.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/sourcekit_lsp.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/svelte_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/svelte_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/taplo_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/taplo_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/terraform_ls.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/terraform_ls.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/ty_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/ty_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/vts_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/vts_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/vue_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/vue_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/yaml_language_server.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/yaml_language_server.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/zls.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/zls.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/solidlsp/angular/conftest.py": {
+      "ruleId": "unused-exports-serena/test/solidlsp/angular/conftest.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/solidlsp/elixir/conftest.py": {
+      "ruleId": "unused-exports-serena/test/solidlsp/elixir/conftest.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/solidlsp/erlang/conftest.py": {
+      "ruleId": "unused-exports-serena/test/solidlsp/erlang/conftest.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/solidlsp/svelte/conftest.py": {
+      "ruleId": "unused-exports-serena/test/solidlsp/svelte/conftest.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/src/solidlsp/language_servers/elixir_tools/elixir_tools.py": {
+      "ruleId": "unused-exports-serena/src/solidlsp/language_servers/elixir_tools/elixir_tools.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/typescript/cross_package_b/consumer.ts": {
+      "ruleId": "unused-exports-serena/test/resources/repos/typescript/cross_package_b/consumer.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/typescript/test_repo/diagnostics_sample.ts": {
+      "ruleId": "unused-exports-serena/test/resources/repos/typescript/test_repo/diagnostics_sample.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/typescript/test_repo/jsx_component.tsx": {
+      "ruleId": "unused-exports-serena/test/resources/repos/typescript/test_repo/jsx_component.tsx",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/typescript/test_repo/use_helper.ts": {
+      "ruleId": "unused-exports-serena/test/resources/repos/typescript/test_repo/use_helper.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/examples/user_management.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/examples/user_management.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/custom_test/advanced_features.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/custom_test/advanced_features.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/ignore_this_dir_with_postfix/ignored_module.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/ignore_this_dir_with_postfix/ignored_module.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/scripts/run_app.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/scripts/run_app.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/complex_types.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/complex_types.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/diagnostics_sample.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/diagnostics_sample.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/name_collisions.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/name_collisions.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/nested.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/nested.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/nested_base.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/nested_base.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/overloaded.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/overloaded.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/utils.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/utils.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/variables.py": {
+      "ruleId": "unused-exports-serena/test/resources/repos/python/test_repo/test_repo/variables.py",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/angular/test_repo/src/app/diagnostics_sample.ts": {
+      "ruleId": "unused-exports-serena/test/resources/repos/angular/test_repo/src/app/diagnostics_sample.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/svelte/test_repo/src/lib/diagnostics_sample.ts": {
+      "ruleId": "unused-exports-serena/test/resources/repos/svelte/test_repo/src/lib/diagnostics_sample.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/svelte/test_repo/src/lib/game.ts": {
+      "ruleId": "unused-exports-serena/test/resources/repos/svelte/test_repo/src/lib/game.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/vue/test_repo/src/stores/calculator.ts": {
+      "ruleId": "unused-exports-serena/test/resources/repos/vue/test_repo/src/stores/calculator.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/vue/test_repo/src/composables/useFormatter.ts": {
+      "ruleId": "unused-exports-serena/test/resources/repos/vue/test_repo/src/composables/useFormatter.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/vue/test_repo/src/composables/useTheme.ts": {
+      "ruleId": "unused-exports-serena/test/resources/repos/vue/test_repo/src/composables/useTheme.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/svelte/test_repo/src/routes/(sverdle)/+page.server.ts": {
+      "ruleId": "unused-exports-serena/test/resources/repos/svelte/test_repo/src/routes/(sverdle)/+page.server.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-serena/test/resources/repos/svelte/test_repo/src/routes/(sverdle)/how-to-play/+page.ts": {
+      "ruleId": "unused-exports-serena/test/resources/repos/svelte/test_repo/src/routes/(sverdle)/how-to-play/+page.ts",
+      "firstSeenAt": "2026-06-05T15:59:10.920Z",
+      "lastSeenAt": "2026-06-05T15:59:35.897Z",
+      "runCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/scripts/extract_nomic_vectors.py": {
+      "ruleId": "unused-exports-codebase-memory-mcp/scripts/extract_nomic_vectors.py",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/scripts/gen-py-stdlib.py": {
+      "ruleId": "unused-exports-codebase-memory-mcp/scripts/gen-py-stdlib.py",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/scripts/generate-lang-code.py": {
+      "ruleId": "unused-exports-codebase-memory-mcp/scripts/generate-lang-code.py",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/src/lib/utils.ts": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/src/lib/utils.ts",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/src/components/ProjectCard.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/src/components/ProjectCard.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/badge.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/badge.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/button.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/button.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/card.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/card.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/checkbox.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/checkbox.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/input.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/input.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/scroll-area.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/scroll-area.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/separator.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/@/components/ui/separator.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/badge.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/badge.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/button.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/button.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/card.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/card.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/checkbox.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/checkbox.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/input.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/input.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/scroll-area.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/scroll-area.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/separator.tsx": {
+      "ruleId": "unused-exports-codebase-memory-mcp/graph-ui/src/components/ui/separator.tsx",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-codebase-memory-mcp/pkg/pypi/src/codebase_memory_mcp/__main__.py": {
+      "ruleId": "unused-exports-codebase-memory-mcp/pkg/pypi/src/codebase_memory_mcp/__main__.py",
+      "firstSeenAt": "2026-06-06T02:20:29.052Z",
+      "lastSeenAt": "2026-06-06T02:21:27.762Z",
+      "runCount": 2,
+      "fixedCount": 0,
       "suppressedInConfig": false
     }
   },
@@ -1069,5 +2101,5 @@
       "lastChurn": 1
     }
   },
-  "totalRuns": 28
+  "totalRuns": 33
 }

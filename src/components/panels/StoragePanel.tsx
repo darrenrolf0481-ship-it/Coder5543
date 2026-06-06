@@ -27,8 +27,8 @@ export const StoragePanel: React.FC<StoragePanelProps> = ({
   handleStorageUpload,
 }) => {
   return (
-    <div className="h-full p-4 md:p-10 flex flex-col gap-6 md:gap-10 animate-in zoom-in-95 duration-500 overflow-y-auto custom-scrollbar">
-      <div className="flex-1 bg-[#0d0404] rounded-[30px] md:rounded-[50px] border border-red-900/30 p-6 md:p-12 flex flex-col space-y-6 md:space-y-10 shadow-2xl relative overflow-hidden shrink-0">
+    <div className="h-full p-4 md:p-10 flex flex-col gap-6 md:gap-10 animate-in zoom-in-95 duration-500 overflow-hidden">
+      <div className="flex-1 bg-[#0d0404] rounded-[30px] md:rounded-[50px] border border-red-900/30 p-6 md:p-12 flex flex-col space-y-6 md:space-y-10 shadow-2xl relative overflow-hidden">
         <div className="absolute -top-24 -right-24 w-64 h-64 md:w-96 md:h-96 bg-red-600/5 blur-[100px] rounded-full pointer-events-none" />
 
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-red-900/20 pb-6 md:pb-8 relative z-10 gap-4">

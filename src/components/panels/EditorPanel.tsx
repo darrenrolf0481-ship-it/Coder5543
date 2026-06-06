@@ -205,8 +205,11 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
   setIsGenerateModalOpen, setIsTemplateModalOpen,
   swarmAnxiety, setTerminalOutput,
 }) => {
+  const [isAiMenuOpen, setIsAiMenuOpen] = React.useState(false);
+  const [isUtilMenuOpen, setIsUtilMenuOpen] = React.useState(false);
+
   return (
-    <div className="h-full flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500">
+    <div className="flex-1 min-h-0 flex flex-col p-4 md:p-8 animate-in fade-in zoom-in-95 duration-500">
       {/* Phi 11.3 grid: sidebar(3) + pulse-border(0.3) + editor(8) */}
       <div className="flex-1 flex flex-col lg:flex-row gap-0 md:gap-0 min-h-0">
         {/* File Tree Sidebar — 3/11.3 phi units */}
@@ -274,7 +277,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
         />
 
         {/* Editor Section — 8/11.3 phi units */}
-        <div className="flex-1 flex flex-col code-editor-bg rounded-[30px] md:rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden min-h-[400px]">
+        <div className="flex-1 flex flex-col code-editor-bg rounded-[30px] md:rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden min-h-0 md:min-h-[400px]">
           <div className="h-auto min-h-16 border-b border-red-900/20 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 bg-black/40 py-2 md:py-0 gap-4">
             <div className="w-full md:w-auto flex items-center justify-between md:justify-start gap-4 md:gap-6 overflow-x-auto custom-scrollbar">
               <div className="flex bg-red-950/20 p-1 rounded-xl border border-red-900/20 shrink-0">
@@ -313,130 +316,230 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                 </div>
               )}
             </div>
-            <div className="w-full md:w-auto flex items-center gap-2 md:gap-4 overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+            <div className="w-full md:w-auto flex flex-wrap items-center gap-2 md:gap-3 py-1">
               <button
                 onClick={() => setIsLivePreviewEnabled(!isLivePreviewEnabled)}
-                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isLivePreviewEnabled ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
+                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isLivePreviewEnabled ? 'bg-red-700 border-red-500 text-white shadow-md' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
                 title="Live Preview"
               >
                 <Globe className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
               </button>
               <button
                 onClick={() => setIsEditorAssistantOpen(!isEditorAssistantOpen)}
-                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isEditorAssistantOpen ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
+                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isEditorAssistantOpen ? 'bg-red-700 border-red-500 text-white shadow-md' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
                 title="Neural Assistant"
               >
                 <MessageSquare className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
               </button>
-              <button
-                onClick={handleToggleCurrentLineBreakpoint}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group shrink-0"
-                title="Toggle Breakpoint"
-              >
-                <Circle className={`w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform ${breakpoints.includes(cursorLine) ? 'fill-red-500 text-red-500' : ''}`} />
-              </button>
-              <button
-                onClick={handleExplainCode}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="AI Analysis"
-              >
-                <Brain className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleFullProjectAnalysis}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Full Project Analysis"
-              >
-                <Network className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleDeepProjectAudit}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Deep Project Audit"
-              >
-                <ShieldAlert className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleGenerateDocs}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Generate Documentation"
-              >
-                <FileText className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={() => handleFormatCode(false)}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Format Code"
-              >
-                <Paintbrush className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={() => handleFormatCode(true)}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Mobile Format"
-              >
-                <Smartphone className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleRefactorCode}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="AI Refactor Current File"
-              >
-                <Wand2 className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleRefactorAllFiles}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="AI Refactor Entire Project"
-              >
-                <Layers className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleReviewCode}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="AI Code Review"
-              >
-                <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleAnalyzeData}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="AI Data Analysis"
-              >
-                <BarChart3 className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleScanCode}
-                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isScanningCode ? 'bg-red-700 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                title="Scan Code for Errors"
-              >
-                <Activity className={`w-4 h-4 md:w-5 md:h-5 ${isScanningCode ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`} />
-              </button>
-              <button
-                onClick={handleGenerateCode}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Neural Forge (Generate Code)"
-              >
-                <Zap className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={() => setIsPairProgrammerActive(!isPairProgrammerActive)}
-                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isPairProgrammerActive ? 'bg-emerald-700 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                title="AI Pair Programmer Mode"
-              >
-                <Users className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
+
+              {/* AI Actions Dropdown */}
+              <div className="relative inline-block text-left">
+                <button
+                  onClick={() => {
+                    setIsAiMenuOpen(!isAiMenuOpen);
+                    setIsUtilMenuOpen(false);
+                  }}
+                  className={`flex items-center gap-2 px-3 py-2 border rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isAiMenuOpen ? 'bg-red-700 border-red-500 text-white shadow-lg' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
+                  title="AI Actions"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>AI Tools</span>
+                  <span className="text-[8px] opacity-65">▼</span>
+                </button>
+                
+                {isAiMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsAiMenuOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#0a0202] border border-red-900/40 shadow-[0_10px_35px_rgba(0,0,0,0.9)] z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className="px-3 py-1 text-[8px] font-black text-red-950 uppercase tracking-widest border-b border-red-900/10 mb-1">
+                        Distributed Inference
+                      </div>
+                      
+                      <button
+                        onClick={() => { handleExplainCode(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors disabled:opacity-30"
+                      >
+                        <Brain className="w-3.5 h-3.5 text-red-500" />
+                        <span>Explain Code</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => { handleReviewCode(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors disabled:opacity-30"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 text-red-500" />
+                        <span>AI Code Review</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => { handleGenerateDocs(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors disabled:opacity-30"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-red-500" />
+                        <span>Generate Docs</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleRefactorCode(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors disabled:opacity-30"
+                      >
+                        <Wand2 className="w-3.5 h-3.5 text-red-500" />
+                        <span>Refactor File</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleRefactorAllFiles(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors disabled:opacity-30"
+                      >
+                        <Layers className="w-3.5 h-3.5 text-red-500" />
+                        <span>Refactor Project</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleAnalyzeData(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors disabled:opacity-30"
+                      >
+                        <BarChart3 className="w-3.5 h-3.5 text-red-500" />
+                        <span>Analyze Data</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleGenerateCode(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors disabled:opacity-30"
+                      >
+                        <Zap className="w-3.5 h-3.5 text-red-500" />
+                        <span>Neural Forge</span>
+                      </button>
+
+                      <div className="h-px bg-red-900/10 my-1" />
+
+                      <button
+                        onClick={() => { handleFullProjectAnalysis(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors disabled:opacity-30"
+                      >
+                        <Network className="w-3.5 h-3.5 text-red-500" />
+                        <span>Project Analysis</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleDeepProjectAudit(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors disabled:opacity-30"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 text-red-500" />
+                        <span>Deep Audit</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Utilities & Modes Dropdown */}
+              <div className="relative inline-block text-left">
+                <button
+                  onClick={() => {
+                    setIsUtilMenuOpen(!isUtilMenuOpen);
+                    setIsAiMenuOpen(false);
+                  }}
+                  className={`flex items-center gap-2 px-3 py-2 border rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isUtilMenuOpen ? 'bg-red-700 border-red-500 text-white shadow-lg' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
+                  title="Utilities & Modes"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Utilities</span>
+                  <span className="text-[8px] opacity-65">▼</span>
+                </button>
+                
+                {isUtilMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsUtilMenuOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-[#0a0202] border border-red-900/40 shadow-[0_10px_35px_rgba(0,0,0,0.9)] z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className="px-3 py-1 text-[8px] font-black text-red-950 uppercase tracking-widest border-b border-red-900/10 mb-1">
+                        Formatting & Audit
+                      </div>
+
+                      <button
+                        onClick={() => { handleFormatCode(false); setIsUtilMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors disabled:opacity-30"
+                      >
+                        <Paintbrush className="w-3.5 h-3.5 text-red-500" />
+                        <span>Format Code (PC)</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleFormatCode(true); setIsUtilMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors disabled:opacity-30"
+                      >
+                        <Smartphone className="w-3.5 h-3.5 text-red-500" />
+                        <span>Format Code (Mobile)</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleScanCode(); setIsUtilMenuOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider transition-colors hover:bg-red-900/20 ${isScanningCode ? 'text-red-500 animate-pulse' : 'text-red-300'}`}
+                      >
+                        <Activity className="w-3.5 h-3.5 text-red-500" />
+                        <span>Scan for Errors</span>
+                      </button>
+
+                      <div className="h-px bg-red-900/10 my-1" />
+                      <div className="px-3 py-1 text-[8px] font-black text-red-950 uppercase tracking-widest border-b border-red-900/10 mb-1">
+                        Modes & Config
+                      </div>
+
+                      <button
+                        onClick={() => { handleToggleCurrentLineBreakpoint(); setIsUtilMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-red-300 hover:bg-red-900/20 hover:text-red-100 transition-colors"
+                      >
+                        <Circle className={`w-3.5 h-3.5 text-red-500 ${breakpoints.includes(cursorLine) ? 'fill-red-500' : ''}`} />
+                        <span>Toggle Breakpoint</span>
+                      </button>
+
+                      <button
+                        onClick={() => { setIsPairProgrammerActive(!isPairProgrammerActive); setIsUtilMenuOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider transition-colors hover:bg-red-900/20 ${isPairProgrammerActive ? 'text-emerald-400' : 'text-red-300'}`}
+                      >
+                        <Users className="w-3.5 h-3.5 text-red-500" />
+                        <span>Pair Programmer</span>
+                      </button>
+
+                      <button
+                        onClick={() => { setEditorMode('git'); setIsUtilMenuOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider transition-colors hover:bg-red-900/20 ${editorMode === 'git' ? 'text-red-400' : 'text-red-300'}`}
+                      >
+                        <GitBranch className="w-3.5 h-3.5 text-red-500" />
+                        <span>Git Panel</span>
+                      </button>
+
+                      <button
+                        onClick={() => { setEditorMode('debug'); setIsUtilMenuOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider transition-colors hover:bg-red-900/20 ${editorMode === 'debug' ? 'text-red-400' : 'text-red-300'}`}
+                      >
+                        <Bug className="w-3.5 h-3.5 text-red-500" />
+                        <span>Debugger Panel</span>
+                      </button>
+
+                      <button
+                        onClick={() => { setEditorMode('settings'); setIsUtilMenuOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider transition-colors hover:bg-red-900/20 ${editorMode === 'settings' ? 'text-red-400' : 'text-red-300'}`}
+                      >
+                        <Settings className="w-3.5 h-3.5 text-red-500" />
+                        <span>Config Panel</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
               <button
                 onClick={handleStartDebug}
                 disabled={isRunningCode || debugState.isActive}
@@ -445,13 +548,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
               >
                 <Bug className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
               </button>
-              <button
-                onClick={() => setEditorMode('git')}
-                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${editorMode === 'git' ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                title="Neural Git"
-              >
-                <GitBranch className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
+
               <button
                 onClick={handleRunCode}
                 disabled={isRunningCode}
@@ -479,22 +576,24 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                 </div>
               </div>
             )}
-            <Editor
-              height="100%"
-              language={editorLanguage === 'python' ? 'python' : editorLanguage === 'javascript' ? 'javascript' : editorLanguage === 'typescript' ? 'typescript' : 'html'}
-              theme={theme === 'dark' ? 'vs-dark' : 'light'}
-              value={editorContent}
-              onChange={(value) => setEditorContent(value || '')}
-              onMount={handleEditorDidMount}
-              options={{
-                fontSize: 14,
-                minimap: { enabled: false },
-                scrollBeyondLastLine: false,
-                wordWrap: 'on',
-                automaticLayout: true,
-                fontFamily: 'JetBrains Mono',
-              }}
-            />
+            <div className="absolute inset-0">
+              <Editor
+                height="100%"
+                language={editorLanguage === 'python' ? 'python' : editorLanguage === 'javascript' ? 'javascript' : editorLanguage === 'typescript' ? 'typescript' : 'html'}
+                theme={theme === 'dark' ? 'vs-dark' : 'light'}
+                value={editorContent}
+                onChange={(value) => setEditorContent(value || '')}
+                onMount={handleEditorDidMount}
+                options={{
+                  fontSize: 14,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  wordWrap: 'on',
+                  automaticLayout: true,
+                  fontFamily: 'JetBrains Mono',
+                }}
+              />
+            </div>
           </div>
         </div>
 

@@ -62,6 +62,7 @@
     "commander": "^12.1.0",
     "fast-glob": "^3.3.2",
     "ora": "^8.1.0",
+    "sharp": "^0.34.5",
     "tree-sitter-c-sharp": "^0.23.5",
     "tree-sitter-go": "^0.25.0",
     "tree-sitter-java": "^0.23.5",

@@ -3,7 +3,7 @@ import { List } from 'react-window';
 import {
   ChevronDown, Folder, FolderOpen, FileCode, Edit2, Check,
   GitBranch, Plus, Trash2, Search, X, FolderPlus, FilePlus,
-  Copy, Archive, MoreVertical, HardDrive, ChevronRight, Download,
+  Copy, Archive, MoreVertical, HardDrive, ChevronRight, Download, Upload, Github,
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -315,16 +315,117 @@ const TermuxBrowser: React.FC<{
     }
   }, [browse, onImport]);
 
+  const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>, isFolder: boolean) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !data) return;
+    setLoading(true); setErr('');
+    try {
+      for (const file of Array.from(files) as File[]) {
+        const relativePath = (file as any).webkitRelativePath || file.name;
+        const destPath = `${data.path}/${relativePath}`;
+        
+        const content = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const dataUrl = event.target?.result as string;
+            const base64 = dataUrl.split(',')[1] || '';
+            resolve(base64);
+          };
+          reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+          reader.readAsDataURL(file);
+        });
+
+        const res = await fetch('./api/fs/write', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: destPath, content, encoding: 'base64' }),
+        });
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.error || `Upload failed for ${file.name}`);
+        }
+      }
+      browse(data.path);
+    } catch (e: any) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [data, browse]);
+
+  const handleCreateDir = useCallback(async () => {
+    if (!data) return;
+    const name = prompt('Enter new folder name:');
+    if (!name || !name.trim()) return;
+    setLoading(true); setErr('');
+    try {
+      const res = await fetch('./api/fs/create-directory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: `${data.path}/${name.trim()}` }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to create folder');
+      }
+      browse(data.path);
+    } catch (e: any) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [data, browse]);
+
+  const handleDeleteEntry = useCallback(async (entryPath: string) => {
+    if (!data) return;
+    const name = entryPath.split('/').pop() || '';
+    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+    setLoading(true); setErr('');
+    try {
+      const res = await fetch('./api/fs/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: entryPath }),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to delete');
+      }
+      browse(data.path);
+    } catch (e: any) {
+      setErr(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [data, browse]);
+
   return (
     <div className="mt-3 rounded-xl border border-red-800/40 bg-red-950/30 text-[10px] font-mono overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 border-b border-red-900/30 bg-black/30">
-        <div className="flex items-center gap-2 text-red-400 font-black uppercase tracking-widest text-[9px]">
-          <HardDrive className="w-3 h-3" />
-          <span className="truncate max-w-[160px]" title={data?.path}>{data?.path ?? '…'}</span>
+        <div className="flex items-center gap-2 text-red-400 font-black uppercase tracking-widest text-[9px] min-w-0">
+          <HardDrive className="w-3 h-3 shrink-0" />
+          <span className="truncate" title={data?.path}>{data?.path ?? '…'}</span>
         </div>
-        <button onClick={onClose} className="text-red-900 hover:text-red-400 transition-colors">
-          <X className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {data && (
+            <>
+              <button onClick={handleCreateDir} className="p-1 hover:bg-red-500/10 rounded-md transition-colors text-red-500" title="Create Folder">
+                <FolderPlus className="w-3.5 h-3.5" />
+              </button>
+              <label className="p-1 hover:bg-red-500/10 rounded-md cursor-pointer transition-colors text-red-500" title="Upload Files">
+                <Upload className="w-3.5 h-3.5" />
+                <input type="file" className="hidden" multiple onChange={(e) => handleUpload(e, false)} />
+              </label>
+              <label className="p-1 hover:bg-red-500/10 rounded-md cursor-pointer transition-colors text-red-500" title="Upload Folder">
+                <Folder className="w-3.5 h-3.5" />
+                <input type="file" className="hidden" {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={(e) => handleUpload(e, true)} />
+              </label>
+            </>
+          )}
+          <button onClick={onClose} className="text-red-900 hover:text-red-400 transition-colors ml-1">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {loading && (
@@ -349,20 +450,28 @@ const TermuxBrowser: React.FC<{
             <div className="px-3 py-3 text-red-900">Empty directory</div>
           )}
           {data.entries.map(e => (
-            <button
-              key={e.path}
-              onClick={() => importFile(e)}
-              title={e.type === 'file' ? `Import ${e.name}` : `Open ${e.name}`}
-              className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-red-900/20 transition-colors text-left group"
-            >
-              {e.type === 'dir'
-                ? <Folder className="w-3.5 h-3.5 text-red-700 shrink-0" />
-                : <FileCode className="w-3.5 h-3.5 text-red-900 shrink-0" />}
-              <span className="flex-1 truncate text-red-300">{e.name}</span>
-              {e.type === 'file' && (
-                <Download className="w-3 h-3 text-red-900 group-hover:text-red-400 shrink-0" />
-              )}
-            </button>
+            <div key={e.path} className="w-full flex items-center hover:bg-red-900/20 transition-colors group">
+              <button
+                onClick={() => importFile(e)}
+                title={e.type === 'file' ? `Import ${e.name}` : `Open ${e.name}`}
+                className="flex-1 flex items-center gap-2 px-3 py-1.5 text-left min-w-0"
+              >
+                {e.type === 'dir'
+                  ? <Folder className="w-3.5 h-3.5 text-red-700 shrink-0" />
+                  : <FileCode className="w-3.5 h-3.5 text-red-900 shrink-0" />}
+                <span className="flex-1 truncate text-red-300">{e.name}</span>
+                {e.type === 'file' && (
+                  <Download className="w-3 h-3 text-red-900 group-hover:text-red-400 shrink-0" />
+                )}
+              </button>
+              <button
+                onClick={() => handleDeleteEntry(e.path)}
+                title={`Delete ${e.name}`}
+                className="p-1.5 text-red-950 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all mr-1 shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           ))}
         </div>
       )}
@@ -384,6 +493,11 @@ export const FileTree: React.FC<FileTreeProps> = ({
   const [showNewProject, setShowNewProject] = useState(false);
   const [projectName,   setProjectName]   = useState('');
   const [showTermuxFS,  setShowTermuxFS]  = useState(false);
+  const [showCloner,    setShowCloner]    = useState(false);
+  const [repoUrl,       setRepoUrl]       = useState('');
+  const [branchName,    setBranchName]    = useState('');
+  const [cloning,       setCloning]       = useState(false);
+  const [cloneErr,      setCloneErr]      = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const [listHeight,    setListHeight]    = useState(400);
   const ctxRef = useRef<HTMLDivElement>(null);
@@ -517,6 +631,42 @@ export const FileTree: React.FC<FileTreeProps> = ({
     onFilesChange(files.map(f => f.id === dragId ? { ...f, parentId: dropId } : f));
   }, [files, onFilesChange]);
 
+  const handleCloneRepo = useCallback(async () => {
+    if (!repoUrl.trim()) return;
+    setCloning(true);
+    setCloneErr('');
+    try {
+      const res = await fetch('./api/github/clone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repoUrl: repoUrl.trim(), branch: branchName.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Cloning failed');
+      }
+      
+      onFilesChange(data.files);
+      
+      const firstFile = data.files.find((f: any) => f.type === 'file');
+      if (firstFile) {
+        onFileSelect(firstFile.id, firstFile);
+      }
+      
+      setShowCloner(false);
+      setRepoUrl('');
+      setBranchName('');
+      
+      if (onProjectCreate) {
+        onProjectCreate(data.repoName);
+      }
+    } catch (err: any) {
+      setCloneErr(err.message || 'Clone failed');
+    } finally {
+      setCloning(false);
+    }
+  }, [repoUrl, branchName, onFilesChange, onFileSelect, onProjectCreate]);
+
   const handleNewProject = useCallback(() => {
     if (!projectName.trim()) return;
     const name = projectName.trim();
@@ -564,10 +714,64 @@ export const FileTree: React.FC<FileTreeProps> = ({
         <Btn title="Browse Termux Filesystem" onClick={() => setShowTermuxFS(v => !v)}>
           <HardDrive className="w-4 h-4" />
         </Btn>
+        <Btn title="Clone Git Repository" onClick={() => setShowCloner(v => !v)}>
+          <Github className="w-4 h-4" />
+        </Btn>
         <Btn title="New Project" onClick={() => setShowNewProject(v => !v)}>
           <Archive className="w-4 h-4" />
         </Btn>
       </div>
+
+      {/* Git Repository Cloner */}
+      {showCloner && (
+        <div className="mb-3 p-3 flex flex-col gap-2 bg-red-950/30 border border-red-900/30 rounded-xl">
+          <div className="flex items-center justify-between border-b border-red-900/20 pb-1.5 mb-1">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-red-400 flex items-center gap-1.5">
+              <Github className="w-3.5 h-3.5" /> Clone Git Repository
+            </span>
+            <button onClick={() => setShowCloner(false)} className="text-red-900 hover:text-red-400 transition-colors">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          
+          <input
+            autoFocus 
+            placeholder="owner/repo or https://..."
+            value={repoUrl} 
+            onChange={e => setRepoUrl(e.target.value)}
+            disabled={cloning}
+            className="w-full bg-black/40 text-[10px] font-mono text-red-100 outline-none border border-red-900/40 focus:border-red-600/50 rounded-lg px-2.5 py-1.5 normal-case tracking-normal"
+          />
+          
+          <div className="flex gap-2">
+            <input
+              placeholder="Branch (optional)..."
+              value={branchName} 
+              onChange={e => setBranchName(e.target.value)}
+              disabled={cloning}
+              className="flex-1 bg-black/40 text-[10px] font-mono text-red-100 outline-none border border-red-900/40 focus:border-red-600/50 rounded-lg px-2.5 py-1.5 normal-case tracking-normal"
+            />
+            
+            <button 
+              onClick={handleCloneRepo}
+              disabled={cloning || !repoUrl.trim()}
+              className="text-[9px] font-black uppercase tracking-widest text-red-100 hover:text-white transition-all px-3 py-1.5 rounded-lg bg-red-800 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              {cloning ? (
+                <span className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 border-2 border-red-200 border-t-transparent rounded-full animate-spin" />
+                  Cloning...
+                </span>
+              ) : (
+                'Clone'
+              )}
+            </button>
+          </div>
+          {cloneErr && (
+            <div className="text-[9px] text-red-500 font-mono mt-1 border-t border-red-950/40 pt-1.5">{cloneErr}</div>
+          )}
+        </div>
+      )}
 
       {/* New project form */}
       {showNewProject && (

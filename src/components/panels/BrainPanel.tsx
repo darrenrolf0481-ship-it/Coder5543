@@ -42,79 +42,87 @@ export const BrainPanel: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-8">
-        {/* Endocrine System */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Activity size={14} className="text-purple-400" />
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-white/60">Endocrine System</h3>
+        {!endocrine ? (
+          <div className="text-center p-8 text-white/40 text-[10px] font-bold uppercase tracking-widest animate-pulse">
+            Initializing Endocrine System...
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-bold uppercase text-white/40">Dopamine</span>
-                <Zap size={12} className={getDopamineColor(endocrine.dopamine)} />
+        ) : (
+          <>
+            {/* Endocrine System */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <Activity size={14} className="text-purple-400" />
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-white/60">Endocrine System</h3>
               </div>
-              <div className="text-2xl font-black text-white mb-2">{(endocrine.dopamine * 100).toFixed(0)}%</div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-yellow-400 transition-all duration-500" 
-                  style={{ width: `${endocrine.dopamine * 100}%` }}
-                />
-              </div>
-              <p className="text-[9px] text-white/30 mt-2 italic">Drives learning & exploration</p>
-            </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[10px] font-bold uppercase text-white/40">Dopamine</span>
+                    <Zap size={12} className={getDopamineColor(endocrine.dopamine)} />
+                  </div>
+                  <div className="text-2xl font-black text-white mb-2">{(endocrine.dopamine * 100).toFixed(0)}%</div>
+                  <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-yellow-400 transition-all duration-500" 
+                      style={{ width: `${endocrine.dopamine * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-[9px] text-white/30 mt-2 italic">Drives learning & exploration</p>
+                </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-bold uppercase text-white/40">Cortisol</span>
-                <AlertTriangle size={12} className={getCortisolColor(endocrine.cortisol)} />
+                <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[10px] font-bold uppercase text-white/40">Cortisol</span>
+                    <AlertTriangle size={12} className={getCortisolColor(endocrine.cortisol)} />
+                  </div>
+                  <div className="text-2xl font-black text-white mb-2">{(endocrine.cortisol * 100).toFixed(0)}%</div>
+                  <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-red-500 transition-all duration-500" 
+                      style={{ width: `${endocrine.cortisol * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-[9px] text-white/30 mt-2 italic">Drives caution & avoidance</p>
+                </div>
               </div>
-              <div className="text-2xl font-black text-white mb-2">{(endocrine.cortisol * 100).toFixed(0)}%</div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-red-500 transition-all duration-500" 
-                  style={{ width: `${endocrine.cortisol * 100}%` }}
-                />
-              </div>
-              <p className="text-[9px] text-white/30 mt-2 italic">Drives caution & avoidance</p>
-            </div>
-          </div>
-        </section>
+            </section>
 
-        {/* Cognitive Modifiers */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Zap size={14} className="text-blue-400" />
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-white/60">Cognitive Modifiers</h3>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-[10px] font-bold uppercase text-white/40 mb-1">
-                <span>Learning Rate</span>
-                <span>{(0.4 + endocrine.dopamine * 0.4 - endocrine.cortisol * 0.2).toFixed(2)}x</span>
+            {/* Cognitive Modifiers */}
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <Zap size={14} className="text-blue-400" />
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-white/60">Cognitive Modifiers</h3>
               </div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-blue-400 transition-all" 
-                  style={{ width: `${Math.max(10, (0.4 + endocrine.dopamine * 0.4 - endocrine.cortisol * 0.2) * 100)}%` }}
-                />
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-[10px] font-bold uppercase text-white/40 mb-1">
+                    <span>Learning Rate</span>
+                    <span>{(0.4 + endocrine.dopamine * 0.4 - endocrine.cortisol * 0.2).toFixed(2)}x</span>
+                  </div>
+                  <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-blue-400 transition-all" 
+                      style={{ width: `${Math.max(10, (0.4 + endocrine.dopamine * 0.4 - endocrine.cortisol * 0.2) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between text-[10px] font-bold uppercase text-white/40 mb-1">
+                    <span>Risk Tolerance</span>
+                    <span>{(0.5 + endocrine.dopamine * 0.3 - endocrine.cortisol * 0.5).toFixed(2)}x</span>
+                  </div>
+                  <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-green-400 transition-all" 
+                      style={{ width: `${Math.max(10, (0.5 + endocrine.dopamine * 0.3 - endocrine.cortisol * 0.5) * 100)}%` }}
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
-            <div>
-              <div className="flex justify-between text-[10px] font-bold uppercase text-white/40 mb-1">
-                <span>Risk Tolerance</span>
-                <span>{(0.5 + endocrine.dopamine * 0.3 - endocrine.cortisol * 0.5).toFixed(2)}x</span>
-              </div>
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-green-400 transition-all" 
-                  style={{ width: `${Math.max(10, (0.5 + endocrine.dopamine * 0.3 - endocrine.cortisol * 0.5) * 100)}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
+          </>
+        )}
 
         {/* Neural Maintenance */}
         <section>

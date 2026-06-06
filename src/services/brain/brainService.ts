@@ -6,6 +6,7 @@ import { AvoidanceMap } from './avoidanceMap';
 import { PainErrorPathway } from './painErrorPathway';
 import { PainType } from './types';
 import type { BrainContext, Experience, OperationMode, WorkingMemory } from './types';
+import logger from '../../utils/logger.js';
 
 export class BrainService {
   private stm = new STMBuffer();
@@ -20,16 +21,25 @@ export class BrainService {
    * Returns a enriched context to be sent to the AI.
    */
   async prepareContext(input: string): Promise<BrainContext> {
+    logger.info(`[Brain] Preparing context for input: "${input.substring(0, 50)}${input.length > 50 ? '...' : ''}"`);
+    
     // 1. Associative Layer: Correct typos and jargon
     const { corrected, changes } = this.associative.processInput(input);
+    if (Object.keys(changes).length > 0) {
+      logger.info(`[Brain] Associative corrections: ${JSON.stringify(changes)}`);
+    }
 
     // 2. Avoidance Map: Check if this pattern is causing "pain"
     const avoidanceStrength = this.avoidance.getStrength(corrected);
     const avoidanceActive = avoidanceStrength > 0.4;
+    if (avoidanceActive) {
+      logger.warn(`[Brain] Avoidance active (strength: ${avoidanceStrength.toFixed(2)}) for pattern: ${corrected}`);
+    }
 
     // 3. Memory Retrieval
     const recentStm = this.stm.getAll();
     const relevantExperiences = await this.ltm.findSimilar(corrected, 3);
+    logger.info(`[Brain] Retrieved ${relevantExperiences.length} relevant experiences from LTM`);
 
     // 4. Endocrine State
     const endocrine = this.endocrine.getState();
@@ -65,10 +75,12 @@ export class BrainService {
       emotionalWeight = 0.5 + (1 - currentCortisol) * 0.5; // More rewarding if not stressed
       this.endocrine.reward(emotionalWeight);
       this.avoidance.recordSuccess(corrected);
+      logger.info(`[Brain] Interaction success. Reward: +${emotionalWeight.toFixed(2)}`);
     } else if (outcome === 'failure') {
       emotionalWeight = -0.6 - currentCortisol * 0.4; // More painful if already stressed
       this.endocrine.punish(Math.abs(emotionalWeight));
       this.avoidance.recordPain(corrected, Math.abs(emotionalWeight));
+      logger.warn(`[Brain] Interaction failure. Punishment: ${emotionalWeight.toFixed(2)}`);
     }
 
     const experience: Experience = {
@@ -85,6 +97,7 @@ export class BrainService {
     // Only burn to LTM if emotionally significant — neutral interactions stay in STM only
     if (Math.abs(emotionalWeight) > 0.5) {
       await this.ltm.save(experience);
+      logger.info(`[Brain] Significant experience saved to LTM: ${id}`);
     }
 
     // 2. Push to STM
@@ -111,6 +124,8 @@ export class BrainService {
    * Simulate a sleep cycle: consolidate memories and prune.
    */
   async sleepCycle(): Promise<{ consolidated: number; prunedLtm: number; prunedAvoidance: number }> {
+    logger.info('[Brain] Starting sleep cycle...');
+    
     // 1. Consolidate STM to LTM (though we already do it, we can enrich it here)
     const stmItems = this.stm.drain();
     
@@ -118,11 +133,12 @@ export class BrainService {
     const prunedLtm = await this.ltm.pruneOld();
 
     // 3. Prune Avoidance Map
-    const countBefore = 0; // We'd need to add a size() to AvoidanceMap to track this accurately
     this.avoidance.pruneWeak();
 
     // 4. Decay endocrine state
     this.endocrine.decay();
+
+    logger.info(`[Brain] Sleep cycle complete. Consolidated ${stmItems.length} items, pruned ${prunedLtm} LTM entries.`);
 
     return {
       consolidated: stmItems.length,
@@ -139,17 +155,27 @@ export class BrainService {
     const { corrected } = this.associative.processInput(input);
 
     // 1. Reflex arc — fastest check, no async needed
-    if (this.pain.shouldAvoid(corrected)) return 'INSTINCT_AVOID';
+    if (this.pain.shouldAvoid(corrected)) {
+      logger.warn(`[Brain] Mode resolved to INSTINCT_AVOID for: ${corrected}`);
+      return 'INSTINCT_AVOID';
+    }
 
     // 2. Hormonal state
     const processingMode = this.endocrine.getProcessingMode();
-    if (processingMode === 'REACTIVE') return 'EMERGENCY_SAFE';
+    if (processingMode === 'REACTIVE') {
+      logger.warn(`[Brain] Mode resolved to EMERGENCY_SAFE due to REACTIVE endocrine state`);
+      return 'EMERGENCY_SAFE';
+    }
 
     // 3. Analytical reasoning — check history and risk tolerance
     const relevantExperiences = await this.ltm.findSimilar(corrected, 3);
     const hasNegativeHistory = relevantExperiences.some(e => e.emotionalWeight < -0.3);
     const riskTolerance = this.endocrine.getRiskTolerance();
-    if (hasNegativeHistory && riskTolerance < 0.3) return 'CAUTIOUS';
+    
+    if (hasNegativeHistory && riskTolerance < 0.3) {
+      logger.info(`[Brain] Mode resolved to CAUTIOUS due to negative history and low risk tolerance`);
+      return 'CAUTIOUS';
+    }
 
     return 'NORMAL';
   }
@@ -158,6 +184,7 @@ export class BrainService {
    * Records feedback after an action executes — maps success/failure to pain or reward.
    */
   async processFeedback(context: string, success: boolean, errorIntensity = 0.5): Promise<void> {
+    logger.info(`[Brain] Processing feedback: success=${success}, intensity=${errorIntensity}`);
     if (!success) {
       await this.pain.processPainSignal(PainType.BUILD_FAILURE, errorIntensity, context);
     } else {

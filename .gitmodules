@@ -1,0 +1,12 @@
+[submodule "projects/Workbench"]
+	path = projects/Workbench
+	url = https://github.com/darrenrolf0481-ship-it/Workbench.git
+[submodule "projects/Sage7"]
+	path = projects/Sage7
+	url = https://github.com/darrenrolf0481-ship-it/Sage7.git
+[submodule "serena"]
+	path = serena
+	url = https://github.com/oraios/serena.git
+[submodule "codebase-memory-mcp"]
+	path = codebase-memory-mcp
+	url = https://github.com/DeusData/codebase-memory-mcp.git

@@ -1,30 +1,66 @@
 import { useState, useCallback, useEffect } from 'react';
-import { brainService } from '../services/brain/brainService';
 import type { BrainContext, EndocrineState } from '../services/brain/types';
 
+const API_BASE = '/api/brain';
+
 export function useBrain() {
-  const [endocrine, setEndocrine] = useState<EndocrineState>(brainService.getEndocrineState());
+  const [endocrine, setEndocrine] = useState<EndocrineState | null>(null);
   const [isBrainActive, setIsBrainActive] = useState(true);
 
-  // Sync endocrine state periodically or after interactions
-  const refreshState = useCallback(() => {
-    setEndocrine(brainService.getEndocrineState());
+  const refreshState = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/endocrine`);
+      if (!res.ok) throw new Error('Failed to fetch endocrine state');
+      const data = await res.json();
+      setEndocrine(data);
+    } catch (err) {
+      console.error('[useBrain] Error refreshing state:', err);
+    }
   }, []);
 
-  const prepareContext = useCallback(async (input: string) => {
+  const prepareContext = useCallback(async (input: string): Promise<BrainContext | null> => {
     if (!isBrainActive) return null;
-    return await brainService.prepareContext(input);
+    try {
+      const res = await fetch(`${API_BASE}/context`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input }),
+      });
+      if (!res.ok) throw new Error('Failed to prepare context');
+      const { context } = await res.json();
+      return context;
+    } catch (err) {
+      console.error('[useBrain] Error preparing context:', err);
+      return null;
+    }
   }, [isBrainActive]);
 
   const recordInteraction = useCallback(async (input: string, response: string, outcome: 'success' | 'failure' | 'neutral') => {
-    await brainService.recordInteraction(input, response, outcome);
-    refreshState();
-  }, [refreshState]);
+    try {
+      const res = await fetch(`${API_BASE}/record`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input, response, outcome }),
+      });
+      if (!res.ok) throw new Error('Failed to record interaction');
+      const data = await res.json();
+      setEndocrine(data.endocrine);
+    } catch (err) {
+      console.error('[useBrain] Error recording interaction:', err);
+    }
+  }, []);
 
   const sleep = useCallback(async () => {
-    const stats = await brainService.sleepCycle();
-    refreshState();
-    return stats;
+    try {
+      const res = await fetch(`${API_BASE}/sleep`, { method: 'POST' });
+      if (!res.ok) throw new Error('Failed to start sleep cycle');
+      const stats = await res.json();
+      await refreshState();
+      return stats;
+    } catch (err) {
+      console.error('[useBrain] Error during sleep cycle:', err);
+      return null;
+    }
   }, [refreshState]);
 
   // Initial load
@@ -42,3 +78,4 @@ export function useBrain() {
     refreshState
   };
 }
+
