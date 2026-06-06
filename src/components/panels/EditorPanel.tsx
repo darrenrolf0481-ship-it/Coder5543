@@ -385,6 +385,18 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
               )}
             </div>
             <div className="w-full md:w-auto flex items-center gap-2 md:gap-4 overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+              {/* File Upload Control */}
+              <label className="p-2 md:p-2.5 border rounded-xl bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20 transition-all cursor-pointer group shrink-0" title="Upload Files">
+                <Upload className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
+                <input type="file" className="hidden" multiple onChange={handleFileUpload} />
+              </label>
+
+              {/* Folder Upload Control */}
+              <label className="p-2 md:p-2.5 border rounded-xl bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20 transition-all cursor-pointer group shrink-0" title="Upload Directory (Recursive)">
+                <Folder className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
+                <input type="file" className="hidden" {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={handleFileUpload} />
+              </label>
+
               <button
                 onClick={() => setIsLivePreviewEnabled(!isLivePreviewEnabled)}
                 className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isLivePreviewEnabled ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
@@ -567,6 +579,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                   </div>
                 )}
                 <div className="flex-1 relative overflow-hidden h-full">
+                  {isScanningCode && <div className="code-scanner" />}
                   {useFallback ? (
                     <textarea
                       value={editorContent}
@@ -642,6 +655,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                     </div>
                   </div>
                   <div className="flex-1 relative overflow-hidden h-full">
+                    {isScanningCode && <div className="code-scanner" />}
                     {useFallback ? (
                       <textarea
                         value={splitContent}

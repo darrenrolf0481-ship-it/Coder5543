@@ -4,8 +4,20 @@ import {
   Database, ChevronDown, FileText, FileCode, GitBranch, FilePlus, X,
   Network, Brain, Code2, FileSearch, BookOpen, Trash2, Power,
 } from 'lucide-react';
+import { AGENT_DOMAINS, getAgentsByDomain } from '../../data/agentRegistry';
 
 // ── Types ──────────────────────────────────────────────────────────────────
+
+export interface WorkerConfig {
+  id: number;
+  label: string;
+  enabled: boolean;
+  provider: 'google' | 'grok' | 'ollama' | 'openrouter';
+  model: string;
+  url: string;
+  models: string[];
+  agentId?: string;
+}
 
 export interface KnowledgeEntry {
   id: string;
@@ -23,7 +35,6 @@ export interface Personality {
   instruction: string;
   active: boolean;
   suggestions: string[];
-  mcpTools?: string[];
   knowledgeBase: KnowledgeEntry[];
 }
 
@@ -50,6 +61,14 @@ interface SettingsPanelProps {
   setActiveTab: (tab: 'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain') => void;
   generateAIResponse: (prompt: string, system: string, opts?: any) => Promise<string>;
   activePersonality: Personality;
+  
+  // Workers Configuration Props
+  workers: WorkerConfig[];
+  setWorkers: React.Dispatch<React.SetStateAction<WorkerConfig[]>>;
+  availableModels: string[];
+  ollamaStatus: 'idle' | 'connecting' | 'connected' | 'error';
+  refreshOllamaModels: (forceNotify?: boolean) => Promise<void>;
+  ollamaError: string | null;
 }
 
 // ── Utils ──────────────────────────────────────────────────────────────────
@@ -77,6 +96,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   isAiProcessing, setIsAiProcessing,
   setTerminalOutput, setActiveTab,
   generateAIResponse, activePersonality,
+  
+  workers, setWorkers, availableModels,
+  ollamaStatus, refreshOllamaModels, ollamaError,
 }) => {
   // ── KB panel state (local) ───────────────────────────────────────────────
   const [openKBPanelId, setOpenKBPanelId] = useState<number | null>(null);
@@ -313,6 +335,133 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </div>
           </section>
 
+          {/* Neural Workers Configuration */}
+          <section className="space-y-6 md:space-y-10">
+            <h3 className="text-[10px] md:text-[12px] font-black text-red-900 uppercase tracking-[0.5em] flex items-center gap-4">
+              <Network className="w-5 h-5 md:w-6 md:h-6 text-red-600" /> Neural Workers & Ollama Configuration
+            </h3>
+            <div className="bg-[#0a0202] rounded-[30px] md:rounded-[40px] border border-red-900/30 p-6 md:p-10 space-y-6 md:space-y-8 shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative overflow-hidden">
+              
+              {/* Ollama Connection Vitals */}
+              <div className="rounded-2xl border border-red-900/20 bg-red-950/10 p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-black text-red-100 uppercase tracking-widest">Ollama Node Status</h4>
+                    <p className="text-[10px] text-red-700 mt-0.5">Vitals for your local hardware cluster</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${ollamaStatus === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : ollamaStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`} />
+                    <span className="text-[10px] font-mono uppercase tracking-tighter text-red-300">{ollamaStatus}</span>
+                    <button 
+                      onClick={() => refreshOllamaModels()} 
+                      className="px-3 py-1 bg-red-900/30 hover:bg-red-800 text-red-400 hover:text-white rounded-lg text-[10px] font-black uppercase tracking-widest border border-red-800/30 transition-all"
+                    >
+                      ↻ Query Status
+                    </button>
+                  </div>
+                </div>
+                {ollamaError && (
+                  <div className="text-[10px] text-red-300 font-mono bg-black/50 border border-red-900/20 rounded-xl p-3 break-all">
+                    {ollamaError}
+                  </div>
+                )}
+                <div className="flex items-center gap-3 pt-3 border-t border-red-900/10">
+                  <span className="text-[10px] text-red-800 uppercase font-black tracking-wider">Models Loaded ({availableModels.length}):</span>
+                  <div className="flex flex-wrap gap-1.5 flex-1">
+                    {availableModels.map(m => (
+                      <span key={m} className="px-2 py-0.5 bg-red-950/30 border border-red-900/30 rounded-full text-[9px] font-mono text-red-400">{m}</span>
+                    ))}
+                    {availableModels.length === 0 && (
+                      <span className="text-[10px] text-red-900 italic">No local models online. Verify connection or OLLAMA_ORIGINS.</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Workers Slots List */}
+              <div className="space-y-6">
+                {workers.map(w => (
+                  <div key={w.id} className={`rounded-3xl border p-6 space-y-4 transition-all ${w.enabled ? 'bg-red-950/10 border-red-800/30 shadow-[inset_0_0_15px_rgba(185,28,28,0.05)]' : 'bg-red-950/5 border-red-900/10 opacity-60'}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition-all ${w.enabled ? 'bg-red-700 text-white shadow-[0_0_10px_rgba(220,38,38,0.4)]' : 'bg-red-950 text-red-700 border border-red-900/30'}`}>{w.id}</span>
+                        <div>
+                          <h4 className="text-sm font-black text-red-200 uppercase tracking-widest">Worker Slot {w.id}</h4>
+                          <p className="text-[9px] text-red-800 font-mono mt-0.5">{w.enabled ? `Enabled • ${w.provider.toUpperCase()} • ${w.model}` : 'Disabled'}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, enabled: !x.enabled } : x))}
+                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${w.enabled ? 'bg-red-700 text-white border-red-600/30 shadow-[0_4px_12px_rgba(185,28,28,0.3)]' : 'bg-red-950/30 text-red-800 border-red-900/30'}`}
+                      >
+                        {w.enabled ? 'Active (ON)' : 'Inactive (OFF)'}
+                      </button>
+                    </div>
+
+                    {w.enabled && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-red-900/10">
+                        {/* Provider select */}
+                        <div>
+                          <label className="block text-[9px] text-red-700 uppercase font-black tracking-widest mb-1.5">Neural Provider</label>
+                          <select
+                            value={w.provider}
+                            onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, provider: e.target.value as any, model: e.target.value === 'google' ? 'gemini-3-flash' : e.target.value === 'grok' ? 'grok-beta' : e.target.value === 'openrouter' ? 'google/gemma-2-9b-it:free' : x.model || 'llama3.2:latest' } : x))}
+                            className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-xs text-red-100 font-mono outline-none focus:border-red-600/60 transition-all"
+                          >
+                            <option value="ollama" className="bg-[#0a0202]">Ollama (Local Llama)</option>
+                            <option value="google" className="bg-[#0a0202]">Google Gemini</option>
+                            <option value="grok" className="bg-[#0a0202]">xAI Grok (Garage)</option>
+                            <option value="openrouter" className="bg-[#0a0202]">OpenRouter</option>
+                          </select>
+                        </div>
+
+                        {/* Model select */}
+                        <div>
+                          <label className="block text-[9px] text-red-700 uppercase font-black tracking-widest mb-1.5">Cognitive Model</label>
+                          <select
+                            value={w.model}
+                            onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, model: e.target.value } : x))}
+                            className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-xs text-red-100 font-mono outline-none focus:border-red-600/60 transition-all"
+                          >
+                            {w.provider === 'ollama'
+                              ? availableModels.length > 0
+                                ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                                : <option value={w.model} className="bg-[#0a0202]">{w.model || 'llama3.2:latest'}</option>
+                              : w.provider === 'google'
+                                ? ['gemini-3-flash', 'gemini-3.1-pro-preview'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                                : w.provider === 'grok'
+                                  ? ['grok-beta', 'grok-2-latest'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                                  : ['google/gemma-2-9b-it:free', 'meta-llama/llama-3.2-3b-instruct:free', 'qwen/qwen-2.5-7b-instruct:free', 'deepseek/deepseek-chat', 'meta-llama/llama-3.1-8b-instruct:free'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                            }
+                          </select>
+                        </div>
+
+                        {/* Agent Role select */}
+                        <div>
+                          <label className="block text-[9px] text-red-700 uppercase font-black tracking-widest mb-1.5">Agent Persona Domain</label>
+                          <select
+                            value={w.agentId || ''}
+                            onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x))}
+                            className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-xs text-red-300 font-mono outline-none focus:border-red-600/60 transition-all"
+                          >
+                            <option value="" className="bg-[#0a0202]">🤖 General Agent (Default)</option>
+                            {AGENT_DOMAINS.map(domain => (
+                              <optgroup key={domain} label={domain} className="bg-[#0a0202]">
+                                {getAgentsByDomain(domain).map(a => (
+                                  <option key={a.id} value={a.id} className="bg-[#0a0202]">{a.emoji} {a.label}</option>
+                                ))}
+                              </optgroup>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
           {/* AI Provider Settings */}
           <section className="space-y-6 md:space-y-10">
             <h3 className="text-[10px] md:text-[12px] font-black text-red-900 uppercase tracking-[0.5em] flex items-center gap-4"><Network className="w-5 h-5 md:w-6 md:h-6 text-red-600" /> Neural Provider Configuration</h3>
@@ -333,8 +482,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
               <div className="space-y-4 relative z-10 pt-6 border-t border-red-900/20">
                 <h4 className="text-lg md:text-xl font-black text-red-100 tracking-tighter uppercase leading-none">OpenRouter API Key</h4>
-                <p className="text-[10px] md:text-xs text-red-900 font-bold tracking-[0.1em]">Required for OpenRouter integration. Stored locally.</p>
-                <input type="password" value={openrouterApiKey} onChange={(e) => setOpenrouterApiKey(e.target.value)} placeholder="sk-or-..."
+                <p className="text-[10px] md:text-xs text-red-900 font-bold tracking-[0.1em]">Required for OpenRouter model integration. Stored locally.</p>
+                <input type="password" value={openrouterApiKey} onChange={(e) => setOpenrouterApiKey(e.target.value)} placeholder="sk-or-v1-..."
                   className="w-full bg-black/60 border border-red-950 rounded-[16px] md:rounded-[20px] p-3 md:p-4 text-xs md:text-sm text-red-100 font-mono outline-none focus:border-red-600/50 transition-all shadow-inner"
                 />
               </div>

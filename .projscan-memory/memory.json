@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "lastUpdatedAt": "2026-05-31T22:44:10.343Z",
+  "lastUpdatedAt": "2026-06-06T04:50:20.039Z",
   "rules": {
     "hardcoded-secret": {
       "ruleId": "hardcoded-secret",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-05-31T22:44:10.340Z",
-      "runCount": 16,
+      "lastSeenAt": "2026-06-06T04:50:20.038Z",
+      "runCount": 21,
       "fixedCount": 15,
       "suppressedInConfig": false
     },
@@ -37,8 +37,8 @@
     "unused-dependency-dep": {
       "ruleId": "unused-dependency-dep",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-05-31T22:44:10.340Z",
-      "runCount": 10,
+      "lastSeenAt": "2026-06-06T04:50:20.038Z",
+      "runCount": 15,
       "fixedCount": 11,
       "suppressedInConfig": false
     },
@@ -53,8 +53,8 @@
     "unused-dependency-tailwindcss": {
       "ruleId": "unused-dependency-tailwindcss",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-05-31T22:44:10.340Z",
-      "runCount": 31,
+      "lastSeenAt": "2026-06-06T04:50:20.038Z",
+      "runCount": 36,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
@@ -117,8 +117,8 @@
     "unused-exports-neural_brain.py": {
       "ruleId": "unused-exports-neural_brain.py",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-05-31T22:44:10.340Z",
-      "runCount": 18,
+      "lastSeenAt": "2026-06-06T04:50:20.038Z",
+      "runCount": 23,
       "fixedCount": 13,
       "suppressedInConfig": false
     },
@@ -237,24 +237,24 @@
     "unused-dependency-@typescript-eslint/eslint-plugin": {
       "ruleId": "unused-dependency-@typescript-eslint/eslint-plugin",
       "firstSeenAt": "2026-05-26T16:02:13.662Z",
-      "lastSeenAt": "2026-05-31T22:44:10.340Z",
-      "runCount": 26,
+      "lastSeenAt": "2026-06-06T04:50:20.038Z",
+      "runCount": 31,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
     "unused-dependency-@typescript-eslint/parser": {
       "ruleId": "unused-dependency-@typescript-eslint/parser",
       "firstSeenAt": "2026-05-26T16:02:13.662Z",
-      "lastSeenAt": "2026-05-31T22:44:10.340Z",
-      "runCount": 26,
+      "lastSeenAt": "2026-06-06T04:50:20.038Z",
+      "runCount": 31,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
     "unused-exports-python-backend/brain_cli.py": {
       "ruleId": "unused-exports-python-backend/brain_cli.py",
       "firstSeenAt": "2026-05-26T19:15:45.850Z",
-      "lastSeenAt": "2026-05-31T22:44:10.340Z",
-      "runCount": 8,
+      "lastSeenAt": "2026-06-06T04:50:20.038Z",
+      "runCount": 13,
       "fixedCount": 11,
       "suppressedInConfig": false
     },
@@ -265,48 +265,56 @@
       "runCount": 1,
       "fixedCount": 2,
       "suppressedInConfig": false
+    },
+    "unused-exports-ask_sage.py": {
+      "ruleId": "unused-exports-ask_sage.py",
+      "firstSeenAt": "2026-06-05T01:31:23.584Z",
+      "lastSeenAt": "2026-06-06T04:50:20.038Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
     }
   },
   "hotspots": {
     "index.tsx": {
       "file": "index.tsx",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-05-28T20:55:15.426Z",
-      "runCount": 7,
-      "lastCc": 495,
-      "lastChurn": 29
+      "lastSeenAt": "2026-06-05T01:31:27.923Z",
+      "runCount": 8,
+      "lastCc": 500,
+      "lastChurn": 32
     },
     "src/components/FileTree.tsx": {
       "file": "src/components/FileTree.tsx",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-05-28T20:55:15.426Z",
-      "runCount": 7,
+      "lastSeenAt": "2026-06-05T01:31:27.923Z",
+      "runCount": 8,
       "lastCc": 114,
       "lastChurn": 7
     },
     "server.ts": {
       "file": "server.ts",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-05-28T20:55:15.426Z",
-      "runCount": 7,
-      "lastCc": 57,
-      "lastChurn": 7
+      "lastSeenAt": "2026-06-05T01:31:27.923Z",
+      "runCount": 8,
+      "lastCc": 137,
+      "lastChurn": 10
     },
     "src/components/panels/EditorPanel.tsx": {
       "file": "src/components/panels/EditorPanel.tsx",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-05-28T20:55:15.426Z",
-      "runCount": 6,
-      "lastCc": 104,
-      "lastChurn": 4
+      "lastSeenAt": "2026-06-05T01:31:27.923Z",
+      "runCount": 7,
+      "lastCc": 145,
+      "lastChurn": 5
     },
     "src/services/aiService.ts": {
       "file": "src/services/aiService.ts",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-05-28T20:55:15.426Z",
-      "runCount": 6,
-      "lastCc": 39,
-      "lastChurn": 6
+      "lastSeenAt": "2026-06-05T01:31:27.923Z",
+      "runCount": 7,
+      "lastCc": 52,
+      "lastChurn": 8
     },
     "src/components/panels/ToolNeuronPanel.tsx": {
       "file": "src/components/panels/ToolNeuronPanel.tsx",
@@ -1069,5 +1077,5 @@
       "lastChurn": 1
     }
   },
-  "totalRuns": 31
+  "totalRuns": 36
 }

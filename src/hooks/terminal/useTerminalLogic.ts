@@ -138,7 +138,10 @@ Current System State:
       try {
         const res = await fetch('./api/terminal/exec', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(window as any).__SESSION_TOKEN__ || ''}`
+          },
           body: JSON.stringify({ cmd: shellCmd, cwd: realCwd }),
         });
         const data = await res.json() as { stdout: string; stderr: string; exitCode: number; newCwd: string };
@@ -267,7 +270,10 @@ Current System State:
         try {
           const res = await fetch('./api/mcp/toggle', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${(window as any).__SESSION_TOKEN__ || ''}`
+            },
             body: JSON.stringify({ name: toolName, enabled: action === 'enable' })
           });
           const data = await res.json();
@@ -305,7 +311,10 @@ Current System State:
         try {
           const res = await fetch('./api/mcp/call', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${(window as any).__SESSION_TOKEN__ || ''}`
+            },
             body: JSON.stringify({ name: toolName, arguments: callArgs })
           });
           const data = await res.json();

@@ -265,10 +265,23 @@
   100% { top: 100%; opacity: 0; }
 }
 
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(239, 68, 68, 0.45) transparent;
+@keyframes code-scan {
+  0% { top: 0%; opacity: 0.1; }
+  50% { opacity: 0.6; }
+  100% { top: 100%; opacity: 0.1; }
 }
+
+.code-scanner {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.8), transparent);
+  animation: code-scan 3s linear infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
