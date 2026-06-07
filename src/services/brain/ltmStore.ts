@@ -1,4 +1,5 @@
 import { storage } from './storage';
+import { vectorService } from './vectorService';
 import type { Experience } from './types';
 
 const STORAGE_KEY = 'brain_ltm_experiences';
@@ -39,6 +40,11 @@ const dbQueue = new PromiseQueue();
 
 export class LTMStore {
   async save(experience: Experience): Promise<void> {
+    // Ensure embedding exists for semantic search
+    if (!experience.embedding) {
+      experience.embedding = await vectorService.getEmbedding(experience.intent);
+    }
+
     return dbQueue.enqueue(() => {
       const all = readAll();
       const idx = all.findIndex(e => e.id === experience.id);
@@ -57,28 +63,56 @@ export class LTMStore {
     });
   }
 
-  async findSimilar(intent: string, k = 3): Promise<Experience[]> {
+  async findSimilar(intent: string, k = 3, tags?: string[]): Promise<Experience[]> {
+    const queryEmbedding = await vectorService.getEmbedding(intent);
+    const queryTokens = new Set(tokenize(intent));
+
     return dbQueue.enqueue(() => {
-      const all = readAll();
-      const queryTokens = new Set(tokenize(intent));
-      if (queryTokens.size === 0) return [];
+      let all = readAll();
+      
+      // Filter by tags if provided
+      if (tags && tags.length > 0) {
+        all = all.filter(exp => tags.some(t => exp.tags.includes(t)));
+      }
+
+      if (queryTokens.size === 0 && queryEmbedding.length === 0) return [];
 
       const scored = all.map(exp => {
-        const expTokens = new Set(tokenize(exp.intent));
-        const intersection = [...queryTokens].filter(t => expTokens.has(t)).length;
-        const union = new Set([...queryTokens, ...expTokens]).size;
-        const jaccard = union > 0 ? intersection / union : 0;
+        let similarity = 0;
+
+        // 1. Semantic Similarity (Primary)
+        if (queryEmbedding.length > 0 && exp.embedding && exp.embedding.length > 0) {
+          similarity = vectorService.cosineSimilarity(queryEmbedding, exp.embedding);
+        } else {
+          // 2. Jaccard Similarity (Fallback)
+          const expTokens = new Set(tokenize(exp.intent));
+          const intersection = [...queryTokens].filter(t => expTokens.has(t)).length;
+          const union = new Set([...queryTokens, ...expTokens]).size;
+          similarity = union > 0 ? intersection / union : 0;
+        }
+
         const ageHours = (Date.now() - exp.timestamp) / 3_600_000;
         const recencyScore = Math.exp(-ageHours / 168);
-        const score = jaccard * 0.6 + recencyScore * 0.2 + Math.abs(exp.emotionalWeight) * 0.2;
+        
+        // Hybrid Score: 70% similarity, 15% recency, 15% emotional weight
+        const score = similarity * 0.7 + recencyScore * 0.15 + Math.abs(exp.emotionalWeight) * 0.15;
         return { exp, score };
       });
 
-      return scored
-        .filter(s => s.score > 0.05)
+      const results = scored
+        .filter(s => s.score > 0.1)
         .sort((a, b) => b.score - a.score)
         .slice(0, k)
         .map(s => s.exp);
+
+      // Log access for these memories
+      results.forEach(r => {
+        const exp = all.find(e => e.id === r.id);
+        if (exp) exp.accessCount++;
+      });
+      if (results.length > 0) writeAll(all);
+
+      return results;
     });
   }
 
@@ -103,6 +137,8 @@ export class LTMStore {
     });
   }
 }
+
+export const ltmStore = new LTMStore();
 
 function tokenize(text: string): string[] {
   return text

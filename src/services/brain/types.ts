@@ -15,6 +15,7 @@ export interface Experience {
   tags: string[];
   timestamp: number;
   accessCount: number;
+  embedding?: number[];
 }
 
 export interface EndocrineState {

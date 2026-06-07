@@ -23,7 +23,9 @@
     "@types/dompurify": "^3.0.5",
     "@types/express": "^5.0.6",
     "@types/react-window": "^2.0.0",
+    "@webcontainer/api": "^1.6.4",
     "better-sqlite3": "^12.10.0",
+    "chokidar": "^5.0.0",
     "dep": "^0.18.3",
     "dompurify": "^3.4.0",
     "express": "^5.2.1",
@@ -36,6 +38,8 @@
     "react-markdown": "^10.1.0",
     "react-window": "^2.2.7",
     "remark-gfm": "^4.0.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "tailwindcss": "^4.2.2",
     "tsx": "^4.21.0",
     "winston": "^3.19.0"

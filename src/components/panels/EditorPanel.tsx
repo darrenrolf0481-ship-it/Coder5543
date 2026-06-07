@@ -281,14 +281,14 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
       {/* Phi 11.3 grid: sidebar(3) + pulse-border(0.3) + editor(8) */}
       <div className="flex-1 flex flex-col lg:flex-row gap-0 md:gap-0 min-h-0">
         {/* File Tree Sidebar — 3/11.3 phi units */}
-        <div className={`fixed inset-0 z-50 lg:relative lg:z-auto w-full lg:w-[26%] flex flex-col code-editor-bg rounded-none lg:rounded-[40px] border-0 lg:border border-red-900/30 shadow-2xl overflow-hidden transition-all duration-300 ${isMobileFileTreeOpen ? 'flex' : 'hidden lg:flex'}`}>
-          <div className="h-16 border-b border-red-900/20 flex items-center justify-between px-6 md:px-8 bg-black/40 shrink-0">
-            <h4 className="text-[10px] md:text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
+        <div className={`fixed inset-0 z-50 lg:relative lg:z-auto w-full lg:w-[26%] flex flex-col code-editor-bg rounded-none lg:rounded-[40px] border-0 lg:border border-accent-900/30 shadow-2xl overflow-hidden transition-all duration-300 ${isMobileFileTreeOpen ? 'flex' : 'hidden lg:flex'}`}>
+          <div className="h-16 border-b border-accent-900/20 flex items-center justify-between px-6 md:px-8 bg-black/40 shrink-0">
+            <h4 className="text-[10px] md:text-[11px] font-black text-accent-500 uppercase tracking-[0.4em] flex items-center gap-3">
               <FolderOpen className="w-4 h-4" /> Project Files
             </h4>
             <button
               onClick={() => setIsMobileFileTreeOpen(false)}
-              className="lg:hidden p-2 text-red-500 hover:bg-red-900/20 rounded-xl transition-all"
+              className="lg:hidden p-2 text-accent-500 hover:bg-accent-900/20 rounded-xl transition-all"
             >
               <X className="w-5 h-5" />
             </button>
@@ -296,7 +296,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
           <div className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
             <button
               onClick={() => setIsGenerateModalOpen(true)}
-              className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-950/40 border border-red-500/30 hover:bg-red-900/40 transition-all shadow-[0_0_20px_rgba(239,68,68,0.1)] mb-4"
+              className="w-full flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-accent-500 bg-accent-950/40 border border-accent-500/30 hover:bg-accent-900/40 transition-all shadow-[0_0_20px_rgba(239,68,68,0.1)] mb-4"
             >
               <Brain className="w-4 h-4 shrink-0" />
               <span className="truncate">AI Generate</span>
@@ -304,17 +304,17 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => setIsTemplateModalOpen(true)}
-                className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-100 bg-red-900/40 border border-red-500/30 hover:bg-red-800/60 transition-all shadow-[0_0_20px_rgba(239,68,68,0.1)]"
+                className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-accent-100 bg-accent-900/40 border border-accent-500/30 hover:bg-accent-800/60 transition-all shadow-[0_0_20px_rgba(239,68,68,0.1)]"
               >
                 <LayoutTemplate className="w-4 h-4 shrink-0" />
                 <span className="truncate">Template</span>
               </button>
-              <label className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-950/40 border border-red-900/30 hover:bg-red-900/20 transition-all cursor-pointer">
+              <label className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-accent-500 bg-accent-950/40 border border-accent-900/30 hover:bg-accent-900/20 transition-all cursor-pointer">
                 <Upload className="w-4 h-4 shrink-0" />
                 <span className="truncate">File</span>
                 <input type="file" className="hidden" multiple onChange={handleFileUpload} />
               </label>
-              <label className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-red-500 bg-red-950/40 border border-red-900/30 hover:bg-red-900/20 transition-all cursor-pointer">
+              <label className="flex-1 flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 md:py-3 rounded-xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-accent-500 bg-accent-950/40 border border-accent-900/30 hover:bg-accent-900/20 transition-all cursor-pointer">
                 <Folder className="w-4 h-4 shrink-0" />
                 <span className="truncate">Folder</span>
                 <input type="file" className="hidden" {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={handleFileUpload} />
@@ -337,7 +337,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
           title={`Swarm Anxiety: ${(swarmAnxiety * 100).toFixed(1)}%`}
           className={`hidden lg:block w-1.5 mx-2 rounded-full self-stretch shrink-0 transition-all duration-1000 ${
             swarmAnxiety > 0.6
-              ? 'bg-red-500/70 shadow-[0_0_20px_rgba(239,68,68,0.7)] animate-pulse'
+              ? 'bg-accent-500/70 shadow-[0_0_20px_rgba(239,68,68,0.7)] animate-pulse'
               : swarmAnxiety > 0.3
                 ? 'bg-orange-500/50 shadow-[0_0_12px_rgba(249,115,22,0.5)] animate-pulse'
                 : 'bg-green-500/20 shadow-[0_0_8px_rgba(34,197,94,0.2)]'
@@ -345,15 +345,15 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
         />
 
         {/* Editor Section — 8/11.3 phi units */}
-        <div className="flex-1 flex flex-col code-editor-bg rounded-[30px] md:rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden min-h-[400px]">
-          <div className="h-auto min-h-16 border-b border-red-900/20 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 bg-black/40 py-2 md:py-0 gap-4">
+        <div className="flex-1 flex flex-col code-editor-bg rounded-[30px] md:rounded-[40px] border border-accent-900/30 shadow-2xl overflow-hidden min-h-[400px]">
+          <div className="relative z-20 h-auto min-h-16 border-b border-accent-900/20 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 bg-black/40 py-2 md:py-0 gap-4">
             <div className="w-full md:w-auto flex items-center justify-between md:justify-start gap-4 md:gap-6 overflow-x-auto custom-scrollbar">
-              <div className="flex bg-red-950/20 p-1 rounded-xl border border-red-900/20 shrink-0">
+              <div className="flex bg-accent-950/20 p-1 rounded-xl border border-accent-900/20 shrink-0">
                 {['python', 'cpp', 'rust', 'java', 'html'].map(lang => (
                   <button
                     key={lang}
                     onClick={() => setEditorLanguage(lang)}
-                    className={`px-3 md:px-4 py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${editorLanguage === lang ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
+                    className={`px-3 md:px-4 py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${editorLanguage === lang ? 'bg-accent-700 text-white shadow-lg' : 'text-accent-900 hover:text-accent-500'}`}
                   >
                     {lang}
                   </button>
@@ -363,7 +363,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                 <button
                   onClick={forceSave}
                   title="Save to app (Ctrl+S)"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-l-lg text-[9px] font-black uppercase tracking-widest bg-red-900/30 border border-red-700/40 text-red-400 hover:bg-red-700 hover:text-white transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-l-lg text-[9px] font-black uppercase tracking-widest bg-accent-900/30 border border-accent-700/40 text-accent-400 hover:bg-accent-700 hover:text-white transition-all"
                 >
                   <Save className="w-3 h-3" />
                   <span className="hidden sm:inline">Save</span>
@@ -371,14 +371,14 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                 <button
                   onClick={saveToFile}
                   title="Save As — choose location on disk"
-                  className="flex items-center gap-1 px-2 py-1.5 rounded-r-lg text-[9px] font-black uppercase tracking-widest bg-red-900/20 border border-l-0 border-red-700/40 text-red-500 hover:bg-red-700 hover:text-white transition-all"
+                  className="flex items-center gap-1 px-2 py-1.5 rounded-r-lg text-[9px] font-black uppercase tracking-widest bg-accent-900/20 border border-l-0 border-accent-700/40 text-accent-500 hover:bg-accent-700 hover:text-white transition-all"
                 >
                   <span className="hidden sm:inline">As...</span>
                   <span className="sm:hidden">↓</span>
                 </button>
               </div>
               {lastSavedTime && (
-                <div className="flex items-center gap-2 text-[8px] md:text-[9px] font-black text-red-900 uppercase tracking-widest animate-in fade-in duration-500 shrink-0">
+                <div className="flex items-center gap-2 text-[8px] md:text-[9px] font-black text-accent-900 uppercase tracking-widest animate-in fade-in duration-500 shrink-0">
                   <ShieldCheck className="w-3 h-3" />
                   <span className="hidden sm:inline">Saved</span> {lastSavedTime}
                 </div>
@@ -386,183 +386,218 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
             </div>
             <div className="w-full md:w-auto flex items-center gap-2 md:gap-4 overflow-x-auto custom-scrollbar pb-2 md:pb-0">
               {/* File Upload Control */}
-              <label className="p-2 md:p-2.5 border rounded-xl bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20 transition-all cursor-pointer group shrink-0" title="Upload Files">
+              <label className="p-2 md:p-2.5 border rounded-xl bg-accent-950/40 border-accent-900/30 text-accent-500 hover:bg-accent-900/20 transition-all cursor-pointer group shrink-0" title="Upload Files">
                 <Upload className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                 <input type="file" className="hidden" multiple onChange={handleFileUpload} />
               </label>
 
               {/* Folder Upload Control */}
-              <label className="p-2 md:p-2.5 border rounded-xl bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20 transition-all cursor-pointer group shrink-0" title="Upload Directory (Recursive)">
+              <label className="p-2 md:p-2.5 border rounded-xl bg-accent-950/40 border-accent-900/30 text-accent-500 hover:bg-accent-900/20 transition-all cursor-pointer group shrink-0" title="Upload Directory (Recursive)">
                 <Folder className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
                 <input type="file" className="hidden" {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={handleFileUpload} />
               </label>
 
-              <button
-                onClick={() => setIsLivePreviewEnabled(!isLivePreviewEnabled)}
-                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isLivePreviewEnabled ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                title="Live Preview"
-              >
-                <Globe className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={() => setIsSplitScreen(!isSplitScreen)}
-                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isSplitScreen ? 'bg-red-700 border-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                title="Toggle Split Editor (Side-by-Side Analysis)"
-              >
-                <Layout className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={() => setIsEditorAssistantOpen(!isEditorAssistantOpen)}
-                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isEditorAssistantOpen ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                title="Neural Assistant"
-              >
-                <MessageSquare className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleToggleCurrentLineBreakpoint}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group shrink-0"
-                title="Toggle Breakpoint"
-              >
-                <Circle className={`w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform ${breakpoints.includes(cursorLine) ? 'fill-red-500 text-red-500' : ''}`} />
-              </button>
-              <button
-                onClick={handleExplainCode}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="AI Analysis"
-              >
-                <Brain className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleFullProjectAnalysis}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Full Project Analysis"
-              >
-                <Network className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleDeepProjectAudit}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Deep Project Audit"
-              >
-                <ShieldAlert className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleGenerateDocs}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Generate Documentation"
-              >
-                <FileText className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={() => handleFormatCode(false)}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Format Code"
-              >
-                <Paintbrush className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={() => handleFormatCode(true)}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Mobile Format"
-              >
-                <Smartphone className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleRefactorCode}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="AI Refactor Current File"
-              >
-                <Wand2 className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleRefactorAllFiles}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="AI Refactor Entire Project"
-              >
-                <Layers className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleReviewCode}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="AI Code Review"
-              >
-                <ShieldCheck className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleAnalyzeData}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="AI Data Analysis"
-              >
-                <BarChart3 className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleScanCode}
-                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isScanningCode ? 'bg-red-700 border-red-500 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                title="Scan Code for Errors"
-              >
-                <Activity className={`w-4 h-4 md:w-5 md:h-5 ${isScanningCode ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`} />
-              </button>
-              <button
-                onClick={handleGenerateCode}
-                disabled={isAiProcessing}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group disabled:opacity-50 shrink-0"
-                title="Neural Forge (Generate Code)"
-              >
-                <Zap className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={() => setIsPairProgrammerActive(!isPairProgrammerActive)}
-                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${isPairProgrammerActive ? 'bg-emerald-700 border-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                title="AI Pair Programmer Mode"
-              >
-                <Users className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={handleStartDebug}
-                disabled={isRunningCode || debugState.isActive}
-                className="p-2 md:p-2.5 bg-red-950/40 border border-red-900/30 rounded-xl text-red-500 hover:bg-red-900/20 transition-all group shrink-0"
-                title="Neural Debugger"
-              >
-                <Bug className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button
-                onClick={() => setEditorMode('git')}
-                className={`p-2 md:p-2.5 border rounded-xl transition-all group shrink-0 ${editorMode === 'git' ? 'bg-red-700 border-red-500 text-white' : 'bg-red-950/40 border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
-                title="Neural Git"
-              >
-                <GitBranch className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-              </button>
+              {/* UTILS DROPDOWN */}
+              <div className="relative shrink-0">
+                <button
+                  onClick={() => { setIsUtilMenuOpen(!isUtilMenuOpen); setIsAiMenuOpen(false); }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${isUtilMenuOpen ? 'bg-accent-700 border-accent-500 text-white' : 'bg-accent-950/40 border-accent-900/30 text-accent-500 hover:bg-accent-900/20'}`}
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="hidden md:inline">Utils</span>
+                  <span className="text-[8px] opacity-65">▼</span>
+                </button>
+
+                {isUtilMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsUtilMenuOpen(false)} />
+                    <div className="absolute left-0 mt-2 w-56 rounded-2xl bg-[#0a0202] border border-accent-900/40 shadow-[0_10px_35px_rgba(0,0,0,0.9)] z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className="px-3 py-1 text-[8px] font-black text-accent-950 uppercase tracking-widest border-b border-accent-900/10 mb-1">
+                        System & Formatting
+                      </div>
+
+                      <button
+                        onClick={() => { handleFormatCode(false); setIsUtilMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors"
+                      >
+                        <Paintbrush className="w-3.5 h-3.5 text-accent-500" />
+                        <span>Format Code (PC)</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleFormatCode(true); setIsUtilMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors"
+                      >
+                        <Smartphone className="w-3.5 h-3.5 text-accent-500" />
+                        <span>Format Code (Mobile)</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleScanCode(); setIsUtilMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors"
+                      >
+                        <Activity className={`w-3.5 h-3.5 text-accent-500 ${isScanningCode ? 'animate-pulse' : ''}`} />
+                        <span>Scan for Errors</span>
+                      </button>
+
+                      <div className="h-px bg-accent-900/10 my-1" />
+
+                      <button
+                        onClick={() => { handleToggleCurrentLineBreakpoint(); setIsUtilMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors"
+                      >
+                        <Circle className={`w-3.5 h-3.5 text-accent-500 ${breakpoints.includes(cursorLine) ? 'fill-accent-500' : ''}`} />
+                        <span>Toggle Breakpoint</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleStartDebug(); setIsUtilMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors"
+                      >
+                        <Bug className="w-3.5 h-3.5 text-accent-500" />
+                        <span>Neural Debugger</span>
+                      </button>
+
+                      <button
+                        onClick={() => { setEditorMode('git'); setIsUtilMenuOpen(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors"
+                      >
+                        <GitBranch className="w-3.5 h-3.5 text-accent-500" />
+                        <span>Neural Git</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* AI DROPDOWN */}
+              <div className="relative shrink-0">
+                <button
+                  onClick={() => { setIsAiMenuOpen(!isAiMenuOpen); setIsUtilMenuOpen(false); }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${isAiMenuOpen ? 'bg-accent-700 border-accent-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-accent-950/40 border-accent-900/30 text-accent-500 hover:bg-accent-900/20'}`}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span className="hidden md:inline">Neural AI</span>
+                  <span className="text-[8px] opacity-65">▼</span>
+                </button>
+
+                {isAiMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsAiMenuOpen(false)} />
+                    <div className="absolute left-0 mt-2 w-64 rounded-2xl bg-[#0a0202] border border-accent-900/40 shadow-[0_10px_35px_rgba(0,0,0,0.9)] z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                      <div className="px-3 py-1 text-[8px] font-black text-accent-950 uppercase tracking-widest border-b border-accent-900/10 mb-1">
+                        Analysis & Audit
+                      </div>
+
+                      <button
+                        onClick={() => { handleExplainCode(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors disabled:opacity-30"
+                      >
+                        <Brain className="w-3.5 h-3.5 text-accent-500" />
+                        <span>AI Analysis</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleFullProjectAnalysis(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors disabled:opacity-30"
+                      >
+                        <Network className="w-3.5 h-3.5 text-accent-500" />
+                        <span>Full Project Analysis</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleDeepProjectAudit(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors disabled:opacity-30"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 text-accent-500" />
+                        <span>Deep Project Audit</span>
+                      </button>
+
+                      <div className="h-px bg-accent-900/10 my-1" />
+                      <div className="px-3 py-1 text-[8px] font-black text-accent-950 uppercase tracking-widest border-b border-accent-900/10 mb-1">
+                        Generation & Refactor
+                      </div>
+
+                      <button
+                        onClick={() => { handleGenerateDocs(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors disabled:opacity-30"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-accent-500" />
+                        <span>Generate Docs</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleRefactorCode(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors disabled:opacity-30"
+                      >
+                        <Wand2 className="w-3.5 h-3.5 text-accent-500" />
+                        <span>Refactor File</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleRefactorAllFiles(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors disabled:opacity-30"
+                      >
+                        <Layers className="w-3.5 h-3.5 text-accent-500" />
+                        <span>Refactor Project</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleReviewCode(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors disabled:opacity-30"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 text-accent-500" />
+                        <span>AI Code Review</span>
+                      </button>
+
+                      <button
+                        onClick={() => { handleGenerateCode(); setIsAiMenuOpen(false); }}
+                        disabled={isAiProcessing}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors disabled:opacity-30"
+                      >
+                        <Zap className="w-3.5 h-3.5 text-accent-500" />
+                        <span>Neural Forge</span>
+                      </button>
+
+                      <button
+                        onClick={() => { setIsPairProgrammerActive(!isPairProgrammerActive); setIsAiMenuOpen(false); }}
+                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider transition-colors hover:bg-accent-900/20 ${isPairProgrammerActive ? 'text-emerald-400' : 'text-accent-300'}`}
+                      >
+                        <Users className="w-3.5 h-3.5 text-accent-500" />
+                        <span>Pair Programmer</span>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
               <button
                 onClick={handleRunCode}
                 disabled={isRunningCode}
-                className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-2.5 bg-red-700 hover:bg-red-600 text-white rounded-xl font-black text-[9px] md:text-[11px] uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all disabled:opacity-50 shrink-0"
+                className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-2.5 bg-accent-700 hover:bg-accent-600 text-white rounded-xl font-black text-[9px] md:text-[11px] uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all disabled:opacity-50 shrink-0"
               >
                 {isRunningCode ? <Zap className="w-3 h-3 md:w-4 md:h-4 animate-spin" /> : <Play className="w-3 h-3 md:w-4 md:h-4" />}
                 Execute
               </button>
             </div>
           </div>
-          <div className="flex-1 relative overflow-hidden">
+          <div className="flex-1 relative z-10 overflow-hidden">
             {isScanningCode && (
               <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
-                <div className="absolute inset-0 bg-red-900/10 mix-blend-overlay"></div>
-                <div className="absolute top-0 left-0 right-0 h-1 bg-red-500 shadow-[0_0_20px_rgba(239,68,68,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
+                <div className="absolute inset-0 bg-accent-900/10 mix-blend-overlay"></div>
+                <div className="absolute top-0 left-0 right-0 h-1 bg-accent-500 shadow-[0_0_20px_rgba(239,68,68,0.8)] animate-[scan_2s_ease-in-out_infinite]"></div>
                 <div className="absolute inset-0 p-4 font-mono text-sm leading-normal text-transparent">
                   {editorContent.split('\n').map((line, i) => (
-                    <div key={i} className={`relative ${scanResults.includes(i + 1) ? 'bg-red-500/20 border-l-2 border-red-500' : ''}`}>
+                    <div key={i} className={`relative ${scanResults.includes(i + 1) ? 'bg-accent-500/20 border-l-2 border-accent-500' : ''}`}>
                       <span className="opacity-0">{line || ' '}</span>
                       {scanResults.includes(i + 1) && (
-                        <span className="absolute right-4 top-0 text-[10px] text-red-500 font-black uppercase tracking-widest bg-black/80 px-2 py-0.5 rounded">Issue Detected</span>
+                        <span className="absolute right-4 top-0 text-[10px] text-accent-500 font-black uppercase tracking-widest bg-black/80 px-2 py-0.5 rounded">Issue Detected</span>
                       )}
                     </div>
                   ))}
@@ -571,9 +606,9 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
             )}
             <div className="flex-1 flex flex-col lg:flex-row relative overflow-hidden h-full w-full">
               {/* PRIMARY EDITOR PANEL */}
-              <div className={`flex-1 flex flex-col h-full ${isSplitScreen ? 'border-r border-red-900/30 w-full lg:w-1/2' : 'w-full'}`}>
+              <div className={`flex-1 flex flex-col h-full ${isSplitScreen ? 'border-r border-accent-900/30 w-full lg:w-1/2' : 'w-full'}`}>
                 {isSplitScreen && (
-                  <div className="h-10 bg-black/50 border-b border-red-900/20 flex items-center justify-between px-4 text-[10px] font-black uppercase tracking-wider text-red-400">
+                  <div className="h-10 bg-black/50 border-b border-accent-900/20 flex items-center justify-between px-4 text-[10px] font-black uppercase tracking-wider text-accent-400">
                     <span className="truncate">Primary Pane: {projectFiles.find(f => f.id === activeFileId)?.name || 'Untitled'}</span>
                     <span className="text-[8px] opacity-60">Read/Write</span>
                   </div>
@@ -584,7 +619,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                     <textarea
                       value={editorContent}
                       onChange={(e) => setEditorContent(e.target.value)}
-                      className="w-full h-full bg-[#120404] text-red-100 font-mono text-[14px] p-6 outline-none border-none resize-none custom-scrollbar"
+                      className="w-full h-full bg-[#120404] text-accent-100 font-mono text-[14px] p-6 outline-none border-none resize-none custom-scrollbar"
                       placeholder="// Lightweight Editor Mode Active (Offline/CDN Blocked Fallback)"
                       style={{ fontFamily: 'JetBrains Mono, Courier New, monospace', lineHeight: '1.6' }}
                     />
@@ -600,7 +635,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                         handleEditorDidMount(editor);
                       }}
                       loading={
-                        <div className="flex flex-col items-center justify-center h-full bg-[#0d0404] text-red-500 font-mono text-xs gap-3 select-none">
+                        <div className="flex flex-col items-center justify-center h-full bg-[#0d0404] text-accent-500 font-mono text-xs gap-3 select-none">
                           <Zap className="w-5 h-5 animate-spin" />
                           CONNECTING_NEURAL_MONACO_LINK...
                         </div>
@@ -621,9 +656,9 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
               {/* SECONDARY / SPLIT EDITOR PANEL */}
               {isSplitScreen && (
                 <div className="flex-1 flex flex-col h-full w-full lg:w-1/2 bg-[#080202]">
-                  <div className="h-10 bg-black/60 border-b border-red-900/20 flex items-center justify-between px-4 text-[10px] font-black uppercase tracking-wider text-red-400 gap-4 shrink-0">
+                  <div className="h-10 bg-black/60 border-b border-accent-900/20 flex items-center justify-between px-4 text-[10px] font-black uppercase tracking-wider text-accent-400 gap-4 shrink-0">
                     <div className="flex items-center gap-2 max-w-[70%] truncate">
-                      <span className="text-[8px] text-red-400 bg-red-950/60 border border-red-900/40 px-2 py-0.5 rounded font-black tracking-widest">Split View</span>
+                      <span className="text-[8px] text-accent-400 bg-accent-950/60 border border-accent-900/40 px-2 py-0.5 rounded font-black tracking-widest">Split View</span>
                       <select
                         value={splitFileId || ''}
                         onChange={(e) => {
@@ -635,7 +670,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                             setSplitLanguage(file.language || 'text');
                           }
                         }}
-                        className="bg-black/90 border border-red-900/50 rounded-lg px-3 py-1 text-[10px] text-red-300 outline-none max-w-full font-bold cursor-pointer hover:border-red-600/60 transition-all uppercase tracking-wider"
+                        className="bg-black/90 border border-accent-900/50 rounded-lg px-3 py-1 text-[10px] text-accent-300 outline-none max-w-full font-bold cursor-pointer hover:border-accent-600/60 transition-all uppercase tracking-wider"
                       >
                         <option value="" disabled>-- Select Code to Analyze --</option>
                         {projectFiles.filter(f => f.type === 'file').map(f => (
@@ -644,10 +679,10 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                       </select>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-[8px] text-red-800 tracking-widest">{splitLanguage.toUpperCase()}</span>
+                      <span className="text-[8px] text-accent-800 tracking-widest">{splitLanguage.toUpperCase()}</span>
                       <button
                         onClick={() => setIsSplitScreen(false)}
-                        className="text-red-700 hover:text-red-400 transition-colors p-1"
+                        className="text-accent-700 hover:text-accent-400 transition-colors p-1"
                         title="Close Split View"
                       >
                         <X className="w-4 h-4" />
@@ -660,7 +695,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                       <textarea
                         value={splitContent}
                         onChange={(e) => handleSplitContentChange(e.target.value)}
-                        className="w-full h-full bg-[#0a0202] text-red-100 font-mono text-[14px] p-6 outline-none border-none resize-none custom-scrollbar"
+                        className="w-full h-full bg-[#0a0202] text-accent-100 font-mono text-[14px] p-6 outline-none border-none resize-none custom-scrollbar"
                         placeholder="// Select a file in the dropdown above to view side-by-side"
                         style={{ fontFamily: 'JetBrains Mono, Courier New, monospace', lineHeight: '1.6' }}
                       />
@@ -675,7 +710,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                           // Split editor mounted
                         }}
                         loading={
-                          <div className="flex flex-col items-center justify-center h-full bg-[#0d0404] text-red-500 font-mono text-xs gap-3 select-none">
+                          <div className="flex flex-col items-center justify-center h-full bg-[#0d0404] text-accent-500 font-mono text-xs gap-3 select-none">
                             <Zap className="w-5 h-5 animate-spin" />
                             CONNECTING_NEURAL_MONACO_LINK...
                           </div>
@@ -699,16 +734,16 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
 
         {/* Assistant Sidebar */}
         {isEditorAssistantOpen && (
-          <div className="fixed inset-0 z-50 lg:relative lg:z-auto w-full lg:w-80 flex flex-col code-editor-bg rounded-none lg:rounded-[40px] border-0 lg:border border-red-900/30 shadow-2xl overflow-hidden animate-in slide-in-from-right-5 duration-300">
-            <div className="h-16 border-b border-red-900/20 flex items-center justify-between px-6 md:px-8 bg-black/40">
-              <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
+          <div className="fixed inset-0 z-50 lg:relative lg:z-auto w-full lg:w-80 flex flex-col code-editor-bg rounded-none lg:rounded-[40px] border-0 lg:border border-accent-900/30 shadow-2xl overflow-hidden animate-in slide-in-from-right-5 duration-300">
+            <div className="h-16 border-b border-accent-900/20 flex items-center justify-between px-6 md:px-8 bg-black/40">
+              <h4 className="text-[11px] font-black text-accent-500 uppercase tracking-[0.4em] flex items-center gap-3">
                 <Brain className="w-4 h-4" /> Neural Assistant
               </h4>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleCodeReview}
                   disabled={isAiProcessing}
-                  className="p-2 text-red-900 hover:text-red-500 transition-colors"
+                  className="p-2 text-accent-900 hover:text-accent-500 transition-colors"
                   title="Perform Code Review"
                 >
                   <Search className="w-4 h-4" />
@@ -719,7 +754,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                     <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Pairing</span>
                   </div>
                 )}
-                <button onClick={() => setIsEditorAssistantOpen(false)} className="text-red-900 hover:text-red-500 transition-colors p-2">
+                <button onClick={() => setIsEditorAssistantOpen(false)} className="text-accent-900 hover:text-accent-500 transition-colors p-2">
                   <X className="w-5 h-5 md:w-4 md:h-4" />
                 </button>
               </div>
@@ -727,7 +762,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
             <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-black/20">
               {editorAssistantMessages.length === 0 && (
                 <div className="h-full flex flex-col items-center justify-center text-center p-4 opacity-30">
-                  <Sparkles className="w-12 h-12 text-red-600 mb-4" />
+                  <Sparkles className="w-12 h-12 text-accent-600 mb-4" />
                   <p className="text-[10px] font-black uppercase tracking-[0.2em]">Awaiting neural synchronization...</p>
                 </div>
               )}
@@ -735,8 +770,8 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                 <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                   <div className={`max-w-[90%] rounded-2xl p-4 text-[12px] leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-red-800 text-white rounded-tr-none'
-                      : 'bg-[#1a0505] border border-red-800/40 text-red-100 rounded-tl-none shadow-[inset_0_0_20px_rgba(0,0,0,0.3)]'
+                      ? 'bg-accent-800 text-white rounded-tr-none'
+                      : 'bg-[#1a0505] border border-accent-800/40 text-accent-100 rounded-tl-none shadow-[inset_0_0_20px_rgba(0,0,0,0.3)]'
                   }`}>
                     <div className="markdown-body">
                       <SafeMarkdown>
@@ -746,7 +781,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
 
                     {/* Action buttons — always outside markdown div, always reachable */}
                     {msg.role === 'ai' && (
-                      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-red-900/20 empty:hidden">
+                      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-accent-900/20 empty:hidden">
 
                         {(msg.text.includes('CODE_ANALYSIS') || msg.text.includes('FULL_PROJECT_ANALYSIS') || msg.text.includes('DEEP_PROJECT_AUDIT')) && (
                           <ActionButton
@@ -769,9 +804,9 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                         {msg.text.includes('REFACTOR_COMPLETE') && msg.metadata?.refactoredCode && (
                           <>
                             {msg.metadata.explanation && (
-                              <div className="w-full p-3 bg-black/40 rounded-lg border border-red-900/30 mb-1">
-                                <h6 className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1">Refactoring Explanation</h6>
-                                <p className="text-[11px] text-red-200/80 leading-relaxed">{msg.metadata.explanation}</p>
+                              <div className="w-full p-3 bg-black/40 rounded-lg border border-accent-900/30 mb-1">
+                                <h6 className="text-[9px] font-black text-accent-500 uppercase tracking-widest mb-1">Refactoring Explanation</h6>
+                                <p className="text-[11px] text-accent-200/80 leading-relaxed">{msg.metadata.explanation}</p>
                               </div>
                             )}
                             <ActionButton
@@ -809,21 +844,21 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
               ))}
               {isAiProcessing && (
                 <div className="flex gap-2 px-1 animate-pulse">
-                  <div className="w-1.5 h-1.5 bg-red-600 rounded-full"></div>
-                  <div className="w-1.5 h-1.5 bg-red-600 rounded-full"></div>
-                  <div className="w-1.5 h-1.5 bg-red-600 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-accent-600 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-accent-600 rounded-full"></div>
+                  <div className="w-1.5 h-1.5 bg-accent-600 rounded-full"></div>
                 </div>
               )}
             </div>
-            <form onSubmit={handleEditorAssistantSubmit} className="p-4 bg-black/40 border-t border-red-900/20">
+            <form onSubmit={handleEditorAssistantSubmit} className="p-4 bg-black/40 border-t border-accent-900/20">
               <div className="relative">
                 <input
                   value={editorAssistantInput}
                   onChange={(e) => setEditorAssistantInput(e.target.value)}
                   placeholder="Ask assistant..."
-                  className="w-full bg-[#0d0404] border border-red-900/40 rounded-xl px-4 py-3 text-[11px] text-red-100 focus:border-red-600/60 outline-none"
+                  className="w-full bg-[#0d0404] border border-accent-900/40 rounded-xl px-4 py-3 text-[11px] text-accent-100 focus:border-accent-600/60 outline-none"
                 />
-                <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 text-red-600 hover:text-red-400">
+                <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 text-accent-600 hover:text-accent-400">
                   <Send className="w-4 h-4" />
                 </button>
               </div>
@@ -832,55 +867,55 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
         )}
 
         {/* Output Section */}
-        <div className="w-full lg:w-96 flex flex-col code-editor-bg rounded-[40px] border border-red-900/30 shadow-2xl overflow-hidden">
-          <div className="h-16 border-b border-red-900/20 flex items-center px-8 bg-black/40 justify-between">
-            <div className="flex bg-red-950/20 p-1 rounded-xl border border-red-900/20">
+        <div className="w-full lg:w-96 flex flex-col code-editor-bg rounded-[40px] border border-accent-900/30 shadow-2xl overflow-hidden">
+          <div className="h-16 border-b border-accent-900/20 flex items-center px-8 bg-black/40 justify-between">
+            <div className="flex bg-accent-950/20 p-1 rounded-xl border border-accent-900/20">
               <button
                 onClick={() => setEditorMode('code')}
-                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'code' ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
+                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'code' ? 'bg-accent-700 text-white shadow-lg' : 'text-accent-900 hover:text-accent-500'}`}
               >
                 Terminal
               </button>
               <button
                 onClick={() => setEditorMode('preview')}
-                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'preview' ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
+                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'preview' ? 'bg-accent-700 text-white shadow-lg' : 'text-accent-900 hover:text-accent-500'}`}
               >
                 Preview
               </button>
               <button
                 onClick={() => setEditorMode('debug')}
-                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'debug' ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
+                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'debug' ? 'bg-accent-700 text-white shadow-lg' : 'text-accent-900 hover:text-accent-500'}`}
               >
                 Debugger
               </button>
               <button
                 onClick={() => setEditorMode('git')}
-                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'git' ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
+                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'git' ? 'bg-accent-700 text-white shadow-lg' : 'text-accent-900 hover:text-accent-500'}`}
               >
                 Git
               </button>
               <button
                 onClick={() => setEditorMode('settings')}
-                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'settings' ? 'bg-red-700 text-white shadow-lg' : 'text-red-900 hover:text-red-500'}`}
+                className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${editorMode === 'settings' ? 'bg-accent-700 text-white shadow-lg' : 'text-accent-900 hover:text-accent-500'}`}
               >
                 Config
               </button>
             </div>
-            <h4 className="text-[11px] font-black text-red-500 uppercase tracking-[0.4em] flex items-center gap-3">
+            <h4 className="text-[11px] font-black text-accent-500 uppercase tracking-[0.4em] flex items-center gap-3">
               <Activity className="w-4 h-4" /> Runtime
             </h4>
           </div>
           <div className="flex-1 overflow-hidden relative bg-black/20">
             {editorMode === 'code' && (
-              <div className="h-full p-4 md:p-8 font-mono text-[13px] overflow-y-auto custom-scrollbar text-red-100/80">
+              <div className="h-full p-4 md:p-8 font-mono text-[13px] overflow-y-auto custom-scrollbar text-accent-100/80">
                 {isRunningCode ? (
                   <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2 text-red-500 animate-pulse">
+                    <div className="flex items-center gap-2 text-accent-500 animate-pulse">
                       <Zap className="w-3 h-3" />
                       <span>NEURAL_LINK_ESTABLISHED...</span>
                     </div>
-                    <div className="text-red-900/60">[SYSTEM] Initializing virtual environment...</div>
-                    <div className="text-red-900/60">[KERNEL] Allocating neural buffers...</div>
+                    <div className="text-accent-900/60">[SYSTEM] Initializing virtual environment...</div>
+                    <div className="text-accent-900/60">[KERNEL] Allocating neural buffers...</div>
                   </div>
                 ) : (
                   <pre className="whitespace-pre-wrap leading-relaxed">
@@ -892,25 +927,25 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
             {editorMode === 'preview' && (
               <div className="h-full flex flex-col">
                 {/* Preview Toolbar */}
-                <div className="p-4 bg-red-950/20 border-b border-red-900/20 flex items-center justify-between">
+                <div className="p-4 bg-accent-950/20 border-b border-accent-900/20 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setIsInspectorActive(!isInspectorActive)}
-                      className={`p-2 rounded-lg transition-all ${isInspectorActive ? 'bg-red-700 text-white shadow-lg' : 'bg-red-950/40 border border-red-900/30 text-red-500 hover:bg-red-900/20'}`}
+                      className={`p-2 rounded-lg transition-all ${isInspectorActive ? 'bg-accent-700 text-white shadow-lg' : 'bg-accent-950/40 border border-accent-900/30 text-accent-500 hover:bg-accent-900/20'}`}
                       title="Toggle Component Inspector"
                     >
                       <MousePointer2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setEditorContent(editorContent)}
-                      className="p-2 bg-red-950/40 border border-red-900/30 text-red-500 rounded-lg hover:bg-red-900/20 transition-all"
+                      className="p-2 bg-accent-950/40 border border-accent-900/30 text-accent-500 rounded-lg hover:bg-accent-900/20 transition-all"
                       title="Refresh Preview"
                     >
                       <RefreshCw className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Live UI Preview</span>
+                    <span className="text-[10px] font-black text-accent-500 uppercase tracking-widest">Live UI Preview</span>
                     <div className="flex items-center gap-1">
                       <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                       <span className="text-[9px] font-mono text-emerald-500/60 uppercase">Synchronized</span>
@@ -926,14 +961,14 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                     onClick={handleInspectClick}
                   >
                     <div
-                      className="w-full min-h-full bg-black/40 rounded-2xl border border-red-900/20 overflow-hidden relative"
+                      className="w-full min-h-full bg-black/40 rounded-2xl border border-accent-900/20 overflow-hidden relative"
                       dangerouslySetInnerHTML={{ __html: isLivePreviewEnabled ? DOMPurify.sanitize(debouncedEditorContent) : '' }}
                     />
 
                     {/* Inspector Highlight Overlay */}
                     {inspectedElement && inspectedElement.rect && (
                       <div
-                        className="absolute pointer-events-none border-2 border-red-500 bg-red-500/10 z-50 transition-all duration-75"
+                        className="absolute pointer-events-none border-2 border-accent-500 bg-accent-500/10 z-50 transition-all duration-75"
                         style={{
                           top: inspectedElement.rect.top + 24,
                           left: inspectedElement.rect.left + 24,
@@ -941,7 +976,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                           height: inspectedElement.rect.height
                         }}
                       >
-                        <div className="absolute -top-6 left-0 bg-red-700 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest whitespace-nowrap">
+                        <div className="absolute -top-6 left-0 bg-accent-700 text-white text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest whitespace-nowrap">
                           {inspectedElement.tagName} {inspectedElement.id && `#${inspectedElement.id}`}
                         </div>
                       </div>
@@ -950,7 +985,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
 
                   {/* Inspector Details Panel */}
                   {inspectedElement && (
-                    <div className="w-full md:w-80 absolute md:relative right-0 top-0 bottom-0 z-50 bg-[#080101] border-l border-red-900/30 p-6 overflow-y-auto custom-scrollbar animate-in slide-in-from-right duration-300">
+                    <div className="w-full md:w-80 absolute md:relative right-0 top-0 bottom-0 z-50 bg-[#080101] border-l border-accent-900/30 p-6 overflow-y-auto custom-scrollbar animate-in slide-in-from-right duration-300">
                       <button
                         onClick={() => {
                           // Clean up tracking attribute
@@ -968,14 +1003,14 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                           setIsInspectorActive(false);
                           inspectedElementRef.current = null;
                         }}
-                        className="absolute top-4 right-4 p-2 text-red-900 hover:text-red-500 transition-colors"
+                        className="absolute top-4 right-4 p-2 text-accent-900 hover:text-accent-500 transition-colors"
                       >
                         <X className="w-4 h-4" />
                       </button>
                       <div className="space-y-6 md:space-y-8">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <h5 className="text-[11px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
+                            <h5 className="text-[11px] font-black text-accent-500 uppercase tracking-widest flex items-center gap-2">
                               <Info className="w-4 h-4" /> Component Info
                             </h5>
                             <div className="flex items-center gap-1">
@@ -986,7 +1021,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                                     setEditorOutput(prev => prev + "[SYSTEM] Element HTML copied to clipboard.\n");
                                   }
                                 }}
-                                className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
+                                className="p-1.5 bg-accent-950/40 border border-accent-900/30 rounded-lg text-accent-500 hover:bg-accent-900/20 transition-all"
                                 title="Copy HTML"
                               >
                                 <Code2 className="w-3 h-3" />
@@ -1002,27 +1037,27 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                                     }
                                   }
                                 }}
-                                className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
+                                className="p-1.5 bg-accent-950/40 border border-accent-900/30 rounded-lg text-accent-500 hover:bg-accent-900/20 transition-all"
                                 title="Delete Element"
                               >
                                 <Trash2 className="w-3 h-3" />
                               </button>
                             </div>
                           </div>
-                          <div className="p-4 bg-red-950/10 border border-red-900/20 rounded-2xl space-y-3">
+                          <div className="p-4 bg-accent-950/10 border border-accent-900/20 rounded-2xl space-y-3">
                             <div className="flex justify-between items-center">
-                              <span className="text-[10px] text-red-900 uppercase font-black">Tag</span>
-                              <span className="text-[11px] font-mono text-red-100 uppercase">{inspectedElement.tagName}</span>
+                              <span className="text-[10px] text-accent-900 uppercase font-black">Tag</span>
+                              <span className="text-[11px] font-mono text-accent-100 uppercase">{inspectedElement.tagName}</span>
                             </div>
                             {inspectedElement.id && (
                               <div className="flex justify-between items-center">
-                                <span className="text-[10px] text-red-900 uppercase font-black">ID</span>
-                                <span className="text-[11px] font-mono text-red-100">{inspectedElement.id}</span>
+                                <span className="text-[10px] text-accent-900 uppercase font-black">ID</span>
+                                <span className="text-[11px] font-mono text-accent-100">{inspectedElement.id}</span>
                               </div>
                             )}
                             <div className="space-y-1">
-                              <span className="text-[10px] text-red-900 uppercase font-black">Classes</span>
-                              <div className="text-[10px] font-mono text-red-100/60 break-all leading-relaxed">
+                              <span className="text-[10px] text-accent-900 uppercase font-black">Classes</span>
+                              <div className="text-[10px] font-mono text-accent-100/60 break-all leading-relaxed">
                                 {inspectedElement.className || 'None'}
                               </div>
                             </div>
@@ -1031,7 +1066,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
 
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <h5 className="text-[11px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
+                            <h5 className="text-[11px] font-black text-accent-500 uppercase tracking-widest flex items-center gap-2">
                               <Edit2 className="w-4 h-4" /> Style Editor
                             </h5>
                             <div className="flex items-center gap-1">
@@ -1043,7 +1078,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                                   navigator.clipboard.writeText(styleStr);
                                   setEditorOutput(prev => prev + "[SYSTEM] Styles copied to clipboard.\n");
                                 }}
-                                className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
+                                className="p-1.5 bg-accent-950/40 border border-accent-900/30 rounded-lg text-accent-500 hover:bg-accent-900/20 transition-all"
                                 title="Copy Styles"
                               >
                                 <Copy className="w-3 h-3" />
@@ -1056,7 +1091,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                                     handleStyleChange(camelProp, '');
                                   }
                                 }}
-                                className="p-1.5 bg-red-900/20 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/40 transition-all"
+                                className="p-1.5 bg-accent-900/20 border border-accent-900/30 rounded-lg text-accent-500 hover:bg-accent-900/40 transition-all"
                                 title="Add Property"
                               >
                                 <Plus className="w-3 h-3" />
@@ -1082,7 +1117,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                                     }
                                   }
                                 }}
-                                className="p-1.5 bg-red-950/40 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/20 transition-all"
+                                className="p-1.5 bg-accent-950/40 border border-accent-900/30 rounded-lg text-accent-500 hover:bg-accent-900/20 transition-all"
                                 title="Reset Styles"
                               >
                                 <RefreshCw className="w-3 h-3" />
@@ -1091,9 +1126,9 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                           </div>
                           <div className="grid grid-cols-1 gap-2">
                             {Object.entries(inspectedElement.styles).map(([key, value]) => (
-                              <div key={key} className="flex flex-col gap-1 p-3 bg-red-950/5 border border-red-900/10 rounded-xl group/style">
+                              <div key={key} className="flex flex-col gap-1 p-3 bg-accent-950/5 border border-accent-900/10 rounded-xl group/style">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-[8px] text-red-900 uppercase font-black">{key}</span>
+                                  <span className="text-[8px] text-accent-900 uppercase font-black">{key}</span>
                                   <button
                                     onClick={() => {
                                       if (inspectedElementRef.current) {
@@ -1110,7 +1145,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                                         }
                                       }
                                     }}
-                                    className="opacity-0 group-hover/style:opacity-100 text-red-900 hover:text-red-500 transition-all"
+                                    className="opacity-0 group-hover/style:opacity-100 text-accent-900 hover:text-accent-500 transition-all"
                                   >
                                     <Trash2 className="w-2.5 h-2.5" />
                                   </button>
@@ -1119,7 +1154,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                                   type="text"
                                   value={value as string}
                                   onChange={(e) => handleStyleChange(key, e.target.value)}
-                                  className="bg-transparent border-none outline-none text-[10px] font-mono text-red-100 w-full focus:text-red-500 transition-colors"
+                                  className="bg-transparent border-none outline-none text-[10px] font-mono text-accent-100 w-full focus:text-accent-500 transition-colors"
                                 />
                               </div>
                             ))}
@@ -1127,17 +1162,17 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                         </div>
 
                         <div className="space-y-4">
-                          <h5 className="text-[11px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
+                          <h5 className="text-[11px] font-black text-accent-500 uppercase tracking-widest flex items-center gap-2">
                             <Layout className="w-4 h-4" /> Geometry
                           </h5>
                           <div className="grid grid-cols-2 gap-2">
-                            <div className="p-3 bg-red-950/5 border border-red-900/10 rounded-xl">
-                              <span className="block text-[8px] text-red-900 uppercase font-black mb-1">Width</span>
-                              <span className="text-[10px] font-mono text-red-100">{Math.round(inspectedElement.rect?.width || 0)}px</span>
+                            <div className="p-3 bg-accent-950/5 border border-accent-900/10 rounded-xl">
+                              <span className="block text-[8px] text-accent-900 uppercase font-black mb-1">Width</span>
+                              <span className="text-[10px] font-mono text-accent-100">{Math.round(inspectedElement.rect?.width || 0)}px</span>
                             </div>
-                            <div className="p-3 bg-red-950/5 border border-red-900/10 rounded-xl">
-                              <span className="block text-[8px] text-red-900 uppercase font-black mb-1">Height</span>
-                              <span className="text-[10px] font-mono text-red-100">{Math.round(inspectedElement.rect?.height || 0)}px</span>
+                            <div className="p-3 bg-accent-950/5 border border-accent-900/10 rounded-xl">
+                              <span className="block text-[8px] text-accent-900 uppercase font-black mb-1">Height</span>
+                              <span className="text-[10px] font-mono text-accent-100">{Math.round(inspectedElement.rect?.height || 0)}px</span>
                             </div>
                           </div>
                         </div>
@@ -1149,59 +1184,59 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
             )}
             {editorMode === 'debug' && (
               <div className="h-full flex flex-col">
-                <div className="p-4 bg-red-950/20 border-b border-red-900/20 flex items-center justify-between">
+                <div className="p-4 bg-accent-950/20 border-b border-accent-900/20 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <button onClick={handleStep} disabled={isAiProcessing || !debugState.isActive} className="p-2 bg-red-700 rounded-lg text-white hover:bg-red-600 transition-all disabled:opacity-50" title="Step Forward">
+                    <button onClick={handleStep} disabled={isAiProcessing || !debugState.isActive} className="p-2 bg-accent-700 rounded-lg text-white hover:bg-accent-600 transition-all disabled:opacity-50" title="Step Forward">
                       <StepForward className="w-4 h-4" />
                     </button>
-                    <button onClick={handleDebugRefactor} disabled={isAiProcessing || !debugState.isActive} className="p-2 bg-red-950/40 border border-red-900/30 text-red-500 rounded-lg hover:bg-red-900/20 transition-all disabled:opacity-50" title="AI Debug Refactor">
+                    <button onClick={handleDebugRefactor} disabled={isAiProcessing || !debugState.isActive} className="p-2 bg-accent-950/40 border border-accent-900/30 text-accent-500 rounded-lg hover:bg-accent-900/20 transition-all disabled:opacity-50" title="AI Debug Refactor">
                       <Wand2 className="w-4 h-4" />
                     </button>
-                    <button onClick={handleStartDebug} disabled={isAiProcessing} className="p-2 bg-red-950/40 border border-red-900/30 text-red-500 rounded-lg hover:bg-red-900/20 transition-all disabled:opacity-50" title="Restart Debugger">
+                    <button onClick={handleStartDebug} disabled={isAiProcessing} className="p-2 bg-accent-950/40 border border-accent-900/30 text-accent-500 rounded-lg hover:bg-accent-900/20 transition-all disabled:opacity-50" title="Restart Debugger">
                       <PlayCircle className="w-4 h-4" />
                     </button>
-                    <button onClick={handleStopDebug} className="p-2 bg-red-950/40 border border-red-900/30 text-red-500 rounded-lg hover:bg-red-900/20 transition-all" title="Stop Debugger">
+                    <button onClick={handleStopDebug} className="p-2 bg-accent-950/40 border border-accent-900/30 text-accent-500 rounded-lg hover:bg-accent-900/20 transition-all" title="Stop Debugger">
                       <StopCircle className="w-4 h-4" />
                     </button>
                   </div>
-                  <span className="text-[10px] font-black text-red-500 uppercase tracking-widest">Line: {debugState.currentLine}</span>
+                  <span className="text-[10px] font-black text-accent-500 uppercase tracking-widest">Line: {debugState.currentLine}</span>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
                   <div className="space-y-3">
-                    <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest">Variables</h5>
+                    <h5 className="text-[10px] font-black text-accent-800 uppercase tracking-widest">Variables</h5>
                     <div className="grid grid-cols-1 gap-2">
                       {Object.entries(debugState.variables).map(([k, v]) => (
-                        <div key={k} className="flex items-center justify-between p-3 bg-red-950/10 border border-red-900/10 rounded-xl font-mono text-[11px]">
-                          <span className="text-red-400">{k}</span>
-                          <span className="text-red-100">{JSON.stringify(v)}</span>
+                        <div key={k} className="flex items-center justify-between p-3 bg-accent-950/10 border border-accent-900/10 rounded-xl font-mono text-[11px]">
+                          <span className="text-accent-400">{k}</span>
+                          <span className="text-accent-100">{JSON.stringify(v)}</span>
                         </div>
                       ))}
                       {Object.keys(debugState.variables).length === 0 && (
-                        <p className="text-[10px] text-red-900 italic">No variables in scope.</p>
+                        <p className="text-[10px] text-accent-900 italic">No variables in scope.</p>
                       )}
                     </div>
                   </div>
 
                   {debugRefactorResult && (
-                    <div className="p-5 bg-red-900/10 border border-red-500/30 rounded-3xl space-y-4 animate-in fade-in zoom-in-95">
+                    <div className="p-5 bg-accent-900/10 border border-accent-500/30 rounded-3xl space-y-4 animate-in fade-in zoom-in-95">
                       <div className="flex items-center justify-between">
-                        <h5 className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-2">
+                        <h5 className="text-[10px] font-black text-accent-500 uppercase tracking-widest flex items-center gap-2">
                           <Sparkles className="w-3 h-3" /> AI Debug Refactor
                         </h5>
-                        <button onClick={() => setDebugRefactorResult(null)} className="text-red-900 hover:text-red-500">
+                        <button onClick={() => setDebugRefactorResult(null)} className="text-accent-900 hover:text-accent-500">
                           <X className="w-3 h-3" />
                         </button>
                       </div>
                       <div className="space-y-3">
-                        <div className="p-3 bg-black/40 rounded-xl border border-red-900/20 font-mono text-[10px] text-red-100/80 overflow-x-auto">
+                        <div className="p-3 bg-black/40 rounded-xl border border-accent-900/20 font-mono text-[10px] text-accent-100/80 overflow-x-auto">
                           <pre>{debugRefactorResult.refactoredCode}</pre>
                         </div>
-                        <p className="text-[11px] text-red-100/60 leading-relaxed italic">
+                        <p className="text-[11px] text-accent-100/60 leading-relaxed italic">
                           {debugRefactorResult.explanation}
                         </p>
                         <button
                           onClick={handleApplyDebugRefactor}
-                          className="w-full py-2 bg-red-700 hover:bg-red-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg transition-all"
+                          className="w-full py-2 bg-accent-700 hover:bg-accent-600 text-white rounded-xl font-black text-[9px] uppercase tracking-widest shadow-lg transition-all"
                         >
                           Apply Refactor
                         </button>
@@ -1209,26 +1244,26 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                     </div>
                   )}
                   <div className="space-y-3">
-                    <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest">Call Stack</h5>
+                    <h5 className="text-[10px] font-black text-accent-800 uppercase tracking-widest">Call Stack</h5>
                     <div className="space-y-2">
                       {debugState.callStack.map((frame, i) => (
-                        <div key={i} className="flex items-center gap-3 text-[11px] font-mono text-red-100/60">
-                          <span className="text-red-900">#{i}</span>
+                        <div key={i} className="flex items-center gap-3 text-[11px] font-mono text-accent-100/60">
+                          <span className="text-accent-900">#{i}</span>
                           <span>{frame}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest">Breakpoints</h5>
+                    <h5 className="text-[10px] font-black text-accent-800 uppercase tracking-widest">Breakpoints</h5>
                     <div className="flex flex-wrap gap-2">
                       {breakpoints.map(line => (
-                        <div key={line} className="px-3 py-1 bg-red-900/20 border border-red-500/30 rounded-full text-[10px] text-red-500 font-black">
+                        <div key={line} className="px-3 py-1 bg-accent-900/20 border border-accent-500/30 rounded-full text-[10px] text-accent-500 font-black">
                           Line {line}
                         </div>
                       ))}
                       {breakpoints.length === 0 && (
-                        <p className="text-[10px] text-red-900 italic">No breakpoints set.</p>
+                        <p className="text-[10px] text-accent-900 italic">No breakpoints set.</p>
                       )}
                     </div>
                   </div>
@@ -1239,46 +1274,46 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
               <div className="h-full flex flex-col">
                 {!gitRepo.initialized ? (
                   <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 text-center space-y-6">
-                    <GitBranch className="w-16 h-16 text-red-900/40" />
+                    <GitBranch className="w-16 h-16 text-accent-900/40" />
                     <div className="space-y-2">
-                      <h5 className="text-[12px] font-black text-red-500 uppercase tracking-widest">Neural Repository Not Found</h5>
-                      <p className="text-[10px] text-red-900/60 leading-relaxed max-w-[240px]">Initialize a repository to begin tracking neural state changes and synchronization.</p>
+                      <h5 className="text-[12px] font-black text-accent-500 uppercase tracking-widest">Neural Repository Not Found</h5>
+                      <p className="text-[10px] text-accent-900/60 leading-relaxed max-w-[240px]">Initialize a repository to begin tracking neural state changes and synchronization.</p>
                     </div>
                     <button
                       onClick={handleGitInit}
-                      className="px-6 py-2.5 bg-red-700 hover:bg-red-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg transition-all"
+                      className="px-6 py-2.5 bg-accent-700 hover:bg-accent-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg transition-all"
                     >
                       Initialize Repository
                     </button>
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="p-4 bg-red-950/20 border-b border-red-900/20 flex items-center justify-between">
+                    <div className="p-4 bg-accent-950/20 border-b border-accent-900/20 flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 text-[10px] font-black text-red-500 uppercase tracking-widest">
+                        <div className="flex items-center gap-2 text-[10px] font-black text-accent-500 uppercase tracking-widest">
                           <GitBranch className="w-3 h-3" />
                           {gitRepo.branch}
                         </div>
-                        <div className="h-4 w-px bg-red-900/30" />
+                        <div className="h-4 w-px bg-accent-900/30" />
                         <div className="flex items-center gap-3">
-                          <button onClick={handleGitPull} title="Pull" className="text-red-900 hover:text-red-500 transition-colors"><GitPullRequest className="w-4 h-4" /></button>
-                          <button onClick={handleGitPush} title="Push" className="text-red-900 hover:text-red-500 transition-colors"><GitMerge className="w-4 h-4" /></button>
-                          <button onClick={handleGitStash} title="Stash" className="text-red-900 hover:text-red-500 transition-colors"><Archive className="w-4 h-4" /></button>
-                          <button onClick={handleGitPop} title="Pop Stash" className="text-red-900 hover:text-red-500 transition-colors"><History className="w-4 h-4" /></button>
+                          <button onClick={handleGitPull} title="Pull" className="text-accent-900 hover:text-accent-500 transition-colors"><GitPullRequest className="w-4 h-4" /></button>
+                          <button onClick={handleGitPush} title="Push" className="text-accent-900 hover:text-accent-500 transition-colors"><GitMerge className="w-4 h-4" /></button>
+                          <button onClick={handleGitStash} title="Stash" className="text-accent-900 hover:text-accent-500 transition-colors"><Archive className="w-4 h-4" /></button>
+                          <button onClick={handleGitPop} title="Pop Stash" className="text-accent-900 hover:text-accent-500 transition-colors"><History className="w-4 h-4" /></button>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={handleGitSaveAll}
                           disabled={gitRepo.modified.length === 0 && gitRepo.staged.length === 0}
-                          className="px-4 py-1.5 bg-red-900/50 hover:bg-red-800 text-red-100 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all disabled:opacity-30 border border-red-800/30"
+                          className="px-4 py-1.5 bg-accent-900/50 hover:bg-accent-800 text-accent-100 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all disabled:opacity-30 border border-accent-800/30"
                         >
                           Save All
                         </button>
                         <button
                           onClick={handleGitCommit}
                           disabled={gitRepo.staged.length === 0}
-                          className="px-4 py-1.5 bg-red-700 hover:bg-red-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest transition-all disabled:opacity-30"
+                          className="px-4 py-1.5 bg-accent-700 hover:bg-accent-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest transition-all disabled:opacity-30"
                         >
                           Commit
                         </button>
@@ -1288,74 +1323,74 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                     <div className="flex-1 overflow-y-auto p-6 space-y-6 md:space-y-8 custom-scrollbar">
                       {/* Staged Changes */}
                       <div className="space-y-3">
-                        <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center justify-between">
+                        <h5 className="text-[10px] font-black text-accent-800 uppercase tracking-widest flex items-center justify-between">
                           Staged Changes
-                          <span className="text-red-900/40">{gitRepo.staged.length}</span>
+                          <span className="text-accent-900/40">{gitRepo.staged.length}</span>
                         </h5>
                         <div className="space-y-1">
                           {gitRepo.staged.map(id => {
                             const file = projectFiles.find(f => f.id === id);
                             return (
-                              <div key={id} className="flex items-center justify-between p-3 bg-red-950/10 border border-red-900/10 rounded-xl group">
+                              <div key={id} className="flex items-center justify-between p-3 bg-accent-950/10 border border-accent-900/10 rounded-xl group">
                                 <div className="flex items-center gap-3">
                                   <Check className="w-3 h-3 text-emerald-500" />
-                                  <span className="text-[11px] font-mono text-red-100">{file?.name}</span>
+                                  <span className="text-[11px] font-mono text-accent-100">{file?.name}</span>
                                 </div>
-                                <button onClick={() => handleGitUnstage(id)} className="opacity-0 group-hover:opacity-100 text-[9px] font-black text-red-900 hover:text-red-500 uppercase tracking-widest transition-all">Unstage</button>
+                                <button onClick={() => handleGitUnstage(id)} className="opacity-0 group-hover:opacity-100 text-[9px] font-black text-accent-900 hover:text-accent-500 uppercase tracking-widest transition-all">Unstage</button>
                               </div>
                             );
                           })}
-                          {gitRepo.staged.length === 0 && <p className="text-[10px] text-red-900/40 italic">No staged changes.</p>}
+                          {gitRepo.staged.length === 0 && <p className="text-[10px] text-accent-900/40 italic">No staged changes.</p>}
                         </div>
                       </div>
 
                       {/* Modified Changes */}
                       <div className="space-y-3">
-                        <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center justify-between">
+                        <h5 className="text-[10px] font-black text-accent-800 uppercase tracking-widest flex items-center justify-between">
                           Modified
                           {gitRepo.modified.length > 0 && (
-                            <button onClick={handleGitStageAll} className="text-[9px] font-black text-red-900 hover:text-red-500 uppercase tracking-widest transition-all">Stage All</button>
+                            <button onClick={handleGitStageAll} className="text-[9px] font-black text-accent-900 hover:text-accent-500 uppercase tracking-widest transition-all">Stage All</button>
                           )}
-                          <span className="text-red-900/40">{gitRepo.modified.length}</span>
+                          <span className="text-accent-900/40">{gitRepo.modified.length}</span>
                         </h5>
                         <div className="space-y-1">
                           {gitRepo.modified.map(id => {
                             const file = projectFiles.find(f => f.id === id);
                             return (
-                              <div key={id} className="flex items-center justify-between p-3 bg-red-950/5 border border-red-900/5 rounded-xl group">
+                              <div key={id} className="flex items-center justify-between p-3 bg-accent-950/5 border border-accent-900/5 rounded-xl group">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                  <span className="text-[11px] font-mono text-red-100/60">{file?.name}</span>
+                                  <div className="w-1.5 h-1.5 rounded-full bg-accent-500" />
+                                  <span className="text-[11px] font-mono text-accent-100/60">{file?.name}</span>
                                 </div>
-                                <button onClick={() => handleGitStage(id)} className="opacity-0 group-hover:opacity-100 text-[9px] font-black text-red-900 hover:text-red-500 uppercase tracking-widest transition-all">Stage</button>
+                                <button onClick={() => handleGitStage(id)} className="opacity-0 group-hover:opacity-100 text-[9px] font-black text-accent-900 hover:text-accent-500 uppercase tracking-widest transition-all">Stage</button>
                               </div>
                             );
                           })}
-                          {gitRepo.modified.length === 0 && <p className="text-[10px] text-red-900/40 italic">No modified files.</p>}
+                          {gitRepo.modified.length === 0 && <p className="text-[10px] text-accent-900/40 italic">No modified files.</p>}
                         </div>
                       </div>
 
                       {/* Commit History */}
                       <div className="space-y-3">
-                        <h5 className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
+                        <h5 className="text-[10px] font-black text-accent-800 uppercase tracking-widest flex items-center gap-2">
                           <History className="w-3 h-3" />
                           History
                         </h5>
-                        <div className="space-y-4 border-l border-red-900/20 ml-2 pl-4">
+                        <div className="space-y-4 border-l border-accent-900/20 ml-2 pl-4">
                           {gitRepo.commits.map(commit => (
                             <div key={commit.id} className="relative space-y-1">
-                              <div className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-red-900 border border-red-500/30" />
+                              <div className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-accent-900 border border-accent-500/30" />
                               <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-black text-red-100">{commit.message}</span>
-                                <span className="text-[9px] font-mono text-red-900">{commit.id}</span>
+                                <span className="text-[11px] font-black text-accent-100">{commit.message}</span>
+                                <span className="text-[9px] font-mono text-accent-900">{commit.id}</span>
                               </div>
-                              <div className="flex items-center justify-between text-[9px] text-red-900/60 uppercase tracking-widest">
+                              <div className="flex items-center justify-between text-[9px] text-accent-900/60 uppercase tracking-widest">
                                 <span>{commit.author}</span>
                                 <span>{new Date(commit.timestamp).toLocaleTimeString()}</span>
                               </div>
                             </div>
                           ))}
-                          {gitRepo.commits.length === 0 && <p className="text-[10px] text-red-900/40 italic">No commit history.</p>}
+                          {gitRepo.commits.length === 0 && <p className="text-[10px] text-accent-900/40 italic">No commit history.</p>}
                         </div>
                       </div>
                     </div>
@@ -1366,16 +1401,16 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
             {editorMode === 'settings' && (
               <div className="h-full flex flex-col p-4 md:p-8 space-y-6 md:space-y-8 overflow-y-auto custom-scrollbar">
                 <div className="space-y-2">
-                  <h5 className="text-[12px] font-black text-red-500 uppercase tracking-widest flex items-center gap-3">
+                  <h5 className="text-[12px] font-black text-accent-500 uppercase tracking-widest flex items-center gap-3">
                     <Settings className="w-4 h-4" /> Project Configuration
                   </h5>
-                  <p className="text-[10px] text-red-900/60 leading-relaxed">Manage neural build paths, compiler directives, and environment state.</p>
+                  <p className="text-[10px] text-accent-900/60 leading-relaxed">Manage neural build paths, compiler directives, and environment state.</p>
                 </div>
 
                 <div className="space-y-6">
                   {/* Build Path */}
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
+                    <label className="text-[10px] font-black text-accent-800 uppercase tracking-widest flex items-center gap-2">
                       <Folder className="w-3 h-3" /> Build Output Path
                     </label>
                     <input
@@ -1385,14 +1420,14 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                         setProjectSettings(newSettings);
                         validateProjectSettings(newSettings);
                       }}
-                      className={`w-full bg-red-950/10 border ${validationErrors.buildPath ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
+                      className={`w-full bg-accent-950/10 border ${validationErrors.buildPath ? 'border-accent-500' : 'border-accent-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-accent-100 outline-none focus:border-accent-600/40 transition-all`}
                     />
-                    {validationErrors.buildPath && <p className="text-[9px] text-red-500 font-black uppercase tracking-widest">{validationErrors.buildPath}</p>}
+                    {validationErrors.buildPath && <p className="text-[9px] text-accent-500 font-black uppercase tracking-widest">{validationErrors.buildPath}</p>}
                   </div>
 
                   {/* Compiler Flags */}
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
+                    <label className="text-[10px] font-black text-accent-800 uppercase tracking-widest flex items-center gap-2">
                       <Cpu className="w-3 h-3" /> Neural Compiler Flags
                     </label>
                     <input
@@ -1402,32 +1437,32 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                         setProjectSettings(newSettings);
                         validateProjectSettings(newSettings);
                       }}
-                      className={`w-full bg-red-950/10 border ${validationErrors.compilerFlags ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
+                      className={`w-full bg-accent-950/10 border ${validationErrors.compilerFlags ? 'border-accent-500' : 'border-accent-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-accent-100 outline-none focus:border-accent-600/40 transition-all`}
                     />
-                    {validationErrors.compilerFlags && <p className="text-[9px] text-red-500 font-black uppercase tracking-widest">{validationErrors.compilerFlags}</p>}
+                    {validationErrors.compilerFlags && <p className="text-[9px] text-accent-500 font-black uppercase tracking-widest">{validationErrors.compilerFlags}</p>}
                   </div>
 
                   {/* Ollama URL */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
+                      <label className="text-[10px] font-black text-accent-800 uppercase tracking-widest flex items-center gap-2">
                         <Globe className="w-3 h-3" /> Ollama Node URL
                       </label>
                       <div className="flex items-center gap-2">
                         <div className={`w-1.5 h-1.5 rounded-full ${
                           ollamaStatus === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' :
                           ollamaStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' :
-                          ollamaStatus === 'error' ? 'bg-red-500' : 'bg-gray-500'
+                          ollamaStatus === 'error' ? 'bg-accent-500' : 'bg-gray-500'
                         }`} />
                         <span className="text-[8px] font-mono uppercase tracking-tighter opacity-40">
                           {ollamaStatus}
                         </span>
                         <button
                           onClick={() => refreshOllamaModels()}
-                          className="p-1 hover:bg-red-500/10 rounded-md transition-colors"
+                          className="p-1 hover:bg-accent-500/10 rounded-md transition-colors"
                           title="Refresh Models"
                         >
-                          <Zap size={10} className="text-red-500/60" />
+                          <Zap size={10} className="text-accent-500/60" />
                         </button>
                       </div>
                     </div>
@@ -1438,16 +1473,16 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                         setProjectSettings(newSettings);
                         validateProjectSettings(newSettings);
                       }}
-                      className={`w-full bg-red-950/10 border ${validationErrors.ollamaUrl ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
+                      className={`w-full bg-accent-950/10 border ${validationErrors.ollamaUrl ? 'border-accent-500' : 'border-accent-900/20'} rounded-xl px-4 py-3 text-[11px] font-mono text-accent-100 outline-none focus:border-accent-600/40 transition-all`}
                       placeholder="http://127.0.0.1:11434"
                     />
-                    {validationErrors.ollamaUrl && <p className="text-[9px] text-red-500 font-black uppercase tracking-widest">{validationErrors.ollamaUrl}</p>}
+                    {validationErrors.ollamaUrl && <p className="text-[9px] text-accent-500 font-black uppercase tracking-widest">{validationErrors.ollamaUrl}</p>}
                   </div>
 
                   {/* Project Profiles */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
+                      <label className="text-[10px] font-black text-accent-800 uppercase tracking-widest flex items-center gap-2">
                         <UserCircle className="w-3 h-3" /> Project Profiles
                       </label>
                       <button
@@ -1455,7 +1490,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                           ...projectSettings,
                           projectProfiles: [...projectSettings.projectProfiles, { id: Date.now().toString(), name: 'New Profile', instruction: 'New instructions...' }]
                         })}
-                        className="p-1.5 bg-red-900/20 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/40 transition-all"
+                        className="p-1.5 bg-accent-900/20 border border-accent-900/30 rounded-lg text-accent-500 hover:bg-accent-900/40 transition-all"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
@@ -1463,14 +1498,14 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                     <select
                       value={projectSettings.activeProfileId}
                       onChange={(e) => setProjectSettings({...projectSettings, activeProfileId: e.target.value})}
-                      className="w-full bg-red-950/10 border border-red-900/20 rounded-xl px-4 py-2 text-[10px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all"
+                      className="w-full bg-accent-950/10 border border-accent-900/20 rounded-xl px-4 py-2 text-[10px] font-mono text-accent-100 outline-none focus:border-accent-600/40 transition-all"
                     >
                       {projectSettings.projectProfiles.map(p => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
                     {projectSettings.projectProfiles.map((p, idx) => (
-                      <div key={p.id} className="space-y-2 bg-red-950/10 p-3 rounded-xl border border-red-900/10">
+                      <div key={p.id} className="space-y-2 bg-accent-950/10 p-3 rounded-xl border border-accent-900/10">
                         <input
                           placeholder="Profile Name"
                           value={p.name}
@@ -1479,7 +1514,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                             newProfiles[idx].name = e.target.value;
                             setProjectSettings({...projectSettings, projectProfiles: newProfiles});
                           }}
-                          className="w-full bg-transparent border-b border-red-900/20 px-2 py-1 text-[10px] font-black text-red-100 outline-none"
+                          className="w-full bg-transparent border-b border-accent-900/20 px-2 py-1 text-[10px] font-black text-accent-100 outline-none"
                         />
                         <textarea
                           placeholder="Instructions"
@@ -1489,7 +1524,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                             newProfiles[idx].instruction = e.target.value;
                             setProjectSettings({...projectSettings, projectProfiles: newProfiles});
                           }}
-                          className="w-full bg-transparent border border-red-900/20 rounded-lg px-2 py-1 text-[10px] font-mono text-red-100 outline-none h-20"
+                          className="w-full bg-transparent border border-accent-900/20 rounded-lg px-2 py-1 text-[10px] font-mono text-accent-100 outline-none h-20"
                         />
                       </div>
                     ))}
@@ -1498,7 +1533,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                   {/* Environment Variables */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
+                      <label className="text-[10px] font-black text-accent-800 uppercase tracking-widest flex items-center gap-2">
                         <Database className="w-3 h-3" /> Environment Variables
                       </label>
                       <button
@@ -1506,7 +1541,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                           ...projectSettings,
                           envVariables: [...projectSettings.envVariables, { key: '', value: '' }]
                         })}
-                        className="p-1.5 bg-red-900/20 border border-red-900/30 rounded-lg text-red-500 hover:bg-red-900/40 transition-all"
+                        className="p-1.5 bg-accent-900/20 border border-accent-900/30 rounded-lg text-accent-500 hover:bg-accent-900/40 transition-all"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
@@ -1525,7 +1560,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                                 setProjectSettings(newSettings);
                                 validateProjectSettings(newSettings);
                               }}
-                              className={`flex-1 bg-red-950/10 border ${validationErrors[`env_key_${idx}`] ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-2 text-[10px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
+                              className={`flex-1 bg-accent-950/10 border ${validationErrors[`env_key_${idx}`] ? 'border-accent-500' : 'border-accent-900/20'} rounded-xl px-4 py-2 text-[10px] font-mono text-accent-100 outline-none focus:border-accent-600/40 transition-all`}
                             />
                             <input
                               placeholder="VALUE"
@@ -1537,7 +1572,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                                 setProjectSettings(newSettings);
                                 validateProjectSettings(newSettings);
                               }}
-                              className={`flex-2 bg-red-950/10 border ${validationErrors[`env_value_${idx}`] ? 'border-red-500' : 'border-red-900/20'} rounded-xl px-4 py-2 text-[10px] font-mono text-red-100 outline-none focus:border-red-600/40 transition-all`}
+                              className={`flex-2 bg-accent-950/10 border ${validationErrors[`env_value_${idx}`] ? 'border-accent-500' : 'border-accent-900/20'} rounded-xl px-4 py-2 text-[10px] font-mono text-accent-100 outline-none focus:border-accent-600/40 transition-all`}
                             />
                             <button
                               onClick={() => {
@@ -1546,15 +1581,15 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                                 setProjectSettings(newSettings);
                                 validateProjectSettings(newSettings);
                               }}
-                              className="p-2 text-red-900 hover:text-red-500 transition-colors"
+                              className="p-2 text-accent-900 hover:text-accent-500 transition-colors"
                             >
                               <Trash2 className="w-3 h-3" />
                             </button>
                           </div>
                           {(validationErrors[`env_key_${idx}`] || validationErrors[`env_value_${idx}`]) && (
                             <div className="flex flex-col gap-0.5 px-1">
-                              {validationErrors[`env_key_${idx}`] && <p className="text-[8px] text-red-500 font-black uppercase tracking-widest">{validationErrors[`env_key_${idx}`]}</p>}
-                              {validationErrors[`env_value_${idx}`] && <p className="text-[8px] text-red-500 font-black uppercase tracking-widest">{validationErrors[`env_value_${idx}`]}</p>}
+                              {validationErrors[`env_key_${idx}`] && <p className="text-[8px] text-accent-500 font-black uppercase tracking-widest">{validationErrors[`env_key_${idx}`]}</p>}
+                              {validationErrors[`env_value_${idx}`] && <p className="text-[8px] text-accent-500 font-black uppercase tracking-widest">{validationErrors[`env_value_${idx}`]}</p>}
                             </div>
                           )}
                         </div>

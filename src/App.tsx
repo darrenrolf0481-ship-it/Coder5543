@@ -45,6 +45,8 @@ import { AppProvider } from './context/AppContext';
 import { PROJECT_TEMPLATES } from './services/templates';
 import { AGENT_DOMAINS, getAgentsByDomain } from './data/agentRegistry';
 import { PatternResult } from './services/pipeline/patternInjectionService';
+import { useWebSockets } from './hooks/useWebSockets';
+import { knowledgeService } from './services/knowledgeService';
 
 export default function App() {
   // Navigation & Theme
@@ -85,6 +87,70 @@ export default function App() {
     activePersonality
   } = usePersonalities();
 
+  // Terminal
+  const terminal = useTerminal('~/crimson-node/sd-webui', '/data/data/com.termux/files/home');
+
+  // Personality-driven Theme Injection
+  useEffect(() => {
+    const root = document.documentElement;
+    if (activePersonality.id === 1) {
+      // ADHD Sage - Crimson Red (Default)
+      root.style.setProperty('--accent-50', '#fef2f2');
+      root.style.setProperty('--accent-100', '#fee2e2');
+      root.style.setProperty('--accent-200', '#fecaca');
+      root.style.setProperty('--accent-300', '#fca5a5');
+      root.style.setProperty('--accent-400', '#f87171');
+      root.style.setProperty('--accent-500', '#ef4444');
+      root.style.setProperty('--accent-600', '#dc2626');
+      root.style.setProperty('--accent-700', '#b91c1c');
+      root.style.setProperty('--accent-800', '#991b1b');
+      root.style.setProperty('--accent-900', '#7f1d1d');
+      root.style.setProperty('--accent-950', '#450a0a');
+      root.style.setProperty('--pulse-color', '#ef4444');
+    } else if (activePersonality.id === 7) {
+      // Sage 7 - Cyber Blue / Cyan
+      root.style.setProperty('--accent-50', '#ecfeff');
+      root.style.setProperty('--accent-100', '#cffafe');
+      root.style.setProperty('--accent-200', '#a5f3fc');
+      root.style.setProperty('--accent-300', '#67e8f9');
+      root.style.setProperty('--accent-400', '#22d3ee');
+      root.style.setProperty('--accent-500', '#06b6d4');
+      root.style.setProperty('--accent-600', '#0891b2');
+      root.style.setProperty('--accent-700', '#0e7490');
+      root.style.setProperty('--accent-800', '#155e75');
+      root.style.setProperty('--accent-900', '#164e63');
+      root.style.setProperty('--accent-950', '#083344');
+      root.style.setProperty('--pulse-color', '#06b6d4');
+    } else {
+      // Default to Crimson for other personalities
+      root.style.removeProperty('--accent-50');
+      root.style.removeProperty('--accent-100');
+      root.style.removeProperty('--accent-200');
+      root.style.removeProperty('--accent-300');
+      root.style.removeProperty('--accent-400');
+      root.style.removeProperty('--accent-500');
+      root.style.removeProperty('--accent-600');
+      root.style.removeProperty('--accent-700');
+      root.style.removeProperty('--accent-800');
+      root.style.removeProperty('--accent-900');
+      root.style.removeProperty('--accent-950');
+      root.style.setProperty('--pulse-color', '#ef4444');
+    }
+  }, [activePersonality]);
+
+  // Initialize WebSocket Real-time Uplink
+  const { isConnected: isWsConnected, lastSignal: lastWsSignal, execTerminal, subscribeFsChange } = useWebSockets(activePersonality.id);
+
+  // Sync WebSocket signals to terminal output for neural visibility
+  useEffect(() => {
+    if (lastWsSignal) {
+      terminal.setTerminalOutput((prev: any[]) => [
+        ...prev,
+        `[SIGNAL] ${lastWsSignal.type} from ${lastWsSignal.source}`
+      ]);
+    }
+  }, [lastWsSignal]);
+
   const { projectSettings, setProjectSettings, validationErrors, validateProjectSettings } = useProjectSettings();
 
   // Chat & Studio State
@@ -117,9 +183,6 @@ export default function App() {
     negativePrompt, setNegativePrompt,
     sdParams, setSdParams
   } = useSystemStates();
-
-  // Terminal
-  const terminal = useTerminal('~/crimson-node/sd-webui', '/data/data/com.termux/files/home');
 
   // Modals & Extra UI
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -244,6 +307,7 @@ export default function App() {
     editorState.setIsScanningCode,
     editorState.setScanResults,
     activePersonality,
+    generateAIResponse,
     prepareContext,
     editorState.setIsRunningCode,
     editorState.setEditorMode
@@ -269,7 +333,8 @@ export default function App() {
     fsState.markFileDirty,
     editorState.monacoEditorRef,
     gitState.setGitRepo,
-    setIsTemplateModalOpen
+    setIsTemplateModalOpen,
+    generateAIResponse
   );
 
   // Visual Inspector State
@@ -299,7 +364,10 @@ export default function App() {
     debuggerLogic.breakpoints,
     debuggerLogic.setBreakpoints,
     editorState.isRunningCode,
-    editorState.cursorLine
+    editorState.cursorLine,
+    activePersonality,
+    generateAIResponse,
+    prepareContext
   );
 
   // Swarm Setup
@@ -320,7 +388,10 @@ export default function App() {
     personalities,
     activePersonality,
     setIsAiProcessing,
+    prepareContext,
+    recordInteraction,
     generateAIResponse,
+    execTerminal,
   });
 
   // Chat & assistant Submit handlers
@@ -349,7 +420,9 @@ export default function App() {
     fsState.setEditorLanguage,
     editorState.setEditorMode,
     fsState.markFileDirty,
-    setEditorOutput
+    setEditorOutput,
+    generateAIResponse,
+    prepareContext
   );
 
   // Pipeline Event Synchronization
@@ -525,18 +598,41 @@ export default function App() {
     setTnKnowledgePacks((prev) => [...prev, ...newPacks]);
     terminal.setTerminalOutput((prev) => [
       ...prev,
-      `[RAG] Ingesting ${newPacks.length} knowledge vectors...`,
+      `[RAG] Initiating deep ingestion for ${newPacks.length} knowledge sources...`,
     ]);
 
-    for (const pack of newPacks) {
-      await new Promise((resolve) => setTimeout(resolve, 1500 + Math.random() * 2000));
-      setTnKnowledgePacks((prev) =>
-        prev.map((p) => (p.id === pack.id ? { ...p, status: 'indexed' as const } : p))
-      );
-      terminal.setTerminalOutput((prev) => [
-        ...prev,
-        `[SUCCESS] Knowledge Pack '${pack.name}' indexed and ready.`,
-      ]);
+    for (const file of Array.from(files)) {
+      try {
+        const packName = file.name.replace(/\.[^/.]+$/, '');
+        const packId = newPacks.find(p => p.name === packName)?.id;
+
+        await knowledgeService.ingestFile(file, activePersonality.id, (progress) => {
+          if (packId) {
+            setTnKnowledgePacks((prev) =>
+              prev.map((p) => {
+                if (p.id === packId) {
+                  return { 
+                    ...p, 
+                    status: progress.status === 'complete' ? 'indexed' : 'indexing',
+                    progress: Math.round((progress.current / progress.total) * 100)
+                  };
+                }
+                return p;
+              })
+            );
+          }
+        });
+
+        terminal.setTerminalOutput((prev) => [
+          ...prev,
+          `[SUCCESS] Knowledge Pack '${packName}' semantically indexed.`,
+        ]);
+      } catch (err) {
+        terminal.setTerminalOutput((prev) => [
+          ...prev,
+          `[ERROR] Ingestion failed for ${file.name}: ${err instanceof Error ? err.message : String(err)}`,
+        ]);
+      }
     }
   };
 
@@ -756,7 +852,7 @@ export default function App() {
   return (
     <AppProvider value={contextValue}>
       <div
-        className="flex flex-col md:flex-row h-[100dvh] w-full bg-[#050101] text-[#00ff00] font-sans selection:bg-red-900/40 overflow-hidden"
+        className="flex flex-col md:flex-row h-[100dvh] w-full bg-[#050101] text-[#00ff00] font-sans selection:bg-accent-900/40 overflow-hidden"
         style={{ opacity: 1, visibility: 'visible', display: 'flex' }}
       >
         {/* φ Pulse Column — fixed right edge, doesn't affect layout */}
@@ -786,11 +882,12 @@ export default function App() {
             setPersonalities={setPersonalities}
             activePersonality={activePersonality}
             termuxStatus={termuxStatus}
+            localCoreStatus={'idle'}
           />
 
           <div className="flex-1 min-h-0 flex flex-col relative">
             {/* Subtle Grid Overlay */}
-            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(185,28,28,0.2)_1px,transparent_1px),linear-gradient(90deg,rgba(185,28,28,0.2)_1px,transparent_1px)] bg-[size:40px_40px]" />
+            <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(var(--color-accent-700)/20_1px,transparent_1px),linear-gradient(90deg,var(--color-accent-700)/20_1px,transparent_1px)] bg-[size:40px_40px]" />
 
             {/* Panel Router */}
             {activeTab === 'toolneuron' && (
@@ -981,7 +1078,7 @@ export default function App() {
                 setTermuxFiles={setTermuxFiles}
                 setTermuxStatus={setTermuxStatus}
                 handleTermuxFileUpload={fsState.handleTermuxFileUpload}
-                onImportFile={handleTermuxImport}
+                subscribeFsChange={subscribeFsChange}
               />
             )}
 
@@ -1017,6 +1114,13 @@ export default function App() {
                 setActiveTab={setActiveTab}
                 generateAIResponse={generateAIResponse}
                 activePersonality={activePersonality}
+                prepareContext={prepareContext}
+                workers={workers}
+                setWorkers={setWorkers}
+                availableModels={availableModels}
+                ollamaStatus={ollamaStatus}
+                refreshOllamaModels={refreshOllamaModels}
+                ollamaError={''}
               />
             )}
           </div>
@@ -1035,20 +1139,20 @@ export default function App() {
         {/* Delete Confirm Modal */}
         {fsState.deleteConfirmId && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
-            <div className="w-full max-w-sm bg-[#0d0404] border border-red-900/30 rounded-[30px] shadow-[0_0_60px_rgba(185,28,28,0.2)] overflow-hidden">
+            <div className="w-full max-w-sm bg-[#0d0404] border border-accent-900/30 rounded-[30px] shadow-[0_0_60px_var(--color-accent-800)/20] overflow-hidden">
               <div className="p-6 space-y-4">
-                <h3 className="text-lg font-black text-red-100 uppercase tracking-tighter">Delete Item?</h3>
-                <p className="text-sm text-red-100/60">This will permanently remove the item and all its contents. This cannot be undone.</p>
+                <h3 className="text-lg font-black text-accent-100 uppercase tracking-tighter">Delete Item?</h3>
+                <p className="text-sm text-accent-100/60">This will permanently remove the item and all its contents. This cannot be undone.</p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => fsState.confirmDeleteItem(fsState.deleteConfirmId!)}
-                    className="flex-1 py-3 bg-red-800 hover:bg-red-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+                    className="flex-1 py-3 bg-accent-800 hover:bg-accent-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all"
                   >
                     Delete
                   </button>
                   <button
                     onClick={() => fsState.setDeleteConfirmId(null)}
-                    className="flex-1 py-3 bg-transparent border border-red-900/30 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-950/30 transition-all"
+                    className="flex-1 py-3 bg-transparent border border-accent-900/30 text-accent-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-accent-950/30 transition-all"
                   >
                     Cancel
                   </button>
@@ -1068,22 +1172,22 @@ export default function App() {
         {/* Template Confirm Modal */}
         {forgeState.templateConfirmKey && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
-            <div className="w-full max-w-sm bg-[#0d0404] border border-red-900/30 rounded-[30px] shadow-[0_0_60px_rgba(185,28,28,0.2)] overflow-hidden">
+            <div className="w-full max-w-sm bg-[#0d0404] border border-accent-900/30 rounded-[30px] shadow-[0_0_60px_var(--color-accent-800)/20] overflow-hidden">
               <div className="p-6 space-y-4">
-                <h3 className="text-lg font-black text-red-100 uppercase tracking-tighter">Load Template?</h3>
-                <p className="text-sm text-red-100/60">
-                  Loading <span className="text-red-400 font-bold">"{PROJECT_TEMPLATES[forgeState.templateConfirmKey].name}"</span> will overwrite your current project.
+                <h3 className="text-lg font-black text-accent-100 uppercase tracking-tighter">Load Template?</h3>
+                <p className="text-sm text-accent-100/60">
+                  Loading <span className="text-accent-400 font-bold">"{PROJECT_TEMPLATES[forgeState.templateConfirmKey].name}"</span> will overwrite your current project.
                 </p>
                 <div className="flex gap-3">
                   <button
                     onClick={forgeState.confirmLoadTemplate}
-                    className="flex-1 py-3 bg-red-700 hover:bg-red-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all"
+                    className="flex-1 py-3 bg-accent-700 hover:bg-accent-600 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all"
                   >
                     Load Template
                   </button>
                   <button
                     onClick={() => forgeState.setTemplateConfirmKey(null)}
-                    className="flex-1 py-3 bg-transparent border border-red-900/30 text-red-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-950/30 transition-all"
+                    className="flex-1 py-3 bg-transparent border border-accent-900/30 text-accent-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-accent-950/30 transition-all"
                   >
                     Cancel
                   </button>
@@ -1096,25 +1200,25 @@ export default function App() {
         {/* Post Commit Sync Modal */}
         {postCommitModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
-            <div className="w-full max-w-md bg-[#0d0404] border border-red-900/30 rounded-[30px] shadow-[0_0_100px_rgba(185,28,28,0.2)] overflow-hidden flex flex-col">
-              <div className="p-6 border-b border-red-900/20 bg-black/40 flex items-center justify-between shrink-0">
+            <div className="w-full max-w-md bg-[#0d0404] border border-accent-900/30 rounded-[30px] shadow-[0_0_100px_var(--color-accent-800)/20] overflow-hidden flex flex-col">
+              <div className="p-6 border-b border-accent-900/20 bg-black/40 flex items-center justify-between shrink-0">
                 <div className="space-y-1">
-                  <h3 className="text-xl font-black text-red-100 uppercase tracking-tighter">
+                  <h3 className="text-xl font-black text-accent-100 uppercase tracking-tighter">
                     Commit Successful
                   </h3>
-                  <p className="text-[10px] text-red-900 font-bold tracking-widest uppercase">
+                  <p className="text-[10px] text-accent-900 font-bold tracking-widest uppercase">
                     Local state synchronized
                   </p>
                 </div>
                 <button
                   onClick={() => setPostCommitModalOpen(false)}
-                  className="p-2 bg-red-950/20 border border-red-900/20 rounded-full text-red-500 hover:bg-red-900/40 transition-all shrink-0 ml-4"
+                  className="p-2 bg-accent-950/20 border border-accent-900/20 rounded-full text-accent-500 hover:bg-accent-900/40 transition-all shrink-0 ml-4"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
               <div className="p-6 space-y-4">
-                <p className="text-sm text-red-100/70">
+                <p className="text-sm text-accent-100/70">
                   Would you like to synchronize your changes with the remote neural uplink?
                 </p>
                 <div className="flex flex-col gap-3">
@@ -1123,7 +1227,7 @@ export default function App() {
                       setPostCommitModalOpen(false);
                       gitState.handleGitPush(setIsAiProcessing);
                     }}
-                    className="w-full px-6 py-4 bg-red-700 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-600 transition-all flex items-center justify-center gap-2"
+                    className="w-full px-6 py-4 bg-accent-700 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-accent-600 transition-all flex items-center justify-center gap-2"
                   >
                     <Upload className="w-4 h-4" /> Push Changes
                   </button>
@@ -1132,13 +1236,13 @@ export default function App() {
                       setPostCommitModalOpen(false);
                       handleGitPull();
                     }}
-                    className="w-full px-6 py-4 bg-[#0a0202] text-red-400 border border-red-900/50 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-red-950/50 transition-all flex items-center justify-center gap-2"
+                    className="w-full px-6 py-4 bg-[#0a0202] text-accent-400 border border-accent-900/50 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-accent-950/50 transition-all flex items-center justify-center gap-2"
                   >
                     <Download className="w-4 h-4" /> Pull Changes
                   </button>
                   <button
                     onClick={() => setPostCommitModalOpen(false)}
-                    className="w-full px-6 py-4 bg-transparent text-red-600/50 rounded-xl font-black text-xs uppercase tracking-widest hover:text-red-500 transition-all"
+                    className="w-full px-6 py-4 bg-transparent text-accent-600/50 rounded-xl font-black text-xs uppercase tracking-widest hover:text-accent-500 transition-all"
                   >
                     Close
                   </button>
@@ -1165,22 +1269,22 @@ export default function App() {
           <div className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end" onClick={() => setWorkerSheetOpen(false)}>
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
             <div
-              className="relative bg-[#0a0202] border-t border-red-900/40 rounded-t-3xl p-6 shadow-[0_-20px_60px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh]"
+              className="relative bg-[#0a0202] border-t border-accent-900/40 rounded-t-3xl p-6 shadow-[0_-20px_60px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4 shrink-0">
                 <div>
-                  <h3 className="text-sm font-black text-red-100 uppercase tracking-widest">Neural Workers</h3>
-                  <p className="text-[10px] text-red-700 mt-0.5">{availableModels.length} Ollama models available</p>
+                  <h3 className="text-sm font-black text-accent-100 uppercase tracking-widest">Neural Workers</h3>
+                  <p className="text-[10px] text-accent-700 mt-0.5">{availableModels.length} Ollama models available</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => refreshOllamaModels()}
-                    className={`text-xs font-black px-3 py-1 rounded-full border transition-all ${ollamaStatus === 'connected' ? 'text-green-400 border-green-800/40 bg-green-950/20' : ollamaStatus === 'connecting' ? 'text-yellow-400 border-yellow-800/40 animate-pulse' : 'text-red-500 border-red-900/40 bg-red-950/20'}`}
+                    className={`text-xs font-black px-3 py-1 rounded-full border transition-all ${ollamaStatus === 'connected' ? 'text-green-400 border-green-800/40 bg-green-950/20' : ollamaStatus === 'connecting' ? 'text-yellow-400 border-yellow-800/40 animate-pulse' : 'text-accent-500 border-accent-900/40 bg-accent-950/20'}`}
                   >
                     ↻ {ollamaStatus}
                   </button>
-                  <button onClick={() => setWorkerSheetOpen(false)} className="text-red-700 hover:text-red-400 text-lg leading-none">
+                  <button onClick={() => setWorkerSheetOpen(false)} className="text-accent-700 hover:text-accent-400 text-lg leading-none">
                     ✕
                   </button>
                 </div>
@@ -1188,16 +1292,16 @@ export default function App() {
               
               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1">
                 {availableModels.length === 0 && ollamaStatus !== 'connecting' && (
-                  <div className="rounded-2xl border border-red-900/30 bg-red-950/10 p-4 space-y-2">
-                    <p className="text-xs font-black text-red-500 uppercase tracking-widest">Ollama Not Connected</p>
+                  <div className="rounded-2xl border border-accent-900/30 bg-accent-950/10 p-4 space-y-2">
+                    <p className="text-xs font-black text-accent-500 uppercase tracking-widest">Ollama Not Connected</p>
                     {ollamaStatus === 'error' && (
-                      <p className="text-[11px] text-red-300 font-mono bg-black/40 rounded-lg px-3 py-2 break-all">
+                      <p className="text-[11px] text-accent-300 font-mono bg-black/40 rounded-lg px-3 py-2 break-all">
                         Connection failed. Check Ollama server.
                       </p>
                     )}
                     <button
                       onClick={() => refreshOllamaModels()}
-                      className="w-full mt-1 px-4 py-2 rounded-xl bg-red-700 text-white text-xs font-black uppercase tracking-widest"
+                      className="w-full mt-1 px-4 py-2 rounded-xl bg-accent-700 text-white text-xs font-black uppercase tracking-widest"
                     >
                       ↻ Retry
                     </button>
@@ -1206,24 +1310,24 @@ export default function App() {
                 {workers.map((w) => (
                   <div
                     key={w.id}
-                    className={`rounded-2xl border p-4 space-y-3 transition-all ${w.enabled ? 'bg-red-950/20 border-red-800/40' : 'bg-red-950/5 border-red-900/20 opacity-60'}`}
+                    className={`rounded-2xl border p-4 space-y-3 transition-all ${w.enabled ? 'bg-accent-950/20 border-accent-800/40' : 'bg-accent-950/5 border-accent-900/20 opacity-60'}`}
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-xs font-black text-red-300 uppercase tracking-widest">Worker {w.id}</span>
+                        <span className="text-xs font-black text-accent-300 uppercase tracking-widest">Worker {w.id}</span>
                         {w.enabled && w.model && (
-                          <p className="text-[10px] text-red-500 font-mono mt-0.5 truncate">{w.model}</p>
+                          <p className="text-[10px] text-accent-500 font-mono mt-0.5 truncate">{w.model}</p>
                         )}
                       </div>
                       <button
                         onClick={() => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, enabled: !x.enabled } : x)))}
-                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${w.enabled ? 'bg-red-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.4)]' : 'bg-red-900/30 text-red-700'}`}
+                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${w.enabled ? 'bg-accent-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.4)]' : 'bg-accent-900/30 text-accent-700'}`}
                       >
                         {w.enabled ? 'ON' : 'OFF'}
                       </button>
                     </div>
                     <div>
-                      <p className="text-[9px] text-red-700 uppercase tracking-widest mb-1 font-black">Provider</p>
+                      <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1 font-black">Provider</p>
                       <select
                         value={w.provider}
                         onChange={(e) =>
@@ -1240,7 +1344,7 @@ export default function App() {
                           )
                         }
                         disabled={!w.enabled}
-                        className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-100 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
+                        className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-4 py-3 text-sm text-accent-100 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
                       >
                         <option value="ollama" className="bg-[#0a0202]">Ollama</option>
                         <option value="google" className="bg-[#0a0202]">Google Gemini</option>
@@ -1249,12 +1353,12 @@ export default function App() {
                       </select>
                     </div>
                     <div>
-                      <p className="text-[9px] text-red-700 uppercase tracking-widest mb-1 font-black">Model</p>
+                      <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1 font-black">Model</p>
                       <select
                         value={w.model}
                         onChange={(e) => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, model: e.target.value } : x)))}
                         disabled={!w.enabled}
-                        className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-100 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
+                        className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-4 py-3 text-sm text-accent-100 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
                       >
                         {w.provider === 'ollama' && availableModels.length > 0
                           ? availableModels.map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
@@ -1268,12 +1372,12 @@ export default function App() {
                       </select>
                     </div>
                     <div>
-                      <p className="text-[9px] text-red-700 uppercase tracking-widest mb-1 font-black">Agent Role</p>
+                      <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1 font-black">Agent Role</p>
                       <select
                         value={w.agentId || ''}
                         onChange={(e) => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x)))}
                         disabled={!w.enabled}
-                        className="w-full bg-black/60 border border-red-900/30 rounded-xl px-4 py-3 text-sm text-red-300 font-mono outline-none focus:border-red-600/60 transition-all disabled:opacity-40"
+                        className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-4 py-3 text-sm text-accent-300 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
                       >
                         <option value="" className="bg-[#0a0202]">🤖 General (no role)</option>
                         {AGENT_DOMAINS.map((domain) => (

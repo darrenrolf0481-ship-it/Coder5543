@@ -13,15 +13,19 @@ export function useEditorHandlers(
   activeFileId: string,
   projectFiles: any[],
   setProjectFiles: any,
-  markFileDirty: any
+  markFileDirty: any,
+  activePersonality: any,
+  prepareContext: any
 ) {
   const handleFormatCode = useCallback(async (isMobile: boolean = false) => {
     setIsAiProcessing(true);
     try {
+      const prompt = `[Context: language=${editorLanguage}]\n\nFormat this code using standard conventions. ${isMobile ? 'Optimise for mobile: shorter line lengths and vertical layout.' : 'Ensure proper indentation, spacing, and line breaks.'}\n\n\`\`\`${editorLanguage}\n${editorContent}\n\`\`\``;
+      const brainContext = await prepareContext(prompt, activePersonality.id);
       const response = await generateAIResponse(
-        `[Context: language=${editorLanguage}]\n\nFormat this code using standard conventions. ${isMobile ? 'Optimise for mobile: shorter line lengths and vertical layout.' : 'Ensure proper indentation, spacing, and line breaks.'}\n\n\`\`\`${editorLanguage}\n${editorContent}\n\`\`\``,
+        prompt,
         'You are an expert code formatter. Return ONLY the formatted code. Do not wrap in markdown blocks.',
-        { modelType: 'fast' }
+        { modelType: 'fast', brainContext }
       );
 
       if (response) {
@@ -40,12 +44,15 @@ export function useEditorHandlers(
   const handleRefactorCode = useCallback(async () => {
     setIsAiProcessing(true);
     try {
+      const prompt = `[Context: language=${editorLanguage}]\n\nRefactor this code for better performance, readability, and structural integrity.\n\n\`\`\`${editorLanguage}\n${editorContent}\n\`\`\``;
+      const brainContext = await prepareContext(prompt, activePersonality.id);
       const response = await generateAIResponse(
-        `[Context: language=${editorLanguage}]\n\nRefactor this code for better performance, readability, and structural integrity.\n\n\`\`\`${editorLanguage}\n${editorContent}\n\`\`\``,
+        prompt,
         'You are a world-class software architect. You refactor code to be production-ready. Always return valid JSON.',
         {
           modelType: 'smart',
           json: true,
+          brainContext,
           responseSchema: {
             type: Type.OBJECT,
             properties: {
@@ -81,12 +88,15 @@ export function useEditorHandlers(
   const handleGenerateDocs = useCallback(async () => {
     setIsAiProcessing(true);
     try {
+      const prompt = `[Context: language=${editorLanguage}]\n\nGenerate comprehensive documentation (docstrings, JSDoc, or comments) for this code. Focus on explaining the logic, parameters, and return values.\n\n\`\`\`${editorLanguage}\n${editorContent}\n\`\`\``;
+      const brainContext = await prepareContext(prompt, activePersonality.id);
       const response = await generateAIResponse(
-        `[Context: language=${editorLanguage}]\n\nGenerate comprehensive documentation (docstrings, JSDoc, or comments) for this code. Focus on explaining the logic, parameters, and return values.\n\n\`\`\`${editorLanguage}\n${editorContent}\n\`\`\``,
+        prompt,
         `You are a world-class documentation expert. Generate clear, concise, and helpful documentation for the provided ${editorLanguage} code. Always return valid JSON.`,
         {
           modelType: 'smart',
           json: true,
+          brainContext,
           responseSchema: {
             type: Type.OBJECT,
             properties: {

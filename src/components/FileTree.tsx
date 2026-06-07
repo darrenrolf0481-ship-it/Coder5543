@@ -125,11 +125,11 @@ const TreeRow = memo((props: TreeRowProps) => {
   if (index >= rows.length) {
     return (
       <div style={style}
-        className="flex items-center gap-2 rounded-xl border border-dashed border-red-500/40 bg-red-950/20 text-[10px] font-mono px-3"
+        className="flex items-center gap-2 rounded-xl border border-dashed border-accent-500/40 bg-accent-950/20 text-[10px] font-mono px-3"
       >
         {creating?.type === 'folder'
-          ? <FolderPlus className="w-3.5 h-3.5 text-red-400 shrink-0" />
-          : <FilePlus   className="w-3.5 h-3.5 text-red-400 shrink-0" />}
+          ? <FolderPlus className="w-3.5 h-3.5 text-accent-400 shrink-0" />
+          : <FilePlus   className="w-3.5 h-3.5 text-accent-400 shrink-0" />}
         <input
           autoFocus
           placeholder={creating?.type === 'folder' ? 'folder-name' : 'file.ts'}
@@ -139,7 +139,7 @@ const TreeRow = memo((props: TreeRowProps) => {
             if (e.key === 'Escape') { setCreating(null); setNewName(''); }
           }}
           onBlur={confirmCreate}
-          className="flex-1 bg-transparent border-b border-red-500/50 text-red-100 outline-none"
+          className="flex-1 bg-transparent border-b border-accent-500/50 text-accent-100 outline-none"
         />
       </div>
     );
@@ -171,15 +171,15 @@ const TreeRow = memo((props: TreeRowProps) => {
         className={[
           'group flex items-center gap-2 pr-2 rounded-xl text-[11px] font-black uppercase tracking-widest cursor-pointer transition-all duration-150 select-none',
           isActive
-            ? 'bg-red-700 text-white border border-red-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+            ? 'bg-accent-700 text-white border border-accent-500 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
             : isDragOver
-              ? 'bg-red-900/50 border border-red-500/60 text-red-200'
+              ? 'bg-accent-900/50 border border-accent-500/60 text-accent-200'
               : node.type === 'folder'
                 ? isExpanded
-                  ? 'bg-red-950/30 text-red-300 border border-red-900/30 hover:bg-red-900/40'
-                  : 'text-red-800 border border-transparent hover:bg-red-950/20 hover:text-red-400'
+                  ? 'bg-accent-950/30 text-accent-300 border border-accent-900/30 hover:bg-accent-900/40'
+                  : 'text-accent-800 border border-transparent hover:bg-accent-950/20 hover:text-accent-400'
                 : [
-                    'text-red-900 border border-transparent hover:bg-red-950/20 hover:text-red-500',
+                    'text-accent-900 border border-transparent hover:bg-accent-950/20 hover:text-accent-500',
                     isModified && 'border-l-2 border-l-orange-500',
                     isStaged   && 'border-l-2 border-l-green-500',
                   ].filter(Boolean).join(' '),
@@ -205,7 +205,7 @@ const TreeRow = memo((props: TreeRowProps) => {
             }}
             onBlur={confirmRename}
             onClick={e => e.stopPropagation()}
-            className="flex-1 bg-red-950/60 border border-red-500/60 rounded px-2 py-0.5 text-white outline-none font-mono text-[10px] normal-case tracking-normal"
+            className="flex-1 bg-accent-950/60 border border-accent-500/60 rounded px-2 py-0.5 text-white outline-none font-mono text-[10px] normal-case tracking-normal"
           />
         ) : (
           <span className="flex-1 truncate flex items-center gap-1.5">
@@ -213,7 +213,7 @@ const TreeRow = memo((props: TreeRowProps) => {
             {isModified && <Edit2  className="w-2.5 h-2.5 text-orange-400 shrink-0" />}
             {isStaged   && <Check  className="w-2.5 h-2.5 text-green-400  shrink-0" />}
             {!isModified && !isStaged && node.type === 'file' &&
-              <GitBranch className="w-2.5 h-2.5 text-red-900/40 shrink-0" />}
+              <GitBranch className="w-2.5 h-2.5 text-accent-900/40 shrink-0" />}
           </span>
         )}
 
@@ -237,12 +237,12 @@ const TreeRow = memo((props: TreeRowProps) => {
       {/* Inline create input rendered inside the folder row's div */}
       {isCreatingHere && (
         <div
-          className="flex items-center gap-2 rounded-xl border border-dashed border-red-500/40 bg-red-950/20 text-[10px] font-mono"
+          className="flex items-center gap-2 rounded-xl border border-dashed border-accent-500/40 bg-accent-950/20 text-[10px] font-mono"
           style={{ paddingLeft: `${(depth + 1) * 14 + 12}px`, paddingTop: 6, paddingBottom: 6, paddingRight: 8, height: ROW_HEIGHT }}
         >
           {creating!.type === 'folder'
-            ? <FolderPlus className="w-3.5 h-3.5 text-red-400 shrink-0" />
-            : <FilePlus   className="w-3.5 h-3.5 text-red-400 shrink-0" />}
+            ? <FolderPlus className="w-3.5 h-3.5 text-accent-400 shrink-0" />
+            : <FilePlus   className="w-3.5 h-3.5 text-accent-400 shrink-0" />}
           <input
             autoFocus
             placeholder={creating!.type === 'folder' ? 'folder-name' : 'file.ts'}
@@ -253,7 +253,7 @@ const TreeRow = memo((props: TreeRowProps) => {
               if (e.key === 'Escape') { setCreating(null); setNewName(''); }
             }}
             onBlur={confirmCreate}
-            className="flex-1 bg-transparent border-b border-red-500/50 text-red-100 outline-none"
+            className="flex-1 bg-transparent border-b border-accent-500/50 text-accent-100 outline-none"
           />
         </div>
       )}
@@ -400,39 +400,39 @@ const TermuxBrowser: React.FC<{
   }, [data, browse]);
 
   return (
-    <div className="mt-3 rounded-xl border border-red-800/40 bg-red-950/30 text-[10px] font-mono overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-red-900/30 bg-black/30">
-        <div className="flex items-center gap-2 text-red-400 font-black uppercase tracking-widest text-[9px] min-w-0">
+    <div className="mt-3 rounded-xl border border-accent-800/40 bg-accent-950/30 text-[10px] font-mono overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-accent-900/30 bg-black/30">
+        <div className="flex items-center gap-2 text-accent-400 font-black uppercase tracking-widest text-[9px] min-w-0">
           <HardDrive className="w-3 h-3 shrink-0" />
           <span className="truncate" title={data?.path}>{data?.path ?? '…'}</span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {data && (
             <>
-              <button onClick={handleCreateDir} className="p-1 hover:bg-red-500/10 rounded-md transition-colors text-red-500" title="Create Folder">
+              <button onClick={handleCreateDir} className="p-1 hover:bg-accent-500/10 rounded-md transition-colors text-accent-500" title="Create Folder">
                 <FolderPlus className="w-3.5 h-3.5" />
               </button>
-              <label className="p-1 hover:bg-red-500/10 rounded-md cursor-pointer transition-colors text-red-500" title="Upload Files">
+              <label className="p-1 hover:bg-accent-500/10 rounded-md cursor-pointer transition-colors text-accent-500" title="Upload Files">
                 <Upload className="w-3.5 h-3.5" />
                 <input type="file" className="hidden" multiple onChange={(e) => handleUpload(e, false)} />
               </label>
-              <label className="p-1 hover:bg-red-500/10 rounded-md cursor-pointer transition-colors text-red-500" title="Upload Folder">
+              <label className="p-1 hover:bg-accent-500/10 rounded-md cursor-pointer transition-colors text-accent-500" title="Upload Folder">
                 <Folder className="w-3.5 h-3.5" />
                 <input type="file" className="hidden" {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={(e) => handleUpload(e, true)} />
               </label>
             </>
           )}
-          <button onClick={onClose} className="text-red-900 hover:text-red-400 transition-colors ml-1">
+          <button onClick={onClose} className="text-accent-900 hover:text-accent-400 transition-colors ml-1">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
       {loading && (
-        <div className="px-3 py-4 text-red-900 text-center">Loading…</div>
+        <div className="px-3 py-4 text-accent-900 text-center">Loading…</div>
       )}
       {err && (
-        <div className="px-3 py-2 text-red-500">{err}</div>
+        <div className="px-3 py-2 text-accent-500">{err}</div>
       )}
 
       {!loading && data && (
@@ -440,34 +440,34 @@ const TermuxBrowser: React.FC<{
           {data.path !== data.parent && (
             <button
               onClick={() => browse(data.parent)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-red-800 hover:bg-red-900/20 hover:text-red-400 transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-accent-800 hover:bg-accent-900/20 hover:text-accent-400 transition-colors"
             >
               <ChevronDown className="w-3 h-3 rotate-90 shrink-0" />
               <span>.. (up)</span>
             </button>
           )}
           {data.entries.length === 0 && (
-            <div className="px-3 py-3 text-red-900">Empty directory</div>
+            <div className="px-3 py-3 text-accent-900">Empty directory</div>
           )}
           {data.entries.map(e => (
-            <div key={e.path} className="w-full flex items-center hover:bg-red-900/20 transition-colors group">
+            <div key={e.path} className="w-full flex items-center hover:bg-accent-900/20 transition-colors group">
               <button
                 onClick={() => importFile(e)}
                 title={e.type === 'file' ? `Import ${e.name}` : `Open ${e.name}`}
                 className="flex-1 flex items-center gap-2 px-3 py-1.5 text-left min-w-0"
               >
                 {e.type === 'dir'
-                  ? <Folder className="w-3.5 h-3.5 text-red-700 shrink-0" />
-                  : <FileCode className="w-3.5 h-3.5 text-red-900 shrink-0" />}
-                <span className="flex-1 truncate text-red-300">{e.name}</span>
+                  ? <Folder className="w-3.5 h-3.5 text-accent-700 shrink-0" />
+                  : <FileCode className="w-3.5 h-3.5 text-accent-900 shrink-0" />}
+                <span className="flex-1 truncate text-accent-300">{e.name}</span>
                 {e.type === 'file' && (
-                  <Download className="w-3 h-3 text-red-900 group-hover:text-red-400 shrink-0" />
+                  <Download className="w-3 h-3 text-accent-900 group-hover:text-accent-400 shrink-0" />
                 )}
               </button>
               <button
                 onClick={() => handleDeleteEntry(e.path)}
                 title={`Delete ${e.name}`}
-                className="p-1.5 text-red-950 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all mr-1 shrink-0"
+                className="p-1.5 text-accent-950 hover:text-accent-500 opacity-0 group-hover:opacity-100 transition-all mr-1 shrink-0"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -724,12 +724,12 @@ export const FileTree: React.FC<FileTreeProps> = ({
 
       {/* Git Repository Cloner */}
       {showCloner && (
-        <div className="mb-3 p-3 flex flex-col gap-2 bg-red-950/30 border border-red-900/30 rounded-xl">
-          <div className="flex items-center justify-between border-b border-red-900/20 pb-1.5 mb-1">
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-red-400 flex items-center gap-1.5">
+        <div className="mb-3 p-3 flex flex-col gap-2 bg-accent-950/30 border border-accent-900/30 rounded-xl">
+          <div className="flex items-center justify-between border-b border-accent-900/20 pb-1.5 mb-1">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-accent-400 flex items-center gap-1.5">
               <Github className="w-3.5 h-3.5" /> Clone Git Repository
             </span>
-            <button onClick={() => setShowCloner(false)} className="text-red-900 hover:text-red-400 transition-colors">
+            <button onClick={() => setShowCloner(false)} className="text-accent-900 hover:text-accent-400 transition-colors">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -740,7 +740,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
             value={repoUrl} 
             onChange={e => setRepoUrl(e.target.value)}
             disabled={cloning}
-            className="w-full bg-black/40 text-[10px] font-mono text-red-100 outline-none border border-red-900/40 focus:border-red-600/50 rounded-lg px-2.5 py-1.5 normal-case tracking-normal"
+            className="w-full bg-black/40 text-[10px] font-mono text-accent-100 outline-none border border-accent-900/40 focus:border-accent-600/50 rounded-lg px-2.5 py-1.5 normal-case tracking-normal"
           />
           
           <div className="flex gap-2">
@@ -749,17 +749,17 @@ export const FileTree: React.FC<FileTreeProps> = ({
               value={branchName} 
               onChange={e => setBranchName(e.target.value)}
               disabled={cloning}
-              className="flex-1 bg-black/40 text-[10px] font-mono text-red-100 outline-none border border-red-900/40 focus:border-red-600/50 rounded-lg px-2.5 py-1.5 normal-case tracking-normal"
+              className="flex-1 bg-black/40 text-[10px] font-mono text-accent-100 outline-none border border-accent-900/40 focus:border-accent-600/50 rounded-lg px-2.5 py-1.5 normal-case tracking-normal"
             />
             
             <button 
               onClick={handleCloneRepo}
               disabled={cloning || !repoUrl.trim()}
-              className="text-[9px] font-black uppercase tracking-widest text-red-100 hover:text-white transition-all px-3 py-1.5 rounded-lg bg-red-800 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+              className="text-[9px] font-black uppercase tracking-widest text-accent-100 hover:text-white transition-all px-3 py-1.5 rounded-lg bg-accent-800 hover:bg-accent-600 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
             >
               {cloning ? (
                 <span className="flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 border-2 border-red-200 border-t-transparent rounded-full animate-spin" />
+                  <span className="w-2.5 h-2.5 border-2 border-accent-200 border-t-transparent rounded-full animate-spin" />
                   Cloning...
                 </span>
               ) : (
@@ -768,14 +768,14 @@ export const FileTree: React.FC<FileTreeProps> = ({
             </button>
           </div>
           {cloneErr && (
-            <div className="text-[9px] text-red-500 font-mono mt-1 border-t border-red-950/40 pt-1.5">{cloneErr}</div>
+            <div className="text-[9px] text-accent-500 font-mono mt-1 border-t border-accent-950/40 pt-1.5">{cloneErr}</div>
           )}
         </div>
       )}
 
       {/* New project form */}
       {showNewProject && (
-        <div className="mb-3 flex gap-2 items-center bg-red-950/30 border border-red-900/30 rounded-xl px-3 py-2">
+        <div className="mb-3 flex gap-2 items-center bg-accent-950/30 border border-accent-900/30 rounded-xl px-3 py-2">
           <input
             autoFocus placeholder="Project name..."
             value={projectName} onChange={e => setProjectName(e.target.value)}
@@ -783,10 +783,10 @@ export const FileTree: React.FC<FileTreeProps> = ({
               if (e.key === 'Enter')  handleNewProject();
               if (e.key === 'Escape') { setShowNewProject(false); setProjectName(''); }
             }}
-            className="flex-1 bg-transparent text-[10px] font-mono text-red-100 outline-none border-b border-red-500/40 normal-case tracking-normal"
+            className="flex-1 bg-transparent text-[10px] font-mono text-accent-100 outline-none border-b border-accent-500/40 normal-case tracking-normal"
           />
           <button onClick={handleNewProject}
-            className="text-[9px] font-black uppercase tracking-widest text-red-400 hover:text-white transition-colors px-2 py-1 rounded bg-red-900/40 hover:bg-red-700">
+            className="text-[9px] font-black uppercase tracking-widest text-accent-400 hover:text-white transition-colors px-2 py-1 rounded bg-accent-900/40 hover:bg-accent-700">
             Create
           </button>
         </div>
@@ -802,14 +802,14 @@ export const FileTree: React.FC<FileTreeProps> = ({
 
       {/* Search */}
       <div className="relative mb-3 shrink-0">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-red-900/60 pointer-events-none" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-accent-900/60 pointer-events-none" />
         <input
           value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search nodes..."
-          className="w-full bg-red-950/20 border border-red-900/20 rounded-xl pl-8 pr-8 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-red-100 placeholder:text-red-900/40 outline-none focus:border-red-600/40 transition-all"
+          className="w-full bg-accent-950/20 border border-accent-900/20 rounded-xl pl-8 pr-8 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-accent-100 placeholder:text-accent-900/40 outline-none focus:border-accent-600/40 transition-all"
         />
         {search && (
-          <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-red-900/60 hover:text-red-400">
+          <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-accent-900/60 hover:text-accent-400">
             <X className="w-3 h-3" />
           </button>
         )}
@@ -818,7 +818,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
       {/* Virtualised tree */}
       <div ref={containerRef} className="flex-1 min-h-0">
         {flatRows.length === 0 && !creating ? (
-          <div className="text-center py-8 text-red-900/40 text-[10px] font-black uppercase tracking-widest">
+          <div className="text-center py-8 text-accent-900/40 text-[10px] font-black uppercase tracking-widest">
             No nodes — create one above
           </div>
         ) : (
@@ -838,22 +838,22 @@ export const FileTree: React.FC<FileTreeProps> = ({
       {ctxMenu && ctxItem && (
         <div ref={ctxRef}
           style={{ position: 'fixed', top: ctxMenu.y, left: ctxMenu.x, zIndex: 9999 }}
-          className="bg-[#100202] border border-red-900/40 rounded-xl shadow-2xl py-1 min-w-[160px] text-[10px] font-black uppercase tracking-widest"
+          className="bg-[#100202] border border-accent-900/40 rounded-xl shadow-2xl py-1 min-w-[160px] text-[10px] font-black uppercase tracking-widest"
           onClick={e => e.stopPropagation()}
         >
           {ctxItem.type === 'folder' && (
             <>
               <CtxItem icon={<FilePlus   className="w-3.5 h-3.5" />} label="New File"   onClick={() => startCreate(ctxItem.id, 'file')} />
               <CtxItem icon={<FolderPlus className="w-3.5 h-3.5" />} label="New Folder" onClick={() => startCreate(ctxItem.id, 'folder')} />
-              <div className="border-t border-red-900/30 my-1" />
+              <div className="border-t border-accent-900/30 my-1" />
             </>
           )}
           {ctxItem.type === 'file' && (
             <CtxItem icon={<Copy className="w-3.5 h-3.5" />} label="Duplicate" onClick={() => duplicateItem(ctxItem.id)} />
           )}
           <CtxItem icon={<Edit2  className="w-3.5 h-3.5" />} label="Rename" onClick={() => startRename(ctxItem.id)} />
-          <div className="border-t border-red-900/30 my-1" />
-          <CtxItem icon={<Trash2 className="w-3.5 h-3.5 text-red-500" />} label="Delete" danger onClick={() => deleteItem(ctxItem.id)} />
+          <div className="border-t border-accent-900/30 my-1" />
+          <CtxItem icon={<Trash2 className="w-3.5 h-3.5 text-accent-500" />} label="Delete" danger onClick={() => deleteItem(ctxItem.id)} />
         </div>
       )}
     </div>
@@ -868,7 +868,7 @@ const Btn: React.FC<{
 }> = ({ title, danger, onClick, children }) => (
   <button title={title} onClick={onClick}
     className={`p-1.5 rounded-lg transition-colors ${
-      danger ? 'text-red-700 hover:text-red-400 hover:bg-red-900/20' : 'text-red-900/60 hover:text-red-300 hover:bg-red-950/40'
+      danger ? 'text-accent-700 hover:text-accent-400 hover:bg-accent-900/20' : 'text-accent-900/60 hover:text-accent-300 hover:bg-accent-950/40'
     }`}
   >
     {children}
@@ -880,7 +880,7 @@ const CtxItem: React.FC<{
 }> = ({ icon, label, danger, onClick }) => (
   <button onClick={onClick}
     className={`w-full flex items-center gap-2.5 px-3 py-2 transition-colors ${
-      danger ? 'text-red-400 hover:bg-red-900/30' : 'text-red-300 hover:bg-red-950/40'
+      danger ? 'text-accent-400 hover:bg-accent-900/30' : 'text-accent-300 hover:bg-accent-950/40'
     }`}
   >
     {icon}{label}

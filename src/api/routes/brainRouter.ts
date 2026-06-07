@@ -6,11 +6,11 @@ import { spawn } from 'child_process';
 const router = Router();
 
 router.post('/context', async (req, res) => {
-  const { input } = req.body as { input?: string };
+  const { input, personalityId } = req.body as { input?: string; personalityId?: number };
   if (!input) { res.status(400).json({ error: 'input required' }); return; }
   const [context, mode] = await Promise.all([
-    brainService.prepareContext(input),
-    brainService.resolveOperationMode(input),
+    brainService.prepareContext(input, personalityId),
+    brainService.resolveOperationMode(input), // resolveOperationMode could also benefit from personalityId in future
   ]);
   res.json({ context, mode });
 });

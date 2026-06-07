@@ -39,7 +39,7 @@ export function useEditorFileSystem(
       parentId: 'src',
       language: 'html',
       content:
-        '<div class="p-8 bg-red-900/20 rounded-3xl border border-red-500/30">\n  <h1 class="text-2xl font-black text-red-500 uppercase">Neural Interface</h1>\n  <p class="text-red-100/60 mt-4">Real-time UI component rendering via Crimson Engine.</p>\n  <button class="mt-8 px-6 py-3 bg-red-700 text-white rounded-xl uppercase font-black text-xs tracking-widest">Activate Core</button>\n</div>',
+        '<div class="p-8 bg-accent-950/20 rounded-3xl border border-accent-500/30">\n  <h1 class="text-2xl font-black text-accent-500 uppercase">Neural Interface</h1>\n  <p class="text-accent-100/60 mt-4">Real-time UI component rendering via Crimson Engine.</p>\n  <button class="mt-8 px-6 py-3 bg-accent-700 text-white rounded-xl uppercase font-black text-xs tracking-widest">Activate Core</button>\n</div>',
     },
     {
       id: 'logic.rs',

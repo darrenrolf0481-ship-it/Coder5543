@@ -1,0 +1,98 @@
+import { useEffect, useRef, useState } from 'react';
+import { io, Socket } from 'socket.io-client';
+
+const SOCKET_URL = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '/';
+
+export function useWebSockets(activePersonalityId?: number) {
+  const socketRef = useRef<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastSignal, setLastSignal] = useState<any>(null);
+
+  // Callbacks for specific stream types
+  const onTerminalOutputRef = useRef<((data: { type: 'stdout' | 'stderr' | 'close'; text?: string; exitCode?: number }) => void) | null>(null);
+  const onFsChangeRef = useRef<((data: { event: string; path: string }) => void) | null>(null);
+
+  useEffect(() => {
+    const socket = io(SOCKET_URL, {
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+    });
+
+    socket.on('connect', () => {
+      setIsConnected(true);
+      console.log('[WS] Connected to Crimson Uplink');
+      
+      if (activePersonalityId) {
+        socket.emit('join_room', `personality_${activePersonalityId}`);
+      }
+    });
+
+    socket.on('terminal_stdout', (data) => {
+      onTerminalOutputRef.current?.({ type: 'stdout', text: data.text });
+    });
+
+    socket.on('terminal_stderr', (data) => {
+      onTerminalOutputRef.current?.({ type: 'stderr', text: data.text });
+    });
+
+    socket.on('terminal_close', (data) => {
+      onTerminalOutputRef.current?.({ type: 'close', exitCode: data.exitCode });
+    });
+
+    socket.on('fs_change', (data) => {
+      onFsChangeRef.current?.(data);
+    });
+
+    socket.on('BROKER_SIGNAL', (signal: any) => {
+      setLastSignal(signal);
+    });
+
+    socket.on('SIGNAL_PERSONALITY', (signal: any) => {
+      console.log('[WS] Targeted Personality Signal:', signal);
+      setLastSignal(signal);
+    });
+
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+    });
+
+    socketRef.current = socket;
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  // Update room when personality changes
+  useEffect(() => {
+    if (socketRef.current && isConnected && activePersonalityId) {
+      socketRef.current.emit('join_room', `personality_${activePersonalityId}`);
+    }
+  }, [activePersonalityId, isConnected]);
+
+  const sendSignal = (type: string, data: any, source: string = 'chat', meta: any = {}) => {
+    if (socketRef.current && isConnected) {
+      socketRef.current.emit('SIGNAL_RAW', { type, data, source, meta });
+    }
+  };
+
+  const execTerminal = (cmd: string, cwd?: string, onOutput?: (data: any) => void) => {
+    if (socketRef.current && isConnected) {
+      onTerminalOutputRef.current = onOutput || null;
+      socketRef.current.emit('terminal_exec', { cmd, cwd });
+    }
+  };
+
+  const killTerminal = () => {
+    if (socketRef.current && isConnected) {
+      socketRef.current.emit('terminal_kill');
+    }
+  };
+
+  const subscribeFsChange = (callback: (data: any) => void) => {
+    onFsChangeRef.current = callback;
+    return () => { onFsChangeRef.current = null; };
+  };
+
+  return { isConnected, lastSignal, sendSignal, execTerminal, killTerminal, subscribeFsChange };
+}

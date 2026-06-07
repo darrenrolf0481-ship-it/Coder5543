@@ -50,6 +50,7 @@ import brainRouter from './src/api/routes/brainRouter.js';
 import terminalRouter from './src/api/routes/terminalRouter.js';
 import githubRouter from './src/api/routes/githubRouter.js';
 import ollamaRouter from './src/api/routes/ollamaRouter.js';
+import { WebSocketBridge } from './src/services/bridge/WebSocketBridge.js';
 
 const execAsync = promisify(exec);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -61,6 +62,8 @@ async function startServer() {
   // ── Security & Observability ───────────────────────────────────────────────
   app.use(helmet({
     contentSecurityPolicy: false, // Disable for Vite dev overlay/HMR
+    crossOriginEmbedderPolicy: { policy: 'require-corp' },
+    crossOriginOpenerPolicy: { policy: 'same-origin' },
   }));
 
   const limiter = rateLimit({
@@ -124,6 +127,10 @@ async function startServer() {
       logger.info('[Pipeline] Stages: ingestion → filtering → pattern_injection');
     });
 
+    // Initialize WebSocket Bridge
+    const wsBridge = new WebSocketBridge(httpServer);
+    (globalThis as any).wsBridge = wsBridge;
+
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
@@ -137,9 +144,13 @@ async function startServer() {
     app.use(express.static(distPath));
     app.use((_req, res) => res.sendFile(path.join(distPath, 'index.html')));
 
-    app.listen(PORT, '0.0.0.0', () => {
+    const httpServer = app.listen(PORT, '0.0.0.0', () => {
       logger.info(`[Server] Running on http://localhost:${PORT}`);
     });
+
+    // Initialize WebSocket Bridge
+    const wsBridge = new WebSocketBridge(httpServer);
+    (globalThis as any).wsBridge = wsBridge;
   }
 }
 

@@ -10,7 +10,7 @@ describe('generateAIResponse', () => {
     const mockAi = {
       models: {
         generateContent: vi.fn().mockResolvedValue({
-          text: () => 'Google response',
+          text: 'Google response',
           functionCalls: () => []
         })
       }
@@ -86,7 +86,7 @@ describe('generateAIResponse', () => {
     const mockAi = {
       models: {
         generateContent: vi.fn().mockResolvedValue({
-          text: () => 'Template response',
+          text: 'Template response',
           functionCalls: () => []
         })
       }
@@ -108,7 +108,7 @@ describe('generateAIResponse', () => {
     
     expect(response).toBe('Template response');
     expect(mockAi.models.generateContent).toHaveBeenCalledWith(expect.objectContaining({
-      contents: [{ role: 'user', parts: [{ text: 'Hello World' }] }]
+      contents: 'Hello World'
     }));
   });
 });

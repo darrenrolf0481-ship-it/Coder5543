@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import path from 'node:path';
 import { createMcpServer } from '../../src/mcp/server.js';
 
 async function rpc(
@@ -13,7 +14,7 @@ async function rpc(
 describe('MCP progress notifications', () => {
   it('emits progress events during tools/call when client supplies a token', async () => {
     const notifications: string[] = [];
-    const server = createMcpServer(process.cwd(), {
+    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'), {
       notify: (payload) => {
         notifications.push(payload);
       },
@@ -47,7 +48,7 @@ describe('MCP progress notifications', () => {
 
   it('does NOT emit progress when client omits progressToken', async () => {
     const notifications: string[] = [];
-    const server = createMcpServer(process.cwd(), {
+    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'), {
       notify: (payload) => {
         notifications.push(payload);
       },

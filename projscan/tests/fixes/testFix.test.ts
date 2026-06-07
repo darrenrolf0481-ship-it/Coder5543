@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import fs from 'node:fs/promises';
-import { testFix } from '../../src/fixes/testFix.js';
 
 vi.mock('node:child_process', () => ({
   execSync: vi.fn(),
@@ -14,9 +13,10 @@ vi.mock('../../src/utils/fileHelpers.js', () => ({
 
 import { execSync } from 'node:child_process';
 import { fileExists } from '../../src/utils/fileHelpers.js';
+import { testFix } from '../../src/fixes/testFix.js';
 
 describe('testFix', () => {
-  beforeEach(() => vi.restoreAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('has correct metadata', () => {
     expect(testFix.id).toBe('add-tests');

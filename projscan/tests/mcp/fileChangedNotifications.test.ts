@@ -39,7 +39,7 @@ describe('MCP notifications/file_changed (1.3+)', () => {
     });
     const result = init.result as { capabilities: Record<string, unknown> };
     expect(result.capabilities.experimental).toBeUndefined();
-    server.close();
+    await server.close();
   });
 
   it('advertises experimental.fileChanged when watch is on', async () => {
@@ -60,7 +60,7 @@ describe('MCP notifications/file_changed (1.3+)', () => {
     expect(result.capabilities.experimental?.fileChanged).toEqual({
       method: 'notifications/file_changed',
     });
-    server.close();
+    await server.close();
   });
 
   it('emits notifications/file_changed on a real file change (watch on)', async () => {
@@ -100,7 +100,7 @@ describe('MCP notifications/file_changed (1.3+)', () => {
     expect(typeof params.scannedFiles).toBe('number');
     expect(typeof params.timestampMs).toBe('number');
 
-    server.close();
+    await server.close();
   });
 
   it('does NOT emit notifications/file_changed when watch is off', async () => {
@@ -122,6 +122,6 @@ describe('MCP notifications/file_changed (1.3+)', () => {
       .filter((n) => n.method === 'notifications/file_changed');
 
     expect(fileChanged.length).toBe(0);
-    server.close();
+    await server.close();
   });
 });

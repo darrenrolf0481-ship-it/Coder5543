@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "lastUpdatedAt": "2026-06-06T19:33:29.604Z",
+  "rules": {
+    "missing-readme": {
+      "ruleId": "missing-readme",
+      "firstSeenAt": "2026-06-06T19:33:11.324Z",
+      "lastSeenAt": "2026-06-06T19:33:29.563Z",
+      "runCount": 4,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "missing-editorconfig": {
+      "ruleId": "missing-editorconfig",
+      "firstSeenAt": "2026-06-06T19:33:11.324Z",
+      "lastSeenAt": "2026-06-06T19:33:29.563Z",
+      "runCount": 4,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "missing-prettier": {
+      "ruleId": "missing-prettier",
+      "firstSeenAt": "2026-06-06T19:33:11.416Z",
+      "lastSeenAt": "2026-06-06T19:33:29.563Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "gitignore-missing-env": {
+      "ruleId": "gitignore-missing-env",
+      "firstSeenAt": "2026-06-06T19:33:11.416Z",
+      "lastSeenAt": "2026-06-06T19:33:29.563Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    }
+  },
+  "hotspots": {},
+  "totalRuns": 4
+}

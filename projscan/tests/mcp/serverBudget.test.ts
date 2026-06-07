@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import path from 'node:path';
 import { createMcpServer } from '../../src/mcp/server.js';
 
 async function roundtrip(server: ReturnType<typeof createMcpServer>, req: object): Promise<Record<string, unknown>> {
@@ -14,7 +15,7 @@ describe('MCP server budget sidecar', () => {
     // output large enough to truncate under a tight max_tokens budget.
     // Instead of setting up a full repo, we use a very small max_tokens so
     // that ~any result gets truncated.
-    const server = createMcpServer(process.cwd());
+    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
     await roundtrip(server, { jsonrpc: '2.0', id: 1, method: 'initialize', params: {} });
 
     const resp = await roundtrip(server, {

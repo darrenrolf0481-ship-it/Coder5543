@@ -18,13 +18,13 @@ export function useBrain() {
     }
   }, []);
 
-  const prepareContext = useCallback(async (input: string): Promise<BrainContext | null> => {
+  const prepareContext = useCallback(async (input: string, personalityId?: number): Promise<BrainContext | null> => {
     if (!isBrainActive) return null;
     try {
       const res = await fetch(`${API_BASE}/context`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input }),
+        body: JSON.stringify({ input, personalityId }),
       });
       if (!res.ok) throw new Error('Failed to prepare context');
       const { context } = await res.json();

@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { makePrompt } from '../../utils/crimson-core';
 import { extractJson } from '../../utils/helpers';
-import { generateAIResponse } from '../../services/aiService';
 
 export function useAnalysisHandlers(
   editorContent: string,
@@ -18,6 +17,7 @@ export function useAnalysisHandlers(
   setIsScanningCode: any,
   setScanResults: any,
   activePersonality: any,
+  generateAIResponse: any,
   prepareContext: any,
   setIsRunningCode: any,
   setEditorMode: any

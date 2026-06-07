@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import fs from 'node:fs/promises';
-import { prettierFix } from '../../src/fixes/prettierFix.js';
 
 vi.mock('node:child_process', () => ({
   execSync: vi.fn(),
@@ -9,9 +8,10 @@ vi.mock('node:child_process', () => ({
 vi.mock('node:fs/promises');
 
 import { execSync } from 'node:child_process';
+import { prettierFix } from '../../src/fixes/prettierFix.js';
 
 describe('prettierFix', () => {
-  beforeEach(() => vi.restoreAllMocks());
+  beforeEach(() => vi.clearAllMocks());
 
   it('has correct metadata', () => {
     expect(prettierFix.id).toBe('add-prettier');

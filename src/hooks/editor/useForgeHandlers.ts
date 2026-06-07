@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Type } from '../../services/googleGenAiStub';
 import { makePrompt, markEphemeral } from '../../utils/crimson-core';
-import { generateAIResponse } from '../../services/aiService';
 import { PROJECT_TEMPLATES } from '../../services/templates';
 import { extractJson } from '../../utils/helpers';
 
@@ -24,7 +23,8 @@ export function useForgeHandlers(
   markFileDirty: any,
   monacoEditorRef: any,
   setGitRepo: any,
-  setIsTemplateModalOpen: any
+  setIsTemplateModalOpen: any,
+  generateAIResponse: any
 ) {
   const [generatePrompt, setGeneratePrompt] = useState('');
   const [generateMode, setGenerateMode] = useState<'snippet' | 'file'>('snippet');

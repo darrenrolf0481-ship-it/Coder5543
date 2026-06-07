@@ -72,7 +72,7 @@ export function usePersonalities() {
       const stored = localStorage.getItem('node_preferences');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed.aiProvider === 'google' || parsed.aiProvider === 'openrouter' || parsed.aiModel?.includes('gemini-3')) {
+        if (parsed.aiProvider !== 'ollama' || parsed.aiModel !== 'llama3.2:latest') {
           parsed.aiProvider = 'ollama';
           parsed.aiModel = 'llama3.2:latest';
         }

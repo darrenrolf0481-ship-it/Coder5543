@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { Type } from '../../services/googleGenAiStub';
-import { generateAIResponse } from '../../services/aiService';
 
 export function useDebuggerHandlers(
   editorContent: string,
@@ -17,7 +16,10 @@ export function useDebuggerHandlers(
   breakpoints: number[],
   setBreakpoints: any,
   isRunningCode: boolean,
-  cursorLine: number
+  cursorLine: number,
+  activePersonality: any,
+  generateAIResponse: any,
+  prepareContext: any
 ) {
   const handleToggleCurrentLineBreakpoint = useCallback(() => {
     setBreakpoints((prev: number[]) =>
@@ -31,8 +33,7 @@ export function useDebuggerHandlers(
     setEditorOutput((prev: string) => prev + '\n[DEBUG] Initializing neural debugging session...');
 
     try {
-      const response = await generateAIResponse(
-        `Initialize a debugging session for this ${editorLanguage} code. 
+      const prompt = `Initialize a debugging session for this ${editorLanguage} code. 
         Analyze the logic and provide:
         1. An initial execution state (current line, variables, call stack).
         2. A set of predicted hotspots where logic might fail.
@@ -40,11 +41,17 @@ export function useDebuggerHandlers(
         Code:
         ${editorContent}
         
-        Return a JSON object with fields: 'currentLine' (number), 'variables' (object), 'callStack' (array of strings), and 'hotspots' (array of objects with 'line' and 'reason').`,
+        Return a JSON object with fields: 'currentLine' (number), 'variables' (object), 'callStack' (array of strings), and 'hotspots' (array of objects with 'line' and 'reason').`;
+
+      const brainContext = await prepareContext(prompt, activePersonality.id);
+
+      const response = await generateAIResponse(
+        prompt,
         'You are a world-class debugger and code analyst. Always return valid JSON.',
         {
           modelType: 'smart',
           json: true,
+          brainContext,
           responseSchema: {
             type: Type.OBJECT,
             properties: {
@@ -99,8 +106,7 @@ export function useDebuggerHandlers(
 
     setIsAiProcessing(true);
     try {
-      const response = await generateAIResponse(
-        `Simulate the next step of execution for this ${editorLanguage} code. 
+      const prompt = `Simulate the next step of execution for this ${editorLanguage} code. 
         Current State:
         Line: ${debugState.currentLine}
         Variables: ${JSON.stringify(debugState.variables)}
@@ -109,11 +115,17 @@ export function useDebuggerHandlers(
         Code:
         ${editorContent}
         
-        Return the new state (currentLine, variables, callStack) after one step.`,
+        Return the new state (currentLine, variables, callStack) after one step.`;
+      
+      const brainContext = await prepareContext(prompt, activePersonality.id);
+
+      const response = await generateAIResponse(
+        prompt,
         'You are a precise code execution simulator. Always return valid JSON.',
         {
           modelType: 'smart',
           json: true,
+          brainContext,
           responseSchema: {
             type: Type.OBJECT,
             properties: {
@@ -145,8 +157,7 @@ export function useDebuggerHandlers(
 
     setIsAiProcessing(true);
     try {
-      const response = await generateAIResponse(
-        `Analyze and refactor this ${editorLanguage} code. 
+      const prompt = `Analyze and refactor this ${editorLanguage} code. 
 The debugger is currently at line ${debugState.currentLine}.
 Current variables in scope: ${JSON.stringify(debugState.variables)}.
 Current call stack: ${debugState.callStack.join(' -> ')}.
@@ -155,11 +166,17 @@ Code to refactor:
 ${editorContent}
 
 Provide a refactored version that improves quality, fixes potential issues, or optimizes performance. 
-Return a JSON object with 'refactoredCode' and 'explanation' fields.`,
+Return a JSON object with 'refactoredCode' and 'explanation' fields.`;
+
+      const brainContext = await prepareContext(prompt, activePersonality.id);
+
+      const response = await generateAIResponse(
+        prompt,
         'You are a world-class software architect and debugger. You provide precise refactorings and clear explanations. Always return valid JSON.',
         {
           modelType: 'smart',
           json: true,
+          brainContext,
           responseSchema: {
             type: Type.OBJECT,
             properties: {

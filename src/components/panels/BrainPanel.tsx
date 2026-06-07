@@ -12,14 +12,23 @@ export const BrainPanel: React.FC = () => {
   };
 
   const getCortisolColor = (val: number) => {
-    if (val > 0.7) return 'text-red-500';
-    if (val > 0.4) return 'text-red-300';
-    return 'text-red-100/40';
+    if (val > 0.7) return 'text-accent-500';
+    if (val > 0.4) return 'text-accent-300';
+    return 'text-accent-100/40';
   };
 
+  if (!endocrine) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center bg-black/60 backdrop-blur-md border border-accent-950/40 rounded-2xl p-6 text-white/50 space-y-4 shadow-[inset_0_0_20px_var(--color-accent-700)/05]">
+        <Activity className="animate-pulse text-purple-400" size={24} />
+        <span className="text-xs uppercase tracking-widest font-black">Synchronizing Synapses...</span>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full flex flex-col bg-black/60 backdrop-blur-md border border-red-950/40 rounded-2xl overflow-hidden shadow-[inset_0_0_20px_rgba(185,28,28,0.05)]">
-      <div className="p-4 border-b border-red-950/30 flex items-center justify-between bg-red-950/10">
+    <div className="h-full flex flex-col bg-black/60 backdrop-blur-md border border-accent-950/40 rounded-2xl overflow-hidden shadow-[inset_0_0_20px_var(--color-accent-700)/05]">
+      <div className="p-4 border-b border-accent-950/30 flex items-center justify-between bg-accent-950/10">
         <div className="flex items-center gap-3">
           <div className={`p-2 rounded-lg ${isBrainActive ? 'bg-purple-500/20 text-purple-400' : 'bg-gray-500/20 text-gray-400'}`}>
             <Brain size={20} />
@@ -33,7 +42,7 @@ export const BrainPanel: React.FC = () => {
           <button 
             onClick={() => setIsBrainActive(!isBrainActive)}
             className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all ${
-              isBrainActive ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-red-950/10 text-white/30 border border-red-900/20'
+              isBrainActive ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-accent-950/10 text-white/30 border border-accent-900/20'
             }`}
           >
             {isBrainActive ? 'Active' : 'Offline'}
@@ -50,7 +59,7 @@ export const BrainPanel: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-red-950/10 border border-red-900/20 backdrop-blur-md rounded-xl p-4 shadow-[inset_0_0_15px_rgba(185,28,28,0.05)]">
+            <div className="bg-accent-950/10 border border-accent-900/20 backdrop-blur-md rounded-xl p-4 shadow-[inset_0_0_15px_var(--color-accent-700)/05]">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-[10px] font-bold uppercase text-white/40">Dopamine</span>
                 <Zap size={12} className={getDopamineColor(endocrine.dopamine)} />
@@ -65,7 +74,7 @@ export const BrainPanel: React.FC = () => {
               <p className="text-[9px] text-white/30 mt-2 italic">Drives learning & exploration</p>
             </div>
 
-            <div className="bg-red-950/10 border border-red-900/20 backdrop-blur-md rounded-xl p-4 shadow-[inset_0_0_15px_rgba(185,28,28,0.05)]">
+            <div className="bg-accent-950/10 border border-accent-900/20 backdrop-blur-md rounded-xl p-4 shadow-[inset_0_0_15px_var(--color-accent-700)/05]">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-[10px] font-bold uppercase text-white/40">Cortisol</span>
                 <AlertTriangle size={12} className={getCortisolColor(endocrine.cortisol)} />
@@ -73,7 +82,7 @@ export const BrainPanel: React.FC = () => {
               <div className="text-2xl font-black text-white mb-2">{(endocrine.cortisol * 100).toFixed(0)}%</div>
               <div className="h-1 bg-white/10 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-red-500 transition-all duration-500" 
+                  className="h-full bg-accent-500 transition-all duration-500" 
                   style={{ width: `${endocrine.cortisol * 100}%` }}
                 />
               </div>
@@ -132,7 +141,7 @@ export const BrainPanel: React.FC = () => {
             </button>
             <button 
               onClick={refreshState}
-              className="px-4 flex items-center justify-center bg-red-950/10 hover:bg-red-950/20 border border-red-900/20 text-white/60 rounded-xl transition-all shadow-[inset_0_0_10px_rgba(185,28,28,0.05)]"
+              className="px-4 flex items-center justify-center bg-accent-950/10 hover:bg-accent-950/20 border border-accent-900/20 text-white/60 rounded-xl transition-all shadow-[inset_0_0_10px_var(--color-accent-700)/05]"
             >
               <RefreshCw size={14} />
             </button>
@@ -140,7 +149,7 @@ export const BrainPanel: React.FC = () => {
         </section>
       </div>
 
-      <div className="p-4 bg-red-950/10 border-t border-red-900/20">
+      <div className="p-4 bg-accent-950/10 border-t border-accent-900/20">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
           <span className="text-[9px] font-bold uppercase text-white/30 tracking-widest">Synaptic Link Synchronized</span>

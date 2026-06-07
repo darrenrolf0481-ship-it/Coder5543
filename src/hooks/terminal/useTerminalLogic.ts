@@ -16,7 +16,7 @@ export function useTerminalLogic(
     personalities: any[];
     activePersonality: any;
     setIsAiProcessing: (processing: boolean) => void;
-    prepareContext: (prompt: string) => Promise<any>;
+    prepareContext: (prompt: string, personalityId?: number) => Promise<any>;
     recordInteraction: (intent: string, response: string, outcome: 'success' | 'failure' | 'neutral') => Promise<void>;
     generateAIResponse: (
       prompt: string | any[],
@@ -29,6 +29,7 @@ export function useTerminalLogic(
       },
       domain?: string
     ) => Promise<string>;
+    execTerminal: (cmd: string, cwd?: string, onOutput?: (data: any) => void) => void;
   }
 ) {
   const {
@@ -56,7 +57,8 @@ export function useTerminalLogic(
     setIsAiProcessing,
     prepareContext,
     recordInteraction,
-    generateAIResponse
+    generateAIResponse,
+    execTerminal
   } = deps;
 
   const commonCommands = [
@@ -69,7 +71,7 @@ export function useTerminalLogic(
   const getAiTerminalAssistance = async (prompt: string) => {
     setIsAiProcessing(true);
     try {
-      const brainContext = await prepareContext(prompt);
+      const brainContext = await prepareContext(prompt, activePersonality.id);
       const systemState = `
 Current System State:
 - Active Tab: ${activeTab}
@@ -135,28 +137,39 @@ Current System State:
 
     const runShellCmd = async (shellCmd: string) => {
       setIsAiProcessing(true);
-      try {
-        const res = await fetch('./api/terminal/exec', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${(window as any).__SESSION_TOKEN__ || ''}`
-          },
-          body: JSON.stringify({ cmd: shellCmd, cwd: realCwd }),
-        });
-        const data = await res.json() as { stdout: string; stderr: string; exitCode: number; newCwd: string };
-        if (data.newCwd) setRealCwd(data.newCwd);
-        const lines: string[] = [];
-        if (data.stdout) lines.push(...stripAnsi(data.stdout).trimEnd().split('\n').filter(Boolean));
-        if (data.stderr) lines.push(...stripAnsi(data.stderr).trimEnd().split('\n').filter(Boolean).map((l: string) => `[ERROR] ${l}`));
-        if (lines.length === 0 && data.exitCode === 0) lines.push('[OK]');
-        else if (lines.length === 0 && data.exitCode !== 0) lines.push(`[ERROR] Command exited with code ${data.exitCode}`);
-        setTerminalOutput((prev: string[]) => [...prev, ...lines]);
-      } catch {
-        setTerminalOutput((prev: string[]) => [...prev, '[ERROR] Shell bridge unreachable.']);
-      } finally {
-        setIsAiProcessing(false);
+
+      // Handle 'cd' locally for state tracking (still needs backend pwd check)
+      if (/^cd(\s|$)/.test(shellCmd.trim())) {
+         try {
+           const res = await fetch('./api/terminal/exec', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ cmd: shellCmd, cwd: realCwd }),
+           });
+           const data = await res.json();
+           if (data.newCwd) setRealCwd(data.newCwd);
+           if (data.stderr) setTerminalOutput((prev: string[]) => [...prev, `[ERROR] ${stripAnsi(data.stderr)}`]);
+         } catch {
+           setTerminalOutput((prev: string[]) => [...prev, '[ERROR] Shell bridge unreachable.']);
+         } finally {
+           setIsAiProcessing(false);
+         }
+         return;
       }
+
+      // Use WebSocket for streaming execution
+      execTerminal(shellCmd, realCwd, (data) => {
+        if (data.type === 'stdout' && data.text) {
+          setTerminalOutput((prev: string[]) => [...prev, ...stripAnsi(data.text).split('\n').filter(Boolean)]);
+        } else if (data.type === 'stderr' && data.text) {
+          setTerminalOutput((prev: string[]) => [...prev, `[ERROR] ${stripAnsi(data.text)}`]);
+        } else if (data.type === 'close') {
+          setIsAiProcessing(false);
+          if (data.exitCode !== 0 && data.exitCode !== null) {
+            setTerminalOutput((prev: string[]) => [...prev, `[SYSTEM] Process exited with code ${data.exitCode}`]);
+          }
+        }
+      });
     };
 
     if (finalCmd === 'clear') {

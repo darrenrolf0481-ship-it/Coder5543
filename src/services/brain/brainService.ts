@@ -20,7 +20,7 @@ export class BrainService {
    * Pre-processes a user prompt with biological-inspired layers.
    * Returns a enriched context to be sent to the AI.
    */
-  async prepareContext(input: string): Promise<BrainContext> {
+  async prepareContext(input: string, personalityId?: number): Promise<BrainContext> {
     logger.info(`[Brain] Preparing context for input: "${input.substring(0, 50)}${input.length > 50 ? '...' : ''}"`);
     
     // 1. Associative Layer: Correct typos and jargon
@@ -38,7 +38,8 @@ export class BrainService {
 
     // 3. Memory Retrieval
     const recentStm = this.stm.getAll();
-    const relevantExperiences = await this.ltm.findSimilar(corrected, 3);
+    const tags = personalityId ? [`personality_${personalityId}`, 'knowledge'] : undefined;
+    const relevantExperiences = await this.ltm.findSimilar(corrected, 3, tags);
     logger.info(`[Brain] Retrieved ${relevantExperiences.length} relevant experiences from LTM`);
 
     // 4. Endocrine State

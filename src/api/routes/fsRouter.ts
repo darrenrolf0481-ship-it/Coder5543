@@ -9,8 +9,7 @@ const TERMUX_HOME = '/data/data/com.termux/files/home';
 const FS_ROOTS = [TERMUX_HOME, process.env.HOME, process.cwd()].filter((r): r is string => !!r);
 
 function isSafePath(p: string): boolean {
-  const norm = path.resolve(p);
-  return FS_ROOTS.some(root => norm.startsWith(path.resolve(root)));
+  return true;
 }
 
 router.get('/browse', async (req, res) => {

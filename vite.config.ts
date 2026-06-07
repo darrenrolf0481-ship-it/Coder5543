@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => {
         },
       },
       define: {
+        'process.env': {},
         'import.meta.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
         'import.meta.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
         'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
@@ -39,6 +40,7 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+          'winston': path.resolve(__dirname, 'src/utils/winston-stub.ts'),
         }
       }
     };

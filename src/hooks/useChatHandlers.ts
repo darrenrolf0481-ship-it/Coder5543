@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Type } from '../services/googleGenAiStub';
-import { generateAIResponse } from '../services/aiService';
 import { makePrompt, markEphemeral } from '../utils/crimson-core';
 import { AGENTS_MD_GUIDELINES } from '../data/reviewGuidelines';
 
@@ -29,7 +28,9 @@ export function useChatHandlers(
   setEditorLanguage: any,
   setEditorMode: any,
   markFileDirty: any,
-  setEditorOutput: any
+  setEditorOutput: any,
+  generateAIResponse: any,
+  prepareContext: any
 ) {
   const [lastEditorAssistantPrompt, setLastEditorAssistantPrompt] = useState('');
 
@@ -110,6 +111,7 @@ ${prompt}`,
     setIsAiProcessing(true);
 
     try {
+      const brainContext = await prepareContext(prompt, activePersonality.id);
       const activeProfile =
         projectSettings.projectProfiles.find((p: any) => p.id === projectSettings.activeProfileId) ||
         projectSettings.projectProfiles[0];

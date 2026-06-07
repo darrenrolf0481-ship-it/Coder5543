@@ -32,12 +32,12 @@ export const CodeBlock: React.FC<{ children: any; className?: string }> = ({ chi
     <div className="relative group/code my-4">
       <button
         onClick={handleCopy}
-        className="absolute right-2 top-2 p-1.5 bg-red-950/80 border border-red-500/30 rounded-md text-red-400 opacity-0 group-hover/code:opacity-100 transition-all hover:bg-red-900 hover:text-white z-10"
+        className="absolute right-2 top-2 p-1.5 bg-accent-950/80 border border-accent-500/30 rounded-md text-accent-400 opacity-0 group-hover/code:opacity-100 transition-all hover:bg-accent-900 hover:text-white z-10"
         title="Copy code"
       >
         {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
       </button>
-      <pre className="overflow-x-auto p-4 bg-black/40 rounded-xl border border-red-900/20">
+      <pre className="overflow-x-auto p-4 bg-black/40 rounded-xl border border-accent-900/20">
         <code className={className}>{children}</code>
       </pre>
     </div>
@@ -54,7 +54,7 @@ export const SafeMarkdown: React.FC<{ children: string }> = ({ children }) => {
           return !inline ? (
             <CodeBlock className={className}>{children}</CodeBlock>
           ) : (
-            <code className={`${className} bg-red-950/30 px-1 rounded text-red-400`} {...props}>
+            <code className={`${className} bg-accent-950/30 px-1 rounded text-accent-400`} {...props}>
               {children}
             </code>
           );
