@@ -1,0 +1,39 @@
+{
+  "hotspots": {
+    "available": true,
+    "window": {
+      "since": "12 months ago",
+      "commitsScanned": 43
+    },
+    "hotspots": [
+      {
+        "relativePath": "src/utils/logger.ts",
+        "churn": 1,
+        "distinctAuthors": 1,
+        "daysSinceLastChange": 1,
+        "lineCount": 52,
+        "cyclomaticComplexity": 5,
+        "sizeBytes": 1121,
+        "issueCount": 0,
+        "issueIds": [],
+        "riskScore": 53.1,
+        "reasons": [
+          "1 commit",
+          "changed this week"
+        ],
+        "primaryAuthor": "darrenrolf0481@example.com",
+        "primaryAuthorShare": 1,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 1
+          }
+        ],
+        "coverage": null
+      }
+    ],
+    "totalFilesRanked": 1
+  }
+}

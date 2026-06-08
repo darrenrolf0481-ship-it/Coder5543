@@ -26,7 +26,6 @@
     "@webcontainer/api": "^1.6.4",
     "better-sqlite3": "^12.10.0",
     "chokidar": "^5.0.0",
-    "dep": "^0.18.3",
     "dompurify": "^3.4.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",

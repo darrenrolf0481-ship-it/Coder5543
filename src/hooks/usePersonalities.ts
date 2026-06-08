@@ -6,14 +6,18 @@ import type { Personality } from '../data/personalities';
 export function usePersonalities() {
   const [personalities, setPersonalities] = useState<Personality[]>(INITIAL_PERSONALITIES);
   
-  const [geminiApiKey, setGeminiApiKey] = useState<string>(() => {
+  // Memoize the initial preferences from localStorage to avoid redundant parsing
+  const initialPrefs = useMemo(() => {
     try {
       const stored = localStorage.getItem('node_preferences');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.geminiApiKey) return parsed.geminiApiKey;
-      }
-    } catch {}
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const [geminiApiKey, setGeminiApiKey] = useState<string>(() => {
+    if (initialPrefs.geminiApiKey) return initialPrefs.geminiApiKey;
     try {
       return (import.meta as any).env?.VITE_GEMINI_API_KEY || '';
     } catch {
@@ -22,24 +26,12 @@ export function usePersonalities() {
   });
 
   const [grokApiKey, setGrokApiKey] = useState<string>(() => {
-    try {
-      const stored = localStorage.getItem('node_preferences');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.grokApiKey) return parsed.grokApiKey;
-      }
-    } catch {}
+    if (initialPrefs.grokApiKey) return initialPrefs.grokApiKey;
     return '';
   });
 
   const [openrouterApiKey, setOpenrouterApiKey] = useState<string>(() => {
-    try {
-      const stored = localStorage.getItem('node_preferences');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.openrouterApiKey) return parsed.openrouterApiKey;
-      }
-    } catch {}
+    if (initialPrefs.openrouterApiKey) return initialPrefs.openrouterApiKey;
     try {
       return (import.meta as any).env?.VITE_OPENROUTER_API_KEY || '';
     } catch {

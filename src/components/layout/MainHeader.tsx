@@ -164,11 +164,29 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
           <Gauge className="w-4 h-4 text-accent-600" />
           <span className="font-black tracking-widest">88%</span>
         </div>
-        <div
-          title={termuxStatus === 'connected' ? 'Node Bridge Online' : 'Node Bridge Offline'}
-          className={`w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full ${termuxStatus === 'connected' ? 'bg-accent-500 glow-accent' : 'bg-accent-950/40 border border-accent-900/30'}`}
-          aria-label={termuxStatus === 'connected' ? 'Node Bridge Online' : 'Node Bridge Offline'}
-        />
+        <div className="flex items-center gap-3 md:gap-4 shrink-0">
+          <div className="flex flex-col items-end">
+            <span className="hidden xs:block text-[7px] font-black text-accent-900 uppercase tracking-widest leading-none mb-1">Local Core</span>
+            <div
+              title={`Local Core (WebContainer): ${localCoreStatus}`}
+              className={`w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full transition-all duration-500 ${
+                localCoreStatus === 'online' ? 'bg-cyan-500 glow-cyan shadow-[0_0_10px_rgba(6,182,212,0.6)]' :
+                localCoreStatus === 'booting' ? 'bg-yellow-500 animate-pulse' :
+                localCoreStatus === 'error' ? 'bg-red-500' :
+                'bg-accent-950/40 border border-accent-900/30'
+              }`}
+              aria-label={`Local Core status: ${localCoreStatus}`}
+            />
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="hidden xs:block text-[7px] font-black text-accent-900 uppercase tracking-widest leading-none mb-1">Node Bridge</span>
+            <div
+              title={termuxStatus === 'connected' ? 'Node Bridge Online' : 'Node Bridge Offline'}
+              className={`w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full transition-all duration-500 ${termuxStatus === 'connected' ? 'bg-accent-500 glow-accent' : 'bg-accent-950/40 border border-accent-900/30'}`}
+              aria-label={termuxStatus === 'connected' ? 'Node Bridge Online' : 'Node Bridge Offline'}
+            />
+          </div>
+        </div>
       </div>
     </header>
   );

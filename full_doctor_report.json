@@ -1,0 +1,589 @@
+{
+  "health": {
+    "score": 0,
+    "grade": "F",
+    "totalIssues": 41,
+    "errors": 1,
+    "warnings": 1,
+    "info": 39,
+    "issues": [
+      {
+        "id": "private-key-committed",
+        "title": "Private key file committed: serena.key",
+        "description": "The file \"serena.key\" appears to be a private key. Remove it and add to .gitignore.",
+        "severity": "error",
+        "category": "security",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "serena.key",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-dependency-dep",
+        "title": "Unused dependency: dep",
+        "description": "The package \"dep\" is declared in package.json but never imported from source files under that package. If it's used only in package.json scripts or as a plugin, add it to the projscan allowlist via .projscanrc → disableRules.",
+        "severity": "warning",
+        "category": "dependencies",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "package.json",
+            "line": 29
+          }
+        ],
+        "suggestedAction": {
+          "summary": "Remove or wire up \"dep\"."
+        }
+      },
+      {
+        "id": "unused-exports-ask_sage.py",
+        "title": "Unused names in ask_sage.py",
+        "description": "4 named names (KEY_FILE, get_api_key, send_to_sage, main) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "ask_sage.py",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-inject_node_bridge.py",
+        "title": "Unused names in inject_node_bridge.py",
+        "description": "12 named names (file_path, new_props, idx, file_path, new_logic, … +7) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "inject_node_bridge.py",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-refactor_settings.py",
+        "title": "Unused names in refactor_settings.py",
+        "description": "3 named names (file_path, new_decl, start_idx) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "refactor_settings.py",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/context/AppContext.tsx",
+        "title": "Unused exports in src/context/AppContext.tsx",
+        "description": "2 named exports (AppProvider, useAppContext) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/context/AppContext.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/useAiOrchestrator.ts",
+        "title": "Unused exports in src/hooks/useAiOrchestrator.ts",
+        "description": "1 named export (useAiOrchestrator) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/useAiOrchestrator.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/useAiRequest.ts",
+        "title": "Unused exports in src/hooks/useAiRequest.ts",
+        "description": "2 named exports (AiDomain, useAiRequest) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/useAiRequest.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/useChatHandlers.ts",
+        "title": "Unused exports in src/hooks/useChatHandlers.ts",
+        "description": "1 named export (useChatHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/useChatHandlers.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/useDebugging.ts",
+        "title": "Unused exports in src/hooks/useDebugging.ts",
+        "description": "1 named export (useDebugging) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/useDebugging.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/useEditorHandlers.ts",
+        "title": "Unused exports in src/hooks/useEditorHandlers.ts",
+        "description": "1 named export (useEditorHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/useEditorHandlers.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/usePersonalities.ts",
+        "title": "Unused exports in src/hooks/usePersonalities.ts",
+        "description": "1 named export (usePersonalities) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/usePersonalities.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/usePipeline.ts",
+        "title": "Unused exports in src/hooks/usePipeline.ts",
+        "description": "4 named exports (PipelineStats, DispatchOptions, UsePipelineReturn, usePipeline) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/usePipeline.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/useSwarm.ts",
+        "title": "Unused exports in src/hooks/useSwarm.ts",
+        "description": "3 named exports (SwarmAgent, SwarmLog, useSwarm) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/useSwarm.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/useThrottledStorage.ts",
+        "title": "Unused exports in src/hooks/useThrottledStorage.ts",
+        "description": "1 named export (useThrottledStorage) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/useThrottledStorage.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/useWebContainer.ts",
+        "title": "Unused exports in src/hooks/useWebContainer.ts",
+        "description": "1 named export (useWebContainer) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/useWebContainer.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/useWebSockets.ts",
+        "title": "Unused exports in src/hooks/useWebSockets.ts",
+        "description": "1 named export (useWebSockets) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/useWebSockets.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/services/knowledgeService.ts",
+        "title": "Unused exports in src/services/knowledgeService.ts",
+        "description": "3 named exports (IngestionProgress, KnowledgeService, knowledgeService) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/services/knowledgeService.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/utils/vfsUtils.ts",
+        "title": "Unused exports in src/utils/vfsUtils.ts",
+        "description": "1 named export (transformToWebContainerTree) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/utils/vfsUtils.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/utils/winston-stub.ts",
+        "title": "Unused exports in src/utils/winston-stub.ts",
+        "description": "1 named export (createLogger) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/utils/winston-stub.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/layout/MainHeader.tsx",
+        "title": "Unused exports in src/components/layout/MainHeader.tsx",
+        "description": "1 named export (MainHeader) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/layout/MainHeader.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/layout/MobileBottomNav.tsx",
+        "title": "Unused exports in src/components/layout/MobileBottomNav.tsx",
+        "description": "1 named export (MobileBottomNav) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/layout/MobileBottomNav.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/layout/Sidebar.tsx",
+        "title": "Unused exports in src/components/layout/Sidebar.tsx",
+        "description": "1 named export (Sidebar) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/layout/Sidebar.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/modals/CommitModal.tsx",
+        "title": "Unused exports in src/components/modals/CommitModal.tsx",
+        "description": "1 named export (CommitModal) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/modals/CommitModal.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/modals/GenerateModal.tsx",
+        "title": "Unused exports in src/components/modals/GenerateModal.tsx",
+        "description": "1 named export (GenerateModal) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/modals/GenerateModal.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/modals/TemplateModal.tsx",
+        "title": "Unused exports in src/components/modals/TemplateModal.tsx",
+        "description": "1 named export (TemplateModal) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/modals/TemplateModal.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/panels/AnalysisPanel.tsx",
+        "title": "Unused exports in src/components/panels/AnalysisPanel.tsx",
+        "description": "1 named export (AnalysisPanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/panels/AnalysisPanel.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/panels/BrainPanel.tsx",
+        "title": "Unused exports in src/components/panels/BrainPanel.tsx",
+        "description": "1 named export (BrainPanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/panels/BrainPanel.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/panels/EditorPanel.tsx",
+        "title": "Unused exports in src/components/panels/EditorPanel.tsx",
+        "description": "1 named export (EditorPanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/panels/EditorPanel.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/panels/NodeBridgePanel.tsx",
+        "title": "Unused exports in src/components/panels/NodeBridgePanel.tsx",
+        "description": "1 named export (NodeBridgePanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/panels/NodeBridgePanel.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/panels/StoragePanel.tsx",
+        "title": "Unused exports in src/components/panels/StoragePanel.tsx",
+        "description": "1 named export (StoragePanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/panels/StoragePanel.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/panels/TerminalPanel.tsx",
+        "title": "Unused exports in src/components/panels/TerminalPanel.tsx",
+        "description": "1 named export (TerminalPanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/panels/TerminalPanel.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/components/panels/ToolNeuronPanel.tsx",
+        "title": "Unused exports in src/components/panels/ToolNeuronPanel.tsx",
+        "description": "1 named export (ToolNeuronPanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/components/panels/ToolNeuronPanel.tsx",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/editor/useAnalysisHandlers.ts",
+        "title": "Unused exports in src/hooks/editor/useAnalysisHandlers.ts",
+        "description": "1 named export (useAnalysisHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/editor/useAnalysisHandlers.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/editor/useDebuggerHandlers.ts",
+        "title": "Unused exports in src/hooks/editor/useDebuggerHandlers.ts",
+        "description": "1 named export (useDebuggerHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/editor/useDebuggerHandlers.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/editor/useEditorLogic.ts",
+        "title": "Unused exports in src/hooks/editor/useEditorLogic.ts",
+        "description": "1 named export (useEditorLogic) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/editor/useEditorLogic.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/editor/useFileSystem.ts",
+        "title": "Unused exports in src/hooks/editor/useFileSystem.ts",
+        "description": "2 named exports (ProjectFile, useFileSystem) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/editor/useFileSystem.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/editor/useForgeHandlers.ts",
+        "title": "Unused exports in src/hooks/editor/useForgeHandlers.ts",
+        "description": "1 named export (useForgeHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/editor/useForgeHandlers.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/editor/useInspectorHandlers.ts",
+        "title": "Unused exports in src/hooks/editor/useInspectorHandlers.ts",
+        "description": "1 named export (useInspectorHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/editor/useInspectorHandlers.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/terminal/useTerminal.ts",
+        "title": "Unused exports in src/hooks/terminal/useTerminal.ts",
+        "description": "1 named export (useTerminal) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/terminal/useTerminal.ts",
+            "line": 1
+          }
+        ]
+      },
+      {
+        "id": "unused-exports-src/hooks/terminal/useTerminalLogic.ts",
+        "title": "Unused exports in src/hooks/terminal/useTerminalLogic.ts",
+        "description": "1 named export (useTerminalLogic) but nothing in the project imports this file. Dead code or awaiting wiring?",
+        "severity": "info",
+        "category": "architecture",
+        "fixAvailable": false,
+        "locations": [
+          {
+            "file": "src/hooks/terminal/useTerminalLogic.ts",
+            "line": 1
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Upload, Download, X, Cpu, Check } from 'lucide-react';
 
+declare global {
+  interface Window {
+    setBootLabel?: (label: string) => void;
+  }
+}
+
 // Hooks
 import { useBrain } from './hooks/useBrain';
 import { usePhi } from './hooks/usePhi';
@@ -46,9 +52,27 @@ import { PROJECT_TEMPLATES } from './services/templates';
 import { AGENT_DOMAINS, getAgentsByDomain } from './data/agentRegistry';
 import { PatternResult } from './services/pipeline/patternInjectionService';
 import { useWebSockets } from './hooks/useWebSockets';
+import { useWebContainer } from './hooks/useWebContainer';
+import { localCore } from './services/localCoreService';
+import { transformToWebContainerTree } from './utils/vfsUtils';
 import { knowledgeService } from './services/knowledgeService';
 
 export default function App() {
+  try {
+    return <AppInner />;
+  } catch (err: any) {
+    console.error('[CRITICAL] App crash:', err);
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.style.background = '#300';
+      const label = splash.querySelector('div:last-child');
+      if (label) label.textContent = 'ERROR: ' + (err.message || String(err));
+    }
+    throw err;
+  }
+}
+
+function AppInner() {
   // Navigation & Theme
   const [activeTab, setActiveTab] = useState<
     'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain'
@@ -62,12 +86,39 @@ export default function App() {
 
   // Remove splash screen on mount
   useEffect(() => {
+    if (window.setBootLabel) window.setBootLabel('Neural Connection Established');
+
     const splash = document.getElementById('splash');
+    const bar = document.getElementById('splash-bar');
+    if (bar) bar.style.width = '100%';
+
     if (splash) {
-      splash.style.opacity = '0';
-      setTimeout(() => splash.remove(), 350);
+      // Ensure we stay on splash until the first paint cycle of the mounted app
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            splash.style.opacity = '0';
+            setTimeout(() => {
+              if (splash.parentElement) splash.remove();
+            }, 500);
+          }, 600); // 600ms grace period after first paint
+        });
+      });
     }
   }, []);
+  // Safety fallback: ensure splash is removed after 5 seconds regardless of mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const splash = document.getElementById('splash');
+      if (splash) {
+        console.warn('[BOOT] Forced splash removal via timeout');
+        splash.style.opacity = '0';
+        setTimeout(() => splash.remove(), 500);
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
 
   // Neural Core & Golden Ratio Layout
   const { endocrine, isBrainActive, setIsBrainActive, prepareContext, recordInteraction, sleep, refreshState } = useBrain();
@@ -89,6 +140,7 @@ export default function App() {
 
   // Terminal
   const terminal = useTerminal('~/crimson-node/sd-webui', '/data/data/com.termux/files/home');
+  const [terminalSource, setTerminalSource] = useState<'node_bridge' | 'local_core'>('node_bridge');
 
   // Personality-driven Theme Injection
   useEffect(() => {
@@ -243,6 +295,17 @@ export default function App() {
     setStorageFiles
   );
 
+  // Local Core (WebContainer)
+  const { status: localCoreStatus, error: localCoreError, boot: bootLocalCore, exec: execWebContainer } = useWebContainer();
+
+  // VFS Sync for WebContainer
+  useEffect(() => {
+    if (localCoreStatus === 'online') {
+      const tree = transformToWebContainerTree(fsState.projectFiles);
+      localCore.mount(tree).catch(err => console.warn('[LocalCore] VFS sync failed:', err));
+    }
+  }, [localCoreStatus, fsState.projectFiles]);
+
   // Git State
   const gitState = useGitLogic(
     fsState.projectFiles,
@@ -392,6 +455,8 @@ export default function App() {
     recordInteraction,
     generateAIResponse,
     execTerminal,
+    terminalSource,
+    execLocalCore: (cmd: string, args: string[], onStdout?: (data: string) => void) => execWebContainer(cmd, args, onStdout),
   });
 
   // Chat & assistant Submit handlers
@@ -852,8 +917,8 @@ export default function App() {
   return (
     <AppProvider value={contextValue}>
       <div
-        className="flex flex-col md:flex-row h-[100dvh] w-full bg-[#050101] text-[#00ff00] font-sans selection:bg-accent-900/40 overflow-hidden"
-        style={{ opacity: 1, visibility: 'visible', display: 'flex' }}
+        className="flex flex-col md:flex-row w-full bg-[#0a0202] text-white font-sans selection:bg-accent-900/40 overflow-hidden"
+        style={{ height: '100vh', opacity: 1, visibility: 'visible', display: 'flex', position: 'relative', zIndex: 1 }}
       >
         {/* φ Pulse Column — fixed right edge, doesn't affect layout */}
         <div
@@ -868,7 +933,7 @@ export default function App() {
         <MobileBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {/* Main Interface */}
-        <main className="flex-1 flex flex-col min-h-0 min-w-0 bg-[#0a0a0c] pb-14 md:pb-0 overflow-hidden">
+        <main className="flex-1 flex flex-col min-h-0 min-w-0 bg-[#0a0202] pb-14 md:pb-0 overflow-hidden">
           <MainHeader
             activeTab={activeTab}
             setIsMobileFileTreeOpen={editorState.setIsMobileFileTreeOpen}
@@ -882,7 +947,7 @@ export default function App() {
             setPersonalities={setPersonalities}
             activePersonality={activePersonality}
             termuxStatus={termuxStatus}
-            localCoreStatus={'idle'}
+            localCoreStatus={localCoreStatus}
           />
 
           <div className="flex-1 min-h-0 flex flex-col relative">
@@ -944,6 +1009,9 @@ export default function App() {
                 handleTermKeyDown={terminalState.handleTermKeyDown}
                 handleTerminalCommand={terminalState.handleTerminalCommand}
                 realCwd={terminal.realCwd}
+                terminalSource={terminalSource}
+                setTerminalSource={setTerminalSource}
+                localCoreStatus={localCoreStatus}
               />
             )}
 
@@ -1308,82 +1376,69 @@ export default function App() {
                   </div>
                 )}
                 {workers.map((w) => (
-                  <div
-                    key={w.id}
-                    className={`rounded-2xl border p-4 space-y-3 transition-all ${w.enabled ? 'bg-accent-950/20 border-accent-800/40' : 'bg-accent-950/5 border-accent-900/20 opacity-60'}`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-black text-accent-300 uppercase tracking-widest">Worker {w.id}</span>
-                        {w.enabled && w.model && (
-                          <p className="text-[10px] text-accent-500 font-mono mt-0.5 truncate">{w.model}</p>
-                        )}
+                  <div key={w.id} className={`p-5 rounded-[30px] border transition-all ${w.enabled ? 'bg-accent-950/20 border-accent-800/30' : 'bg-black/20 border-accent-900/10 opacity-60'}`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${w.enabled ? 'bg-accent-600 text-white shadow-lg' : 'bg-accent-900/40 text-accent-700'}`}>
+                          W{w.id}
+                        </div>
+                        <span className="text-[11px] font-black text-accent-200 uppercase tracking-widest">Worker Node {w.id}</span>
                       </div>
                       <button
                         onClick={() => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, enabled: !x.enabled } : x)))}
-                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${w.enabled ? 'bg-accent-600 text-white shadow-[0_0_12px_rgba(220,38,38,0.4)]' : 'bg-accent-900/30 text-accent-700'}`}
+                        className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase transition-all ${w.enabled ? 'bg-accent-500/20 text-accent-400 border border-accent-500/30' : 'bg-accent-950/40 text-accent-800 border border-accent-900/20'}`}
                       >
-                        {w.enabled ? 'ON' : 'OFF'}
+                        {w.enabled ? 'Enabled' : 'Disabled'}
                       </button>
                     </div>
-                    <div>
-                      <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1 font-black">Provider</p>
-                      <select
-                        value={w.provider}
-                        onChange={(e) =>
-                          setWorkers((prev) =>
-                            prev.map((x) =>
-                              x.id === w.id
-                                ? {
-                                    ...x,
-                                    provider: e.target.value as any,
-                                    model: e.target.value === 'google' ? 'gemini-2.5-flash' : e.target.value === 'grok' ? 'grok-beta' : e.target.value === 'openrouter' ? 'meta-llama/llama-3.3-70b-instruct:free' : x.model || 'llama3.2:latest',
-                                  }
-                                : x
-                            )
-                          )
-                        }
-                        disabled={!w.enabled}
-                        className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-4 py-3 text-sm text-accent-100 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
-                      >
-                        <option value="ollama" className="bg-[#0a0202]">Ollama</option>
-                        <option value="google" className="bg-[#0a0202]">Google Gemini</option>
-                        <option value="grok" className="bg-[#0a0202]">xAI Grok</option>
-                        <option value="openrouter" className="bg-[#0a0202]">OpenRouter</option>
-                      </select>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1.5 font-black">Provider</p>
+                        <select
+                          value={w.provider}
+                          onChange={(e) => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, provider: e.target.value as any, model: e.target.value === 'google' ? 'gemini-2.5-flash' : e.target.value === 'grok' ? 'grok-beta' : e.target.value === 'openrouter' ? 'meta-llama/llama-3.3-70b-instruct:free' : x.model || 'llama3.2:latest' } : x)))}
+                          disabled={!w.enabled}
+                          className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-3 py-2.5 text-xs text-accent-300 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
+                        >
+                          <option value="ollama" className="bg-[#0a0202]">Ollama</option>
+                          <option value="google" className="bg-[#0a0202]">Google Gemini</option>
+                          <option value="grok" className="bg-[#0a0202]">xAI Grok</option>
+                          <option value="openrouter" className="bg-[#0a0202]">OpenRouter</option>
+                        </select>
+                      </div>
+                      <div>
+                        <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1.5 font-black">Model</p>
+                        <select
+                          value={w.model}
+                          onChange={(e) => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, model: e.target.value } : x)))}
+                          disabled={!w.enabled}
+                          className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-3 py-2.5 text-xs text-accent-300 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
+                        >
+                          {w.provider === 'ollama' && availableModels.length > 0
+                            ? availableModels.map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                            : w.provider === 'google'
+                              ? ['gemini-2.5-flash', 'gemini-2.5-pro'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                              : w.provider === 'grok'
+                                ? ['grok-beta', 'grok-2-latest'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                                : w.provider === 'openrouter'
+                                  ? ['meta-llama/llama-3.3-70b-instruct:free', 'deepseek/deepseek-chat', 'google/gemini-2.5-flash', 'meta-llama/llama-3-8b-instruct:free'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                                  : <option value={w.model} className="bg-[#0a0202]">{w.model}</option>}
+                        </select>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1 font-black">Model</p>
-                      <select
-                        value={w.model}
-                        onChange={(e) => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, model: e.target.value } : x)))}
-                        disabled={!w.enabled}
-                        className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-4 py-3 text-sm text-accent-100 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
-                      >
-                        {w.provider === 'ollama' && availableModels.length > 0
-                          ? availableModels.map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
-                          : w.provider === 'google'
-                            ? ['gemini-2.5-flash', 'gemini-2.5-pro'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
-                            : w.provider === 'grok'
-                              ? ['grok-beta', 'grok-2-latest'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
-                              : w.provider === 'openrouter'
-                                ? ['meta-llama/llama-3.3-70b-instruct:free', 'deepseek/deepseek-chat', 'google/gemini-2.5-flash', 'meta-llama/llama-3-8b-instruct:free'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
-                                : <option value={w.model} className="bg-[#0a0202]">{w.model}</option>}
-                      </select>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1 font-black">Agent Role</p>
+                    <div className="mt-4">
+                      <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1.5 font-black">Agent Archetype</p>
                       <select
                         value={w.agentId || ''}
                         onChange={(e) => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x)))}
                         disabled={!w.enabled}
-                        className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-4 py-3 text-sm text-accent-300 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
+                        className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-4 py-3 text-[11px] text-accent-300 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
                       >
-                        <option value="" className="bg-[#0a0202]">🤖 General (no role)</option>
+                        <option value="" className="bg-[#0a0202]">🤖 Default (Generalist)</option>
                         {AGENT_DOMAINS.map((domain) => (
-                          <optgroup key={domain} label={domain} className="bg-[#0a0202]">
+                          <optgroup key={domain} label={domain.toUpperCase()} className="bg-[#0a0202] text-accent-600">
                             {getAgentsByDomain(domain).map((a) => (
-                              <option key={a.id} value={a.id} className="bg-[#0a0202]">
+                              <option key={a.id} value={a.id} className="bg-[#0a0202] text-accent-200">
                                 {a.emoji} {a.label}
                               </option>
                             ))}

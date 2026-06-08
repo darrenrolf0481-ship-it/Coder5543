@@ -346,18 +346,32 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
 
         {/* Editor Section — 8/11.3 phi units */}
         <div className="flex-1 flex flex-col code-editor-bg rounded-[30px] md:rounded-[40px] border border-accent-900/30 shadow-2xl overflow-hidden min-h-[400px]">
-          <div className="relative z-20 h-auto min-h-16 border-b border-accent-900/20 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 bg-black/40 py-2 md:py-0 gap-4">
-            <div className="w-full md:w-auto flex items-center justify-between md:justify-start gap-4 md:gap-6 overflow-x-auto custom-scrollbar">
+          <div className="relative z-30 h-auto min-h-16 border-b border-accent-900/20 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 bg-black/40 py-2 md:py-0 gap-4">
+            <div className="w-full md:w-auto flex items-center justify-between md:justify-start gap-4 md:gap-6 overflow-x-auto no-scrollbar">
               <div className="flex bg-accent-950/20 p-1 rounded-xl border border-accent-900/20 shrink-0">
-                {['python', 'cpp', 'rust', 'java', 'html'].map(lang => (
-                  <button
-                    key={lang}
-                    onClick={() => setEditorLanguage(lang)}
-                    className={`px-3 md:px-4 py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${editorLanguage === lang ? 'bg-accent-700 text-white shadow-lg' : 'text-accent-900 hover:text-accent-500'}`}
+                <div className="md:hidden px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-accent-500 flex items-center gap-2">
+                  <Code2 className="w-3 h-3" />
+                  <select
+                    value={editorLanguage}
+                    onChange={(e) => setEditorLanguage(e.target.value)}
+                    className="bg-transparent outline-none cursor-pointer"
                   >
-                    {lang}
-                  </button>
-                ))}
+                    {['python', 'cpp', 'rust', 'java', 'html', 'javascript', 'typescript'].map(lang => (
+                      <option key={lang} value={lang} className="bg-[#0a0202]">{lang}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="hidden md:flex">
+                  {['python', 'cpp', 'rust', 'java', 'html'].map(lang => (
+                    <button
+                      key={lang}
+                      onClick={() => setEditorLanguage(lang)}
+                      className={`px-3 md:px-4 py-1.5 rounded-lg text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all ${editorLanguage === lang ? 'bg-accent-700 text-white shadow-lg' : 'text-accent-900 hover:text-accent-500'}`}
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="flex items-center shrink-0">
                 <button
@@ -380,22 +394,22 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
               {lastSavedTime && (
                 <div className="flex items-center gap-2 text-[8px] md:text-[9px] font-black text-accent-900 uppercase tracking-widest animate-in fade-in duration-500 shrink-0">
                   <ShieldCheck className="w-3 h-3" />
-                  <span className="hidden sm:inline">Saved</span> {lastSavedTime}
+                  <span className="hidden xs:inline">Saved</span> {lastSavedTime}
                 </div>
               )}
             </div>
-            <div className="w-full md:w-auto flex items-center gap-2 md:gap-4 overflow-x-auto custom-scrollbar pb-2 md:pb-0">
-              {/* File Upload Control */}
-              <label className="p-2 md:p-2.5 border rounded-xl bg-accent-950/40 border-accent-900/30 text-accent-500 hover:bg-accent-900/20 transition-all cursor-pointer group shrink-0" title="Upload Files">
-                <Upload className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                <input type="file" className="hidden" multiple onChange={handleFileUpload} />
-              </label>
+            <div className="w-full md:w-auto flex items-center justify-between md:justify-end gap-2 md:gap-4 overflow-x-auto no-scrollbar pb-2 md:pb-0">
+              <div className="flex items-center gap-2">
+                <label className="p-2 border rounded-xl bg-accent-950/40 border-accent-900/30 text-accent-500 hover:bg-accent-900/20 transition-all cursor-pointer group shrink-0" title="Upload Files">
+                  <Upload className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <input type="file" className="hidden" multiple onChange={handleFileUpload} />
+                </label>
 
-              {/* Folder Upload Control */}
-              <label className="p-2 md:p-2.5 border rounded-xl bg-accent-950/40 border-accent-900/30 text-accent-500 hover:bg-accent-900/20 transition-all cursor-pointer group shrink-0" title="Upload Directory (Recursive)">
-                <Folder className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />
-                <input type="file" className="hidden" {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={handleFileUpload} />
-              </label>
+                <label className="hidden sm:block p-2 border rounded-xl bg-accent-950/40 border-accent-900/30 text-accent-500 hover:bg-accent-900/20 transition-all cursor-pointer group shrink-0" title="Upload Directory (Recursive)">
+                  <Folder className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                  <input type="file" className="hidden" {...{ webkitdirectory: "", directory: "" } as any} multiple onChange={handleFileUpload} />
+                </label>
+              </div>
 
               {/* UTILS DROPDOWN */}
               <div className="relative shrink-0">
@@ -410,8 +424,8 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
 
                 {isUtilMenuOpen && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsUtilMenuOpen(false)} />
-                    <div className="absolute left-0 mt-2 w-56 rounded-2xl bg-[#0a0202] border border-accent-900/40 shadow-[0_10px_35px_rgba(0,0,0,0.9)] z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="fixed inset-0 z-[60]" onClick={() => setIsUtilMenuOpen(false)} />
+                    <div className="absolute left-0 mt-2 w-56 rounded-2xl bg-[#0a0202] border border-accent-900/40 shadow-[0_10px_35px_rgba(0,0,0,0.9)] z-[70] py-2 animate-in fade-in slide-in-from-top-2 duration-150">
                       <div className="px-3 py-1 text-[8px] font-black text-accent-950 uppercase tracking-widest border-b border-accent-900/10 mb-1">
                         System & Formatting
                       </div>
@@ -483,8 +497,8 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
 
                 {isAiMenuOpen && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setIsAiMenuOpen(false)} />
-                    <div className="absolute left-0 mt-2 w-64 rounded-2xl bg-[#0a0202] border border-accent-900/40 shadow-[0_10px_35px_rgba(0,0,0,0.9)] z-50 py-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="fixed inset-0 z-[60]" onClick={() => setIsAiMenuOpen(false)} />
+                    <div className="absolute left-0 mt-2 w-64 rounded-2xl bg-[#0a0202] border border-accent-900/40 shadow-[0_10px_35px_rgba(0,0,0,0.9)] z-[70] py-2 animate-in fade-in slide-in-from-top-2 duration-150">
                       <div className="px-3 py-1 text-[8px] font-black text-accent-950 uppercase tracking-widest border-b border-accent-900/10 mb-1">
                         Analysis & Audit
                       </div>

@@ -17,6 +17,7 @@
   --pulse-color:     #ef4444;   /* default: idle red                */
   --pulse-opacity:   0.4;
   --pulse-anim:      none;
+  --pulse-duration:  1s;
 
   /* Transactional fill (0–1) — sdk_bridge writes this */
   --tx-progress:     0;
@@ -76,17 +77,17 @@
 [data-pulse="healthy"] {
   --pulse-color:   #22c55e;
   --pulse-opacity: 0.5;
-  --pulse-anim:    none;
+  --pulse-anim:    phi-heartbeat var(--pulse-duration) ease-in-out infinite;
 }
 [data-pulse="warning"] {
   --pulse-color:   #f59e0b;
   --pulse-opacity: 0.7;
-  --pulse-anim:    phi-vibrate 0.4s ease-in-out infinite alternate;
+  --pulse-anim:    phi-vibrate 0.4s ease-in-out infinite alternate, phi-heartbeat var(--pulse-duration) ease-in-out infinite;
 }
 [data-pulse="error"] {
   --pulse-color:   #ef4444;
   --pulse-opacity: 0.9;
-  --pulse-anim:    phi-vibrate 0.15s ease-in-out infinite alternate;
+  --pulse-anim:    phi-vibrate 0.15s ease-in-out infinite alternate, phi-heartbeat var(--pulse-duration) ease-in-out infinite;
 }
 [data-pulse="sync"] {
   --pulse-color:   #6366f1;
@@ -102,6 +103,14 @@
 @keyframes phi-breathe {
   0%, 100% { opacity: 0.3; }
   50%       { opacity: 0.9; }
+}
+
+@keyframes phi-heartbeat {
+  0%, 100% { opacity: 0.3; transform: scaleX(1); }
+  10%       { opacity: 1;   transform: scaleX(2); }
+  20%       { opacity: 0.3; transform: scaleX(1.2); }
+  30%       { opacity: 0.8; transform: scaleX(1.8); }
+  40%       { opacity: 0.3; transform: scaleX(1); }
 }
 
 /* ── Mobile override (Motorola-optimized, <600px) ─────────────────── */

@@ -29,3 +29,4 @@ dist-ssr
 *.sw?
 .env
 .sage_key
+serena.key

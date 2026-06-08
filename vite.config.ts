@@ -9,8 +9,15 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
+    
+    // Handle VS Code / Zo workspace proxy routing for dev mode
+    let base = './';
+    if (process.env.VSCODE_PROXY_URI) {
+      base = process.env.VSCODE_PROXY_URI.replace('{{port}}', '3000');
+    }
+
     return {
-      base: './',
+      base,
       server: {
         port: 3003,
         host: '0.0.0.0',

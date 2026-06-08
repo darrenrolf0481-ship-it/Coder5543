@@ -1,0 +1,829 @@
+{
+  "hotspots": {
+    "available": true,
+    "window": {
+      "since": "12 months ago",
+      "commitsScanned": 43
+    },
+    "hotspots": [
+      {
+        "relativePath": "src/components/panels/EditorPanel.tsx",
+        "churn": 8,
+        "distinctAuthors": 4,
+        "daysSinceLastChange": 0,
+        "lineCount": 1622,
+        "cyclomaticComplexity": 143,
+        "sizeBytes": 96659,
+        "issueCount": 1,
+        "issueIds": [
+          "unused-exports-src/components/panels/EditorPanel.tsx"
+        ],
+        "riskScore": 193.9,
+        "reasons": [
+          "frequent changes (8 commits)",
+          "high complexity (CC 143)",
+          "4 contributors",
+          "1 open issue",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.5,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 4,
+            "share": 0.5
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 2,
+            "share": 0.25
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.125
+          },
+          {
+            "author": "darren.rolf0481@gmail.com",
+            "commits": 1,
+            "share": 0.125
+          }
+        ],
+        "coverage": null,
+        "accepted": true
+      },
+      {
+        "relativePath": "src/components/FileTree.tsx",
+        "churn": 9,
+        "distinctAuthors": 5,
+        "daysSinceLastChange": 0,
+        "lineCount": 889,
+        "cyclomaticComplexity": 148,
+        "sizeBytes": 38030,
+        "issueCount": 0,
+        "issueIds": [],
+        "riskScore": 190.2,
+        "reasons": [
+          "frequent changes (9 commits)",
+          "high complexity (CC 148)",
+          "5 contributors",
+          "changed this week"
+        ],
+        "primaryAuthor": "darren.rolf0481@gmail.com",
+        "primaryAuthorShare": 0.333,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "darren.rolf0481@gmail.com",
+            "commits": 3,
+            "share": 0.333
+          },
+          {
+            "author": "help@zocomputer.com",
+            "commits": 2,
+            "share": 0.222
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 2,
+            "share": 0.222
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.111
+          },
+          {
+            "author": "noreply@anthropic.com",
+            "commits": 1,
+            "share": 0.111
+          }
+        ],
+        "coverage": null,
+        "accepted": true
+      },
+      {
+        "relativePath": "src/components/panels/ToolNeuronPanel.tsx",
+        "churn": 8,
+        "distinctAuthors": 4,
+        "daysSinceLastChange": 0,
+        "lineCount": 716,
+        "cyclomaticComplexity": 68,
+        "sizeBytes": 47507,
+        "issueCount": 1,
+        "issueIds": [
+          "unused-exports-src/components/panels/ToolNeuronPanel.tsx"
+        ],
+        "riskScore": 179.5,
+        "reasons": [
+          "frequent changes (8 commits)",
+          "high complexity (CC 68)",
+          "4 contributors",
+          "1 open issue",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.625,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 5,
+            "share": 0.625
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.125
+          },
+          {
+            "author": "darren.rolf0481@gmail.com",
+            "commits": 1,
+            "share": 0.125
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 1,
+            "share": 0.125
+          }
+        ],
+        "coverage": null,
+        "accepted": true
+      },
+      {
+        "relativePath": "src/services/aiService.ts",
+        "churn": 11,
+        "distinctAuthors": 4,
+        "daysSinceLastChange": 0,
+        "lineCount": 304,
+        "cyclomaticComplexity": 52,
+        "sizeBytes": 10151,
+        "issueCount": 0,
+        "issueIds": [],
+        "riskScore": 177.8,
+        "reasons": [
+          "frequent changes (11 commits)",
+          "high complexity (CC 52)",
+          "4 contributors",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.364,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 4,
+            "share": 0.364
+          },
+          {
+            "author": "darren.rolf0481@gmail.com",
+            "commits": 4,
+            "share": 0.364
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 2,
+            "share": 0.182
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 1,
+            "share": 0.091
+          }
+        ],
+        "coverage": null,
+        "accepted": true
+      },
+      {
+        "relativePath": "src/hooks/terminal/useTerminalLogic.ts",
+        "churn": 5,
+        "distinctAuthors": 1,
+        "daysSinceLastChange": 0,
+        "lineCount": 555,
+        "cyclomaticComplexity": 102,
+        "sizeBytes": 20933,
+        "issueCount": 1,
+        "issueIds": [
+          "unused-exports-src/hooks/terminal/useTerminalLogic.ts"
+        ],
+        "riskScore": 172.3,
+        "reasons": [
+          "5 commits",
+          "high complexity (CC 102)",
+          "1 open issue",
+          "changed this week",
+          "bus factor 1 (help)"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 1,
+        "busFactorOne": true,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 5,
+            "share": 1
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/App.tsx",
+        "churn": 3,
+        "distinctAuthors": 3,
+        "daysSinceLastChange": 0,
+        "lineCount": 1454,
+        "cyclomaticComplexity": null,
+        "sizeBytes": 63177,
+        "issueCount": 0,
+        "issueIds": [],
+        "riskScore": 165.1,
+        "reasons": [
+          "3 commits",
+          "large file (1454 lines)",
+          "3 contributors",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.333,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 1,
+            "share": 0.333
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.333
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 1,
+            "share": 0.333
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "server.ts",
+        "churn": 11,
+        "distinctAuthors": 4,
+        "daysSinceLastChange": 0,
+        "lineCount": 161,
+        "cyclomaticComplexity": 13,
+        "sizeBytes": 6413,
+        "issueCount": 0,
+        "issueIds": [],
+        "riskScore": 149.5,
+        "reasons": [
+          "frequent changes (11 commits)",
+          "4 contributors",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.364,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 4,
+            "share": 0.364
+          },
+          {
+            "author": "darren.rolf0481@gmail.com",
+            "commits": 4,
+            "share": 0.364
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 2,
+            "share": 0.182
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 1,
+            "share": 0.091
+          }
+        ],
+        "coverage": null,
+        "accepted": true
+      },
+      {
+        "relativePath": "src/components/panels/SettingsPanel.tsx",
+        "churn": 5,
+        "distinctAuthors": 3,
+        "daysSinceLastChange": 0,
+        "lineCount": 651,
+        "cyclomaticComplexity": 90,
+        "sizeBytes": 50415,
+        "issueCount": 0,
+        "issueIds": [],
+        "riskScore": 148.2,
+        "reasons": [
+          "5 commits",
+          "high complexity (CC 90)",
+          "3 contributors",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.4,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 2,
+            "share": 0.4
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 2,
+            "share": 0.4
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 1,
+            "share": 0.2
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/components/panels/NodeBridgePanel.tsx",
+        "churn": 4,
+        "distinctAuthors": 3,
+        "daysSinceLastChange": 0,
+        "lineCount": 171,
+        "cyclomaticComplexity": 32,
+        "sizeBytes": 10324,
+        "issueCount": 1,
+        "issueIds": [
+          "unused-exports-src/components/panels/NodeBridgePanel.tsx"
+        ],
+        "riskScore": 133.8,
+        "reasons": [
+          "4 commits",
+          "high complexity (CC 32)",
+          "3 contributors",
+          "1 open issue",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.5,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 2,
+            "share": 0.5
+          },
+          {
+            "author": "darren.rolf0481@gmail.com",
+            "commits": 1,
+            "share": 0.25
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 1,
+            "share": 0.25
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/services/brain/ltmStore.ts",
+        "churn": 5,
+        "distinctAuthors": 3,
+        "daysSinceLastChange": 0,
+        "lineCount": 150,
+        "cyclomaticComplexity": 18,
+        "sizeBytes": 4268,
+        "issueCount": 0,
+        "issueIds": [],
+        "riskScore": 121.6,
+        "reasons": [
+          "5 commits",
+          "moderate complexity (CC 18)",
+          "3 contributors",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.6,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 3,
+            "share": 0.6
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.2
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 1,
+            "share": 0.2
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "vite.config.ts",
+        "churn": 7,
+        "distinctAuthors": 4,
+        "daysSinceLastChange": 0,
+        "lineCount": 49,
+        "cyclomaticComplexity": 5,
+        "sizeBytes": 1655,
+        "issueCount": 0,
+        "issueIds": [],
+        "riskScore": 115.2,
+        "reasons": [
+          "7 commits",
+          "4 contributors",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.286,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 2,
+            "share": 0.286
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 2,
+            "share": 0.286
+          },
+          {
+            "author": "darren.rolf0481@gmail.com",
+            "commits": 2,
+            "share": 0.286
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.143
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/components/panels/BrainPanel.tsx",
+        "churn": 4,
+        "distinctAuthors": 3,
+        "daysSinceLastChange": 0,
+        "lineCount": 161,
+        "cyclomaticComplexity": 9,
+        "sizeBytes": 7947,
+        "issueCount": 1,
+        "issueIds": [
+          "unused-exports-src/components/panels/BrainPanel.tsx"
+        ],
+        "riskScore": 114.9,
+        "reasons": [
+          "4 commits",
+          "3 contributors",
+          "1 open issue",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.5,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 2,
+            "share": 0.5
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.25
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 1,
+            "share": 0.25
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/components/panels/AnalysisPanel.tsx",
+        "churn": 4,
+        "distinctAuthors": 4,
+        "daysSinceLastChange": 0,
+        "lineCount": 104,
+        "cyclomaticComplexity": 7,
+        "sizeBytes": 4934,
+        "issueCount": 1,
+        "issueIds": [
+          "unused-exports-src/components/panels/AnalysisPanel.tsx"
+        ],
+        "riskScore": 112.9,
+        "reasons": [
+          "4 commits",
+          "4 contributors",
+          "1 open issue",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.25,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 1,
+            "share": 0.25
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.25
+          },
+          {
+            "author": "darren.rolf0481@gmail.com",
+            "commits": 1,
+            "share": 0.25
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 1,
+            "share": 0.25
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/components/panels/TerminalPanel.tsx",
+        "churn": 3,
+        "distinctAuthors": 3,
+        "daysSinceLastChange": 0,
+        "lineCount": 144,
+        "cyclomaticComplexity": 13,
+        "sizeBytes": 6800,
+        "issueCount": 1,
+        "issueIds": [
+          "unused-exports-src/components/panels/TerminalPanel.tsx"
+        ],
+        "riskScore": 110.1,
+        "reasons": [
+          "3 commits",
+          "3 contributors",
+          "1 open issue",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.333,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 1,
+            "share": 0.333
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.333
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 1,
+            "share": 0.333
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/hooks/editor/useForgeHandlers.ts",
+        "churn": 2,
+        "distinctAuthors": 2,
+        "daysSinceLastChange": 0,
+        "lineCount": 380,
+        "cyclomaticComplexity": 39,
+        "sizeBytes": 13397,
+        "issueCount": 1,
+        "issueIds": [
+          "unused-exports-src/hooks/editor/useForgeHandlers.ts"
+        ],
+        "riskScore": 108.2,
+        "reasons": [
+          "2 commits",
+          "high complexity (CC 39)",
+          "2 contributors",
+          "1 open issue",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.5,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 1,
+            "share": 0.5
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.5
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/services/brain/brainService.ts",
+        "churn": 4,
+        "distinctAuthors": 3,
+        "daysSinceLastChange": 0,
+        "lineCount": 210,
+        "cyclomaticComplexity": 13,
+        "sizeBytes": 7390,
+        "issueCount": 0,
+        "issueIds": [],
+        "riskScore": 108.2,
+        "reasons": [
+          "4 commits",
+          "3 contributors",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.5,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 2,
+            "share": 0.5
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.25
+          },
+          {
+            "author": "your_email@example.com",
+            "commits": 1,
+            "share": 0.25
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/components/layout/MainHeader.tsx",
+        "churn": 2,
+        "distinctAuthors": 2,
+        "daysSinceLastChange": 0,
+        "lineCount": 194,
+        "cyclomaticComplexity": 37,
+        "sizeBytes": 11337,
+        "issueCount": 1,
+        "issueIds": [
+          "unused-exports-src/components/layout/MainHeader.tsx"
+        ],
+        "riskScore": 107.6,
+        "reasons": [
+          "2 commits",
+          "high complexity (CC 37)",
+          "2 contributors",
+          "1 open issue",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.5,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 1,
+            "share": 0.5
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.5
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/hooks/useChatHandlers.ts",
+        "churn": 2,
+        "distinctAuthors": 2,
+        "daysSinceLastChange": 0,
+        "lineCount": 384,
+        "cyclomaticComplexity": 33,
+        "sizeBytes": 12917,
+        "issueCount": 1,
+        "issueIds": [
+          "unused-exports-src/hooks/useChatHandlers.ts"
+        ],
+        "riskScore": 106.2,
+        "reasons": [
+          "2 commits",
+          "high complexity (CC 33)",
+          "2 contributors",
+          "1 open issue",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.5,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 1,
+            "share": 0.5
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.5
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/hooks/usePersonalities.ts",
+        "churn": 2,
+        "distinctAuthors": 2,
+        "daysSinceLastChange": 0,
+        "lineCount": 127,
+        "cyclomaticComplexity": 23,
+        "sizeBytes": 3832,
+        "issueCount": 1,
+        "issueIds": [
+          "unused-exports-src/hooks/usePersonalities.ts"
+        ],
+        "riskScore": 101.8,
+        "reasons": [
+          "2 commits",
+          "moderate complexity (CC 23)",
+          "2 contributors",
+          "1 open issue",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.5,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 1,
+            "share": 0.5
+          },
+          {
+            "author": "darrenrolf0481@example.com",
+            "commits": 1,
+            "share": 0.5
+          }
+        ],
+        "coverage": null
+      },
+      {
+        "relativePath": "src/components/TerminalLine.tsx",
+        "churn": 3,
+        "distinctAuthors": 2,
+        "daysSinceLastChange": 0,
+        "lineCount": 62,
+        "cyclomaticComplexity": 19,
+        "sizeBytes": 2563,
+        "issueCount": 0,
+        "issueIds": [],
+        "riskScore": 101.1,
+        "reasons": [
+          "3 commits",
+          "moderate complexity (CC 19)",
+          "2 contributors",
+          "changed this week"
+        ],
+        "primaryAuthor": "help@zocomputer.com",
+        "primaryAuthorShare": 0.667,
+        "busFactorOne": false,
+        "topAuthors": [
+          {
+            "author": "help@zocomputer.com",
+            "commits": 2,
+            "share": 0.667
+          },
+          {
+            "author": "noreply@anthropic.com",
+            "commits": 1,
+            "share": 0.333
+          }
+        ],
+        "coverage": null
+      }
+    ],
+    "totalFilesRanked": 115
+  }
+}

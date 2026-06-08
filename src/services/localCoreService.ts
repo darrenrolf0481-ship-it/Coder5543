@@ -1,5 +1,5 @@
 import { WebContainer } from '@webcontainer/api';
-import logger from '../utils/logger.js';
+import logger from '../utils/logger';
 
 export class LocalCoreService {
   private webcontainerInstance: WebContainer | null = null;
@@ -43,6 +43,32 @@ export class LocalCoreService {
   async mount(files: any) {
     const instance = await this.boot();
     await instance.mount(files);
+  }
+
+  /**
+   * Performs initial dependency setup (npm install).
+   */
+  async setupDependencies(onOutput?: (data: string) => void) {
+    const instance = await this.boot();
+    
+    // Check if package.json exists, if not create a basic one
+    try {
+      await instance.fs.readFile('package.json');
+    } catch {
+      logger.info('[LocalCore] No package.json found, creating default...');
+      await instance.fs.writeFile('package.json', JSON.stringify({
+        name: 'crimson-local-core',
+        version: '1.0.0',
+        dependencies: {}
+      }, null, 2));
+    }
+
+    logger.info('[LocalCore] Starting dependency setup...');
+    const exitCode = await this.exec('npm', ['install'], onOutput);
+    if (exitCode !== 0) {
+      throw new Error(`npm install failed with code ${exitCode}`);
+    }
+    logger.info('[LocalCore] Dependency setup complete.');
   }
 
   /**

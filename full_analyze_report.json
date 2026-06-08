@@ -1,0 +1,2343 @@
+{
+  "projectName": "Coder5543",
+  "rootPath": "/home/workspace/Coder5543",
+  "scan": {
+    "rootPath": "/home/workspace/Coder5543",
+    "totalFiles": 179,
+    "totalDirectories": 38,
+    "files": [
+      {
+        "relativePath": ".editorconfig",
+        "absolutePath": "/home/workspace/Coder5543/.editorconfig",
+        "extension": "",
+        "sizeBytes": 219,
+        "directory": "."
+      },
+      {
+        "relativePath": ".env.example",
+        "absolutePath": "/home/workspace/Coder5543/.env.example",
+        "extension": ".example",
+        "sizeBytes": 190,
+        "directory": "."
+      },
+      {
+        "relativePath": ".eslintrc.json",
+        "absolutePath": "/home/workspace/Coder5543/.eslintrc.json",
+        "extension": ".json",
+        "sizeBytes": 329,
+        "directory": "."
+      },
+      {
+        "relativePath": ".gitignore",
+        "absolutePath": "/home/workspace/Coder5543/.gitignore",
+        "extension": "",
+        "sizeBytes": 319,
+        "directory": "."
+      },
+      {
+        "relativePath": ".gitmodules",
+        "absolutePath": "/home/workspace/Coder5543/.gitmodules",
+        "extension": "",
+        "sizeBytes": 435,
+        "directory": "."
+      },
+      {
+        "relativePath": ".prettierrc",
+        "absolutePath": "/home/workspace/Coder5543/.prettierrc",
+        "extension": "",
+        "sizeBytes": 106,
+        "directory": "."
+      },
+      {
+        "relativePath": ".projscanrc.json",
+        "absolutePath": "/home/workspace/Coder5543/.projscanrc.json",
+        "extension": ".json",
+        "sizeBytes": 423,
+        "directory": "."
+      },
+      {
+        "relativePath": "AGENTS.md",
+        "absolutePath": "/home/workspace/Coder5543/AGENTS.md",
+        "extension": ".md",
+        "sizeBytes": 7124,
+        "directory": "."
+      },
+      {
+        "relativePath": "AGENT_RECORD.md",
+        "absolutePath": "/home/workspace/Coder5543/AGENT_RECORD.md",
+        "extension": ".md",
+        "sizeBytes": 1627,
+        "directory": "."
+      },
+      {
+        "relativePath": "ARCHITECTURE_REPORT.md",
+        "absolutePath": "/home/workspace/Coder5543/ARCHITECTURE_REPORT.md",
+        "extension": ".md",
+        "sizeBytes": 3346,
+        "directory": "."
+      },
+      {
+        "relativePath": "HANDOVER.md",
+        "absolutePath": "/home/workspace/Coder5543/HANDOVER.md",
+        "extension": ".md",
+        "sizeBytes": 4323,
+        "directory": "."
+      },
+      {
+        "relativePath": "README.md",
+        "absolutePath": "/home/workspace/Coder5543/README.md",
+        "extension": ".md",
+        "sizeBytes": 1297,
+        "directory": "."
+      },
+      {
+        "relativePath": "SKILL.md",
+        "absolutePath": "/home/workspace/Coder5543/SKILL.md",
+        "extension": ".md",
+        "sizeBytes": 3708,
+        "directory": "."
+      },
+      {
+        "relativePath": "ask_sage.py",
+        "absolutePath": "/home/workspace/Coder5543/ask_sage.py",
+        "extension": ".py",
+        "sizeBytes": 3254,
+        "directory": "."
+      },
+      {
+        "relativePath": "components.txt",
+        "absolutePath": "/home/workspace/Coder5543/components.txt",
+        "extension": ".txt",
+        "sizeBytes": 1746,
+        "directory": "."
+      },
+      {
+        "relativePath": "correctness-error-handling.md",
+        "absolutePath": "/home/workspace/Coder5543/correctness-error-handling.md",
+        "extension": ".md",
+        "sizeBytes": 7039,
+        "directory": "."
+      },
+      {
+        "relativePath": "diagnostic.js",
+        "absolutePath": "/home/workspace/Coder5543/diagnostic.js",
+        "extension": ".js",
+        "sizeBytes": 1751,
+        "directory": "."
+      },
+      {
+        "relativePath": "diagnostic_404.js",
+        "absolutePath": "/home/workspace/Coder5543/diagnostic_404.js",
+        "extension": ".js",
+        "sizeBytes": 1323,
+        "directory": "."
+      },
+      {
+        "relativePath": "diagnostic_connect.js",
+        "absolutePath": "/home/workspace/Coder5543/diagnostic_connect.js",
+        "extension": ".js",
+        "sizeBytes": 1849,
+        "directory": "."
+      },
+      {
+        "relativePath": "diagnostic_firefox.js",
+        "absolutePath": "/home/workspace/Coder5543/diagnostic_firefox.js",
+        "extension": ".js",
+        "sizeBytes": 1826,
+        "directory": "."
+      },
+      {
+        "relativePath": "doctor_report.json",
+        "absolutePath": "/home/workspace/Coder5543/doctor_report.json",
+        "extension": ".json",
+        "sizeBytes": 818,
+        "directory": "."
+      },
+      {
+        "relativePath": "full_analyze_report.json",
+        "absolutePath": "/home/workspace/Coder5543/full_analyze_report.json",
+        "extension": ".json",
+        "sizeBytes": 0,
+        "directory": "."
+      },
+      {
+        "relativePath": "hotspots_report.json",
+        "absolutePath": "/home/workspace/Coder5543/hotspots_report.json",
+        "extension": ".json",
+        "sizeBytes": 878,
+        "directory": "."
+      },
+      {
+        "relativePath": "index.css",
+        "absolutePath": "/home/workspace/Coder5543/index.css",
+        "extension": ".css",
+        "sizeBytes": 8535,
+        "directory": "."
+      },
+      {
+        "relativePath": "index.html",
+        "absolutePath": "/home/workspace/Coder5543/index.html",
+        "extension": ".html",
+        "sizeBytes": 4157,
+        "directory": "."
+      },
+      {
+        "relativePath": "inject_node_bridge.py",
+        "absolutePath": "/home/workspace/Coder5543/inject_node_bridge.py",
+        "extension": ".py",
+        "sizeBytes": 2298,
+        "directory": "."
+      },
+      {
+        "relativePath": "inspect_page.cjs",
+        "absolutePath": "/home/workspace/Coder5543/inspect_page.cjs",
+        "extension": ".cjs",
+        "sizeBytes": 504,
+        "directory": "."
+      },
+      {
+        "relativePath": "maintainability-naming.md",
+        "absolutePath": "/home/workspace/Coder5543/maintainability-naming.md",
+        "extension": ".md",
+        "sizeBytes": 3252,
+        "directory": "."
+      },
+      {
+        "relativePath": "maintainability-type-hints.md",
+        "absolutePath": "/home/workspace/Coder5543/maintainability-type-hints.md",
+        "extension": ".md",
+        "sizeBytes": 1916,
+        "directory": "."
+      },
+      {
+        "relativePath": "manifest.json",
+        "absolutePath": "/home/workspace/Coder5543/manifest.json",
+        "extension": ".json",
+        "sizeBytes": 493,
+        "directory": "."
+      },
+      {
+        "relativePath": "metadata.json",
+        "absolutePath": "/home/workspace/Coder5543/metadata.json",
+        "extension": ".json",
+        "sizeBytes": 312,
+        "directory": "."
+      },
+      {
+        "relativePath": "neural_brain.py",
+        "absolutePath": "/home/workspace/Coder5543/neural_brain.py",
+        "extension": ".py",
+        "sizeBytes": 6426,
+        "directory": "."
+      },
+      {
+        "relativePath": "package-lock.json",
+        "absolutePath": "/home/workspace/Coder5543/package-lock.json",
+        "extension": ".json",
+        "sizeBytes": 668495,
+        "directory": "."
+      },
+      {
+        "relativePath": "package.json",
+        "absolutePath": "/home/workspace/Coder5543/package.json",
+        "extension": ".json",
+        "sizeBytes": 1648,
+        "directory": "."
+      },
+      {
+        "relativePath": "performance-n-plus-one.md",
+        "absolutePath": "/home/workspace/Coder5543/performance-n-plus-one.md",
+        "extension": ".md",
+        "sizeBytes": 5883,
+        "directory": "."
+      },
+      {
+        "relativePath": "phi_geometry.css",
+        "absolutePath": "/home/workspace/Coder5543/phi_geometry.css",
+        "extension": ".css",
+        "sizeBytes": 4196,
+        "directory": "."
+      },
+      {
+        "relativePath": "print_select_options.js",
+        "absolutePath": "/home/workspace/Coder5543/print_select_options.js",
+        "extension": ".js",
+        "sizeBytes": 1165,
+        "directory": "."
+      },
+      {
+        "relativePath": "project_graph.json",
+        "absolutePath": "/home/workspace/Coder5543/project_graph.json",
+        "extension": ".json",
+        "sizeBytes": 12513366,
+        "directory": "."
+      },
+      {
+        "relativePath": "pyproject.toml",
+        "absolutePath": "/home/workspace/Coder5543/pyproject.toml",
+        "extension": ".toml",
+        "sizeBytes": 946,
+        "directory": "."
+      },
+      {
+        "relativePath": "refactor_settings.py",
+        "absolutePath": "/home/workspace/Coder5543/refactor_settings.py",
+        "extension": ".py",
+        "sizeBytes": 1846,
+        "directory": "."
+      },
+      {
+        "relativePath": "scr.png",
+        "absolutePath": "/home/workspace/Coder5543/scr.png",
+        "extension": ".png",
+        "sizeBytes": 383122,
+        "directory": "."
+      },
+      {
+        "relativePath": "screenshot.png",
+        "absolutePath": "/home/workspace/Coder5543/screenshot.png",
+        "extension": ".png",
+        "sizeBytes": 194013,
+        "directory": "."
+      },
+      {
+        "relativePath": "security-sql-injection.md",
+        "absolutePath": "/home/workspace/Coder5543/security-sql-injection.md",
+        "extension": ".md",
+        "sizeBytes": 3689,
+        "directory": "."
+      },
+      {
+        "relativePath": "security-xss-prevention.md",
+        "absolutePath": "/home/workspace/Coder5543/security-xss-prevention.md",
+        "extension": ".md",
+        "sizeBytes": 5683,
+        "directory": "."
+      },
+      {
+        "relativePath": "serena.key",
+        "absolutePath": "/home/workspace/Coder5543/serena.key",
+        "extension": ".key",
+        "sizeBytes": 2386,
+        "directory": "."
+      },
+      {
+        "relativePath": "server.ts",
+        "absolutePath": "/home/workspace/Coder5543/server.ts",
+        "extension": ".ts",
+        "sizeBytes": 6413,
+        "directory": "."
+      },
+      {
+        "relativePath": "sw.js",
+        "absolutePath": "/home/workspace/Coder5543/sw.js",
+        "extension": ".js",
+        "sizeBytes": 572,
+        "directory": "."
+      },
+      {
+        "relativePath": "take_screenshot.js",
+        "absolutePath": "/home/workspace/Coder5543/take_screenshot.js",
+        "extension": ".js",
+        "sizeBytes": 747,
+        "directory": "."
+      },
+      {
+        "relativePath": "tsconfig.json",
+        "absolutePath": "/home/workspace/Coder5543/tsconfig.json",
+        "extension": ".json",
+        "sizeBytes": 790,
+        "directory": "."
+      },
+      {
+        "relativePath": "verify_load.js",
+        "absolutePath": "/home/workspace/Coder5543/verify_load.js",
+        "extension": ".js",
+        "sizeBytes": 1418,
+        "directory": "."
+      },
+      {
+        "relativePath": "vite.config.ts",
+        "absolutePath": "/home/workspace/Coder5543/vite.config.ts",
+        "extension": ".ts",
+        "sizeBytes": 1655,
+        "directory": "."
+      },
+      {
+        "relativePath": ".projscan-memory/memory.json",
+        "absolutePath": "/home/workspace/Coder5543/.projscan-memory/memory.json",
+        "extension": ".json",
+        "sizeBytes": 35817,
+        "directory": ".projscan-memory"
+      },
+      {
+        "relativePath": ".projscan-cache/.gitignore",
+        "absolutePath": "/home/workspace/Coder5543/.projscan-cache/.gitignore",
+        "extension": "",
+        "sizeBytes": 2,
+        "directory": ".projscan-cache"
+      },
+      {
+        "relativePath": ".projscan-cache/graph.json",
+        "absolutePath": "/home/workspace/Coder5543/.projscan-cache/graph.json",
+        "extension": ".json",
+        "sizeBytes": 2539253,
+        "directory": ".projscan-cache"
+      },
+      {
+        "relativePath": ".projscan-cache/session.json",
+        "absolutePath": "/home/workspace/Coder5543/.projscan-cache/session.json",
+        "extension": ".json",
+        "sizeBytes": 15732,
+        "directory": ".projscan-cache"
+      },
+      {
+        "relativePath": "data-science/requirements.txt",
+        "absolutePath": "/home/workspace/Coder5543/data-science/requirements.txt",
+        "extension": ".txt",
+        "sizeBytes": 45,
+        "directory": "data-science"
+      },
+      {
+        "relativePath": "python-backend/requirements.txt",
+        "absolutePath": "/home/workspace/Coder5543/python-backend/requirements.txt",
+        "extension": ".txt",
+        "sizeBytes": 49,
+        "directory": "python-backend"
+      },
+      {
+        "relativePath": "react-frontend/package.json",
+        "absolutePath": "/home/workspace/Coder5543/react-frontend/package.json",
+        "extension": ".json",
+        "sizeBytes": 138,
+        "directory": "react-frontend"
+      },
+      {
+        "relativePath": "rules/correctness-error-handling.md",
+        "absolutePath": "/home/workspace/Coder5543/rules/correctness-error-handling.md",
+        "extension": ".md",
+        "sizeBytes": 7039,
+        "directory": "rules"
+      },
+      {
+        "relativePath": "rules/maintainability-naming.md",
+        "absolutePath": "/home/workspace/Coder5543/rules/maintainability-naming.md",
+        "extension": ".md",
+        "sizeBytes": 3252,
+        "directory": "rules"
+      },
+      {
+        "relativePath": "rules/maintainability-type-hints.md",
+        "absolutePath": "/home/workspace/Coder5543/rules/maintainability-type-hints.md",
+        "extension": ".md",
+        "sizeBytes": 1916,
+        "directory": "rules"
+      },
+      {
+        "relativePath": "rules/performance-n-plus-one.md",
+        "absolutePath": "/home/workspace/Coder5543/rules/performance-n-plus-one.md",
+        "extension": ".md",
+        "sizeBytes": 5883,
+        "directory": "rules"
+      },
+      {
+        "relativePath": "rules/security-sql-injection.md",
+        "absolutePath": "/home/workspace/Coder5543/rules/security-sql-injection.md",
+        "extension": ".md",
+        "sizeBytes": 3689,
+        "directory": "rules"
+      },
+      {
+        "relativePath": "rules/security-xss-prevention.md",
+        "absolutePath": "/home/workspace/Coder5543/rules/security-xss-prevention.md",
+        "extension": ".md",
+        "sizeBytes": 5683,
+        "directory": "rules"
+      },
+      {
+        "relativePath": "src/App.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/App.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 63177,
+        "directory": "src"
+      },
+      {
+        "relativePath": "src/index.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/index.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 2078,
+        "directory": "src"
+      },
+      {
+        "relativePath": "scratch/detailed_inspect.cjs",
+        "absolutePath": "/home/workspace/Coder5543/scratch/detailed_inspect.cjs",
+        "extension": ".cjs",
+        "sizeBytes": 690,
+        "directory": "scratch"
+      },
+      {
+        "relativePath": "scratch/detailed_inspect.js",
+        "absolutePath": "/home/workspace/Coder5543/scratch/detailed_inspect.js",
+        "extension": ".js",
+        "sizeBytes": 690,
+        "directory": "scratch"
+      },
+      {
+        "relativePath": "tests/ai.test.ts",
+        "absolutePath": "/home/workspace/Coder5543/tests/ai.test.ts",
+        "extension": ".ts",
+        "sizeBytes": 474,
+        "directory": "tests"
+      },
+      {
+        "relativePath": ".claude/skills/clean-code.md",
+        "absolutePath": "/home/workspace/Coder5543/.claude/skills/clean-code.md",
+        "extension": ".md",
+        "sizeBytes": 4669,
+        "directory": ".claude/skills"
+      },
+      {
+        "relativePath": ".claude/skills/code-review-excellence.md",
+        "absolutePath": "/home/workspace/Coder5543/.claude/skills/code-review-excellence.md",
+        "extension": ".md",
+        "sizeBytes": 1718,
+        "directory": ".claude/skills"
+      },
+      {
+        "relativePath": ".claude/skills/nodejs-best-practices.md",
+        "absolutePath": "/home/workspace/Coder5543/.claude/skills/nodejs-best-practices.md",
+        "extension": ".md",
+        "sizeBytes": 8772,
+        "directory": ".claude/skills"
+      },
+      {
+        "relativePath": ".claude/skills/react-best-practices.md",
+        "absolutePath": "/home/workspace/Coder5543/.claude/skills/react-best-practices.md",
+        "extension": ".md",
+        "sizeBytes": 5649,
+        "directory": ".claude/skills"
+      },
+      {
+        "relativePath": ".claude/skills/tailwind-patterns.md",
+        "absolutePath": "/home/workspace/Coder5543/.claude/skills/tailwind-patterns.md",
+        "extension": ".md",
+        "sizeBytes": 7256,
+        "directory": ".claude/skills"
+      },
+      {
+        "relativePath": ".claude/skills/typescript-expert.md",
+        "absolutePath": "/home/workspace/Coder5543/.claude/skills/typescript-expert.md",
+        "extension": ".md",
+        "sizeBytes": 14791,
+        "directory": ".claude/skills"
+      },
+      {
+        "relativePath": "agency-agents/engineering/engineering-backend-architect.md",
+        "absolutePath": "/home/workspace/Coder5543/agency-agents/engineering/engineering-backend-architect.md",
+        "extension": ".md",
+        "sizeBytes": 9176,
+        "directory": "agency-agents/engineering"
+      },
+      {
+        "relativePath": "agency-agents/engineering/engineering-frontend-developer.md",
+        "absolutePath": "/home/workspace/Coder5543/agency-agents/engineering/engineering-frontend-developer.md",
+        "extension": ".md",
+        "sizeBytes": 8989,
+        "directory": "agency-agents/engineering"
+      },
+      {
+        "relativePath": "python-backend/tests/conftest.py",
+        "absolutePath": "/home/workspace/Coder5543/python-backend/tests/conftest.py",
+        "extension": ".py",
+        "sizeBytes": 195,
+        "directory": "python-backend/tests"
+      },
+      {
+        "relativePath": "python-backend/tests/test_neural_brain.py",
+        "absolutePath": "/home/workspace/Coder5543/python-backend/tests/test_neural_brain.py",
+        "extension": ".py",
+        "sizeBytes": 5258,
+        "directory": "python-backend/tests"
+      },
+      {
+        "relativePath": "src/components/ActionButton.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/ActionButton.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 1146,
+        "directory": "src/components"
+      },
+      {
+        "relativePath": "src/components/FileTree.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/FileTree.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 38030,
+        "directory": "src/components"
+      },
+      {
+        "relativePath": "src/components/SafeMarkdown.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/SafeMarkdown.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 2367,
+        "directory": "src/components"
+      },
+      {
+        "relativePath": "src/components/TerminalLine.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/TerminalLine.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 2563,
+        "directory": "src/components"
+      },
+      {
+        "relativePath": "src/components/Toast.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/Toast.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 0,
+        "directory": "src/components"
+      },
+      {
+        "relativePath": "src/context/AppContext.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/context/AppContext.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 8313,
+        "directory": "src/context"
+      },
+      {
+        "relativePath": "src/data/agentRegistry.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/data/agentRegistry.ts",
+        "extension": ".ts",
+        "sizeBytes": 584,
+        "directory": "src/data"
+      },
+      {
+        "relativePath": "src/data/personalities.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/data/personalities.ts",
+        "extension": ".ts",
+        "sizeBytes": 5967,
+        "directory": "src/data"
+      },
+      {
+        "relativePath": "src/data/reviewGuidelines.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/data/reviewGuidelines.ts",
+        "extension": ".ts",
+        "sizeBytes": 5074,
+        "directory": "src/data"
+      },
+      {
+        "relativePath": "src/hooks/useAiOrchestrator.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useAiOrchestrator.ts",
+        "extension": ".ts",
+        "sizeBytes": 4167,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useAiRequest.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useAiRequest.ts",
+        "extension": ".ts",
+        "sizeBytes": 1421,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useAiWorkers.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useAiWorkers.ts",
+        "extension": ".ts",
+        "sizeBytes": 2749,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useBrain.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useBrain.ts",
+        "extension": ".ts",
+        "sizeBytes": 2544,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useChatHandlers.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useChatHandlers.ts",
+        "extension": ".ts",
+        "sizeBytes": 12917,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useDebugging.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useDebugging.ts",
+        "extension": ".ts",
+        "sizeBytes": 2929,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useEditorHandlers.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useEditorHandlers.ts",
+        "extension": ".ts",
+        "sizeBytes": 5288,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useGitLogic.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useGitLogic.ts",
+        "extension": ".ts",
+        "sizeBytes": 2779,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/usePersonalities.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/usePersonalities.ts",
+        "extension": ".ts",
+        "sizeBytes": 3832,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/usePhi.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/usePhi.ts",
+        "extension": ".ts",
+        "sizeBytes": 4444,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/usePipeline.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/usePipeline.ts",
+        "extension": ".ts",
+        "sizeBytes": 5098,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useProjectSettings.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useProjectSettings.ts",
+        "extension": ".ts",
+        "sizeBytes": 2780,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useSwarm.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useSwarm.ts",
+        "extension": ".ts",
+        "sizeBytes": 2476,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useSwarmState.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useSwarmState.ts",
+        "extension": ".ts",
+        "sizeBytes": 1776,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useSystemStates.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useSystemStates.ts",
+        "extension": ".ts",
+        "sizeBytes": 1592,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useThrottledStorage.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useThrottledStorage.ts",
+        "extension": ".ts",
+        "sizeBytes": 422,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useWebContainer.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useWebContainer.ts",
+        "extension": ".ts",
+        "sizeBytes": 1127,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/hooks/useWebSockets.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/useWebSockets.ts",
+        "extension": ".ts",
+        "sizeBytes": 3105,
+        "directory": "src/hooks"
+      },
+      {
+        "relativePath": "src/lib/constants.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/lib/constants.ts",
+        "extension": ".ts",
+        "sizeBytes": 180,
+        "directory": "src/lib"
+      },
+      {
+        "relativePath": "src/lib/useDebounce.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/lib/useDebounce.ts",
+        "extension": ".ts",
+        "sizeBytes": 386,
+        "directory": "src/lib"
+      },
+      {
+        "relativePath": "src/services/aiService.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/aiService.ts",
+        "extension": ".ts",
+        "sizeBytes": 10151,
+        "directory": "src/services"
+      },
+      {
+        "relativePath": "src/services/fileStore.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/fileStore.ts",
+        "extension": ".ts",
+        "sizeBytes": 5418,
+        "directory": "src/services"
+      },
+      {
+        "relativePath": "src/services/googleGenAiStub.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/googleGenAiStub.ts",
+        "extension": ".ts",
+        "sizeBytes": 267,
+        "directory": "src/services"
+      },
+      {
+        "relativePath": "src/services/knowledgeService.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/knowledgeService.ts",
+        "extension": ".ts",
+        "sizeBytes": 3292,
+        "directory": "src/services"
+      },
+      {
+        "relativePath": "src/services/localCoreService.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/localCoreService.ts",
+        "extension": ".ts",
+        "sizeBytes": 2654,
+        "directory": "src/services"
+      },
+      {
+        "relativePath": "src/services/messageBroker.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/messageBroker.ts",
+        "extension": ".ts",
+        "sizeBytes": 4750,
+        "directory": "src/services"
+      },
+      {
+        "relativePath": "src/services/placeholder.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/placeholder.ts",
+        "extension": ".ts",
+        "sizeBytes": 23,
+        "directory": "src/services"
+      },
+      {
+        "relativePath": "src/services/templates.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/templates.ts",
+        "extension": ".ts",
+        "sizeBytes": 3467,
+        "directory": "src/services"
+      },
+      {
+        "relativePath": "src/utils/crimson-core.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/utils/crimson-core.ts",
+        "extension": ".ts",
+        "sizeBytes": 3011,
+        "directory": "src/utils"
+      },
+      {
+        "relativePath": "src/utils/helpers.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/utils/helpers.ts",
+        "extension": ".ts",
+        "sizeBytes": 1953,
+        "directory": "src/utils"
+      },
+      {
+        "relativePath": "src/utils/logger.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/utils/logger.ts",
+        "extension": ".ts",
+        "sizeBytes": 442,
+        "directory": "src/utils"
+      },
+      {
+        "relativePath": "src/utils/vfsUtils.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/utils/vfsUtils.ts",
+        "extension": ".ts",
+        "sizeBytes": 1859,
+        "directory": "src/utils"
+      },
+      {
+        "relativePath": "src/utils/winston-stub.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/utils/winston-stub.ts",
+        "extension": ".ts",
+        "sizeBytes": 866,
+        "directory": "src/utils"
+      },
+      {
+        "relativePath": "templates/python-backend/requirements.txt",
+        "absolutePath": "/home/workspace/Coder5543/templates/python-backend/requirements.txt",
+        "extension": ".txt",
+        "sizeBytes": 15,
+        "directory": "templates/python-backend"
+      },
+      {
+        "relativePath": "templates/data-science/requirements.txt",
+        "absolutePath": "/home/workspace/Coder5543/templates/data-science/requirements.txt",
+        "extension": ".txt",
+        "sizeBytes": 45,
+        "directory": "templates/data-science"
+      },
+      {
+        "relativePath": "templates/react-frontend/package.json",
+        "absolutePath": "/home/workspace/Coder5543/templates/react-frontend/package.json",
+        "extension": ".json",
+        "sizeBytes": 138,
+        "directory": "templates/react-frontend"
+      },
+      {
+        "relativePath": "tests/python/test_brain.py",
+        "absolutePath": "/home/workspace/Coder5543/tests/python/test_brain.py",
+        "extension": ".py",
+        "sizeBytes": 1536,
+        "directory": "tests/python"
+      },
+      {
+        "relativePath": "src/api/routes/brainRouter.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/api/routes/brainRouter.ts",
+        "extension": ".ts",
+        "sizeBytes": 3734,
+        "directory": "src/api/routes"
+      },
+      {
+        "relativePath": "src/api/routes/fsRouter.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/api/routes/fsRouter.ts",
+        "extension": ".ts",
+        "sizeBytes": 4359,
+        "directory": "src/api/routes"
+      },
+      {
+        "relativePath": "src/api/routes/githubRouter.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/api/routes/githubRouter.ts",
+        "extension": ".ts",
+        "sizeBytes": 5899,
+        "directory": "src/api/routes"
+      },
+      {
+        "relativePath": "src/api/routes/mcpRouter.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/api/routes/mcpRouter.ts",
+        "extension": ".ts",
+        "sizeBytes": 2963,
+        "directory": "src/api/routes"
+      },
+      {
+        "relativePath": "src/api/routes/ollamaRouter.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/api/routes/ollamaRouter.ts",
+        "extension": ".ts",
+        "sizeBytes": 1771,
+        "directory": "src/api/routes"
+      },
+      {
+        "relativePath": "src/api/routes/pipelineRouter.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/api/routes/pipelineRouter.ts",
+        "extension": ".ts",
+        "sizeBytes": 3362,
+        "directory": "src/api/routes"
+      },
+      {
+        "relativePath": "src/api/routes/terminalRouter.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/api/routes/terminalRouter.ts",
+        "extension": ".ts",
+        "sizeBytes": 2254,
+        "directory": "src/api/routes"
+      },
+      {
+        "relativePath": "src/components/layout/MainHeader.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/layout/MainHeader.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 11337,
+        "directory": "src/components/layout"
+      },
+      {
+        "relativePath": "src/components/layout/MobileBottomNav.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/layout/MobileBottomNav.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 1460,
+        "directory": "src/components/layout"
+      },
+      {
+        "relativePath": "src/components/layout/Sidebar.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/layout/Sidebar.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 3526,
+        "directory": "src/components/layout"
+      },
+      {
+        "relativePath": "src/components/modals/CommitModal.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/modals/CommitModal.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 3293,
+        "directory": "src/components/modals"
+      },
+      {
+        "relativePath": "src/components/modals/GenerateModal.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/modals/GenerateModal.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 4820,
+        "directory": "src/components/modals"
+      },
+      {
+        "relativePath": "src/components/modals/TemplateModal.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/modals/TemplateModal.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 4244,
+        "directory": "src/components/modals"
+      },
+      {
+        "relativePath": "src/components/panels/AnalysisPanel.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/panels/AnalysisPanel.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 4934,
+        "directory": "src/components/panels"
+      },
+      {
+        "relativePath": "src/components/panels/BrainPanel.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/panels/BrainPanel.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 7947,
+        "directory": "src/components/panels"
+      },
+      {
+        "relativePath": "src/components/panels/EditorPanel.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/panels/EditorPanel.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 96659,
+        "directory": "src/components/panels"
+      },
+      {
+        "relativePath": "src/components/panels/NodeBridgePanel.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/panels/NodeBridgePanel.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 10324,
+        "directory": "src/components/panels"
+      },
+      {
+        "relativePath": "src/components/panels/SettingsPanel.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/panels/SettingsPanel.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 50415,
+        "directory": "src/components/panels"
+      },
+      {
+        "relativePath": "src/components/panels/StoragePanel.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/panels/StoragePanel.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 5696,
+        "directory": "src/components/panels"
+      },
+      {
+        "relativePath": "src/components/panels/TerminalPanel.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/panels/TerminalPanel.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 6800,
+        "directory": "src/components/panels"
+      },
+      {
+        "relativePath": "src/components/panels/ToolNeuronPanel.tsx",
+        "absolutePath": "/home/workspace/Coder5543/src/components/panels/ToolNeuronPanel.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 47507,
+        "directory": "src/components/panels"
+      },
+      {
+        "relativePath": "src/components/panels/types.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/components/panels/types.ts",
+        "extension": ".ts",
+        "sizeBytes": 767,
+        "directory": "src/components/panels"
+      },
+      {
+        "relativePath": "src/hooks/editor/useAnalysisHandlers.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/editor/useAnalysisHandlers.ts",
+        "extension": ".ts",
+        "sizeBytes": 9674,
+        "directory": "src/hooks/editor"
+      },
+      {
+        "relativePath": "src/hooks/editor/useDebuggerHandlers.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/editor/useDebuggerHandlers.ts",
+        "extension": ".ts",
+        "sizeBytes": 7048,
+        "directory": "src/hooks/editor"
+      },
+      {
+        "relativePath": "src/hooks/editor/useDebuggerLogic.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/editor/useDebuggerLogic.ts",
+        "extension": ".ts",
+        "sizeBytes": 700,
+        "directory": "src/hooks/editor"
+      },
+      {
+        "relativePath": "src/hooks/editor/useEditorFileSystem.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/editor/useEditorFileSystem.ts",
+        "extension": ".ts",
+        "sizeBytes": 12088,
+        "directory": "src/hooks/editor"
+      },
+      {
+        "relativePath": "src/hooks/editor/useEditorLogic.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/editor/useEditorLogic.ts",
+        "extension": ".ts",
+        "sizeBytes": 5753,
+        "directory": "src/hooks/editor"
+      },
+      {
+        "relativePath": "src/hooks/editor/useFileSystem.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/editor/useFileSystem.ts",
+        "extension": ".ts",
+        "sizeBytes": 3059,
+        "directory": "src/hooks/editor"
+      },
+      {
+        "relativePath": "src/hooks/editor/useForgeHandlers.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/editor/useForgeHandlers.ts",
+        "extension": ".ts",
+        "sizeBytes": 13397,
+        "directory": "src/hooks/editor"
+      },
+      {
+        "relativePath": "src/hooks/editor/useInspectorHandlers.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/editor/useInspectorHandlers.ts",
+        "extension": ".ts",
+        "sizeBytes": 3253,
+        "directory": "src/hooks/editor"
+      },
+      {
+        "relativePath": "src/hooks/terminal/useTerminal.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/terminal/useTerminal.ts",
+        "extension": ".ts",
+        "sizeBytes": 1684,
+        "directory": "src/hooks/terminal"
+      },
+      {
+        "relativePath": "src/hooks/terminal/useTerminalLogic.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/hooks/terminal/useTerminalLogic.ts",
+        "extension": ".ts",
+        "sizeBytes": 20933,
+        "directory": "src/hooks/terminal"
+      },
+      {
+        "relativePath": "src/services/brain/associativeLayer.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/brain/associativeLayer.ts",
+        "extension": ".ts",
+        "sizeBytes": 3234,
+        "directory": "src/services/brain"
+      },
+      {
+        "relativePath": "src/services/brain/avoidanceMap.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/brain/avoidanceMap.ts",
+        "extension": ".ts",
+        "sizeBytes": 3205,
+        "directory": "src/services/brain"
+      },
+      {
+        "relativePath": "src/services/brain/brainService.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/brain/brainService.ts",
+        "extension": ".ts",
+        "sizeBytes": 7390,
+        "directory": "src/services/brain"
+      },
+      {
+        "relativePath": "src/services/brain/endocrineSystem.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/brain/endocrineSystem.ts",
+        "extension": ".ts",
+        "sizeBytes": 3754,
+        "directory": "src/services/brain"
+      },
+      {
+        "relativePath": "src/services/brain/ltmStore.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/brain/ltmStore.ts",
+        "extension": ".ts",
+        "sizeBytes": 4268,
+        "directory": "src/services/brain"
+      },
+      {
+        "relativePath": "src/services/brain/painErrorPathway.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/brain/painErrorPathway.ts",
+        "extension": ".ts",
+        "sizeBytes": 2145,
+        "directory": "src/services/brain"
+      },
+      {
+        "relativePath": "src/services/brain/stmBuffer.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/brain/stmBuffer.ts",
+        "extension": ".ts",
+        "sizeBytes": 1128,
+        "directory": "src/services/brain"
+      },
+      {
+        "relativePath": "src/services/brain/storage.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/brain/storage.ts",
+        "extension": ".ts",
+        "sizeBytes": 909,
+        "directory": "src/services/brain"
+      },
+      {
+        "relativePath": "src/services/brain/types.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/brain/types.ts",
+        "extension": ".ts",
+        "sizeBytes": 1906,
+        "directory": "src/services/brain"
+      },
+      {
+        "relativePath": "src/services/brain/vectorService.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/brain/vectorService.ts",
+        "extension": ".ts",
+        "sizeBytes": 1372,
+        "directory": "src/services/brain"
+      },
+      {
+        "relativePath": "src/services/bridge/WebSocketBridge.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/bridge/WebSocketBridge.ts",
+        "extension": ".ts",
+        "sizeBytes": 3473,
+        "directory": "src/services/bridge"
+      },
+      {
+        "relativePath": "src/services/mcp/McpManager.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/mcp/McpManager.ts",
+        "extension": ".ts",
+        "sizeBytes": 7882,
+        "directory": "src/services/mcp"
+      },
+      {
+        "relativePath": "src/services/pipeline/filteringService.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/pipeline/filteringService.ts",
+        "extension": ".ts",
+        "sizeBytes": 4505,
+        "directory": "src/services/pipeline"
+      },
+      {
+        "relativePath": "src/services/pipeline/ingestionService.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/pipeline/ingestionService.ts",
+        "extension": ".ts",
+        "sizeBytes": 1767,
+        "directory": "src/services/pipeline"
+      },
+      {
+        "relativePath": "src/services/pipeline/patternInjectionService.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/pipeline/patternInjectionService.ts",
+        "extension": ".ts",
+        "sizeBytes": 9467,
+        "directory": "src/services/pipeline"
+      },
+      {
+        "relativePath": "src/services/storage/AsyncStorage.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/storage/AsyncStorage.ts",
+        "extension": ".ts",
+        "sizeBytes": 1764,
+        "directory": "src/services/storage"
+      },
+      {
+        "relativePath": "src/services/storage/sqliteDb.ts",
+        "absolutePath": "/home/workspace/Coder5543/src/services/storage/sqliteDb.ts",
+        "extension": ".ts",
+        "sizeBytes": 1060,
+        "directory": "src/services/storage"
+      },
+      {
+        "relativePath": "templates/react-frontend/src/App.tsx",
+        "absolutePath": "/home/workspace/Coder5543/templates/react-frontend/src/App.tsx",
+        "extension": ".tsx",
+        "sizeBytes": 94,
+        "directory": "templates/react-frontend/src"
+      },
+      {
+        "relativePath": "tests/fixtures/python-small/.projscan-cache/.gitignore",
+        "absolutePath": "/home/workspace/Coder5543/tests/fixtures/python-small/.projscan-cache/.gitignore",
+        "extension": "",
+        "sizeBytes": 2,
+        "directory": "tests/fixtures/python-small/.projscan-cache"
+      },
+      {
+        "relativePath": "tests/fixtures/python-small/.projscan-cache/graph.json",
+        "absolutePath": "/home/workspace/Coder5543/tests/fixtures/python-small/.projscan-cache/graph.json",
+        "extension": ".json",
+        "sizeBytes": 130,
+        "directory": "tests/fixtures/python-small/.projscan-cache"
+      },
+      {
+        "relativePath": "tests/fixtures/python-small/.projscan-cache/session.json",
+        "absolutePath": "/home/workspace/Coder5543/tests/fixtures/python-small/.projscan-cache/session.json",
+        "extension": ".json",
+        "sizeBytes": 1095,
+        "directory": "tests/fixtures/python-small/.projscan-cache"
+      },
+      {
+        "relativePath": "tests/fixtures/python-small/.projscan-memory/memory.json",
+        "absolutePath": "/home/workspace/Coder5543/tests/fixtures/python-small/.projscan-memory/memory.json",
+        "extension": ".json",
+        "sizeBytes": 1114,
+        "directory": "tests/fixtures/python-small/.projscan-memory"
+      }
+    ],
+    "directoryTree": {
+      "name": "Coder5543",
+      "path": ".",
+      "children": [
+        {
+          "name": ".claude",
+          "path": ".claude",
+          "children": [
+            {
+              "name": "skills",
+              "path": ".claude/skills",
+              "children": [],
+              "fileCount": 6,
+              "totalFileCount": 6
+            }
+          ],
+          "fileCount": 0,
+          "totalFileCount": 6
+        },
+        {
+          "name": ".projscan-cache",
+          "path": ".projscan-cache",
+          "children": [],
+          "fileCount": 3,
+          "totalFileCount": 3
+        },
+        {
+          "name": ".projscan-memory",
+          "path": ".projscan-memory",
+          "children": [],
+          "fileCount": 1,
+          "totalFileCount": 1
+        },
+        {
+          "name": "agency-agents",
+          "path": "agency-agents",
+          "children": [
+            {
+              "name": "engineering",
+              "path": "agency-agents/engineering",
+              "children": [],
+              "fileCount": 2,
+              "totalFileCount": 2
+            }
+          ],
+          "fileCount": 0,
+          "totalFileCount": 2
+        },
+        {
+          "name": "data-science",
+          "path": "data-science",
+          "children": [],
+          "fileCount": 1,
+          "totalFileCount": 1
+        },
+        {
+          "name": "python-backend",
+          "path": "python-backend",
+          "children": [
+            {
+              "name": "tests",
+              "path": "python-backend/tests",
+              "children": [],
+              "fileCount": 2,
+              "totalFileCount": 2
+            }
+          ],
+          "fileCount": 1,
+          "totalFileCount": 3
+        },
+        {
+          "name": "react-frontend",
+          "path": "react-frontend",
+          "children": [],
+          "fileCount": 1,
+          "totalFileCount": 1
+        },
+        {
+          "name": "rules",
+          "path": "rules",
+          "children": [],
+          "fileCount": 6,
+          "totalFileCount": 6
+        },
+        {
+          "name": "scratch",
+          "path": "scratch",
+          "children": [],
+          "fileCount": 2,
+          "totalFileCount": 2
+        },
+        {
+          "name": "src",
+          "path": "src",
+          "children": [
+            {
+              "name": "api",
+              "path": "src/api",
+              "children": [
+                {
+                  "name": "routes",
+                  "path": "src/api/routes",
+                  "children": [],
+                  "fileCount": 7,
+                  "totalFileCount": 7
+                }
+              ],
+              "fileCount": 0,
+              "totalFileCount": 7
+            },
+            {
+              "name": "components",
+              "path": "src/components",
+              "children": [
+                {
+                  "name": "layout",
+                  "path": "src/components/layout",
+                  "children": [],
+                  "fileCount": 3,
+                  "totalFileCount": 3
+                },
+                {
+                  "name": "modals",
+                  "path": "src/components/modals",
+                  "children": [],
+                  "fileCount": 3,
+                  "totalFileCount": 3
+                },
+                {
+                  "name": "panels",
+                  "path": "src/components/panels",
+                  "children": [],
+                  "fileCount": 9,
+                  "totalFileCount": 9
+                }
+              ],
+              "fileCount": 5,
+              "totalFileCount": 20
+            },
+            {
+              "name": "context",
+              "path": "src/context",
+              "children": [],
+              "fileCount": 1,
+              "totalFileCount": 1
+            },
+            {
+              "name": "data",
+              "path": "src/data",
+              "children": [],
+              "fileCount": 3,
+              "totalFileCount": 3
+            },
+            {
+              "name": "hooks",
+              "path": "src/hooks",
+              "children": [
+                {
+                  "name": "editor",
+                  "path": "src/hooks/editor",
+                  "children": [],
+                  "fileCount": 8,
+                  "totalFileCount": 8
+                },
+                {
+                  "name": "terminal",
+                  "path": "src/hooks/terminal",
+                  "children": [],
+                  "fileCount": 2,
+                  "totalFileCount": 2
+                }
+              ],
+              "fileCount": 18,
+              "totalFileCount": 28
+            },
+            {
+              "name": "lib",
+              "path": "src/lib",
+              "children": [],
+              "fileCount": 2,
+              "totalFileCount": 2
+            },
+            {
+              "name": "services",
+              "path": "src/services",
+              "children": [
+                {
+                  "name": "brain",
+                  "path": "src/services/brain",
+                  "children": [],
+                  "fileCount": 10,
+                  "totalFileCount": 10
+                },
+                {
+                  "name": "bridge",
+                  "path": "src/services/bridge",
+                  "children": [],
+                  "fileCount": 1,
+                  "totalFileCount": 1
+                },
+                {
+                  "name": "mcp",
+                  "path": "src/services/mcp",
+                  "children": [],
+                  "fileCount": 1,
+                  "totalFileCount": 1
+                },
+                {
+                  "name": "pipeline",
+                  "path": "src/services/pipeline",
+                  "children": [],
+                  "fileCount": 3,
+                  "totalFileCount": 3
+                },
+                {
+                  "name": "storage",
+                  "path": "src/services/storage",
+                  "children": [],
+                  "fileCount": 2,
+                  "totalFileCount": 2
+                }
+              ],
+              "fileCount": 8,
+              "totalFileCount": 25
+            },
+            {
+              "name": "utils",
+              "path": "src/utils",
+              "children": [],
+              "fileCount": 5,
+              "totalFileCount": 5
+            }
+          ],
+          "fileCount": 2,
+          "totalFileCount": 93
+        },
+        {
+          "name": "templates",
+          "path": "templates",
+          "children": [
+            {
+              "name": "data-science",
+              "path": "templates/data-science",
+              "children": [],
+              "fileCount": 1,
+              "totalFileCount": 1
+            },
+            {
+              "name": "python-backend",
+              "path": "templates/python-backend",
+              "children": [],
+              "fileCount": 1,
+              "totalFileCount": 1
+            },
+            {
+              "name": "react-frontend",
+              "path": "templates/react-frontend",
+              "children": [
+                {
+                  "name": "src",
+                  "path": "templates/react-frontend/src",
+                  "children": [],
+                  "fileCount": 1,
+                  "totalFileCount": 1
+                }
+              ],
+              "fileCount": 1,
+              "totalFileCount": 2
+            }
+          ],
+          "fileCount": 0,
+          "totalFileCount": 4
+        },
+        {
+          "name": "tests",
+          "path": "tests",
+          "children": [
+            {
+              "name": "fixtures",
+              "path": "tests/fixtures",
+              "children": [
+                {
+                  "name": "python-small",
+                  "path": "tests/fixtures/python-small",
+                  "children": [
+                    {
+                      "name": ".projscan-cache",
+                      "path": "tests/fixtures/python-small/.projscan-cache",
+                      "children": [],
+                      "fileCount": 3,
+                      "totalFileCount": 3
+                    },
+                    {
+                      "name": ".projscan-memory",
+                      "path": "tests/fixtures/python-small/.projscan-memory",
+                      "children": [],
+                      "fileCount": 1,
+                      "totalFileCount": 1
+                    }
+                  ],
+                  "fileCount": 0,
+                  "totalFileCount": 4
+                }
+              ],
+              "fileCount": 0,
+              "totalFileCount": 4
+            },
+            {
+              "name": "python",
+              "path": "tests/python",
+              "children": [],
+              "fileCount": 1,
+              "totalFileCount": 1
+            }
+          ],
+          "fileCount": 1,
+          "totalFileCount": 6
+        }
+      ],
+      "fileCount": 51,
+      "totalFileCount": 179
+    },
+    "scanDurationMs": 29.12738900000005
+  },
+  "languages": {
+    "primary": "TypeScript",
+    "languages": {
+      "JSON": {
+        "name": "JSON",
+        "fileCount": 19,
+        "percentage": 11.2,
+        "extensions": [
+          ".json"
+        ]
+      },
+      "Markdown": {
+        "name": "Markdown",
+        "fileCount": 26,
+        "percentage": 15.4,
+        "extensions": [
+          ".md"
+        ]
+      },
+      "Python": {
+        "name": "Python",
+        "fileCount": 7,
+        "percentage": 4.1,
+        "extensions": [
+          ".py"
+        ]
+      },
+      "Text": {
+        "name": "Text",
+        "fileCount": 5,
+        "percentage": 3,
+        "extensions": [
+          ".txt"
+        ]
+      },
+      "JavaScript": {
+        "name": "JavaScript",
+        "fileCount": 11,
+        "percentage": 6.5,
+        "extensions": [
+          ".cjs",
+          ".js"
+        ]
+      },
+      "CSS": {
+        "name": "CSS",
+        "fileCount": 2,
+        "percentage": 1.2,
+        "extensions": [
+          ".css"
+        ]
+      },
+      "HTML": {
+        "name": "HTML",
+        "fileCount": 1,
+        "percentage": 0.6,
+        "extensions": [
+          ".html"
+        ]
+      },
+      "TOML": {
+        "name": "TOML",
+        "fileCount": 1,
+        "percentage": 0.6,
+        "extensions": [
+          ".toml"
+        ]
+      },
+      "TypeScript": {
+        "name": "TypeScript",
+        "fileCount": 97,
+        "percentage": 57.4,
+        "extensions": [
+          ".ts",
+          ".tsx"
+        ]
+      }
+    }
+  },
+  "frameworks": {
+    "frameworks": [
+      {
+        "name": "React",
+        "version": "^19.2.4",
+        "category": "frontend",
+        "confidence": "high"
+      },
+      {
+        "name": "Express",
+        "version": "^5.2.1",
+        "category": "backend",
+        "confidence": "high"
+      },
+      {
+        "name": "Socket.IO",
+        "version": "^4.8.3",
+        "category": "backend",
+        "confidence": "high"
+      },
+      {
+        "name": "Vitest",
+        "version": "^4.1.4",
+        "category": "testing",
+        "confidence": "high"
+      },
+      {
+        "name": "Vite",
+        "version": "^6.2.0",
+        "category": "bundler",
+        "confidence": "high"
+      },
+      {
+        "name": "Rollup",
+        "version": "npm:@rollup/wasm-node@^4.60.4",
+        "category": "bundler",
+        "confidence": "high"
+      },
+      {
+        "name": "Tailwind CSS",
+        "version": "^4.2.2",
+        "category": "css",
+        "confidence": "high"
+      }
+    ],
+    "buildTools": [
+      "TypeScript",
+      "Vite"
+    ],
+    "packageManager": "npm"
+  },
+  "dependencies": {
+    "totalDependencies": 27,
+    "totalDevDependencies": 10,
+    "dependencies": {
+      "@google/genai": "^1.40.0",
+      "@modelcontextprotocol/sdk": "^1.29.0",
+      "@monaco-editor/react": "^4.7.0",
+      "@tailwindcss/vite": "^4.2.2",
+      "@types/dompurify": "^3.0.5",
+      "@types/express": "^5.0.6",
+      "@types/react-window": "^2.0.0",
+      "@webcontainer/api": "^1.6.4",
+      "better-sqlite3": "^12.10.0",
+      "chokidar": "^5.0.0",
+      "dep": "^0.18.3",
+      "dompurify": "^3.4.0",
+      "express": "^5.2.1",
+      "express-rate-limit": "^8.5.2",
+      "helmet": "^8.2.0",
+      "lucide-react": "^0.563.0",
+      "puppeteer": "^24.42.0",
+      "react": "^19.2.4",
+      "react-dom": "^19.2.4",
+      "react-markdown": "^10.1.0",
+      "react-window": "^2.2.7",
+      "remark-gfm": "^4.0.1",
+      "socket.io": "^4.8.3",
+      "socket.io-client": "^4.8.3",
+      "tailwindcss": "^4.2.2",
+      "tsx": "^4.21.0",
+      "winston": "^3.19.0"
+    },
+    "devDependencies": {
+      "@types/node": "^22.14.0",
+      "@typescript-eslint/eslint-plugin": "^8.60.0",
+      "@typescript-eslint/parser": "^8.60.0",
+      "@vitejs/plugin-react": "^5.0.0",
+      "eslint": "^10.4.0",
+      "prettier": "^3.8.3",
+      "rollup": "npm:@rollup/wasm-node@^4.60.4",
+      "typescript": "~5.8.2",
+      "vite": "^6.2.0",
+      "vitest": "^4.1.4"
+    },
+    "risks": []
+  },
+  "issues": [
+    {
+      "id": "private-key-committed",
+      "title": "Private key file committed: serena.key",
+      "description": "The file \"serena.key\" appears to be a private key. Remove it and add to .gitignore.",
+      "severity": "error",
+      "category": "security",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "serena.key",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-dependency-dep",
+      "title": "Unused dependency: dep",
+      "description": "The package \"dep\" is declared in package.json but never imported from source files under that package. If it's used only in package.json scripts or as a plugin, add it to the projscan allowlist via .projscanrc → disableRules.",
+      "severity": "warning",
+      "category": "dependencies",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "package.json",
+          "line": 29
+        }
+      ],
+      "suggestedAction": {
+        "summary": "Remove or wire up \"dep\"."
+      }
+    },
+    {
+      "id": "unused-exports-ask_sage.py",
+      "title": "Unused names in ask_sage.py",
+      "description": "4 named names (KEY_FILE, get_api_key, send_to_sage, main) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "ask_sage.py",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-inject_node_bridge.py",
+      "title": "Unused names in inject_node_bridge.py",
+      "description": "12 named names (file_path, new_props, idx, file_path, new_logic, … +7) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "inject_node_bridge.py",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-refactor_settings.py",
+      "title": "Unused names in refactor_settings.py",
+      "description": "3 named names (file_path, new_decl, start_idx) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "refactor_settings.py",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/context/AppContext.tsx",
+      "title": "Unused exports in src/context/AppContext.tsx",
+      "description": "2 named exports (AppProvider, useAppContext) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/context/AppContext.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/useAiOrchestrator.ts",
+      "title": "Unused exports in src/hooks/useAiOrchestrator.ts",
+      "description": "1 named export (useAiOrchestrator) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/useAiOrchestrator.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/useAiRequest.ts",
+      "title": "Unused exports in src/hooks/useAiRequest.ts",
+      "description": "2 named exports (AiDomain, useAiRequest) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/useAiRequest.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/useChatHandlers.ts",
+      "title": "Unused exports in src/hooks/useChatHandlers.ts",
+      "description": "1 named export (useChatHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/useChatHandlers.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/useDebugging.ts",
+      "title": "Unused exports in src/hooks/useDebugging.ts",
+      "description": "1 named export (useDebugging) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/useDebugging.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/useEditorHandlers.ts",
+      "title": "Unused exports in src/hooks/useEditorHandlers.ts",
+      "description": "1 named export (useEditorHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/useEditorHandlers.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/usePersonalities.ts",
+      "title": "Unused exports in src/hooks/usePersonalities.ts",
+      "description": "1 named export (usePersonalities) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/usePersonalities.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/usePipeline.ts",
+      "title": "Unused exports in src/hooks/usePipeline.ts",
+      "description": "4 named exports (PipelineStats, DispatchOptions, UsePipelineReturn, usePipeline) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/usePipeline.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/useSwarm.ts",
+      "title": "Unused exports in src/hooks/useSwarm.ts",
+      "description": "3 named exports (SwarmAgent, SwarmLog, useSwarm) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/useSwarm.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/useThrottledStorage.ts",
+      "title": "Unused exports in src/hooks/useThrottledStorage.ts",
+      "description": "1 named export (useThrottledStorage) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/useThrottledStorage.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/useWebContainer.ts",
+      "title": "Unused exports in src/hooks/useWebContainer.ts",
+      "description": "1 named export (useWebContainer) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/useWebContainer.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/useWebSockets.ts",
+      "title": "Unused exports in src/hooks/useWebSockets.ts",
+      "description": "1 named export (useWebSockets) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/useWebSockets.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/services/knowledgeService.ts",
+      "title": "Unused exports in src/services/knowledgeService.ts",
+      "description": "3 named exports (IngestionProgress, KnowledgeService, knowledgeService) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/services/knowledgeService.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/utils/vfsUtils.ts",
+      "title": "Unused exports in src/utils/vfsUtils.ts",
+      "description": "1 named export (transformToWebContainerTree) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/utils/vfsUtils.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/utils/winston-stub.ts",
+      "title": "Unused exports in src/utils/winston-stub.ts",
+      "description": "1 named export (createLogger) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/utils/winston-stub.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/layout/MainHeader.tsx",
+      "title": "Unused exports in src/components/layout/MainHeader.tsx",
+      "description": "1 named export (MainHeader) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/layout/MainHeader.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/layout/MobileBottomNav.tsx",
+      "title": "Unused exports in src/components/layout/MobileBottomNav.tsx",
+      "description": "1 named export (MobileBottomNav) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/layout/MobileBottomNav.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/layout/Sidebar.tsx",
+      "title": "Unused exports in src/components/layout/Sidebar.tsx",
+      "description": "1 named export (Sidebar) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/layout/Sidebar.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/modals/CommitModal.tsx",
+      "title": "Unused exports in src/components/modals/CommitModal.tsx",
+      "description": "1 named export (CommitModal) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/modals/CommitModal.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/modals/GenerateModal.tsx",
+      "title": "Unused exports in src/components/modals/GenerateModal.tsx",
+      "description": "1 named export (GenerateModal) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/modals/GenerateModal.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/modals/TemplateModal.tsx",
+      "title": "Unused exports in src/components/modals/TemplateModal.tsx",
+      "description": "1 named export (TemplateModal) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/modals/TemplateModal.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/panels/AnalysisPanel.tsx",
+      "title": "Unused exports in src/components/panels/AnalysisPanel.tsx",
+      "description": "1 named export (AnalysisPanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/panels/AnalysisPanel.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/panels/BrainPanel.tsx",
+      "title": "Unused exports in src/components/panels/BrainPanel.tsx",
+      "description": "1 named export (BrainPanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/panels/BrainPanel.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/panels/EditorPanel.tsx",
+      "title": "Unused exports in src/components/panels/EditorPanel.tsx",
+      "description": "1 named export (EditorPanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/panels/EditorPanel.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/panels/NodeBridgePanel.tsx",
+      "title": "Unused exports in src/components/panels/NodeBridgePanel.tsx",
+      "description": "1 named export (NodeBridgePanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/panels/NodeBridgePanel.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/panels/StoragePanel.tsx",
+      "title": "Unused exports in src/components/panels/StoragePanel.tsx",
+      "description": "1 named export (StoragePanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/panels/StoragePanel.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/panels/TerminalPanel.tsx",
+      "title": "Unused exports in src/components/panels/TerminalPanel.tsx",
+      "description": "1 named export (TerminalPanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/panels/TerminalPanel.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/components/panels/ToolNeuronPanel.tsx",
+      "title": "Unused exports in src/components/panels/ToolNeuronPanel.tsx",
+      "description": "1 named export (ToolNeuronPanel) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/components/panels/ToolNeuronPanel.tsx",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/editor/useAnalysisHandlers.ts",
+      "title": "Unused exports in src/hooks/editor/useAnalysisHandlers.ts",
+      "description": "1 named export (useAnalysisHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/editor/useAnalysisHandlers.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/editor/useDebuggerHandlers.ts",
+      "title": "Unused exports in src/hooks/editor/useDebuggerHandlers.ts",
+      "description": "1 named export (useDebuggerHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/editor/useDebuggerHandlers.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/editor/useEditorLogic.ts",
+      "title": "Unused exports in src/hooks/editor/useEditorLogic.ts",
+      "description": "1 named export (useEditorLogic) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/editor/useEditorLogic.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/editor/useFileSystem.ts",
+      "title": "Unused exports in src/hooks/editor/useFileSystem.ts",
+      "description": "2 named exports (ProjectFile, useFileSystem) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/editor/useFileSystem.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/editor/useForgeHandlers.ts",
+      "title": "Unused exports in src/hooks/editor/useForgeHandlers.ts",
+      "description": "1 named export (useForgeHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/editor/useForgeHandlers.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/editor/useInspectorHandlers.ts",
+      "title": "Unused exports in src/hooks/editor/useInspectorHandlers.ts",
+      "description": "1 named export (useInspectorHandlers) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/editor/useInspectorHandlers.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/terminal/useTerminal.ts",
+      "title": "Unused exports in src/hooks/terminal/useTerminal.ts",
+      "description": "1 named export (useTerminal) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/terminal/useTerminal.ts",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "id": "unused-exports-src/hooks/terminal/useTerminalLogic.ts",
+      "title": "Unused exports in src/hooks/terminal/useTerminalLogic.ts",
+      "description": "1 named export (useTerminalLogic) but nothing in the project imports this file. Dead code or awaiting wiring?",
+      "severity": "info",
+      "category": "architecture",
+      "fixAvailable": false,
+      "locations": [
+        {
+          "file": "src/hooks/terminal/useTerminalLogic.ts",
+          "line": 1
+        }
+      ]
+    }
+  ],
+  "timestamp": "2026-06-07T13:54:02.788Z"
+}

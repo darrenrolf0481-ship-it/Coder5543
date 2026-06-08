@@ -8,7 +8,7 @@
  * Layout:  primary 8fr | contextual 3fr | pulse 0.3fr
  */
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import type { EndocrineState } from '../services/brain/types';
 
 export const PHI      = 1.618;
@@ -30,6 +30,16 @@ function setTxProgress(value: number) {
   document.documentElement.style.setProperty(
     '--tx-progress',
     String(Math.max(0, Math.min(1, value)))
+  );
+}
+
+function setPulseDuration(cortisol: number) {
+  // Cortisol 0.0 -> 2.0s duration (slow)
+  // Cortisol 1.0 -> 0.4s duration (fast/panic)
+  const duration = 2.0 - (cortisol * 1.6);
+  document.documentElement.style.setProperty(
+    '--pulse-duration',
+    `${Math.max(0.3, duration)}s`
   );
 }
 
@@ -59,6 +69,8 @@ export function usePhi(endocrine: EndocrineState | null): PhiController {
   useEffect(() => {
     if (!endocrine) return;
     const { cortisol, dopamine } = endocrine;
+
+    setPulseDuration(cortisol);
 
     if (cortisol >= 0.8) {
       setPulse('error');
@@ -93,7 +105,14 @@ export function usePhi(endocrine: EndocrineState | null): PhiController {
     if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
   }, []);
 
-  return { beginTx, commitTx, rollbackTx, setPulse, phi: PHI, phiInv: PHI_INV };
+  return useMemo(() => ({ 
+    beginTx, 
+    commitTx, 
+    rollbackTx, 
+    setPulse, 
+    phi: PHI, 
+    phiInv: PHI_INV 
+  }), [beginTx, commitTx, rollbackTx]);
 }
 
 // ── Storage pressure monitor (can be called independently) ──────────────────

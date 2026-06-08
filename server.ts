@@ -57,14 +57,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function startServer() {
   const app = express();
-  const PORT = 3001;
+  const PORT = 3000;
 
-  // ── Security & Observability ───────────────────────────────────────────────
-  app.use(helmet({
-    contentSecurityPolicy: false, // Disable for Vite dev overlay/HMR
-    crossOriginEmbedderPolicy: { policy: 'require-corp' },
-    crossOriginOpenerPolicy: { policy: 'same-origin' },
-  }));
+  if (process.env.NODE_ENV === 'production') {
+    app.use(helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: { policy: 'require-corp' },
+      crossOriginOpenerPolicy: { policy: 'same-origin' },
+    }));
+  }
 
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -76,16 +77,23 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Strict CORS: Allow only localhost and 127.0.0.1
+  // Strict CORS: Allow wildcard in dev, specific origins in prod
   app.use((req, res, next) => {
     const origin = req.headers.origin;
-    const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
-    
-    if (origin && allowedOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
+    if (process.env.NODE_ENV !== 'production') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    } else {
+      const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'];
+      if (origin && allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+      }
     }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    
+    // Removing COOP/COEP headers so the app can render in VS Code iframes.
+    // Note: WebContainer will fail to boot without these, but the UI will render.
+    // To use WebContainer, the user must open the app in a new top-level browser tab.
+    
     next();
   });
 
@@ -131,10 +139,20 @@ async function startServer() {
     const wsBridge = new WebSocketBridge(httpServer);
     (globalThis as any).wsBridge = wsBridge;
 
+    let hmrConfig: any = { server: httpServer, overlay: true };
+    if (process.env.VSCODE_PROXY_URI) {
+      hmrConfig = {
+        server: httpServer,
+        overlay: true,
+        clientPort: 443,
+        path: 'proxy/3000/'
+      };
+    }
+
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
-        hmr: { server: httpServer, overlay: false },
+        hmr: hmrConfig,
       },
       appType: 'spa',
     });

@@ -23,10 +23,17 @@ export function useWebContainer() {
     return localCore.exec(cmd, args, onStdout);
   }, [status, boot]);
 
+  const setup = useCallback(async (onOutput?: (data: string) => void) => {
+    if (status !== 'online') {
+      await boot();
+    }
+    return localCore.setupDependencies(onOutput);
+  }, [status, boot]);
+
   // Initial boot attempt
   useEffect(() => {
     boot();
   }, [boot]);
 
-  return { status, error, boot, exec };
+  return { status, error, boot, exec, setup };
 }

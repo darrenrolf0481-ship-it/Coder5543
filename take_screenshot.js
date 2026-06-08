@@ -5,6 +5,11 @@ import puppeteer from 'puppeteer';
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   const page = await browser.newPage();
+  
+  page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+  page.on('pageerror', error => console.log('PAGE ERROR:', error.message));
+  page.on('requestfailed', request => console.log('PAGE REQUEST FAILED:', request.url(), request.failure()?.errorText));
+
   await page.setViewport({ width: 1280, height: 800 });
   
   console.log('Navigating to http://localhost:3000...');

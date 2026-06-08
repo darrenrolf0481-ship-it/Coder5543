@@ -30,6 +30,8 @@ export function useTerminalLogic(
       domain?: string
     ) => Promise<string>;
     execTerminal: (cmd: string, cwd?: string, onOutput?: (data: any) => void) => void;
+    terminalSource: 'node_bridge' | 'local_core';
+    execLocalCore: (cmd: string, args: string[], onStdout?: (data: string) => void) => Promise<number>;
   }
 ) {
   const {
@@ -58,7 +60,9 @@ export function useTerminalLogic(
     prepareContext,
     recordInteraction,
     generateAIResponse,
-    execTerminal
+    execTerminal,
+    terminalSource,
+    execLocalCore
   } = deps;
 
   const commonCommands = [
@@ -137,6 +141,23 @@ Current System State:
 
     const runShellCmd = async (shellCmd: string) => {
       setIsAiProcessing(true);
+
+      if (terminalSource === 'local_core') {
+        const parts = shellCmd.trim().split(' ').filter(Boolean);
+        const cmd = parts[0];
+        const args = parts.slice(1);
+        
+        try {
+          await execLocalCore(cmd, args, (data) => {
+             setTerminalOutput((prev: string[]) => [...prev, ...stripAnsi(data).split('\n').filter(Boolean)]);
+          });
+        } catch (err: any) {
+          setTerminalOutput((prev: string[]) => [...prev, `[ERROR] Local Core: ${err.message}`]);
+        } finally {
+          setIsAiProcessing(false);
+        }
+        return;
+      }
 
       // Handle 'cd' locally for state tracking (still needs backend pwd check)
       if (/^cd(\s|$)/.test(shellCmd.trim())) {

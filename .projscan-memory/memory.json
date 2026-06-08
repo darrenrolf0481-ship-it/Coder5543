@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "lastUpdatedAt": "2026-06-06T04:50:20.039Z",
+  "lastUpdatedAt": "2026-06-07T13:57:19.506Z",
   "rules": {
     "hardcoded-secret": {
       "ruleId": "hardcoded-secret",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-06-06T04:50:20.038Z",
       "runCount": 21,
-      "fixedCount": 15,
+      "fixedCount": 16,
       "suppressedInConfig": false
     },
     "missing-eslint": {
@@ -37,8 +37,8 @@
     "unused-dependency-dep": {
       "ruleId": "unused-dependency-dep",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-06-06T04:50:20.038Z",
-      "runCount": 15,
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 20,
       "fixedCount": 11,
       "suppressedInConfig": false
     },
@@ -53,8 +53,8 @@
     "unused-dependency-tailwindcss": {
       "ruleId": "unused-dependency-tailwindcss",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-06-06T04:50:20.038Z",
-      "runCount": 36,
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 41,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
@@ -119,7 +119,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-06-06T04:50:20.038Z",
       "runCount": 23,
-      "fixedCount": 13,
+      "fixedCount": 14,
       "suppressedInConfig": false
     },
     "unused-exports-sdk_bridge.js": {
@@ -237,16 +237,16 @@
     "unused-dependency-@typescript-eslint/eslint-plugin": {
       "ruleId": "unused-dependency-@typescript-eslint/eslint-plugin",
       "firstSeenAt": "2026-05-26T16:02:13.662Z",
-      "lastSeenAt": "2026-06-06T04:50:20.038Z",
-      "runCount": 31,
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 36,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
     "unused-dependency-@typescript-eslint/parser": {
       "ruleId": "unused-dependency-@typescript-eslint/parser",
       "firstSeenAt": "2026-05-26T16:02:13.662Z",
-      "lastSeenAt": "2026-06-06T04:50:20.038Z",
-      "runCount": 31,
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 36,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
@@ -255,7 +255,7 @@
       "firstSeenAt": "2026-05-26T19:15:45.850Z",
       "lastSeenAt": "2026-06-06T04:50:20.038Z",
       "runCount": 13,
-      "fixedCount": 11,
+      "fixedCount": 12,
       "suppressedInConfig": false
     },
     "unused-exports-src/services/brain_old/brainService.ts": {
@@ -269,9 +269,329 @@
     "unused-exports-ask_sage.py": {
       "ruleId": "unused-exports-ask_sage.py",
       "firstSeenAt": "2026-06-05T01:31:23.584Z",
-      "lastSeenAt": "2026-06-06T04:50:20.038Z",
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 10,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "private-key-committed": {
+      "ruleId": "private-key-committed",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
       "runCount": 5,
       "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-@modelcontextprotocol/sdk": {
+      "ruleId": "unused-dependency-@modelcontextprotocol/sdk",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-inject_node_bridge.py": {
+      "ruleId": "unused-exports-inject_node_bridge.py",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-refactor_settings.py": {
+      "ruleId": "unused-exports-refactor_settings.py",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/context/AppContext.tsx": {
+      "ruleId": "unused-exports-src/context/AppContext.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useAiOrchestrator.ts": {
+      "ruleId": "unused-exports-src/hooks/useAiOrchestrator.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useAiRequest.ts": {
+      "ruleId": "unused-exports-src/hooks/useAiRequest.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useChatHandlers.ts": {
+      "ruleId": "unused-exports-src/hooks/useChatHandlers.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useDebugging.ts": {
+      "ruleId": "unused-exports-src/hooks/useDebugging.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useEditorHandlers.ts": {
+      "ruleId": "unused-exports-src/hooks/useEditorHandlers.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/usePersonalities.ts": {
+      "ruleId": "unused-exports-src/hooks/usePersonalities.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/usePipeline.ts": {
+      "ruleId": "unused-exports-src/hooks/usePipeline.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useSwarm.ts": {
+      "ruleId": "unused-exports-src/hooks/useSwarm.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useThrottledStorage.ts": {
+      "ruleId": "unused-exports-src/hooks/useThrottledStorage.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useWebContainer.ts": {
+      "ruleId": "unused-exports-src/hooks/useWebContainer.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useWebSockets.ts": {
+      "ruleId": "unused-exports-src/hooks/useWebSockets.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/services/knowledgeService.ts": {
+      "ruleId": "unused-exports-src/services/knowledgeService.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/utils/vfsUtils.ts": {
+      "ruleId": "unused-exports-src/utils/vfsUtils.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/utils/winston-stub.ts": {
+      "ruleId": "unused-exports-src/utils/winston-stub.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/layout/MainHeader.tsx": {
+      "ruleId": "unused-exports-src/components/layout/MainHeader.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/layout/MobileBottomNav.tsx": {
+      "ruleId": "unused-exports-src/components/layout/MobileBottomNav.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/layout/Sidebar.tsx": {
+      "ruleId": "unused-exports-src/components/layout/Sidebar.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/modals/CommitModal.tsx": {
+      "ruleId": "unused-exports-src/components/modals/CommitModal.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/modals/GenerateModal.tsx": {
+      "ruleId": "unused-exports-src/components/modals/GenerateModal.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/modals/TemplateModal.tsx": {
+      "ruleId": "unused-exports-src/components/modals/TemplateModal.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/panels/AnalysisPanel.tsx": {
+      "ruleId": "unused-exports-src/components/panels/AnalysisPanel.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/panels/BrainPanel.tsx": {
+      "ruleId": "unused-exports-src/components/panels/BrainPanel.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/panels/EditorPanel.tsx": {
+      "ruleId": "unused-exports-src/components/panels/EditorPanel.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/panels/NodeBridgePanel.tsx": {
+      "ruleId": "unused-exports-src/components/panels/NodeBridgePanel.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/panels/StoragePanel.tsx": {
+      "ruleId": "unused-exports-src/components/panels/StoragePanel.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/panels/TerminalPanel.tsx": {
+      "ruleId": "unused-exports-src/components/panels/TerminalPanel.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/panels/ToolNeuronPanel.tsx": {
+      "ruleId": "unused-exports-src/components/panels/ToolNeuronPanel.tsx",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/editor/useAnalysisHandlers.ts": {
+      "ruleId": "unused-exports-src/hooks/editor/useAnalysisHandlers.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/editor/useDebuggerHandlers.ts": {
+      "ruleId": "unused-exports-src/hooks/editor/useDebuggerHandlers.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/editor/useEditorLogic.ts": {
+      "ruleId": "unused-exports-src/hooks/editor/useEditorLogic.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/editor/useFileSystem.ts": {
+      "ruleId": "unused-exports-src/hooks/editor/useFileSystem.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:57:19.329Z",
+      "runCount": 5,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/editor/useForgeHandlers.ts": {
+      "ruleId": "unused-exports-src/hooks/editor/useForgeHandlers.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/editor/useInspectorHandlers.ts": {
+      "ruleId": "unused-exports-src/hooks/editor/useInspectorHandlers.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/terminal/useTerminal.ts": {
+      "ruleId": "unused-exports-src/hooks/terminal/useTerminal.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/terminal/useTerminalLogic.ts": {
+      "ruleId": "unused-exports-src/hooks/terminal/useTerminalLogic.ts",
+      "firstSeenAt": "2026-06-07T13:54:02.792Z",
+      "lastSeenAt": "2026-06-07T13:54:05.247Z",
+      "runCount": 3,
+      "fixedCount": 2,
       "suppressedInConfig": false
     }
   },
@@ -287,42 +607,42 @@
     "src/components/FileTree.tsx": {
       "file": "src/components/FileTree.tsx",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-06-05T01:31:27.923Z",
-      "runCount": 8,
-      "lastCc": 114,
-      "lastChurn": 7
+      "lastSeenAt": "2026-06-07T13:57:19.506Z",
+      "runCount": 10,
+      "lastCc": 148,
+      "lastChurn": 9
     },
     "server.ts": {
       "file": "server.ts",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-06-05T01:31:27.923Z",
-      "runCount": 8,
-      "lastCc": 137,
-      "lastChurn": 10
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 9,
+      "lastCc": 13,
+      "lastChurn": 11
     },
     "src/components/panels/EditorPanel.tsx": {
       "file": "src/components/panels/EditorPanel.tsx",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-06-05T01:31:27.923Z",
-      "runCount": 7,
-      "lastCc": 145,
-      "lastChurn": 5
+      "lastSeenAt": "2026-06-07T13:57:19.506Z",
+      "runCount": 9,
+      "lastCc": 143,
+      "lastChurn": 8
     },
     "src/services/aiService.ts": {
       "file": "src/services/aiService.ts",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-06-05T01:31:27.923Z",
-      "runCount": 7,
+      "lastSeenAt": "2026-06-07T13:57:19.506Z",
+      "runCount": 9,
       "lastCc": 52,
-      "lastChurn": 8
+      "lastChurn": 11
     },
     "src/components/panels/ToolNeuronPanel.tsx": {
       "file": "src/components/panels/ToolNeuronPanel.tsx",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-05-28T20:55:15.426Z",
-      "runCount": 4,
-      "lastCc": 66,
-      "lastChurn": 4
+      "lastSeenAt": "2026-06-07T13:57:19.506Z",
+      "runCount": 6,
+      "lastCc": 68,
+      "lastChurn": 8
     },
     "assets/index-CdxXPu_B.js": {
       "file": "assets/index-CdxXPu_B.js",
@@ -359,10 +679,10 @@
     "src/components/panels/NodeBridgePanel.tsx": {
       "file": "src/components/panels/NodeBridgePanel.tsx",
       "firstSeenAt": "2026-05-26T21:13:44.546Z",
-      "lastSeenAt": "2026-05-28T20:55:15.426Z",
-      "runCount": 3,
-      "lastCc": 31,
-      "lastChurn": 3
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 4,
+      "lastCc": 32,
+      "lastChurn": 4
     },
     "neural_brain.py": {
       "file": "neural_brain.py",
@@ -375,10 +695,10 @@
     "vite.config.ts": {
       "file": "vite.config.ts",
       "firstSeenAt": "2026-05-26T21:13:44.546Z",
-      "lastSeenAt": "2026-05-28T20:55:15.426Z",
-      "runCount": 3,
-      "lastCc": 4,
-      "lastChurn": 5
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 4,
+      "lastCc": 5,
+      "lastChurn": 7
     },
     "components/FileTree.tsx": {
       "file": "components/FileTree.tsx",
@@ -567,10 +887,10 @@
     "src/components/panels/SettingsPanel.tsx": {
       "file": "src/components/panels/SettingsPanel.tsx",
       "firstSeenAt": "2026-05-26T21:13:53.901Z",
-      "lastSeenAt": "2026-05-26T21:13:53.901Z",
-      "runCount": 1,
-      "lastCc": 65,
-      "lastChurn": 1
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 2,
+      "lastCc": 90,
+      "lastChurn": 5
     },
     "projscan/src/cli/commands/search.ts": {
       "file": "projscan/src/cli/commands/search.ts",
@@ -655,10 +975,10 @@
     "src/components/panels/AnalysisPanel.tsx": {
       "file": "src/components/panels/AnalysisPanel.tsx",
       "firstSeenAt": "2026-05-26T21:13:53.901Z",
-      "lastSeenAt": "2026-05-26T21:13:53.901Z",
-      "runCount": 1,
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 2,
       "lastCc": 7,
-      "lastChurn": 2
+      "lastChurn": 4
     },
     "projscan/src/core/languages/phpFunctions.ts": {
       "file": "projscan/src/core/languages/phpFunctions.ts",
@@ -1075,7 +1395,95 @@
       "runCount": 1,
       "lastCc": 21,
       "lastChurn": 1
+    },
+    "src/hooks/terminal/useTerminalLogic.ts": {
+      "file": "src/hooks/terminal/useTerminalLogic.ts",
+      "firstSeenAt": "2026-06-07T13:54:05.393Z",
+      "lastSeenAt": "2026-06-07T13:57:19.506Z",
+      "runCount": 2,
+      "lastCc": 102,
+      "lastChurn": 5
+    },
+    "src/App.tsx": {
+      "file": "src/App.tsx",
+      "firstSeenAt": "2026-06-07T13:54:05.393Z",
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 1,
+      "lastCc": null,
+      "lastChurn": 3
+    },
+    "src/services/brain/ltmStore.ts": {
+      "file": "src/services/brain/ltmStore.ts",
+      "firstSeenAt": "2026-06-07T13:54:05.393Z",
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 1,
+      "lastCc": 18,
+      "lastChurn": 5
+    },
+    "src/components/panels/BrainPanel.tsx": {
+      "file": "src/components/panels/BrainPanel.tsx",
+      "firstSeenAt": "2026-06-07T13:54:05.393Z",
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 1,
+      "lastCc": 9,
+      "lastChurn": 4
+    },
+    "src/components/panels/TerminalPanel.tsx": {
+      "file": "src/components/panels/TerminalPanel.tsx",
+      "firstSeenAt": "2026-06-07T13:54:05.393Z",
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 1,
+      "lastCc": 13,
+      "lastChurn": 3
+    },
+    "src/hooks/editor/useForgeHandlers.ts": {
+      "file": "src/hooks/editor/useForgeHandlers.ts",
+      "firstSeenAt": "2026-06-07T13:54:05.393Z",
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 1,
+      "lastCc": 39,
+      "lastChurn": 2
+    },
+    "src/services/brain/brainService.ts": {
+      "file": "src/services/brain/brainService.ts",
+      "firstSeenAt": "2026-06-07T13:54:05.393Z",
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 1,
+      "lastCc": 13,
+      "lastChurn": 4
+    },
+    "src/components/layout/MainHeader.tsx": {
+      "file": "src/components/layout/MainHeader.tsx",
+      "firstSeenAt": "2026-06-07T13:54:05.393Z",
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 1,
+      "lastCc": 37,
+      "lastChurn": 2
+    },
+    "src/hooks/useChatHandlers.ts": {
+      "file": "src/hooks/useChatHandlers.ts",
+      "firstSeenAt": "2026-06-07T13:54:05.393Z",
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 1,
+      "lastCc": 33,
+      "lastChurn": 2
+    },
+    "src/hooks/usePersonalities.ts": {
+      "file": "src/hooks/usePersonalities.ts",
+      "firstSeenAt": "2026-06-07T13:54:05.393Z",
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 1,
+      "lastCc": 23,
+      "lastChurn": 2
+    },
+    "src/components/TerminalLine.tsx": {
+      "file": "src/components/TerminalLine.tsx",
+      "firstSeenAt": "2026-06-07T13:54:05.393Z",
+      "lastSeenAt": "2026-06-07T13:54:05.393Z",
+      "runCount": 1,
+      "lastCc": 19,
+      "lastChurn": 3
     }
   },
-  "totalRuns": 36
+  "totalRuns": 41
 }

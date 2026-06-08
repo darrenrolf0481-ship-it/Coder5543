@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '/';
+const SOCKET_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '/';
 
 export function useWebSockets(activePersonalityId?: number) {
   const socketRef = useRef<Socket | null>(null);
