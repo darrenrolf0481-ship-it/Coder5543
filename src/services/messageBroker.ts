@@ -18,6 +18,9 @@ export type SignalType =
   | 'SWARM_CONFLICT'
   | 'CODE_RUN_REQUESTED'
   | 'CODE_SCAN_REQUESTED'
+  | 'NEURAL_STATE_UPDATE'      // Hormones, STM, and LTM changes
+  | 'LLM_NETWORK_TRAFFIC'      // API latency and model tracking
+  | 'IDENTITY_DRIFT_ALERT'     // Assistant tone detection
   | 'PIPELINE_ERROR';         // unhandled error anywhere in the pipeline
 
 export interface Signal<T = unknown> {

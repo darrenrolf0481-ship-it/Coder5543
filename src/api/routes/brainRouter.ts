@@ -3,7 +3,18 @@ import { brainService } from '../../services/brain/brainService.js';
 import { PainType } from '../../services/brain/types.js';
 import { spawn } from 'child_process';
 
+import { ltmStore } from '../../services/brain/ltmStore.js';
+
 const router = Router();
+
+router.get('/memory/vault', async (_req, res) => {
+  try {
+    const experiences = await ltmStore.getAll();
+    res.json(experiences);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to read vault memory', details: err.message });
+  }
+});
 
 router.post('/context', async (req, res) => {
   const { input, personalityId } = req.body as { input?: string; personalityId?: number };

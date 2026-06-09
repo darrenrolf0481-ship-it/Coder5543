@@ -5,7 +5,7 @@ import chokidar, { FSWatcher } from 'chokidar';
 import { broker, Signal } from '../messageBroker.js';
 import logger from '../../utils/logger.js';
 
-const TERMUX_HOME_DIR = '/data/data/com.termux/files/home';
+const TERMUX_HOME_DIR = '/home/workspace/Coder5543';
 
 export class WebSocketBridge {
   private io: SocketServer | null = null;

@@ -7,6 +7,8 @@ import { DebugState } from '../hooks/editor/useDebuggerLogic';
 import { ProjectSettings } from '../hooks/useProjectSettings';
 import { SwarmAgent, SwarmLog } from '../hooks/useSwarmState';
 import { StorageFile } from '../hooks/useSystemStates';
+import { TrafficEvent, DriftAlert } from '../hooks/useBrain';
+import { EndocrineState, BrainContext } from '../services/brain/types';
 
 interface AppContextType {
   // Navigation & Theme
@@ -15,6 +17,20 @@ interface AppContextType {
   theme: 'dark' | 'light';
   toggleTheme: () => void;
   
+  // Brain & Monitoring
+  endocrine: EndocrineState | null;
+  isBrainActive: boolean;
+  setIsBrainActive: (v: boolean) => void;
+  traffic: TrafficEvent[];
+  driftAlert: DriftAlert | null;
+  clearDriftAlert: () => void;
+  vaultMemories: any[];
+  fetchVault: () => Promise<void>;
+  prepareContext: (input: string, personalityId?: number) => Promise<BrainContext | null>;
+  recordInteraction: (input: string, response: string, outcome: 'success' | 'failure' | 'neutral') => Promise<void>;
+  sleep: () => Promise<any>;
+  refreshState: () => Promise<void>;
+
   // AI Orchestration
   isAiProcessing: boolean;
   setIsAiProcessing: (v: boolean) => void;

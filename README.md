@@ -1,6 +1,8 @@
-# 🚀 Crimson OS: How to install on your phone!
+# 🚀 Crimson OS: Gemini Edition!
 
 Hi there! Do you want to keep Crimson OS on your phone like a real app? It's super easy, just like putting a sticker on your favorite toy!
+
+This version is optimized for the **Gemini CLI** and uses **Google AI** for its neural brain!
 
 ## 📱 For iPhones (Apple)
 1. Open this website in **Safari** (the blue compass icon).

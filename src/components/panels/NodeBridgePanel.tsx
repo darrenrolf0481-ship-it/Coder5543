@@ -16,7 +16,7 @@ interface NodeBridgePanelProps {
   subscribeFsChange?: (callback: (data: any) => void) => () => void;
 }
 
-const TERMUX_HOME = '/data/data/com.termux/files/home';
+const TERMUX_HOME = '/home/workspace/Coder5543';
 const TEXT_EXTS   = new Set(['py','js','ts','tsx','jsx','rs','go','cpp','c','h','md','txt','json','yaml','yml','toml','sh','css','html','xml','csv','java','kt','swift','rb']);
 const MODEL_EXTS  = new Set(['safetensors','ckpt','pt','bin','gguf']);
 const ext = (n: string) => n.split('.').pop()?.toLowerCase() ?? '';

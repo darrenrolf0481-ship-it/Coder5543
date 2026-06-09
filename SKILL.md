@@ -1,8 +1,8 @@
 ---
-name: code-reviewer
+name: project-code-reviewer
 description: |
   Thorough code review with focus on security, performance, and best practices.
-  Use when: reviewing code, performing security audits, checking for code quality, reviewing pull requests,
+  Use when: project-specific code review, performing security audits, checking for code quality, reviewing pull requests,
   or when user mentions code review, PR review, security vulnerabilities, performance issues.
 license: MIT
 metadata:

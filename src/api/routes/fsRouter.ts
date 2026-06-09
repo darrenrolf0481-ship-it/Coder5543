@@ -5,7 +5,7 @@ import logger from '../../utils/logger.js';
 
 const router = Router();
 
-const TERMUX_HOME = '/data/data/com.termux/files/home';
+const TERMUX_HOME = '/home/workspace/Coder5543';
 const FS_ROOTS = [TERMUX_HOME, process.env.HOME, process.cwd()].filter((r): r is string => !!r);
 
 function isSafePath(p: string): boolean {

@@ -1,0 +1,9 @@
+# Ignore redundant skills that are already built-in
+Mcp/antigravity-awesome-skills/skills/
+Mcp/antigravity-awesome-skills/plugins/
+Mcp/Skills/
+Skills/
+.claude/skills/
+SKILL.md
+AGENTS.md
+AI_ASSETS_REGISTRY.md

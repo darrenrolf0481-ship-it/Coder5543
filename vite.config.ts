@@ -25,7 +25,7 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react(), tailwindcss()],
       build: {
-        crossOriginLoading: false,
+        crossOriginLoading: 'anonymous',
         modulePreload: { polyfill: false },
         rollupOptions: {
           output: {

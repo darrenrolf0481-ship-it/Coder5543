@@ -7,7 +7,11 @@ export class VectorService {
    */
   async getEmbedding(text: string, model = 'llama3.2:latest'): Promise<number[]> {
     try {
-      const response = await fetch('./api/ollama/embeddings', {
+      const isBackend = typeof window === 'undefined';
+      const baseUrl = isBackend ? (process.env.OLLAMA_HOST || 'http://127.0.0.1:11434') : '';
+      const endpoint = isBackend ? '/api/embeddings' : './api/ollama/embeddings';
+
+      const response = await fetch(`${baseUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model, prompt: text }),

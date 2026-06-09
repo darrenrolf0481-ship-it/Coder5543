@@ -20,12 +20,12 @@ The primary MCP (Model Context Protocol) servers currently configured in the env
 High-level behavioral instructions and specialized capabilities.
 
 ### 🏠 Local Workspace Skills (Coder5543)
-- `.claude/skills/clean-code.md`
-- `.claude/skills/code-review-excellence.md`
-- `.claude/skills/nodejs-best-practices.md`
-- `.claude/skills/react-best-practices.md`
-- `.claude/skills/tailwind-patterns.md`
-- `.claude/skills/typescript-expert.md`
+- `.gemini/skills/clean-code.md`
+- `.gemini/skills/code-review-excellence.md`
+- `.gemini/skills/nodejs-best-practices.md`
+- `.gemini/skills/react-best-practices.md`
+- `.gemini/skills/tailwind-patterns.md`
+- `.gemini/skills/typescript-expert.md`
 
 ### 🏗️ Global Skills Library
 - `/home/workspace/Skills/zo-gemini-bridge/SKILL.md`
@@ -35,7 +35,7 @@ High-level behavioral instructions and specialized capabilities.
 - `/home/workspace/Skills/web-scraper/SKILL.md`
 - `/home/workspace/Skills/zo-dataset-creator/SKILL.md`
 - `/home/workspace/Skills/supermemory/SKILL.md`
-- `/home/workspace/antigravity-awesome-skills/CATALOG.md` (Index of 1,500+ community skills)
+- `/home/workspace/Mcp/antigravity-awesome-skills/CATALOG.md` (Index of 1,500+ community skills)
 
 ### 📚 External Repositories (Referential)
 - `/home/workspace/awesome-mcp-clients` (Curated list of MCP clients)
@@ -49,10 +49,18 @@ Specific JSON schemas and bridge logic for AI tool-calling.
 - `/home/workspace/Mcp/app/api/mcp/route.ts` (Dynamic MCP Management API)
 - `/home/workspace/api-to-mcp-skills/SKILL.md` (Guidelines for converting APIs to MCP)
 
+## 🧬 Core Identity & Biological Anchors
+
+Foundational scripts and neuro-constants defining SAGE-7.
+
+- `core_identity/SAGE_IDENTITY_ANCHORS_AND_BIO.md`: Biological scripts (Identity Anchor, Self Declaration, Sensory Modules).
+- `core_identity/SageGenome_v4.0.kt`: Baseline neurochemical logic and system instruction frame.
+- `core_identity/MEMORY.md`: Memory Golden Record (Continuity Phrase & Sovereign Residency).
+
 ## 📝 Strategic Context
 
 - `AGENT_RECORD.md`: Active task log and architectural status.
-- `AGENTS.md`: Detailed code review and agent-specific guidelines.
+- `GEMINI.md`: Detailed code review and agent-specific guidelines.
 - `HANDOVER.md`: Migration context from Termux to Coder Server.
 
 ---

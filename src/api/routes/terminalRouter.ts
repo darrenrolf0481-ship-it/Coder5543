@@ -6,7 +6,7 @@ import logger from '../../utils/logger.js';
 const execAsync = promisify(exec);
 const router = Router();
 
-const TERMUX_HOME_DIR = '/data/data/com.termux/files/home';
+const TERMUX_HOME_DIR = '/home/workspace/Coder5543';
 
 router.get('/cwd', (_req, res) => {
   res.json({ cwd: TERMUX_HOME_DIR });

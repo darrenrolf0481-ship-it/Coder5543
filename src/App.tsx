@@ -120,10 +120,6 @@ function AppInner() {
   }, []);
 
 
-  // Neural Core & Golden Ratio Layout
-  const { endocrine, isBrainActive, setIsBrainActive, prepareContext, recordInteraction, sleep, refreshState } = useBrain();
-  const phi = usePhi(endocrine);
-
   // Model slots & Personalities
   const {
     personalities,
@@ -138,8 +134,11 @@ function AppInner() {
     activePersonality
   } = usePersonalities();
 
+  // Initialize WebSocket Real-time Uplink
+  const { isConnected: isWsConnected, lastSignal: lastWsSignal, execTerminal, subscribeFsChange } = useWebSockets(activePersonality.id);
+
   // Terminal
-  const terminal = useTerminal('~/crimson-node/sd-webui', '/data/data/com.termux/files/home');
+  const terminal = useTerminal('~/crimson-node/sd-webui', '/home/workspace/Coder5543');
   const [terminalSource, setTerminalSource] = useState<'node_bridge' | 'local_core'>('node_bridge');
 
   // Personality-driven Theme Injection
@@ -190,8 +189,22 @@ function AppInner() {
     }
   }, [activePersonality]);
 
-  // Initialize WebSocket Real-time Uplink
-  const { isConnected: isWsConnected, lastSignal: lastWsSignal, execTerminal, subscribeFsChange } = useWebSockets(activePersonality.id);
+  // Neural Core & Golden Ratio Layout
+  const { 
+    endocrine, 
+    isBrainActive, 
+    setIsBrainActive, 
+    prepareContext, 
+    recordInteraction, 
+    sleep, 
+    refreshState,
+    traffic,
+    driftAlert,
+    clearDriftAlert,
+    vaultMemories,
+    fetchVault
+  } = useBrain(lastWsSignal);
+  const phi = usePhi(endocrine);
 
   // Sync WebSocket signals to terminal output for neural visibility
   useEffect(() => {
@@ -247,7 +260,7 @@ function AppInner() {
   const [brainConfig, setBrainConfig] = useState({
     runtime: 'python',
     logic: '',
-    mappedPaths: ['/sdcard/Download/Crimson-Weights', '/data/data/com.termux/files/home'],
+    mappedPaths: ['/home/workspace/weights', '/home/workspace/Coder5543'],
   });
   const [brainRefFile, setBrainRefFile] = useState<any>(null);
 
@@ -707,6 +720,20 @@ function AppInner() {
     setActiveTab,
     theme,
     toggleTheme,
+
+    // Brain & Monitoring
+    endocrine,
+    isBrainActive,
+    setIsBrainActive,
+    traffic,
+    driftAlert,
+    clearDriftAlert,
+    vaultMemories,
+    fetchVault,
+    prepareContext,
+    recordInteraction,
+    sleep,
+    refreshState,
 
     isAiProcessing,
     setIsAiProcessing,

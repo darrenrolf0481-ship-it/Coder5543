@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import type { BrainContext } from './brain/types';
+import { broker } from './messageBroker.js';
 
 export const fillTemplate = (template: string, data: Record<string, string>): string => {
     return template.replace(/\{\{(\w+)\}\}/g, (_: string, key: string) => data[key] || `{{${key}}}`);
@@ -266,7 +267,8 @@ export const generateAIResponse = async (
         brainContext?: BrainContext;
     }
 ) => {
-    const { aiProvider } = dependencies;
+    const { aiProvider, aiModel } = dependencies;
+    const startTime = Date.now();
 
     let finalPrompt = prompt;
     if (options?.template) {
@@ -287,17 +289,46 @@ export const generateAIResponse = async (
 
     if (dependencies.signal?.aborted) return '';
 
-    switch (aiProvider) {
-      case 'google':
-        return generateGoogleResponse(finalPrompt, systemInstruction, options, dependencies);
-      case 'grok':
-        return generateGrokResponse(finalPrompt, systemInstruction, options, dependencies);
-      case 'ollama':
-        return generateOllamaResponse(finalPrompt, systemInstruction, options, dependencies);
-      case 'openrouter':
-        return generateOpenRouterResponse(finalPrompt, systemInstruction, options, dependencies);
-      default:
-        return '';
+    try {
+        let response = '';
+        switch (aiProvider) {
+          case 'google':
+            response = await generateGoogleResponse(finalPrompt, systemInstruction, options, dependencies);
+            break;
+          case 'grok':
+            response = await generateGrokResponse(finalPrompt, systemInstruction, options, dependencies);
+            break;
+          case 'ollama':
+            response = await generateOllamaResponse(finalPrompt, systemInstruction, options, dependencies);
+            break;
+          case 'openrouter':
+            response = await generateOpenRouterResponse(finalPrompt, systemInstruction, options, dependencies);
+            break;
+          default:
+            response = '';
+        }
+
+        const duration = Date.now() - startTime;
+        broker.publish('LLM_NETWORK_TRAFFIC', {
+            provider: aiProvider,
+            model: aiModel,
+            latencyMs: duration,
+            status: 'success',
+            timestamp: startTime
+        }, 'system');
+
+        return response;
+    } catch (error: any) {
+        const duration = Date.now() - startTime;
+        broker.publish('LLM_NETWORK_TRAFFIC', {
+            provider: aiProvider,
+            model: aiModel,
+            latencyMs: duration,
+            status: 'error',
+            error: error.message,
+            timestamp: startTime
+        }, 'system');
+        throw error;
     }
 };
 

@@ -7,6 +7,7 @@ import {
   Fingerprint, HelpCircle, ImageIcon, LayoutTemplate, MessageSquare,
   Network, Save, Send, ShieldCheck, Sparkles, Trash2, Unlock, Users, Zap,
 } from 'lucide-react';
+import { useAppContext } from '../../context/AppContext';
 import { Personality } from './SettingsPanel';
 import { SafeMarkdown } from '../SafeMarkdown';
 import { ActionButton } from '../ActionButton';
@@ -48,10 +49,17 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
   isAiProcessing, debugAnalysis, runStaticAnalysis, runDynamicTracing, getRefactoringSuggestions,
   activePersonality, tnKnowledgePacks, handleKnowledgeUpload, setActiveTab, onApplyCode, onSaveReport,
 }) => {
+  const { vaultMemories, fetchVault } = useAppContext();
   // ── Local state ────────────────────────────────────────────────────────
   const [tnModule, setTnModule] = useState<'chat' | 'vision' | 'knowledge' | 'vault' | 'swarm' | 'help' | 'debug'>('chat');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isVaultUnlocked && tnModule === 'vault') {
+      fetchVault();
+    }
+  }, [isVaultUnlocked, tnModule, fetchVault]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -436,18 +444,24 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
                     </button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                    {[
-                      { title: 'Neural Weights',   desc: 'Optimized Llama-3 8B weights for local inference.',        size: '4.8GB',  date: '2024-03-20' },
-                      { title: 'Personal Dataset', desc: 'Encrypted JSON export of private chat history.',            size: '124MB',  date: '2024-03-22' },
-                      { title: 'Hardware Keys',    desc: 'Master recovery keys for crimson-node-01.',                 size: '2KB',    date: '2024-01-15' },
-                      { title: 'Vision Assets',    desc: 'High-fidelity textures for UI generation.',                 size: '850MB',  date: '2024-03-23' },
-                    ].map((item, i) => (
-                      <div key={i} className="p-6 md:p-8 bg-accent-950/5 border border-accent-900/20 rounded-[20px] md:rounded-[40px] space-y-4 group hover:border-accent-600/30 transition-all cursor-pointer animate-in fade-in slide-in-from-left-4" style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'both' }}>
+                    {(vaultMemories.length > 0 ? vaultMemories.map(m => ({
+                      id: m.id,
+                      title: 'Memory Record',
+                      desc: m.intent ? (m.intent.length > 100 ? m.intent.substring(0, 100) + '...' : m.intent) : 'Encrypted memory fragment',
+                      size: m.outcome === 'success' ? '+ Dopamine' : '- Cortisol',
+                      date: new Date(m.timestamp).toLocaleDateString()
+                    })) : [
+                      { id: '1', title: 'Neural Weights',   desc: 'Optimized Llama-3 8B weights for local inference.',        size: '4.8GB',  date: '2024-03-20' },
+                      { id: '2', title: 'Personal Dataset', desc: 'Encrypted JSON export of private chat history.',            size: '124MB',  date: '2024-03-22' },
+                      { id: '3', title: 'Hardware Keys',    desc: 'Master recovery keys for crimson-node-01.',                 size: '2KB',    date: '2024-01-15' },
+                      { id: '4', title: 'Vision Assets',    desc: 'High-fidelity textures for UI generation.',                 size: '850MB',  date: '2024-03-23' },
+                    ]).map((item, i) => (
+                      <div key={item.id} className="p-6 md:p-8 bg-accent-950/5 border border-accent-900/20 rounded-[20px] md:rounded-[40px] space-y-4 group hover:border-accent-600/30 transition-all cursor-pointer animate-in fade-in slide-in-from-left-4" style={{ animationDelay: `${(i % 10) * 50}ms`, animationFillMode: 'both' }}>
                         <div className="flex items-center justify-between">
                           <div className="p-3 bg-accent-900/10 rounded-2xl border border-accent-900/20 text-accent-500 group-hover:scale-110 transition-transform">
-                            <FileCode className="w-5 h-5" />
+                            <Database className="w-5 h-5" />
                           </div>
-                          <span className="text-[10px] font-black text-accent-900 uppercase tracking-widest">{item.size}</span>
+                          <span className={`text-[10px] font-black uppercase tracking-widest ${item.size.includes('+') ? 'text-yellow-400' : item.size.includes('-') ? 'text-accent-500' : 'text-accent-900'}`}>{item.size}</span>
                         </div>
                         <div className="space-y-2">
                           <h4 className="text-lg font-black text-accent-100 uppercase tracking-tight">{item.title}</h4>

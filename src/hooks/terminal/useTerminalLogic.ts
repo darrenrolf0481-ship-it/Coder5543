@@ -208,7 +208,7 @@ Current System State:
         '  mcp info <tool>  - Show detailed input schema for a tool',
         '  mcp call <tool>  - Call an MCP tool directly with JSON args',
         '  mcp enable/disable <tool> - Enable or disable an MCP tool',
-        'All other commands execute in the Termux shell.',
+        'All other commands execute in the workspace shell.',
       ]);
       return;
     } else if (finalCmd.startsWith('mcp ') || finalCmd === 'mcp') {

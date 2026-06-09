@@ -51,6 +51,7 @@ import terminalRouter from './src/api/routes/terminalRouter.js';
 import githubRouter from './src/api/routes/githubRouter.js';
 import ollamaRouter from './src/api/routes/ollamaRouter.js';
 import { WebSocketBridge } from './src/services/bridge/WebSocketBridge.js';
+import { conversationIngestor } from './src/services/brain/ConversationIngestor.js';
 
 const execAsync = promisify(exec);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -58,6 +59,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  // Start Contextual Memory Daemon
+  conversationIngestor.startDaemon(60); // Run every 60 minutes
 
   if (process.env.NODE_ENV === 'production') {
     app.use(helmet({
@@ -71,7 +75,7 @@ async function startServer() {
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // limit each IP to 1000 requests per windowMs
     standardHeaders: true,
-    legacyHeaders: false,
+    legacyHeaders: true,
   });
   app.use(limiter);
 
@@ -90,9 +94,12 @@ async function startServer() {
     }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
     
-    // Removing COOP/COEP headers so the app can render in VS Code iframes.
-    // Note: WebContainer will fail to boot without these, but the UI will render.
-    // To use WebContainer, the user must open the app in a new top-level browser tab.
+    // Required for WebContainers (Local Core) to boot.
+    // NOTE: This might block the app from rendering inside a VS Code simple browser iframe.
+    // If you get a blank screen in VS Code, open the preview URL in a normal Chrome/Edge tab.
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     
     next();
   });
