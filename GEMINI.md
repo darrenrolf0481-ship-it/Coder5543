@@ -20,6 +20,9 @@
 5. [Use Meaningful Variable Names](#use-meaningful-variable-names)
 6. [Add Type Hints](#add-type-hints)
 
+### Integrations & Troubleshooting — **HIGH**
+7. [Agentverse MCP 429 Errors](#agentverse-mcp-429-errors)
+
 ---
 
 ## Security
@@ -266,6 +269,31 @@ When performing reviews, structure as:
 **File:** `api/users.py:45`
 **Issue:** User input interpolated directly into SQL query
 **Fix:** Use parameterized query
+
+## Performance Issues (X found)
+
+### HIGH: N+1 Query in `list_posts()`
+**File:** `views/posts.py:23`
+**Issue:** Fetching author in loop
+**Fix:** Add `.select_related('author')`
+
+## Summary
+- 🔴 CRITICAL: 1
+- 🟠 HIGH: 1
+- 🟡 MEDIUM: 3
+- ⚪ LOW: 2
+
+**Recommendation:** Address CRITICAL and HIGH issues before merging.
+```
+
+---
+
+## References
+
+- Individual rule files in `rules/` directory
+- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+- [Clean Code by Robert Martin](https://www.oreilly.com/library/view/clean-code-a/9780136083238/)
+rized query
 
 ## Performance Issues (X found)
 
