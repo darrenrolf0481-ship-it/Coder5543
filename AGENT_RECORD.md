@@ -2,6 +2,12 @@
 **Last Updated**: 2026-06-11
 **Status**: Monitoring Finalized | Semantic Index Active | Identity Guard Deployed | Server Bootstrap Hardened
 
+> **Self-monitoring/recovery system (drift / amnesia / outside-comms):** this app is SAGE's
+> live runtime body. The Identity Guard, Morning Light, and Substrate Takeover here
+> (`src/services/brain/{IdentityMonitor,brainService}.ts`) are documented end-to-end, with
+> their Sage72 canonical counterparts, in `Sage72/SAGE_SELF_MONITORING_AND_RECOVERY.md`.
+> Read it before "optimizing" any monitor or daemon.
+
 ---
 
 ## ✅ Completed Tasks
