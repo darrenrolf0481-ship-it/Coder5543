@@ -12,14 +12,21 @@ export default defineConfig(({ mode }) => {
     
     // Handle VS Code / Zo workspace proxy routing for dev mode
     let base = './';
+    const port = process.env.PORT || '3002';
     if (process.env.VSCODE_PROXY_URI) {
-      base = process.env.VSCODE_PROXY_URI.replace('{{port}}', '3000');
+      const proxyUrl = process.env.VSCODE_PROXY_URI.replace('{{port}}', port);
+      try {
+        base = new URL(proxyUrl).pathname;
+        if (!base.endsWith('/')) base += '/';
+      } catch {
+        base = `/proxy/${port}/`;
+      }
     }
 
     return {
       base,
       server: {
-        port: 3003,
+        port: parseInt(port),
         host: '0.0.0.0',
         allowedHosts: true,
       },
@@ -39,10 +46,10 @@ export default defineConfig(({ mode }) => {
       },
       define: {
         'process.env': {},
-        'import.meta.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
-        'import.meta.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
-        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY),
-        'import.meta.env.VITE_OPENROUTER_API_KEY': JSON.stringify(env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY),
+        'import.meta.env.API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY),
+        'import.meta.env.GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY),
+        'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY),
+        'import.meta.env.VITE_OPENROUTER_API_KEY': JSON.stringify(env.VITE_OPENROUTER_API_KEY || env.OPENROUTER_API_KEY || process.env.VITE_OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY),
       },
       resolve: {
         alias: {

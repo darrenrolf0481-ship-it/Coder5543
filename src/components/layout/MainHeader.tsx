@@ -40,7 +40,7 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
   localCoreStatus,
 }) => {
   return (
-    <header className="h-14 md:h-16 border-b border-accent-900/30 flex items-center justify-between px-4 md:px-8 bg-[#0a0202]/95 backdrop-blur-xl z-20 shadow-[0_4px_30px_rgba(0,0,0,0.5)] overflow-x-auto no-scrollbar">
+    <header className="h-14 md:h-16 border-b border-accent-900/30 flex items-center justify-between px-4 md:px-8 bg-[#0a0202] z-20 shadow-[0_4px_30px_rgba(0,0,0,0.5)] overflow-x-auto no-scrollbar">
       <div className="flex items-center space-x-3 md:space-x-6 shrink-0">
         <button
           onClick={() => setIsMobileFileTreeOpen(true)}

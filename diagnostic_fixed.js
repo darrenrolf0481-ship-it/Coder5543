@@ -31,7 +31,7 @@ import puppeteer from 'puppeteer';
         errorLogVisible: errorLog ? (errorLog.style.height === '100vh') : false,
         splashExists: !!splash,
         splashOpacity: splash ? getComputedStyle(splash).opacity : 'n/a',
-        rootHtml: root ? root.innerHTML.substring(0, 500) : 'not found',
+        rootHtml: root ? root.innerHTML.substring(0, 5000) : 'not found',
         bodyBg: getComputedStyle(document.body).backgroundColor,
         visibility: getComputedStyle(document.body).visibility,
         title: document.title,

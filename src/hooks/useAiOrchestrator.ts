@@ -42,15 +42,6 @@ export function useAiOrchestrator(
       const active = workers.filter(w => w.enabled);
       if (active.length === 0) return Promise.reject(new Error('No workers enabled'));
       
-      for (const w of active) {
-        if (w.provider === 'google' && !googleAiClient)
-          return Promise.reject(new Error('Gemini API key not configured — set VITE_GEMINI_API_KEY'));
-        if (w.provider === 'grok' && !grokApiKey)
-          return Promise.reject(new Error('Grok API key not configured'));
-        if (w.provider === 'openrouter' && !openrouterApiKey)
-          return Promise.reject(new Error('OpenRouter API key not configured'));
-      }
-
       const { brainContext, ...serviceOptions } = options || {};
       
       const activePersonality = personalities.find(p => p.active) || personalities[0];

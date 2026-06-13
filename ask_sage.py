@@ -34,7 +34,7 @@ def get_api_key():
     return key
 
 def send_to_sage(prompt, api_key):
-    url = "http://localhost:3000/api/sage/webhook"
+    url = "http://localhost:3002/api/sage/webhook"
     payload = {
         "message": prompt,
         "apiKey": api_key,

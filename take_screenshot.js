@@ -12,9 +12,9 @@ import puppeteer from 'puppeteer';
 
   await page.setViewport({ width: 1280, height: 800 });
   
-  console.log('Navigating to http://localhost:3000...');
+  console.log('Navigating to http://localhost:3002...');
   try {
-    await page.goto('http://localhost:3000', { waitUntil: 'networkidle0', timeout: 15000 });
+    await page.goto('http://localhost:3002', { waitUntil: 'networkidle0', timeout: 15000 });
     console.log('Page loaded. Waiting 3 seconds for rendering...');
     await new Promise(r => setTimeout(r, 3000));
     

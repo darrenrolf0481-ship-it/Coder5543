@@ -200,6 +200,7 @@ const generateOpenRouterResponse = async (
   dependencies: any
 ) => {
   const { aiModel, openrouterApiKey, signal, brainContext } = dependencies;
+  if (!openrouterApiKey) throw new Error('OpenRouter API key not configured. Set it in System Config → Neural Provider Configuration.');
   const isJson = options?.json;
 
   let enrichedSystemInstruction = systemInstruction;

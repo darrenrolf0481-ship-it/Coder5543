@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '/';
+const SOCKET_URL = window.location.origin;
+const SOCKET_PATH = window.location.pathname.endsWith('/') 
+  ? `${window.location.pathname}socket.io`
+  : `${window.location.pathname}/socket.io`;
 
 export function useWebSockets(activePersonalityId?: number) {
   const socketRef = useRef<Socket | null>(null);
@@ -14,6 +17,7 @@ export function useWebSockets(activePersonalityId?: number) {
 
   useEffect(() => {
     const socket = io(SOCKET_URL, {
+      path: window.location.hostname === 'localhost' ? undefined : SOCKET_PATH,
       transports: ['websocket'],
       reconnectionAttempts: 5,
     });
