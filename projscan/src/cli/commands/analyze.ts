@@ -6,7 +6,7 @@ import {
   program,
   pkg,
   getFormat,
-  getRootPath,
+  resolveRootPath,
   loadProjectConfig,
   setupLogLevel,
   maybeBanner,
@@ -29,13 +29,14 @@ export function registerAnalyze(): void {
   program
     .command('analyze', { isDefault: true })
     .description('Analyze repository and show project report')
+    .argument('[pathOrUrl]', 'local path or Git URL to scan')
     .option('--changed-only', 'only report issues on files changed vs base ref')
     .option('--base-ref <ref>', 'git base ref for --changed-only (default: origin/main)')
     .option('--package <name>', 'monorepo: scope issues to a single workspace package')
-    .action(async (cmdOpts) => {
+    .action(async (pathOrUrl: string | undefined, cmdOpts) => {
       setupLogLevel();
       maybeBanner();
-      const rootPath = getRootPath();
+      const rootPath = await resolveRootPath(pathOrUrl);
       const format = getFormat();
       const config = await loadProjectConfig();
       const spinner = format === 'console' ? ora('Scanning repository...').start() : null;

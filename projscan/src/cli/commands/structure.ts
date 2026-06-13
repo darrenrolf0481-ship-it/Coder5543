@@ -5,7 +5,7 @@ import path from 'node:path';
 import {
   program,
   getFormat,
-  getRootPath,
+  resolveRootPath,
   loadProjectConfig,
   setupLogLevel,
   maybeCompactBanner,
@@ -21,11 +21,12 @@ export function registerStructure(): void {
   program
     .command('structure')
     .description('Show project directory structure')
+    .argument('[pathOrUrl]', 'local path or Git URL to scan')
     .option('--package <name>', 'monorepo: scope tree to a single workspace package')
-    .action(async (cmdOpts) => {
+    .action(async (pathOrUrl, cmdOpts) => {
       setupLogLevel();
       maybeCompactBanner();
-      const rootPath = getRootPath();
+      const rootPath = await resolveRootPath(pathOrUrl);
       const format = getFormat();
       const config = await loadProjectConfig();
       const spinner = format === 'console' ? ora('Scanning...').start() : null;

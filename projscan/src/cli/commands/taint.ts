@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import {
   program,
   getFormat,
-  getRootPath,
+  resolveRootPath,
   loadProjectConfig,
   setupLogLevel,
   maybeCompactBanner,
@@ -21,13 +21,14 @@ export function registerTaint(): void {
   program
     .command('taint')
     .description('Source-to-sink reachability over the call graph (1.6+)')
+    .argument('[pathOrUrl]', 'local path or Git URL to scan')
     .option('--source <name...>', 'add a custom source name (repeatable)')
     .option('--sink <name...>', 'add a custom sink name (repeatable)')
     .option('--limit <n>', 'cap flows shown', '50')
-    .action(async (opts: { source?: string[]; sink?: string[]; limit?: string }) => {
+    .action(async (pathOrUrl: string | undefined, opts: { source?: string[]; sink?: string[]; limit?: string }) => {
       setupLogLevel();
       maybeCompactBanner();
-      const rootPath = getRootPath();
+      const rootPath = await resolveRootPath(pathOrUrl);
       const format = getFormat();
       try {
         const config = await loadProjectConfig();

@@ -8,9 +8,9 @@ export class VectorService {
 
   /**
    * Generates an embedding for the given text using Ollama.
-   * Defaults to llama3.2 for embeddings if not specified.
+   * Defaults to nomic-embed-text for embeddings if not specified.
    */
-  async getEmbedding(text: string, model = 'llama3.2:latest'): Promise<number[]> {
+  async getEmbedding(text: string, model = 'nomic-embed-text'): Promise<number[]> {
     // Circuit breaker: if the embedding endpoint recently failed to connect,
     // short-circuit without hammering it (and without re-logging) until cooldown.
     if (Date.now() < VectorService.unavailableUntil) {

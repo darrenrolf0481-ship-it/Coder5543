@@ -288,7 +288,9 @@ export const generateAIResponse = async (
         }
     }
 
-    if (dependencies.signal?.aborted) return '';
+    if (dependencies.signal?.aborted) {
+        throw new DOMException('AI request was cancelled before it started.', 'AbortError');
+    }
 
     try {
         let response = '';

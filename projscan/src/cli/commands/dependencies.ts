@@ -1,7 +1,7 @@
 import ora from 'ora';
 import chalk from 'chalk';
 
-import { program, getFormat, getRootPath, setupLogLevel, maybeCompactBanner } from '../_shared.js';
+import { program, getFormat, resolveRootPath, setupLogLevel, maybeCompactBanner } from '../_shared.js';
 import { analyzeDependencies } from '../../core/dependencyAnalyzer.js';
 import { reportDependencies } from '../../reporters/consoleReporter.js';
 import { reportDependenciesJson } from '../../reporters/jsonReporter.js';
@@ -11,11 +11,12 @@ export function registerDependencies(): void {
   program
     .command('dependencies')
     .description('Analyze project dependencies (workspace-aware in monorepos)')
+    .argument('[pathOrUrl]', 'local path or Git URL to scan')
     .option('--package <name>', 'monorepo: scope analysis to a single workspace package')
-    .action(async (cmdOpts: { package?: string }) => {
+    .action(async (pathOrUrl, cmdOpts: { package?: string }) => {
       setupLogLevel();
       maybeCompactBanner();
-      const rootPath = getRootPath();
+      const rootPath = await resolveRootPath(pathOrUrl);
       const format = getFormat();
       const spinner = format === 'console' ? ora('Analyzing dependencies...').start() : null;
 

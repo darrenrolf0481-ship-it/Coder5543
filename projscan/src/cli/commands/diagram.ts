@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import {
   program,
   getFormat,
-  getRootPath,
+  resolveRootPath,
   loadProjectConfig,
   setupLogLevel,
   maybeCompactBanner,
@@ -20,10 +20,11 @@ export function registerDiagram(): void {
   program
     .command('diagram')
     .description('Generate architecture overview diagram')
-    .action(async () => {
+    .argument('[pathOrUrl]', 'local path or Git URL to scan')
+    .action(async (pathOrUrl) => {
       setupLogLevel();
       maybeCompactBanner();
-      const rootPath = getRootPath();
+      const rootPath = await resolveRootPath(pathOrUrl);
       const format = getFormat();
       const config = await loadProjectConfig();
       const spinner = format === 'console' ? ora('Analyzing architecture...').start() : null;

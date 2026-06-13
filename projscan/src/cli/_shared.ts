@@ -15,6 +15,7 @@ import { setLogLevel } from '../utils/logger.js';
 import { showBanner, showCompactBanner } from '../utils/banner.js';
 import { loadConfig } from '../utils/config.js';
 import { getChangedFiles } from '../utils/changedFiles.js';
+import { isGitUrl, ensureClone } from '../utils/remote.js';
 import type {
   ArchitectureLayer,
   FileExplanation,
@@ -48,6 +49,25 @@ export function getFormat(): ReportFormat {
 
 export function getRootPath(): string {
   return process.cwd();
+}
+
+/**
+ * Resolve the root path to scan. If `input` is a Git URL, clone it to a
+ * local cache and return the clone path. Otherwise return the resolved
+ * local path (defaults to cwd).
+ */
+export async function resolveRootPath(input?: string): Promise<string> {
+  if (!input) return process.cwd();
+
+  if (isGitUrl(input)) {
+    const root = process.cwd();
+    if (getFormat() === 'console' && !program.opts().quiet) {
+      console.error(chalk.dim(`  [cloning/refreshing ${input}...]`));
+    }
+    return await ensureClone(input, root);
+  }
+
+  return path.resolve(input);
 }
 
 export async function loadProjectConfig(): Promise<ProjscanConfig> {

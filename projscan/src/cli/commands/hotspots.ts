@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import {
   program,
   getFormat,
-  getRootPath,
+  resolveRootPath,
   loadProjectConfig,
   setupLogLevel,
   maybeCompactBanner,
@@ -26,13 +26,14 @@ export function registerHotspots(): void {
   program
     .command('hotspots')
     .description('Rank files by risk (git churn × AST cyclomatic complexity × open issues)')
+    .argument('[pathOrUrl]', 'local path or Git URL to scan')
     .option('--limit <n>', 'number of hotspots to show')
     .option('--since <when>', 'git history window (e.g. "6 months ago", "2024-01-01")')
     .option('--package <name>', 'monorepo: scope to a single workspace package')
-    .action(async (cmdOpts) => {
+    .action(async (pathOrUrl, cmdOpts) => {
       setupLogLevel();
       maybeCompactBanner();
-      const rootPath = getRootPath();
+      const rootPath = await resolveRootPath(pathOrUrl);
       const format = getFormat();
       const config = await loadProjectConfig();
       const spinner = format === 'console' ? ora('Analyzing hotspots...').start() : null;

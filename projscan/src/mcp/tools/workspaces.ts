@@ -7,7 +7,12 @@ export const workspacesTool: McpTool = {
     'List monorepo workspace packages (npm/yarn workspaces, pnpm-workspace.yaml, Nx/Turbo/Lerna fallback). Returns one row per package with name, relative path, and version. Use the package `name` as the `package` argument on projscan_hotspots / projscan_coupling to scope those tools to a single package.',
   inputSchema: {
     type: 'object',
-    properties: {},
+    properties: {
+      url: {
+        type: 'string',
+        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+      },
+    },
   },
   handler: async (_args, rootPath) => {
     return await detectWorkspaces(rootPath);

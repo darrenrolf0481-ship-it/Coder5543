@@ -35,6 +35,10 @@ export const hotspotsTool: McpTool = {
         enum: ['files', 'functions'],
         description: 'Output shape. "files" (default) returns ranked hotspot files. "functions" returns the top-N individual functions across all hotspots, sorted by per-function CC desc.',
       },
+      url: {
+        type: 'string',
+        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+      },
     },
   },
   handler: async (args, rootPath) => {

@@ -12,6 +12,10 @@ export const dependenciesTool: McpTool = {
         type: 'string',
         description: 'Optional. Workspace package name to scope analysis to one workspace only.',
       },
+      url: {
+        type: 'string',
+        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+      },
     },
   },
   handler: async (args, rootPath) => {

@@ -128,38 +128,14 @@ const builtinPatterns: Pattern[] = [
     },
   },
   {
-    id: 'swarm_cycle',
-    match: s => s.source === 'swarm',
-    handler: async (signal, execute) => {
-      const { agentCount, activePersonality } = signal.data as { agentCount: number; activePersonality: string };
-      const result = await withRetry(() =>
-        execute(
-          `Simulate a swarm consensus cycle for ${agentCount} neural agents using personality: ${activePersonality}. Decide: consensus or conflict? Output JSON: { "consensus": bool, "confidence": 0-1, "summary": "..." }`,
-          'You are the Crimson OS Swarm Orchestrator. Be concise. Output only valid JSON.',
-          { modelType: 'fast', json: true },
-        ),
-      );
-
-      let parsed: { consensus: boolean; confidence: number; summary: string } = {
-        consensus: Math.random() > 0.25,
-        confidence: 0.7,
-        summary: 'Simulated cycle',
-      };
-      try { parsed = JSON.parse(result); } catch { /* use fallback */ }
-
-      // Apply φ stabilisation — primary model gets 61.8% weight,
-      // minority ensemble always holds 38.2% (Fibonacci Buffer).
-      const stabilisedConfidence = phiStabilise(parsed.confidence, parsed.consensus);
-
+    id: 'swarm_cycle_legacy',
+    match: s => s.source === 'swarm' && s.type === 'SWARM_CYCLE_START',
+    handler: async (signal) => {
+      // The real swarm engine now runs through useSwarm / swarmEngine directly.
+      // This legacy handler simply acknowledges the signal so older callers don't hang.
       return {
-        responseType: 'swarm_update',
-        payload: {
-          ...parsed,
-          confidence: stabilisedConfidence,
-          // Surface the weighting so the UI can show it
-          phiWeight: parsed.consensus ? PHI_INV : PHI_MIN,
-          minorityWeight: parsed.consensus ? PHI_MIN : PHI_INV,
-        },
+        responseType: 'noop',
+        payload: { message: 'Swarm cycles are now handled by the Swarm Core engine.' },
         correlationId: signal.id,
       };
     },

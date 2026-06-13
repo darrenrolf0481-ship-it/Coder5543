@@ -9,6 +9,7 @@ import { applyBudget, attachCostSidecar, estimateTokens } from './tokenBudget.js
 import { withProgress, type ProgressEmitter } from './progress.js';
 import { toContentBlocks } from './chunker.js';
 import { startWatcher, type WatchHandle } from '../core/watcher.js';
+import { isGitUrl, ensureClone } from '../utils/remote.js';
 import {
   loadSession,
   recordTouch,
@@ -186,8 +187,14 @@ export function createMcpServer(rootPath: string, options: McpServerOptions = {}
 
     try {
       const args = params.arguments ?? {};
+      let effectiveRootPath = rootPath;
+
+      if (typeof args.url === 'string' && isGitUrl(args.url)) {
+        effectiveRootPath = await ensureClone(args.url, rootPath);
+      }
+
       const emit = buildProgressEmitter(params._meta?.progressToken);
-      const result = await withProgress(emit, () => handler(args, rootPath));
+      const result = await withProgress(emit, () => handler(args, effectiveRootPath));
       await recordSessionTouches(name, result);
       const payload = applyBudgetAndCost(result, args);
       const content = formatToolContent(payload, args.stream === true);

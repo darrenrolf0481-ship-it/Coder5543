@@ -3,16 +3,18 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import DOMPurify from 'dompurify';
 import {
-  Activity, BookOpen, Brain, Bug, Check, Copy, Database, Download, FileCode, FileSearch,
+  Activity, BookOpen, Bug, Check, Copy, Database, Download, FileCode, FileSearch,
   Fingerprint, HelpCircle, ImageIcon, LayoutTemplate, MessageSquare,
-  Network, Save, Send, ShieldCheck, Sparkles, Trash2, Unlock, Users, Zap,
+  Network, Save, Send, ShieldCheck, Sparkles, Trash2, Unlock, Zap,
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 import { Personality } from './SettingsPanel';
 import { SafeMarkdown } from '../SafeMarkdown';
 import { ActionButton } from '../ActionButton';
-import { DebugAnalysis, SwarmAgent, SwarmLog, KnowledgePack, ChatMessage } from './types';
+import { DebugAnalysis, SwarmLog, KnowledgePack, ChatMessage } from './types';
 import { extractAllCodeBlocks, isAnalysisMessage } from '../../utils/helpers';
+import { UseSwarmStateReturn } from '../../hooks/useSwarmState';
+import { SwarmCore } from './swarm/SwarmCore';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -23,11 +25,13 @@ interface ToolNeuronPanelProps {
   handleStudioSubmit: (e: React.FormEvent) => void;
   isVaultUnlocked: boolean;
   setIsVaultUnlocked: (v: boolean) => void;
-  swarmAnxiety: number;
-  swarmAgents: SwarmAgent[];
-  swarmLogs: SwarmLog[];
-  triggerSwarmCycle: () => void;
-  isAiProcessing: boolean;
+  swarmState: UseSwarmStateReturn;
+  swarm: {
+    missionInput: string;
+    setMissionInput: (v: string) => void;
+    isRunning: boolean;
+    triggerSwarmCycle: (missionOverride?: string) => Promise<void>;
+  };
   debugAnalysis: DebugAnalysis;
   runStaticAnalysis: () => void;
   runDynamicTracing: () => void;
@@ -45,8 +49,8 @@ interface ToolNeuronPanelProps {
 export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
   chatMessages, studioInput, setStudioInput, handleStudioSubmit,
   isVaultUnlocked, setIsVaultUnlocked,
-  swarmAnxiety, swarmAgents, swarmLogs, triggerSwarmCycle,
-  isAiProcessing, debugAnalysis, runStaticAnalysis, runDynamicTracing, getRefactoringSuggestions,
+  swarmState, swarm,
+  debugAnalysis, runStaticAnalysis, runDynamicTracing, getRefactoringSuggestions,
   activePersonality, tnKnowledgePacks, handleKnowledgeUpload, setActiveTab, onApplyCode, onSaveReport,
 }) => {
   const { vaultMemories, fetchVault } = useAppContext();
@@ -494,99 +498,9 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
           )}
 
           {/* SWARM */}
-          {tnModule === 'swarm' && (
-            <div className="flex-1 p-6 md:p-10 space-y-6 md:space-y-10 overflow-y-auto custom-scrollbar">
-              <div className="flex items-center justify-between border-b border-accent-900/20 pb-8">
-                <div className="space-y-2">
-                  <h3 className="text-3xl font-black text-accent-100 uppercase tracking-tighter flex items-center gap-5">
-                    <Network className="w-8 h-8 text-accent-600" /> Neural Swarm Core
-                  </h3>
-                  <p className="text-sm text-accent-900 font-bold tracking-widest uppercase">Biomimetic distributed intelligence & consensus engine</p>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-accent-900 uppercase tracking-widest mb-1">Swarm Anxiety</p>
-                    <p className={`text-lg font-mono font-black ${(swarmAnxiety * 100) > 50 ? 'text-accent-500' : 'text-accent-700'}`}>{(swarmAnxiety * 100).toFixed(1)}%</p>
-                  </div>
-                  <button onClick={triggerSwarmCycle} disabled={isAiProcessing} className="px-8 py-4 bg-accent-700 hover:bg-accent-600 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] shadow-lg active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3">
-                    <Zap className={`w-4 h-4 ${isAiProcessing ? 'animate-pulse' : ''}`} />
-                    {isAiProcessing ? 'Processing...' : 'Trigger Cycle'}
-                  </button>
-                </div>
-              </div>
+          {tnModule === 'swarm' && <SwarmCore swarmState={swarmState} swarm={swarm} onSaveReport={onSaveReport} onApplyCode={onApplyCode} />}
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10">
-                <div className="lg:col-span-2 space-y-6 md:space-y-8">
-                  <div className="bg-accent-950/5 border border-accent-900/20 rounded-[20px] md:rounded-[40px] p-6 md:p-10 relative overflow-hidden h-[300px] md:h-[500px] flex items-center justify-center">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,var(--color-accent-800)/0.1_0%,transparent_70%)]" />
-                    <div className="relative w-full h-full">
-                      {swarmAgents.map((agent, i) => {
-                        const angle = (i / swarmAgents.length) * Math.PI * 2;
-                        const x = Math.cos(angle) * 160;
-                        const y = Math.sin(angle) * 160;
-                        return (
-                          <div key={agent.id} style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${agent.status === 'active' ? 1.1 : 1})` }} className="absolute left-1/2 top-1/2 flex flex-col items-center gap-3 transition-all duration-500">
-                            <div className={`w-16 h-16 rounded-full border-2 flex items-center justify-center transition-all duration-500 ${agent.status === 'active' ? 'bg-accent-600 border-accent-400 shadow-[0_0_30px_var(--color-accent-600)/0.6]' : 'bg-accent-950/40 border-accent-900/40'}`}>
-                              <Users className={`w-7 h-7 ${agent.status === 'active' ? 'text-white' : 'text-accent-900'}`} />
-                            </div>
-                            <div className="text-center">
-                              <p className="text-[10px] font-black text-accent-100 uppercase tracking-tighter">{agent.name}</p>
-                              <p className="text-[8px] font-black text-accent-900 uppercase tracking-widest mt-1">{agent.expertise}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-accent-900/20 rounded-full blur-3xl animate-pulse" />
-                      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                        <Brain className="w-12 h-12 text-accent-600 drop-shadow-[0_0_15px_var(--color-accent-600)/0.5]" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    {swarmAgents.map(agent => (
-                      <div key={agent.id} className="p-5 bg-accent-950/5 border border-accent-900/10 rounded-3xl space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-[9px] font-black text-accent-900 uppercase tracking-widest">Trust</span>
-                          <span className="text-[10px] font-mono text-accent-500">{(agent.trust * 100).toFixed(0)}%</span>
-                        </div>
-                        <div className="w-full h-1 bg-accent-950/40 rounded-full overflow-hidden">
-                          <div className="h-full bg-accent-600" style={{ width: `${agent.trust * 100}%` }} />
-                        </div>
-                        <p className="text-[9px] font-black text-accent-100 uppercase truncate">{agent.name}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="bg-[#0a0202] border border-accent-900/30 rounded-[30px] md:rounded-[40px] flex flex-col shadow-2xl overflow-hidden h-[400px] md:h-[650px]">
-                  <div className="p-4 md:p-8 border-b border-accent-900/20 bg-black/40 flex items-center justify-between">
-                    <h4 className="text-[11px] font-black text-accent-500 uppercase tracking-[0.4em] flex items-center gap-3">
-                      <Activity className="w-4 h-4" /> Consensus Stream
-                    </h4>
-                    <div className="w-2 h-2 rounded-full bg-accent-500 animate-pulse" />
-                  </div>
-                  <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 custom-scrollbar font-mono text-[11px]">
-                    {swarmLogs.map(log => (
-                      <div key={log.id} className={`p-4 rounded-2xl border ${
-                        log.type === 'consensus' ? 'bg-green-500/5 border-green-500/20 text-green-500' :
-                        log.type === 'pain'      ? 'bg-accent-500/5 border-accent-500/20 text-accent-500' :
-                                                   'bg-accent-950/10 border-accent-900/10 text-accent-900'
-                      }`}>
-                        <div className="flex justify-between mb-2 opacity-50">
-                          <span>[{log.type.toUpperCase()}]</span>
-                          <span>{log.time}</span>
-                        </div>
-                        <p className="leading-relaxed font-bold">{log.message}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* DEBUG */}
+          {/* DEBUG }
           {tnModule === 'debug' && (
             <div className="flex-1 p-6 md:p-12 space-y-8 md:space-y-10 overflow-y-auto custom-scrollbar">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">

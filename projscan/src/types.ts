@@ -528,7 +528,7 @@ export interface CouplingReport {
 
 // === Monorepo / Workspaces (0.13) ===
 
-export type WorkspaceKind = 'npm' | 'yarn' | 'pnpm' | 'nx' | 'turbo' | 'lerna' | 'none';
+export type WorkspaceKind = 'npm' | 'yarn' | 'pnpm' | 'nx' | 'turbo' | 'lerna' | 'auto-discovered' | 'none';
 
 export interface WorkspacePackage {
   /** package.json `name` field, or directory basename when missing. */

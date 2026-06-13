@@ -18,7 +18,7 @@ export function useWebSockets(activePersonalityId?: number) {
   useEffect(() => {
     const socket = io(SOCKET_URL, {
       path: window.location.hostname === 'localhost' ? undefined : SOCKET_PATH,
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       reconnectionAttempts: 5,
     });
 

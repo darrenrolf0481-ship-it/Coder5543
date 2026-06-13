@@ -9,6 +9,10 @@ export const structureTool: McpTool = {
     type: 'object',
     properties: {
       package: PACKAGE_ARG_SCHEMA,
+      url: {
+        type: 'string',
+        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+      },
     },
   },
   handler: async (args, rootPath) => {

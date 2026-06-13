@@ -13,6 +13,10 @@ export const coverageTool: McpTool = {
   inputSchema: {
     type: 'object',
     properties: {
+      url: {
+        type: 'string',
+        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+      },
       limit: {
         type: 'number',
         description: 'How many entries to return (default: 30, max: 200).',

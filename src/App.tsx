@@ -27,6 +27,7 @@ import { useDebuggerLogic } from './hooks/editor/useDebuggerLogic';
 import { useDebuggerHandlers } from './hooks/editor/useDebuggerHandlers';
 import { useChatHandlers } from './hooks/useChatHandlers';
 import { useSwarm } from './hooks/useSwarm';
+import { useSwarmState } from './hooks/useSwarmState';
 import { useTerminal } from './hooks/terminal/useTerminal';
 import { useTerminalLogic } from './hooks/terminal/useTerminalLogic';
 
@@ -249,6 +250,11 @@ function AppInner() {
     sdParams, setSdParams
   } = useSystemStates();
 
+  // Sync WebSocket connection status to termuxStatus state
+  useEffect(() => {
+    setTermuxStatus(isWsConnected ? 'connected' : 'disconnected');
+  }, [isWsConnected, setTermuxStatus]);
+
   // Modals & Extra UI
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
   const [isCommitModalOpen, setIsCommitModalOpen] = useState(false);
@@ -447,7 +453,27 @@ function AppInner() {
   );
 
   // Swarm Setup
-  const swarm = useSwarm(pipeline.dispatch);
+  const swarmState = useSwarmState();
+  const swarm = useSwarm({
+    state: swarmState,
+    generateAIResponse,
+    activePersonality,
+    projectFiles: fsState.projectFiles,
+    activeFileId: fsState.activeFileId,
+    editorContent: editorState.editorContent,
+    editorLanguage: fsState.editorLanguage,
+    onAgentChatUpdate: (agentName, text, phase) => {
+      const prefix = phase === 'start' ? '🔵' : phase === 'claim' ? '✅' : '🏁';
+      setChatMessages(prev => [
+        ...prev,
+        {
+          role: 'ai',
+          text: `${prefix} **${agentName}**\n\n${text}`,
+          timestamp: Date.now(),
+        },
+      ]);
+    },
+  });
 
   // Terminal State
   const terminalState = useTerminalLogic(terminal, {
@@ -460,7 +486,7 @@ function AppInner() {
     termuxStatus,
     ollamaStatus,
     isVaultUnlocked,
-    swarmAnxiety: swarm.swarmAnxiety,
+    swarmAnxiety: swarmState.swarmAnxiety,
     personalities,
     activePersonality,
     setIsAiProcessing,
@@ -516,35 +542,23 @@ function AppInner() {
         editorState.setScanResults(lines);
         editorState.setIsScanningCode(false);
       } else if (result.responseType === 'swarm_update') {
+        // Legacy pipeline swarm response — keep for backwards compatibility.
         const update = result.payload as {
           consensus: boolean;
           confidence: number;
           summary: string;
         };
-        if (update.consensus) {
-          swarm.setSwarmLogs((prev) => [
-            {
-              id: Date.now(),
-              type: 'consensus',
-              message: `Consensus: ${update.summary} (${(update.confidence * 100).toFixed(0)}%)`,
-              time: new Date().toLocaleTimeString(),
-            },
-            ...prev,
-          ]);
-          swarm.setSwarmAnxiety((prev) => Math.max(0.05, prev - 0.02));
-        } else {
-          swarm.setSwarmLogs((prev) => [
-            {
-              id: Date.now(),
-              type: 'pain',
-              message: `Conflict: ${update.summary}`,
-              time: new Date().toLocaleTimeString(),
-            },
-            ...prev,
-          ]);
-          swarm.setSwarmAnxiety((prev) => Math.min(1.0, prev + 0.15));
-        }
-        swarm.setSwarmAgents((prev) => prev.map((a) => ({ ...a, status: 'idle' as const })));
+        const type = update.consensus ? 'consensus' : 'pain';
+        const message = update.consensus
+          ? `Legacy consensus: ${update.summary} (${(update.confidence * 100).toFixed(0)}%)`
+          : `Legacy conflict: ${update.summary}`;
+        swarmState.setSwarmLogs((prev) => [
+          { id: Date.now(), type, message, time: new Date().toLocaleTimeString() },
+          ...prev,
+        ]);
+        swarmState.setSwarmAnxiety((prev) =>
+          update.consensus ? Math.max(0.05, prev - 0.02) : Math.min(1.0, prev + 0.15)
+        );
         setIsAiProcessing(false);
       }
     });
@@ -778,9 +792,9 @@ function AppInner() {
     projectSettings,
     setProjectSettings,
 
-    swarmAnxiety: swarm.swarmAnxiety,
-    swarmAgents: swarm.swarmAgents,
-    swarmLogs: swarm.swarmLogs,
+    swarmAnxiety: swarmState.swarmAnxiety,
+    swarmAgents: swarmState.swarmAgents,
+    swarmLogs: swarmState.swarmLogs,
 
     termuxStatus,
     storageFiles,
@@ -906,9 +920,7 @@ function AppInner() {
     handleTermKeyDown: terminalState.handleTermKeyDown,
 
     // Swarm Handlers
-    triggerSwarmCycle: async () => {
-      await swarm.triggerSwarmCycle(activePersonality.name, setIsAiProcessing);
-    },
+    triggerSwarmCycle: swarm.triggerSwarmCycle,
 
     // Extra UI / Parameters
     cursorLine: editorState.cursorLine,
@@ -990,13 +1002,8 @@ function AppInner() {
                 handleStudioSubmit={chatState.handleStudioSubmit}
                 isVaultUnlocked={isVaultUnlocked}
                 setIsVaultUnlocked={setIsVaultUnlocked}
-                swarmAnxiety={swarm.swarmAnxiety}
-                swarmAgents={swarm.swarmAgents}
-                swarmLogs={swarm.swarmLogs}
-                triggerSwarmCycle={async () => {
-                  await swarm.triggerSwarmCycle(activePersonality.name, setIsAiProcessing);
-                }}
-                isAiProcessing={isAiProcessing}
+                swarmState={swarmState}
+                swarm={swarm}
                 debugAnalysis={analysisState.debugAnalysis}
                 runStaticAnalysis={analysisState.runStaticAnalysis}
                 runDynamicTracing={analysisState.runDynamicTracing}
@@ -1149,7 +1156,7 @@ function AppInner() {
                 setIsMobileFileTreeOpen={editorState.setIsMobileFileTreeOpen}
                 setIsGenerateModalOpen={forgeState.setIsGenerateModalOpen}
                 setIsTemplateModalOpen={setIsTemplateModalOpen}
-                swarmAnxiety={swarm.swarmAnxiety}
+                swarmAnxiety={swarmState.swarmAnxiety}
                 setTerminalOutput={terminal.setTerminalOutput}
               />
             )}

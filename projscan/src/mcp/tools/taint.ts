@@ -41,6 +41,10 @@ export const taintTool: McpTool = {
         description:
           'Cap the number of flows returned (most-direct first; same-function flows lead). Default 50.',
       },
+      url: {
+        type: 'string',
+        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+      },
     },
   },
   handler: async (args, rootPath) => {

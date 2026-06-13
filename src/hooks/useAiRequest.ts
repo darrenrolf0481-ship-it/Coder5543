@@ -17,7 +17,10 @@ export function useAiRequest(generateFn: (...args: any[]) => Promise<any>) {
     try {
       return await generateFn(prompt, systemInstruction, options, domain) ?? null;
     } catch (err: any) {
-      if (err?.name === 'AbortError') return null;
+      if (err?.name === 'AbortError') {
+        console.warn(`[AI:${domain}] Request was aborted.`);
+        return null;
+      }
       const msg = err instanceof Error ? err.message : String(err);
       setErrors(prev => ({ ...prev, [domain]: msg }));
       console.error(`[AI:${domain}]`, msg);

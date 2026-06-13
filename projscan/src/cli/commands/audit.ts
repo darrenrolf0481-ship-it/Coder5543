@@ -1,7 +1,7 @@
 import ora from 'ora';
 import chalk from 'chalk';
 
-import { program, pkg, getFormat, getRootPath, setupLogLevel, maybeCompactBanner } from '../_shared.js';
+import { program, pkg, getFormat, resolveRootPath, setupLogLevel, maybeCompactBanner } from '../_shared.js';
 import { runAudit, auditFindingsToIssues } from '../../core/auditRunner.js';
 import { reportAudit } from '../../reporters/consoleReporter.js';
 import { reportAuditJson } from '../../reporters/jsonReporter.js';
@@ -12,12 +12,13 @@ export function registerAudit(): void {
   program
     .command('audit')
     .description('Run npm audit and surface vulnerabilities (SARIF supported; --package scopes findings to a single workspace)')
+    .argument('[pathOrUrl]', 'local path or Git URL to scan')
     .option('--timeout <ms>', 'override npm audit timeout (default 60000)')
     .option('--package <name>', 'monorepo: scope findings to direct deps of one workspace package')
-    .action(async (cmdOpts: { timeout?: string; package?: string }) => {
+    .action(async (pathOrUrl: string | undefined, cmdOpts: { timeout?: string; package?: string }) => {
       setupLogLevel();
       maybeCompactBanner();
-      const rootPath = getRootPath();
+      const rootPath = await resolveRootPath(pathOrUrl);
       const format = getFormat();
       const spinner = format === 'console' ? ora('Running npm audit...').start() : null;
 

@@ -33,6 +33,10 @@ export const graphTool: McpTool = {
       },
       limit: { type: 'number', description: 'Max entries returned (default 50).' },
       max_tokens: { type: 'number', description: 'Cap the response to roughly this many tokens.' },
+      url: {
+        type: 'string',
+        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+      },
     },
     required: ['direction'],
   },

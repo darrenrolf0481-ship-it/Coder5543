@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-import { program, getFormat, getRootPath, setupLogLevel, maybeCompactBanner } from '../_shared.js';
+import { program, getFormat, resolveRootPath, setupLogLevel, maybeCompactBanner } from '../_shared.js';
 import { detectWorkspaces } from '../../core/monorepo.js';
 import { reportWorkspaces } from '../../reporters/consoleReporter.js';
 import { reportWorkspacesJson } from '../../reporters/jsonReporter.js';
@@ -10,10 +10,11 @@ export function registerWorkspaces(): void {
   program
     .command('workspaces')
     .description('List monorepo workspace packages (npm/yarn workspaces, pnpm-workspace.yaml, Nx/Turbo/Lerna fallback)')
-    .action(async () => {
+    .argument('[pathOrUrl]', 'local path or Git URL to scan')
+    .action(async (pathOrUrl: string | undefined) => {
       setupLogLevel();
       maybeCompactBanner();
-      const rootPath = getRootPath();
+      const rootPath = await resolveRootPath(pathOrUrl);
       const format = getFormat();
       try {
         const info = await detectWorkspaces(rootPath);

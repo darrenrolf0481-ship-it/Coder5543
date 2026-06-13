@@ -1,69 +1,176 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import { Personality } from '../data/personalities';
+import { runSwarmCycle, AIResponseFn } from '../services/swarm/swarmEngine';
+import { AgentRunResult, SwarmEngineContext } from '../services/swarm/types';
+import { UseSwarmStateReturn } from './useSwarmState';
 
-export interface SwarmAgent {
-  id: string;
-  name: string;
-  expertise: string;
-  status: 'active' | 'idle';
-  trust: number;
+export interface UseSwarmProps {
+  state: UseSwarmStateReturn;
+  generateAIResponse: AIResponseFn;
+  activePersonality: Personality;
+  projectFiles: { id: string; name: string; content?: string; language?: string }[];
+  activeFileId?: string;
+  editorContent?: string;
+  editorLanguage?: string;
+  onAgentChatUpdate?: (agentName: string, text: string, phase: 'start' | 'claim' | 'complete') => void;
 }
 
-export interface SwarmLog {
-  id: number;
-  type: 'consensus' | 'pain' | 'info';
-  message: string;
-  time: string;
-}
-
-export function useSwarm(dispatch: (type: any, source: any, data: any) => Promise<any>) {
-  const [swarmAnxiety, setSwarmAnxiety] = useState(0.12);
-  const [swarmAgents, setSwarmAgents] = useState<SwarmAgent[]>([
-    { id: 'agent_0', name: 'Visual_Cortex', expertise: 'PATTERN_MATCHING', status: 'idle', trust: 1.0 },
-    { id: 'agent_1', name: 'Threat_Scanner', expertise: 'THREAT_DETECTION', status: 'active', trust: 0.95 },
-    { id: 'agent_2', name: 'Social_Node', expertise: 'SOCIAL_NUANCE', status: 'idle', trust: 0.88 },
-    { id: 'agent_3', name: 'Memory_Recall', expertise: 'MEMORY_RECALL', status: 'idle', trust: 1.0 },
-    { id: 'agent_4', name: 'Creative_Core', expertise: 'CREATIVE_NOVELTY', status: 'idle', trust: 0.92 },
-    { id: 'agent_5', name: 'Safety_Guardian', expertise: 'SAFETY_GUARDIAN', status: 'active', trust: 1.0 },
-    { id: 'agent_6', name: 'Context_Engine', expertise: 'PATTERN_MATCHING', status: 'idle', trust: 0.97 },
-  ]);
-  const [swarmLogs, setSwarmLogs] = useState<SwarmLog[]>([
-    { id: 1, type: 'info', message: 'Swarm Consensus Engine Initialized.', time: '08:45:12' },
-    { id: 2, type: 'info', message: 'Pain Propagation Protocol Active.', time: '08:45:15' },
-  ]);
-
-  const triggerSwarmCycle = useCallback(async (activePersonality: string, setIsAiProcessing: (v: boolean) => void) => {
-    setIsAiProcessing(true);
-    setSwarmLogs((prev) => [
-      {
-        id: Date.now(),
-        type: 'info',
-        message: 'Initiating Parallel Perception Cycle...',
-        time: new Date().toLocaleTimeString(),
-      },
-      ...prev,
-    ]);
-    setSwarmAgents((prev) => prev.map((a) => ({ ...a, status: 'active' as const })));
-    
-    const safetyTimer = setTimeout(() => setIsAiProcessing(false), 15_000);
-    try {
-      await dispatch('SWARM_CYCLE_START', 'swarm', {
-        agentCount: swarmAgents.length,
-        activePersonality,
-      });
-    } catch {
-      setIsAiProcessing(false);
-    } finally {
-      clearTimeout(safetyTimer);
-    }
-  }, [dispatch, swarmAgents.length]);
-
-  return {
-    swarmAnxiety,
-    setSwarmAnxiety,
+export function useSwarm({
+  state,
+  generateAIResponse,
+  activePersonality,
+  projectFiles,
+  activeFileId,
+  editorContent,
+  editorLanguage,
+  onAgentChatUpdate,
+}: UseSwarmProps) {
+  const {
+    swarmMode,
+    enableCritique,
+    enabledBoosts,
     swarmAgents,
-    setSwarmAgents,
+    setRuntimeAgents,
+    swarmRepos,
     swarmLogs,
     setSwarmLogs,
+    setSwarmAnxiety,
+    setLastReport,
+  } = state;
+
+  const [missionInput, setMissionInput] = useState('');
+  const [isRunning, setIsRunning] = useState(false);
+
+  const addLog = useCallback(
+    (type: 'consensus' | 'pain' | 'info', message: string) => {
+      setSwarmLogs(prev => [
+        { id: Date.now(), type, message, time: new Date().toLocaleTimeString() },
+        ...prev,
+      ]);
+    },
+    [setSwarmLogs]
+  );
+
+  const updateAgentStatus = useCallback(
+    (agentId: string, status: any, meta?: string) => {
+      setRuntimeAgents(prev =>
+        prev.map(a => {
+          if (a.id !== agentId) return a;
+          return { ...a, status, error: status === 'error' ? meta || a.error : undefined };
+        })
+      );
+      if (status === 'thinking') {
+        const agent = swarmAgents.find(a => a.id === agentId);
+        if (agent) onAgentChatUpdate?.(agent.name, `🧠 ${agent.name} is analyzing...`, 'start');
+      }
+    },
+    [setRuntimeAgents, swarmAgents, onAgentChatUpdate]
+  );
+
+  const handleAgentComplete = useCallback(
+    (result: AgentRunResult) => {
+      const agent = swarmAgents.find(a => a.id === result.agentId);
+      if (!agent) return;
+      if (result.status === 'fulfilled' && result.response) {
+        const claims = result.keyClaims?.length ? result.keyClaims.join('\n- ') : 'No key claims extracted.';
+        onAgentChatUpdate?.(
+          agent.name,
+          `**${agent.name}** (${agent.expertise}) — Confidence: ${result.confidence !== undefined ? `${(result.confidence * 100).toFixed(0)}%` : 'unknown'}\n\nKey claims:\n- ${claims}`,
+          'claim'
+        );
+      } else if (result.status === 'rejected') {
+        onAgentChatUpdate?.(agent.name, `**${agent.name}** failed: ${result.error}`, 'claim');
+      }
+    },
+    [swarmAgents, onAgentChatUpdate]
+  );
+
+  const triggerSwarmCycle = useCallback(
+    async (missionOverride?: string) => {
+      const mission = (missionOverride || missionInput).trim();
+      if (!mission) {
+        addLog('pain', 'No mission provided. Enter a prompt before triggering the swarm.');
+        return;
+      }
+
+      const activeAgents = swarmAgents.filter(a => a.active);
+      if (activeAgents.length === 0) {
+        addLog('pain', 'No active agents. Activate at least one agent.');
+        return;
+      }
+
+      setIsRunning(true);
+      setRuntimeAgents(activeAgents.map(a => ({ ...a, status: 'idle' })));
+      addLog('info', `Starting ${swarmMode} swarm with ${activeAgents.length} agents...`);
+
+      try {
+        const ctx: SwarmEngineContext = {
+          mode: swarmMode,
+          mission,
+          agents: activeAgents,
+          activePersonality,
+          repos: swarmRepos,
+          enableCritique,
+          enabledBoosts,
+          projectFiles: projectFiles || [],
+          activeFileId,
+          editorContent,
+          editorLanguage,
+        };
+
+        const report = await runSwarmCycle(ctx, generateAIResponse, updateAgentStatus, handleAgentComplete);
+        setLastReport(report);
+
+        // Simple anxiety derived from conflict ratio
+        const conflictRatio =
+          report.conflicts.length / Math.max(1, report.agreements.length + report.conflicts.length);
+        setSwarmAnxiety(Number(conflictRatio.toFixed(2)));
+
+        addLog(
+          'consensus',
+          `Swarm synthesis complete. ${report.recommendations.length} recommendations, ${report.conflicts.length} conflicts.`
+        );
+        onAgentChatUpdate?.(
+          'Swarm Synthesis',
+          `## Swarm Report — ${swarmMode}\n\n**Best Course of Action:** ${report.bestCourseOfAction}\n\n**Summary:** ${report.summary}`,
+          'complete'
+        );
+      } catch (err: any) {
+        const msg = err instanceof Error ? err.message : String(err);
+        addLog('pain', `Swarm cycle failed: ${msg}`);
+      } finally {
+        setIsRunning(false);
+      }
+    },
+    [
+      missionInput,
+      swarmAgents,
+      swarmMode,
+      enableCritique,
+      enabledBoosts,
+      swarmRepos,
+      activePersonality,
+      projectFiles,
+      activeFileId,
+      editorContent,
+      editorLanguage,
+      generateAIResponse,
+      updateAgentStatus,
+      addLog,
+      setLastReport,
+      setSwarmAnxiety,
+      setRuntimeAgents,
+    ]
+  );
+
+  return {
+    missionInput,
+    setMissionInput,
+    isRunning,
     triggerSwarmCycle,
+    swarmLogs,
+    addLog,
   };
 }
+
+export type { AgentRunResult, SwarmAgent, SwarmMode, SwarmReport, AssignedRepo } from '../services/swarm/types';

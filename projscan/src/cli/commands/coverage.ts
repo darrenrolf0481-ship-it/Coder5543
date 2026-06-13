@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import {
   program,
   getFormat,
-  getRootPath,
+  resolveRootPath,
   loadProjectConfig,
   setupLogLevel,
   maybeCompactBanner,
@@ -25,6 +25,7 @@ export function registerCoverage(): void {
   program
     .command('coverage')
     .description('Join test coverage with hotspots - surface the scariest untested files')
+    .argument('[pathOrUrl]', 'local path or Git URL to scan')
     .option('--limit <n>', 'limit number of entries shown', '30')
     .option('--package <name>', 'monorepo: scope to a single workspace package')
     .option(
@@ -32,10 +33,10 @@ export function registerCoverage(): void {
       '1.6+: scope to files changed vs base ref (auto-detected; override with --base-ref)',
     )
     .option('--base-ref <ref>', 'git base ref for --changed-only')
-    .action(async (cmdOpts) => {
+    .action(async (pathOrUrl: string | undefined, cmdOpts) => {
       setupLogLevel();
       maybeCompactBanner();
-      const rootPath = getRootPath();
+      const rootPath = await resolveRootPath(pathOrUrl);
       const format = getFormat();
       const config = await loadProjectConfig();
       const spinner = format === 'console' ? ora('Parsing coverage...').start() : null;

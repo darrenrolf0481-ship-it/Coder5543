@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import {
   program,
   getFormat,
-  getRootPath,
+  resolveRootPath,
   loadProjectConfig,
   setupLogLevel,
   maybeCompactBanner,
@@ -23,16 +23,17 @@ export function registerCoupling(): void {
   program
     .command('coupling')
     .description('Per-file fan-in / fan-out / instability and circular-import cycles (AST-derived)')
+    .argument('[pathOrUrl]', 'local path or Git URL to scan')
     .option('--limit <n>', 'number of files to show (default 25)')
     .option('--cycles-only', 'only show files participating in import cycles')
     .option('--high-fan-in', 'sort by fan-in (most-depended-on first)')
     .option('--high-fan-out', 'sort by fan-out (most-coupled first)')
     .option('--file <path>', 'restrict output to a single file')
     .option('--package <name>', 'monorepo: scope to a single workspace package')
-    .action(async (cmdOpts) => {
+    .action(async (pathOrUrl, cmdOpts) => {
       setupLogLevel();
       maybeCompactBanner();
-      const rootPath = getRootPath();
+      const rootPath = await resolveRootPath(pathOrUrl);
       const format = getFormat();
       const config = await loadProjectConfig();
       const spinner = format === 'console' ? ora('Computing coupling + cycles...').start() : null;

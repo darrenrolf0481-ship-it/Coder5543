@@ -74,11 +74,92 @@ export async function detectWorkspaces(rootPath: string): Promise<WorkspaceInfo>
     }
   }
 
+  // 6) Auto-discovery fallback: scan for common project markers if no explicit
+  // monorepo config is found. This enables "editor file tree" recognition for
+  // arbitrary nested projects.
+  const discoveredPackages = await autoDiscoverPackages(rootPath, rootPkg);
+  if (discoveredPackages.length > (rootPkg ? 1 : 0)) {
+    return { kind: 'auto-discovered', packages: discoveredPackages, source: 'auto-discovery scan' };
+  }
+
   // Single-package repo (or non-JS).
   return { kind: 'none', packages: rootPkg ? [rootPackageOnly(rootPkg)] : [] };
 }
 
 // ── helpers ───────────────────────────────────────────────
+
+async function autoDiscoverPackages(
+  rootPath: string,
+  rootPkg: PackageJson | null,
+): Promise<WorkspacePackage[]> {
+  const patterns = [
+    '**/package.json',
+    '**/pyproject.toml',
+    '**/Cargo.toml',
+    '**/go.mod',
+    '**/.projscanrc.json',
+    '**/.projscanrc',
+  ];
+  const matches = await fg(patterns, {
+    cwd: rootPath,
+    onlyFiles: true,
+    ignore: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.*/**'],
+    deep: 4,
+  });
+
+  const packages: WorkspacePackage[] = [];
+  const seenDirs = new Set<string>();
+
+  // Ensure root is in seen if it has a manifest we might match
+  if (rootPkg) seenDirs.add('.');
+
+  for (const rel of matches) {
+    const dir = path.posix.dirname(rel.split(path.sep).join('/'));
+    if (dir === '.' || seenDirs.has(dir)) continue;
+    seenDirs.add(dir);
+
+    // Try to get name from manifest
+    let name: string | undefined;
+    const absPath = path.join(rootPath, rel);
+    if (rel.endsWith('package.json')) {
+      const pkg = await readPackageJson(absPath);
+      if (pkg?.name) name = pkg.name;
+    } else if (rel.endsWith('pyproject.toml')) {
+      const content = await tryRead(absPath);
+      if (content) {
+        const m = /^\s*name\s*=\s*['"]([^'"]+)['"]/m.exec(content);
+        if (m) name = m[1];
+      }
+    }
+
+    if (!name) name = path.posix.basename(dir);
+
+    packages.push({
+      name,
+      relativePath: dir,
+      version: undefined,
+      isRoot: false,
+    });
+  }
+
+  if (rootPkg && rootPkg.name) {
+    packages.unshift(rootPackageOnly(rootPkg));
+  } else {
+    // Even if no root package.json, we have a root.
+    packages.unshift({ name: '<root>', relativePath: '', isRoot: true });
+  }
+
+  packages.sort((a, b) => a.relativePath.localeCompare(b.relativePath));
+  return packages;
+}
+
+async function tryRead(absPath: string): Promise<string | null> {
+  try {
+    return await fs.readFile(absPath, 'utf-8');
+  } catch {
+    return null;
+  }
+}
 
 interface PackageJson {
   name?: string;

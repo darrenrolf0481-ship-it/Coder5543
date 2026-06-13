@@ -10,6 +10,7 @@ import {
   UserCircle, Database, BarChart3, Copy, Cpu,
 } from 'lucide-react';
 import { FileTree } from '../FileTree';
+import { AnchoredMenu } from '../AnchoredMenu';
 import Editor from '@monaco-editor/react';
 import { SafeMarkdown } from '../SafeMarkdown';
 import { ActionButton } from '../ActionButton';
@@ -207,6 +208,8 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
 }) => {
   const [isAiMenuOpen, setIsAiMenuOpen] = React.useState(false);
   const [isUtilMenuOpen, setIsUtilMenuOpen] = React.useState(false);
+  const utilBtnRef = React.useRef<HTMLButtonElement>(null);
+  const aiBtnRef = React.useRef<HTMLButtonElement>(null);
   const [monacoLoaded, setMonacoLoaded] = useState(false);
   const [useFallback, setUseFallback] = useState(false);
 
@@ -412,8 +415,9 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
               </div>
 
               {/* UTILS DROPDOWN */}
-              <div className="relative shrink-0">
+              <div className="shrink-0">
                 <button
+                  ref={utilBtnRef}
                   onClick={() => { setIsUtilMenuOpen(!isUtilMenuOpen); setIsAiMenuOpen(false); }}
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${isUtilMenuOpen ? 'bg-accent-700 border-accent-500 text-white' : 'bg-accent-950/40 border-accent-900/30 text-accent-500 hover:bg-accent-900/20'}`}
                 >
@@ -422,10 +426,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                   <span className="text-[8px] opacity-65">▼</span>
                 </button>
 
-                {isUtilMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-[60]" onClick={() => setIsUtilMenuOpen(false)} />
-                    <div className="absolute left-0 mt-2 w-56 rounded-2xl bg-[#0a0202] border border-accent-900/40 shadow-[0_10px_35px_rgba(0,0,0,0.9)] z-[70] py-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                <AnchoredMenu anchorRef={utilBtnRef} open={isUtilMenuOpen} onClose={() => setIsUtilMenuOpen(false)} width={224}>
                       <div className="px-3 py-1 text-[8px] font-black text-accent-950 uppercase tracking-widest border-b border-accent-900/10 mb-1">
                         System & Formatting
                       </div>
@@ -479,14 +480,13 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                         <GitBranch className="w-3.5 h-3.5 text-accent-500" />
                         <span>Neural Git</span>
                       </button>
-                    </div>
-                  </>
-                )}
+                </AnchoredMenu>
               </div>
 
               {/* AI DROPDOWN */}
-              <div className="relative shrink-0">
+              <div className="shrink-0">
                 <button
+                  ref={aiBtnRef}
                   onClick={() => { setIsAiMenuOpen(!isAiMenuOpen); setIsUtilMenuOpen(false); }}
                   className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${isAiMenuOpen ? 'bg-accent-700 border-accent-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-accent-950/40 border-accent-900/30 text-accent-500 hover:bg-accent-900/20'}`}
                 >
@@ -495,10 +495,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                   <span className="text-[8px] opacity-65">▼</span>
                 </button>
 
-                {isAiMenuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-[60]" onClick={() => setIsAiMenuOpen(false)} />
-                    <div className="absolute left-0 mt-2 w-64 rounded-2xl bg-[#0a0202] border border-accent-900/40 shadow-[0_10px_35px_rgba(0,0,0,0.9)] z-[70] py-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                <AnchoredMenu anchorRef={aiBtnRef} open={isAiMenuOpen} onClose={() => setIsAiMenuOpen(false)} width={256}>
                       <div className="px-3 py-1 text-[8px] font-black text-accent-950 uppercase tracking-widest border-b border-accent-900/10 mb-1">
                         Analysis & Audit
                       </div>
@@ -587,9 +584,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                         <Users className="w-3.5 h-3.5 text-accent-500" />
                         <span>Pair Programmer</span>
                       </button>
-                    </div>
-                  </>
-                )}
+                </AnchoredMenu>
               </div>
               <button
                 onClick={handleRunCode}

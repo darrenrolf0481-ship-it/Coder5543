@@ -5,7 +5,7 @@ import {
   program,
   pkg,
   getFormat,
-  getRootPath,
+  resolveRootPath,
   loadProjectConfig,
   setupLogLevel,
   maybeCompactBanner,
@@ -26,13 +26,14 @@ export function registerDoctor(): void {
   program
     .command('doctor')
     .description('Evaluate project health and detect issues')
+    .argument('[pathOrUrl]', 'local path or Git URL to scan')
     .option('--changed-only', 'only report issues on files changed vs base ref')
     .option('--base-ref <ref>', 'git base ref for --changed-only (default: origin/main)')
     .option('--package <name>', 'monorepo: scope issues to a single workspace package')
-    .action(async (cmdOpts) => {
+    .action(async (pathOrUrl: string | undefined, cmdOpts) => {
       setupLogLevel();
       maybeCompactBanner();
-      const rootPath = getRootPath();
+      const rootPath = await resolveRootPath(pathOrUrl);
       const format = getFormat();
       const config = await loadProjectConfig();
       const spinner = format === 'console' ? ora('Running health checks...').start() : null;

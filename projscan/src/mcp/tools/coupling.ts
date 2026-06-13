@@ -30,6 +30,10 @@ export const couplingTool: McpTool = {
         description:
           'Optional. Workspace package name (from projscan_workspaces) to scope coupling rows to one package only.',
       },
+      url: {
+        type: 'string',
+        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+      },
     },
   },
   handler: async (args, rootPath) => {

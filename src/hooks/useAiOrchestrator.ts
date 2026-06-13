@@ -19,11 +19,18 @@ export function useAiOrchestrator(
   );
 
   const abortRefs = useRef<Record<string, AbortController>>({});
-  
-  const getSignal = useCallback((domain: string): AbortSignal => {
-    abortRefs.current[domain]?.abort();
-    abortRefs.current[domain] = new AbortController();
-    return abortRefs.current[domain].signal;
+
+  // Only abort a previous in-flight request when the caller explicitly passes
+  // a stable domain (e.g. 'chat'). Callers that omit a domain are asking for a
+  // standalone request, so parallel work (editor analysis, swarm agents, etc.)
+  // does not cancel each other.
+  const getSignal = useCallback((domain?: string): AbortSignal => {
+    const controller = new AbortController();
+    if (domain) {
+      abortRefs.current[domain]?.abort();
+      abortRefs.current[domain] = controller;
+    }
+    return controller.signal;
   }, []);
 
   const generateAIResponse = useCallback(
@@ -37,7 +44,7 @@ export function useAiOrchestrator(
         brainContext?: any; 
         mcpTools?: string[] 
       },
-      domain = 'default'
+      domain?: string
     ) => {
       const active = workers.filter(w => w.enabled);
       if (active.length === 0) return Promise.reject(new Error('No workers enabled'));
@@ -73,7 +80,10 @@ export function useAiOrchestrator(
         });
       }
 
-      const signal = getSignal(domain);
+      // When an explicit domain is provided all workers share one signal so the
+      // whole call can be cancelled together. Otherwise each worker gets its own
+      // isolated signal so parallel feature calls don't abort each other.
+      const sharedSignal = domain ? getSignal(domain) : undefined;
       const results = await Promise.allSettled(
         active.map(w =>
           generateAIResponseService(prompt as string, buildInstruction(w), mergedOptions, {
@@ -84,7 +94,7 @@ export function useAiOrchestrator(
             openrouterApiKey,
             projectSettings: { ...projectSettings, ollamaUrl: w.url },
             ollamaModels: w.models ?? [],
-            signal,
+            signal: sharedSignal ?? getSignal(),
             brainContext,
           })
         )

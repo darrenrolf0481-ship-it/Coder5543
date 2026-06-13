@@ -17,6 +17,10 @@ export const doctorTool: McpTool = {
         description:
           '1.5+ — adaptive shape budget. <3000 returns verdict-only (score + grade + per-severity counts); <7000 returns a summary (top-5 issues by severity, no descriptions); otherwise the full issue list. Different from `max_tokens` (post-hoc truncation): the tool reshapes BEFORE serializing.',
       },
+      url: {
+        type: 'string',
+        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+      },
     },
   },
   handler: async (args, rootPath) => {

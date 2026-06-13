@@ -4,7 +4,10 @@ export type DebugAnalysis = {
   refactoring: { status: 'idle' | 'running' | 'done'; suggestions: string[] };
 };
 
-export type SwarmAgent = { id: string; name: string; expertise: string; status: 'active' | 'idle'; trust: number };
+export type { SwarmAgent } from '../../services/swarm/types';
+
 export type SwarmLog = { id: number; type: 'consensus' | 'pain' | 'info'; message: string; time: string };
+
 export type KnowledgePack = { id: number; name: string; size: string; status: string; progress?: number };
+
 export type ChatMessage = { role: 'user' | 'ai'; text: string; type?: 'text' | 'image'; url?: string; timestamp: number };

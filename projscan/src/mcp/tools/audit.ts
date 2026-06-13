@@ -10,6 +10,10 @@ export const auditTool: McpTool = {
   inputSchema: {
     type: 'object',
     properties: {
+      url: {
+        type: 'string',
+        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+      },
       cursor: { type: 'string', description: 'Opaque cursor from a previous response.' },
       page_size: { type: 'number', description: 'Items per page (default 50).' },
       max_tokens: { type: 'number', description: 'Cap response size.' },
