@@ -1,3 +1,28 @@
+/**
+ * @hook useTerminalLogic
+ *
+ * Core terminal command processing hook for ToolNeuron Hub.
+ * Handles command dispatch, AI assistance, MCP subcommands,
+ * autocomplete suggestions, and keyboard navigation.
+ *
+ * ## Architecture
+ *
+ * The hook returns 4 functions:
+ * - `handleTerminalCommand` — Main command dispatcher (clear, help, mcp, ai, shell)
+ * - `handleTermInputChange` — Autocomplete/suggestion engine
+ * - `handleTermKeyDown` — Tab/arrow key navigation
+ * - `getAiTerminalAssistance` — AI-powered terminal assistance
+ *
+ * ## Bus Factor Note
+ *
+ * This hook was originally written by a single author (help@zocomputer.com).
+ * If you're modifying it, please update this documentation and add inline comments
+ * for any non-obvious logic.
+ *
+ * @param terminal - State object from useTerminal hook (termInput, terminalOutput, etc.)
+ * @param deps - Dependencies: activeTab, editorLanguage, projectFiles, AI functions, etc.
+ * @returns Object with handleTerminalCommand, handleTermInputChange, handleTermKeyDown, getAiTerminalAssistance
+ */
 import React, { useCallback } from 'react';
 
 export function useTerminalLogic(
