@@ -1,0 +1,234 @@
+---
+description: Methodology walkthrough for the 2026-06-16 architecture analysis of Coder5543/ToolNeuron Hub. Records tools, steps, and reasoning. Reference only — not a task list.
+globs:
+alwaysApply: false
+---
+
+# Architecture Analysis Walkthrough
+
+This document records **how** the 2026-06-16 architecture assessment was performed — the tools, commands, steps, and reasoning. It is a reference log, not a task list.
+
+---
+
+## Phase 1: Project Health Scan (projscan)
+
+### Tools
+- **projscan** — static analysis tool that scores project health (coupling, cyclomatic complexity, dependency cycles, dead code)
+
+### Steps
+1. Run projscan against the repo root:
+   ```bash
+   projscan --full /home/workspace/Coder5543
+   ```
+2. Initial score: **0/F** — failed on multiple dimensions
+3. Review the JSON report for top hotspots:
+   - EditorPanel.tsx: 193.9 hotspot score
+   - FileTree.tsx: 190.2
+   - ToolNeuronPanel.tsx: 179.5
+   - aiService.ts: 177.8
+   - useTerminalLogic.ts: 172.3
+
+### Observation
+The 0/F score is projscan's "full mode" — it reports every finding without filtering. The compact re-run scores 90/A after remediation. The gap between full and compact shows where the most impactful changes were.
+
+---
+
+## Phase 2: Dead Code & Duplicate Identification
+
+### Tools
+- **projscan** rules: `unused-dependency-*`, `gitignore-missing-env`, `missing-eslint`, `missing-prettier`, `hardcoded-secret`
+- **grep**, **diff**, **git status** — manual verification
+
+### Method
+1. Identify dead code by searching for zero-import modules:
+   ```bash
+   grep -r "ask_sage" src/ projects/ --include="*.ts" --include="*.tsx" --include="*.py" -l
+   # No results → no callers
+   ```
+2. Find duplicate files by comparing project-scoped copies against root:
+   ```bash
+   diff projects/Coder5543/ARCHITECTURE_REPORT.md ./ARCHITECTURE_REPORT.md
+   # Identical → duplicate
+   ```
+3. Check `.gitignore` coverage for generated artifacts
+
+### Findings
+- `ask_sage.py` — zero callers → deleted
+- 8 duplicate files in `projects/Coder5543/` → deleted
+- `.gitignore` missing patterns → added (`*_report.json`, `project_graph.json`, `ARCHITECTURE_REPORT.md`)
+
+---
+
+## Phase 3: EditorPanel.tsx — Hotspot Analysis
+
+### Tools
+- **Serena** (`find_symbol`, `get_symbols_overview`, `find_referencing_symbols`) — symbolic code navigation
+- **TypeScript compiler** (`tsc --noEmit`) — verification after extraction
+
+### Method
+1. **Map the structure** using symbol overview:
+   ```
+   mcp__serena__get_symbols_overview → EditorPanel.tsx, depth 1
+   ```
+   This reveals the component's shape: state, callbacks, sub-render sections, effects.
+
+2. **Identify logical boundaries** — look for:
+   - Self-contained state that doesn't leak to other sections
+   - Distinct render trees that could stand alone
+   - Props that are only used by one sub-section
+
+3. **Verify dependencies** before extracting:
+   - Trace each sub-section's prop usage via `find_referencing_symbols`
+   - Confirm the extracted component can receive everything it needs via props
+   - Decide on explicit props vs. context (chose props for clarity)
+
+4. **Extract and verify**:
+   - Create new file with explicit props interface
+   - Move the sub-section's JSX, state, and callbacks
+   - Replace original JSX with component tag + props
+   - Run `npx tsc --noEmit` to catch type errors
+
+### What was found (EditorPanel)
+Three logical sections:
+| Section | Lines | Extracted to |
+|---------|-------|-------------|
+| Assistant sidebar | ~221 | `AssistantSidebar.tsx` |
+| Output panel (5 tabs) | ~1,239 | `OutputPanel.tsx` |
+| Editor orchestration | ~1,031 | remains in `EditorPanel.tsx` |
+
+**Design context**: OutputPanel's 5 sub-components (TerminalOutput, PreviewPanel, DebugPanel, GitPanel, SettingsPanel) are co-located in one file. They share active-tab state, terminal buffer, and git state. Explicit props are used instead of context — EditorPanel is the single source of truth for editor state.
+
+---
+
+## Phase 4: brainService.ts — Coupling Analysis
+
+### Tools
+- **Serena** (`find_symbol`, `find_referencing_symbols`)
+- **TypeScript compiler**
+
+### Method
+1. **Count internal imports** in brainService.ts:
+   ```
+   mcp__serena__find_symbol → brainService → depth 1
+   ```
+   Found 6: STMBuffer, LTMStore, AssociativeLayer, EndocrineSystem, AvoidanceMap, PainErrorPathway
+
+2. **Map cohesion groups** — which modules talk to each other?
+   - Memory group: STMBuffer → LTMStore, AssociativeLayer sits atop both
+   - Autonomic group: EndocrineSystem ↔ AvoidanceMap ↔ PainErrorPathway (tight feedback loop)
+
+3. **Calculate instability** = egress / (egress + ingress)
+   - Before: 6 egress imports / (6 + 1) = 0.88
+   - After facades: 2 egress imports / (2 + many) ≈ 0.22
+
+4. **Create facades** — one per cohesion group:
+   - `MemorySystem.ts`: groups STM + LTM + Associative
+   - `AutonomicSystem.ts`: groups Endocrine + Avoidance + Pain (constructor wires PainErrorPathway's deps)
+
+5. **Update brainService** to import 2 facades instead of 6 modules
+6. **Verify** with `tsc --noEmit`
+
+### Result
+- brainService imports: 6 → 2 (−67%)
+- Instability: 0.88 → ~0.22 (−75%)
+
+**Why facades**: The autonomic trio forms a tight feedback loop (pain → endocrine → avoidance). A facade groups them logically while still reducing the import surface.
+
+---
+
+## Phase 5: FileTree.tsx — Embedded Component Detection
+
+### Tools
+- **Serena** (`find_symbol`, `replace_content`)
+- **TypeScript compiler**
+
+### Method
+1. **Spot embedded sub-components** by looking for:
+   - State that's only used by one section
+   - Self-contained render trees with their own callbacks
+   - Line ranges that could be a standalone component
+
+2. **Extract** the sub-component (TermuxBrowser) with a props interface
+3. **Replace** inline JSX with component tag
+4. **Verify** compilation
+
+### Result
+- FileTree.tsx: 1,255 → 671 lines (−47%)
+- TermuxBrowser.tsx: 225 lines (new file)
+
+---
+
+## Phase 6: Boot-Up Race Condition Identification
+
+### Tools
+- **Serena** (`find_symbol`, `find_referencing_symbols`) — understanding call chains
+- **Manual code review** — tracing async startup sequences
+
+### Method
+Race conditions in startup code are hard to spot statically. The approach:
+1. **Map the startup sequence** — trace from App.tsx mount through all initialization effects
+2. **Identify unguarded async operations** — look for:
+   - Fire-and-forget promises (no await, no error boundary)
+   - Multiple independent effects that write to the same state
+   - Re-entrant async flows (component mounts, starts async work, unmounts, remounts, starts again)
+3. **Classify by symptom**:
+   - Timeout / hang → configurable timeout + retry
+   - Process leak → reference tracking + kill-before-spawn
+   - Reconnect storm → exponential backoff with jitter
+   - Retry without backoff → capped retry with delay
+   - State race → sequential queue or single-source-of-truth derivation
+
+### Findings (12 total: 8 bugs, 4 UI issues)
+All committed in `0f9c0a8` — see ARCHITECTURE_ANALYSIS.md §2.5 for the full table.
+
+---
+
+## Phase 7: Staged Infrastructure
+
+### Tools
+- **Manual creation** (Write tool)
+
+### What was created
+Standalone modules with clear integration contracts. Not wired into App.tsx — that's a separate step for whenever it happens.
+
+| File | Purpose | State |
+|------|---------|-------|
+| `src/services/eventBus.ts` | Typed singleton event bus (18 event types, 6 domains) | Staged |
+| `src/services/analysisService.ts` | Consolidated analysis (static, security, architecture, performance, deep) | Staged |
+| `src/components/panels/UnifiedResultsPanel.tsx` | Auto-subscribing results display | Staged |
+| `src/components/panels/ProjectPanel.tsx` | Project management UI | Staged |
+| `src/services/projectManager.ts` | Project lifecycle management | Staged |
+| `src/hooks/useProjectManager.ts` | React hook for project manager | Staged |
+| `src/services/storage/sqliteLtmStore.ts` | SQLite LTM backend | Staged |
+| `src/utils/githubUrl.ts` | GitHub URL parsing utility | Staged |
+
+Integration guide lives in `src/docs/INNER_APP_COMMUNICATION.md`.
+
+---
+
+## Tools Used
+
+| Tool | Purpose | Key Commands |
+|------|---------|--------------|
+| **projscan** | Project health scoring, hotspot detection | `projscan --full`, `projscan --compact` |
+| **Serena** | Symbolic code navigation, reference tracking | `find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `replace_content`, `replace_symbol_body` |
+| **TypeScript compiler** | Compilation verification after each change | `npx tsc --noEmit` |
+| **grep / diff / git** | Dead code detection, duplicate identification | `grep -r`, `diff`, `git status` |
+| **Write tool** | New file creation (facades, services, panels) | N/A |
+| **Manual review** | Race condition identification, architectural reasoning | N/A |
+
+---
+
+## Methodology Notes
+
+1. **Facade pattern for reducing coupling**: When a service imports 3+ modules that form a cohesive group, extract a facade. Less disruptive than a full re-architecture, achieves most of the coupling reduction.
+
+2. **Co-locate sub-components when they share state**: The 5 output tabs share terminal buffer, git state, and active tab. Keeping them in one file with named exports avoids prop-drilling or hidden context deps at this scale.
+
+3. **Verify compilation after every extraction**: Each extraction step was followed by `tsc --noEmit`. This caught one case where a moved component referenced a prop not yet in the extracted interface.
+
+4. **Race conditions hide in "obvious" startup code**: 8 of the 12 fixes were in boot/startup paths that seemed straightforward but had timing dependencies. Backoff, guards, and queues addressed these.
+
+5. **Stage infrastructure before wiring**: The event bus, analysis service, and unified results panel exist as standalone modules. Wiring them into App.tsx is a separate step, keeping refactoring PRs distinct from integration PRs.
+
+6. **Log what exists, don't prescribe what to do next**: This is a reference document recording what was found, what was done, and what the numbers are. The people already coding on this project know what's next.
