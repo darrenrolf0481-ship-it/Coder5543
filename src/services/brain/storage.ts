@@ -1,8 +1,13 @@
 /**
  * storage.ts — Polymorphic storage layer for Neural Core
- * 
+ *
  * Automatically detects environment (Node.js vs Browser) and selects
  * the appropriate persistence mechanism (Filesystem vs LocalStorage).
+ *
+ * On the server side, uses a lazy proxy that reads globalThis.brainStorage
+ * on each call rather than at import time. This ensures the storage works
+ * correctly even if this module is imported before server.ts sets
+ * globalThis.brainStorage.
  */
 
 interface StorageImpl {
@@ -20,10 +25,18 @@ if (typeof window !== 'undefined') {
   };
 } else {
   // Server environment (Node.js)
-  // We use a global proxy to avoid bundling Node modules in the frontend
-  storageImpl = (globalThis as any).brainStorage || {
-    getItem: () => null,
-    setItem: () => {},
+  // Lazy proxy: reads globalThis.brainStorage on each call, not at import time.
+  // This prevents the no-op shim from being captured if this module is imported
+  // before server.ts initializes globalThis.brainStorage.
+  storageImpl = {
+    getItem: (key) => (globalThis as any).brainStorage?.getItem(key) ?? null,
+    setItem: (key, val) => {
+      if ((globalThis as any).brainStorage) {
+        (globalThis as any).brainStorage.setItem(key, val);
+      } else {
+        console.warn('[storage] brainStorage not initialized; write to key "%s" discarded', key);
+      }
+    },
   };
 }
 

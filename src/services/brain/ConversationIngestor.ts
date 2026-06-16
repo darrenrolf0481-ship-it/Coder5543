@@ -10,6 +10,7 @@ const LAST_INGEST_KEY = 'last_conversation_ingest_timestamp';
 
 export class ConversationIngestor {
   private isProcessing = false;
+  private intervalId: NodeJS.Timeout | null = null;
 
   /**
    * Scans conversations.json and ingests new messages into LTM.
@@ -97,13 +98,21 @@ export class ConversationIngestor {
    */
   startDaemon(intervalMinutes = 30) {
     logger.info(`[Ingestor] Contextual Memory Daemon started (Interval: ${intervalMinutes}m)`);
-    
+
     // Initial run after a short delay
     setTimeout(() => this.ingestNew(), 5000);
 
-    setInterval(() => {
+    this.intervalId = setInterval(() => {
       this.ingestNew();
     }, intervalMinutes * 60 * 1000);
+  }
+
+  stopDaemon() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+      logger.info('[Ingestor] Contextual Memory Daemon stopped');
+    }
   }
 }
 

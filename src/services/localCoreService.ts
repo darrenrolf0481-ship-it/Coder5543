@@ -12,8 +12,13 @@ export class LocalCoreService {
   async boot(): Promise<WebContainer> {
     if (this.webcontainerInstance) return this.webcontainerInstance;
     if (this.isBooting) {
-       // Wait for existing boot process
+       // Wait for existing boot process with a 30s timeout
+       const deadline = Date.now() + 30_000;
        while (this.isBooting) {
+         if (Date.now() > deadline) {
+           this.isBooting = false;
+           throw new Error('WebContainer boot timed out after 30 seconds');
+         }
          await new Promise(resolve => setTimeout(resolve, 100));
        }
        if (this.webcontainerInstance) return this.webcontainerInstance;

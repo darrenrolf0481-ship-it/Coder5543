@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 const SOCKET_URL = window.location.origin;
-const SOCKET_PATH = window.location.pathname.endsWith('/') 
+const SOCKET_PATH = window.location.pathname.endsWith('/')
   ? `${window.location.pathname}socket.io`
   : `${window.location.pathname}/socket.io`;
 
@@ -10,6 +10,7 @@ export function useWebSockets(activePersonalityId?: number) {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [lastSignal, setLastSignal] = useState<any>(null);
+  const [wasConnected, setWasConnected] = useState(false);
 
   // Callbacks for specific stream types
   const onTerminalOutputRef = useRef<((data: { type: 'stdout' | 'stderr' | 'close'; text?: string; exitCode?: number }) => void) | null>(null);
@@ -19,13 +20,15 @@ export function useWebSockets(activePersonalityId?: number) {
     const socket = io(SOCKET_URL, {
       path: window.location.hostname === 'localhost' ? undefined : SOCKET_PATH,
       transports: ['polling', 'websocket'],
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 50,
+      reconnectionDelayMax: 10000,
     });
 
     socket.on('connect', () => {
       setIsConnected(true);
+      setWasConnected(true);
       console.log('[WS] Connected to Crimson Uplink');
-      
+
       if (activePersonalityId) {
         socket.emit('join_room', `personality_${activePersonalityId}`);
       }
@@ -58,6 +61,7 @@ export function useWebSockets(activePersonalityId?: number) {
 
     socket.on('disconnect', () => {
       setIsConnected(false);
+      console.log('[WS] Disconnected from Crimson Uplink');
     });
 
     socketRef.current = socket;
@@ -93,10 +97,17 @@ export function useWebSockets(activePersonalityId?: number) {
     }
   };
 
-  const subscribeFsChange = (callback: (data: any) => void) => {
+  const subscribeFsChange = (callback: (data: { event: string; path: string }) => void) => {
     onFsChangeRef.current = callback;
     return () => { onFsChangeRef.current = null; };
   };
 
-  return { isConnected, lastSignal, sendSignal, execTerminal, killTerminal, subscribeFsChange };
+  const reconnect = useCallback(() => {
+    if (socketRef.current && !isConnected) {
+      console.log('[WS] Manual reconnect triggered');
+      socketRef.current.connect();
+    }
+  }, [isConnected]);
+
+  return { isConnected, wasConnected, lastSignal, sendSignal, execTerminal, killTerminal, subscribeFsChange, reconnect };
 }

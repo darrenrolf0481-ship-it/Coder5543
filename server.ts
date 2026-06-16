@@ -171,3 +171,14 @@ startServer().catch((err) => {
   logger.error('Failed to start server:', err);
 });
 
+// ── Graceful Shutdown ─────────────────────────────────────────────────────────
+function gracefulShutdown(signal: string) {
+  logger.info(`[Server] Received ${signal}. Shutting down gracefully...`);
+  conversationIngestor.stopDaemon();
+  mcpManager.shutdown();
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+

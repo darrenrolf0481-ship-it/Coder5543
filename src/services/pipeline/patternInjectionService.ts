@@ -169,6 +169,12 @@ export class PatternInjectionService {
   }
 
   async onFiltered(signal: Signal): Promise<void> {
+    if (!this.executor) {
+      console.warn('[PatternInjection] Executor not initialized, skipping signal:', signal.id);
+      await broker.publish('AI_RESPONSE_RECEIVED', { responseType: 'noop', payload: null, correlationId: signal.id }, signal.source);
+      return;
+    }
+
     const pattern = this.patterns.find(p => p.match(signal));
     if (!pattern) {
       // No registered pattern — pass through as noop

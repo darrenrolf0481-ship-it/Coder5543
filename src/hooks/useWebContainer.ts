@@ -7,6 +7,7 @@ export function useWebContainer() {
 
   const boot = useCallback(async () => {
     setStatus('booting');
+    setError(null);
     try {
       await localCore.boot();
       setStatus('online');
@@ -30,10 +31,17 @@ export function useWebContainer() {
     return localCore.setupDependencies(onOutput);
   }, [status, boot]);
 
+  const retryBoot = useCallback(() => {
+    setStatus('idle');
+    setError(null);
+    // Use a microtask to allow state to flush before boot
+    Promise.resolve().then(() => boot());
+  }, [boot]);
+
   // Initial boot attempt
   useEffect(() => {
     boot();
   }, [boot]);
 
-  return { status, error, boot, exec, setup };
+  return { status, error, boot, exec, setup, retryBoot };
 }

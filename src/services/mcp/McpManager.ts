@@ -44,6 +44,7 @@ export class McpManager {
       let stage = 'init'; // 'init' -> 'initialized' -> 'tools'
       const timer = setTimeout(() => {
         child.stdout.off('data', onData);
+        child.kill();
         reject(new Error('Timeout initializing Serena MCP server'));
       }, 15000);
 
@@ -91,6 +92,7 @@ export class McpManager {
       this.instances.push({ name: 'serena', type: 'process', handle: child, tools });
       console.log('[McpManager] Serena integrated');
     } catch (err) {
+      child.kill();
       console.warn('[McpManager] Serena integration failed:', err);
     }
   }
@@ -121,6 +123,7 @@ export class McpManager {
       let output = '';
       const timer = setTimeout(() => {
         child.stdout.off('data', onData);
+        child.kill();
         reject(new Error(`Timeout fetching tools from ${name}`));
       }, 5000);
 
@@ -150,6 +153,7 @@ export class McpManager {
       this.instances.push({ name, type: 'process', handle: child, tools });
       console.log(`[McpManager] ${name} integrated`);
     } catch (err) {
+      child.kill();
       console.warn(`[McpManager] ${name} integration failed:`, err);
     }
   }
@@ -184,6 +188,7 @@ export class McpManager {
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
           child.stdout.off('data', onData);
+          child.kill();
           reject(new Error(`Timeout calling tool ${name}`));
         }, 10000);
 

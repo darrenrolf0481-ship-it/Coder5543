@@ -136,7 +136,7 @@ function AppInner() {
   } = usePersonalities();
 
   // Initialize WebSocket Real-time Uplink
-  const { isConnected: isWsConnected, lastSignal: lastWsSignal, execTerminal, subscribeFsChange } = useWebSockets(activePersonality.id);
+  const { isConnected: isWsConnected, wasConnected, lastSignal: lastWsSignal, execTerminal, subscribeFsChange, reconnect: reconnectWs } = useWebSockets(activePersonality.id);
 
   // Terminal
   const terminal = useTerminal('~/crimson-node/sd-webui', '/home/workspace/Coder5543');
@@ -251,8 +251,12 @@ function AppInner() {
   } = useSystemStates();
 
   // Sync WebSocket connection status to termuxStatus state
+  // Debounced to avoid flashing "disconnected" during brief reconnects
   useEffect(() => {
-    setTermuxStatus(isWsConnected ? 'connected' : 'disconnected');
+    const timer = setTimeout(() => {
+      setTermuxStatus(isWsConnected ? 'connected' : 'disconnected');
+    }, 300);
+    return () => clearTimeout(timer);
   }, [isWsConnected, setTermuxStatus]);
 
   // Modals & Extra UI
@@ -322,6 +326,16 @@ function AppInner() {
     if (localCoreStatus === 'online') {
       const tree = transformToWebContainerTree(fsState.projectFiles);
       localCore.mount(tree).catch(err => console.warn('[LocalCore] VFS sync failed:', err));
+    }
+  }, [localCoreStatus, fsState.projectFiles]);
+
+  // Initial VFS sync when WebContainer first comes online
+  const vfsSyncedRef = useRef(false);
+  useEffect(() => {
+    if (localCoreStatus === 'online' && !vfsSyncedRef.current && fsState.projectFiles) {
+      vfsSyncedRef.current = true;
+      const tree = transformToWebContainerTree(fsState.projectFiles);
+      localCore.mount(tree).catch(err => console.warn('[LocalCore] Initial VFS sync failed:', err));
     }
   }, [localCoreStatus, fsState.projectFiles]);
 

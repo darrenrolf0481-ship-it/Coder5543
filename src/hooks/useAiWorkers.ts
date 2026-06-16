@@ -63,12 +63,19 @@ export function useAiWorkers(setChatMessages?: React.Dispatch<React.SetStateActi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const retryOllama = useCallback(() => {
+    setOllamaStatus('idle');
+    setOllamaError(null);
+    refreshOllamaModels(false);
+  }, [refreshOllamaModels]);
+
   return {
     workers,
     setWorkers,
     availableModels,
     ollamaStatus,
     ollamaError,
-    refreshOllamaModels
+    refreshOllamaModels,
+    retryOllama
   };
 }

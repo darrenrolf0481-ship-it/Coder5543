@@ -39,14 +39,21 @@ export function useBrain(lastSignal?: any) {
     }
   }, []);
 
-  const refreshState = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_BASE}/endocrine`);
-      if (!res.ok) throw new Error('Failed to fetch endocrine state');
-      const data = await res.json();
-      setEndocrine(data);
-    } catch (err) {
-      console.error('[useBrain] Error refreshing state:', err);
+  const refreshState = useCallback(async (retries = 3) => {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const res = await fetch(`${API_BASE}/endocrine`);
+        if (!res.ok) throw new Error('Failed to fetch endocrine state');
+        const data = await res.json();
+        setEndocrine(data);
+        return;
+      } catch (err) {
+        if (attempt === retries) {
+          console.error('[useBrain] Error refreshing state after retries:', err);
+          return;
+        }
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+      }
     }
   }, []);
 
