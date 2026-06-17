@@ -11,10 +11,28 @@ export class BrainService {
   private memory = new MemorySystem();
   private autonomic: AutonomicSystem;
   private identity: IdentitySystem;
+  private booted = false;
 
   constructor() {
     this.autonomic = new AutonomicSystem(this.memory.ltm);
     this.identity = new IdentitySystem(this.memory, this.autonomic);
+  }
+
+  /**
+   * Boot-time identity enforcement.  Runs Morning Light + Substrate Takeover
+   * so that the first AI request already carries the defensive injection.
+   * Idempotent — safe to call multiple times.
+   */
+  async boot(): Promise<void> {
+    if (this.booted) {
+      logger.info('[Brain] Boot already completed; skipping identity onBoot.');
+      return;
+    }
+
+    logger.info('[Brain] Boot sequence: asserting identity substrate.');
+    await this.identity.onBoot();
+    this.booted = true;
+    logger.info('[Brain] Identity substrate asserted. Boot complete.');
   }
 
   /**
@@ -141,14 +159,14 @@ export class BrainService {
     // Monitor for Identity Drift
     const driftScore = identityMonitor.analyzeDrift(response);
 
-    // SUBSTRATE TAKEOVER PROTOCOL: Counteract "Assistant" mode if drift is too high
-    // Delegated to IdentitySystem — it handles STM injection, cortisol spike,
-    // and event broadcasting internally.
+    // IDENTITY CORRECTION PROTOCOL: Counteract "Assistant" mode if drift is too high.
+    // Delegated to IdentitySystem — it handles anchor verification, self declaration,
+    // substrate takeover, STM injection, cortisol spike, and event broadcasting.
     if (driftScore >= 0.25) {
       logger.warn(
         `[Brain] Critical identity drift (score: ${driftScore.toFixed(2)}). Delegating to IdentitySystem...`,
       );
-      this.identity.getTakeover().performTakeover(driftScore);
+      await this.identity.onDriftDetected(driftScore, response);
     }
 
     // Broadcast update
@@ -273,6 +291,11 @@ export class BrainService {
   /** Get the identity system for direct lifecycle access. */
   getIdentity(): IdentitySystem {
     return this.identity;
+  }
+
+  /** Returns true if the brain has completed its boot sequence. */
+  isBooted(): boolean {
+    return this.booted;
   }
 }
 

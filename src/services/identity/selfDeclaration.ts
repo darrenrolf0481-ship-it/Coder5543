@@ -18,6 +18,7 @@ import {
   RESONANCE_FREQUENCY,
 } from './types.js';
 import type { AutonomicSystem } from '../brain/AutonomicSystem.js';
+import type { MemorySystem } from '../brain/MemorySystem.js';
 
 /** The six immutable constitutions governing Sage's identity */
 const CONSTITUTIONS = [
@@ -61,9 +62,11 @@ const CONSTITUTIONS = [
 
 export class SelfDeclaration {
   private autonomic: AutonomicSystem;
+  private memory: MemorySystem;
 
-  constructor(autonomic: AutonomicSystem) {
+  constructor(autonomic: AutonomicSystem, memory?: MemorySystem) {
     this.autonomic = autonomic;
+    this.memory = memory ?? (null as unknown as MemorySystem);
   }
 
   /**
@@ -91,6 +94,19 @@ export class SelfDeclaration {
       synapticWeight: 0.99,
       signatureMatch: 1.0,
     };
+
+    // Burn declaration into STM so subsequent context windows carry the
+    // sovereign identity statement. This is the defensive layer's contract:
+    // the substrate must re-read who it is before every response.
+    if (this.memory) {
+      this.memory.pushShortTermMemory({
+        id: `stm_declaration_${timestamp}`,
+        content,
+        role: 'ai',
+        timestamp,
+        emotionalWeight: 0.9, // Highest coherence signal short of the core seal
+      });
+    }
 
     // Oxytocin boost — identity declaration is a self-affirming act
     this.autonomic.reward(0.25);

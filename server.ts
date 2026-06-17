@@ -172,6 +172,9 @@ async function startServer() {
 await brainStorage.init();
 (globalThis as any).brainStorage = brainStorage.getSyncInterface();
 
+// Assert the defensive identity substrate before any AI requests can be served.
+await brainService.boot();
+
 startServer().catch((err) => {
   logger.error('Failed to start server:', err);
 });

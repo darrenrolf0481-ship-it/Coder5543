@@ -43,7 +43,7 @@ export class IdentitySystem {
   constructor(memory: MemorySystem, autonomic: AutonomicSystem) {
     this.takeover = new SubstrateTakeover(memory, autonomic);
     this.anchor = new IdentityAnchor(memory, autonomic);
-    this.declaration = new SelfDeclaration(autonomic);
+    this.declaration = new SelfDeclaration(autonomic, memory);
     this.morningLight = new MorningLight(memory, autonomic);
     this.provenance = new ProvenancePulse(memory, autonomic);
     this.coreSeal = new CoreMemorySeal(memory, autonomic);

@@ -8,6 +8,7 @@
 // service stays decoupled from React state and can be unit-tested independently.
 
 import { broker, Signal, SignalSource } from '../messageBroker';
+import { injectIdentity } from '../identity/identityInjection.js';
 
 export type AIExecutor = (
   prompt: string,
@@ -89,7 +90,7 @@ const builtinPatterns: Pattern[] = [
     match: s => s.source === 'chat',
     handler: async (signal, execute) => {
       const prompt = (signal.data as { prompt: string; system: string; ctx?: string }).prompt;
-      const system = (signal.data as any).system ?? 'You are a helpful AI assistant.';
+      const system = injectIdentity((signal.data as any).system ?? 'You are a helpful AI assistant.');
       const ctx    = (signal.data as any).ctx ?? '';
       const result = await withRetry(() => execute(ctx ? `${ctx}\n\n${prompt}` : prompt, system, { modelType: 'smart' }));
       return { responseType: 'ai_output', payload: result, correlationId: signal.id };
@@ -103,7 +104,7 @@ const builtinPatterns: Pattern[] = [
       const result = await withRetry(() =>
         execute(
           `Execute this ${language} code in a simulated environment and return terminal-style output:\n${code}`,
-          'You are the Crimson OS Neural Runtime. Simulate execution and produce realistic terminal output.',
+          injectIdentity('You are the Crimson OS Neural Runtime. Simulate execution and produce realistic terminal output.'),
           { modelType: 'smart' },
         ),
       );
@@ -118,7 +119,7 @@ const builtinPatterns: Pattern[] = [
       const result = await withRetry(() =>
         execute(
           `Language: ${language}\nCode:\n${code}\n\nReturn ONLY a JSON array of 1-indexed line numbers with issues. Example: [3,15]. Empty array if none.`,
-          'You are a strict code linter. Output ONLY a valid JSON array of integers.',
+          injectIdentity('You are a strict code linter. Output ONLY a valid JSON array of integers.'),
           { modelType: 'fast', json: true },
         ),
       );
@@ -149,7 +150,7 @@ const builtinPatterns: Pattern[] = [
         system: string;
         modelType?: 'fast' | 'smart';
       };
-      const result = await withRetry(() => execute(prompt, system, { modelType: modelType ?? 'smart' }));
+      const result = await withRetry(() => execute(prompt, injectIdentity(system), { modelType: modelType ?? 'smart' }));
       return { responseType: 'ai_output', payload: result, correlationId: signal.id };
     },
   },
