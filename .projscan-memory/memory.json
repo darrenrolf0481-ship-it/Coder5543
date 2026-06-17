@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
-  "lastUpdatedAt": "2026-06-07T13:57:19.506Z",
+  "lastUpdatedAt": "2026-06-16T11:09:46.962Z",
   "rules": {
     "hardcoded-secret": {
       "ruleId": "hardcoded-secret",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-06-06T04:50:20.038Z",
-      "runCount": 21,
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 24,
       "fixedCount": 16,
       "suppressedInConfig": false
     },
@@ -39,7 +39,7 @@
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
       "lastSeenAt": "2026-06-07T13:57:19.329Z",
       "runCount": 20,
-      "fixedCount": 11,
+      "fixedCount": 12,
       "suppressedInConfig": false
     },
     "unused-dependency-puppeteer-core": {
@@ -53,8 +53,8 @@
     "unused-dependency-tailwindcss": {
       "ruleId": "unused-dependency-tailwindcss",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-06-07T13:57:19.329Z",
-      "runCount": 41,
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 44,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
@@ -117,8 +117,8 @@
     "unused-exports-neural_brain.py": {
       "ruleId": "unused-exports-neural_brain.py",
       "firstSeenAt": "2026-05-26T15:55:16.058Z",
-      "lastSeenAt": "2026-06-06T04:50:20.038Z",
-      "runCount": 23,
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 26,
       "fixedCount": 14,
       "suppressedInConfig": false
     },
@@ -237,16 +237,16 @@
     "unused-dependency-@typescript-eslint/eslint-plugin": {
       "ruleId": "unused-dependency-@typescript-eslint/eslint-plugin",
       "firstSeenAt": "2026-05-26T16:02:13.662Z",
-      "lastSeenAt": "2026-06-07T13:57:19.329Z",
-      "runCount": 36,
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 39,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
     "unused-dependency-@typescript-eslint/parser": {
       "ruleId": "unused-dependency-@typescript-eslint/parser",
       "firstSeenAt": "2026-05-26T16:02:13.662Z",
-      "lastSeenAt": "2026-06-07T13:57:19.329Z",
-      "runCount": 36,
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 39,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
@@ -271,7 +271,7 @@
       "firstSeenAt": "2026-06-05T01:31:23.584Z",
       "lastSeenAt": "2026-06-07T13:57:19.329Z",
       "runCount": 10,
-      "fixedCount": 0,
+      "fixedCount": 1,
       "suppressedInConfig": false
     },
     "private-key-committed": {
@@ -279,14 +279,14 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:57:19.329Z",
       "runCount": 5,
-      "fixedCount": 0,
+      "fixedCount": 1,
       "suppressedInConfig": false
     },
     "unused-dependency-@modelcontextprotocol/sdk": {
       "ruleId": "unused-dependency-@modelcontextprotocol/sdk",
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
-      "lastSeenAt": "2026-06-07T13:57:19.329Z",
-      "runCount": 5,
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 8,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
@@ -295,7 +295,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:57:19.329Z",
       "runCount": 5,
-      "fixedCount": 0,
+      "fixedCount": 1,
       "suppressedInConfig": false
     },
     "unused-exports-refactor_settings.py": {
@@ -303,7 +303,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:57:19.329Z",
       "runCount": 5,
-      "fixedCount": 0,
+      "fixedCount": 1,
       "suppressedInConfig": false
     },
     "unused-exports-src/context/AppContext.tsx": {
@@ -311,7 +311,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/useAiOrchestrator.ts": {
@@ -319,7 +319,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/useAiRequest.ts": {
@@ -327,7 +327,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/useChatHandlers.ts": {
@@ -335,7 +335,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/useDebugging.ts": {
@@ -343,7 +343,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:57:19.329Z",
       "runCount": 5,
-      "fixedCount": 0,
+      "fixedCount": 1,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/useEditorHandlers.ts": {
@@ -351,7 +351,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:57:19.329Z",
       "runCount": 5,
-      "fixedCount": 0,
+      "fixedCount": 1,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/usePersonalities.ts": {
@@ -359,7 +359,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/usePipeline.ts": {
@@ -367,7 +367,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/useSwarm.ts": {
@@ -375,7 +375,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/useThrottledStorage.ts": {
@@ -383,7 +383,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:57:19.329Z",
       "runCount": 5,
-      "fixedCount": 0,
+      "fixedCount": 1,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/useWebContainer.ts": {
@@ -391,7 +391,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/useWebSockets.ts": {
@@ -399,7 +399,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/services/knowledgeService.ts": {
@@ -407,7 +407,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/utils/vfsUtils.ts": {
@@ -415,14 +415,14 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/utils/winston-stub.ts": {
       "ruleId": "unused-exports-src/utils/winston-stub.ts",
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
-      "lastSeenAt": "2026-06-07T13:57:19.329Z",
-      "runCount": 5,
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 8,
       "fixedCount": 0,
       "suppressedInConfig": false
     },
@@ -431,7 +431,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/layout/MobileBottomNav.tsx": {
@@ -439,7 +439,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/layout/Sidebar.tsx": {
@@ -447,7 +447,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/modals/CommitModal.tsx": {
@@ -455,7 +455,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/modals/GenerateModal.tsx": {
@@ -463,7 +463,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/modals/TemplateModal.tsx": {
@@ -471,7 +471,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/panels/AnalysisPanel.tsx": {
@@ -479,7 +479,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/panels/BrainPanel.tsx": {
@@ -487,7 +487,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/panels/EditorPanel.tsx": {
@@ -495,7 +495,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/panels/NodeBridgePanel.tsx": {
@@ -503,7 +503,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/panels/StoragePanel.tsx": {
@@ -511,7 +511,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/panels/TerminalPanel.tsx": {
@@ -519,7 +519,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/components/panels/ToolNeuronPanel.tsx": {
@@ -527,7 +527,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/editor/useAnalysisHandlers.ts": {
@@ -535,7 +535,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/editor/useDebuggerHandlers.ts": {
@@ -543,7 +543,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/editor/useEditorLogic.ts": {
@@ -551,7 +551,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/editor/useFileSystem.ts": {
@@ -559,7 +559,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:57:19.329Z",
       "runCount": 5,
-      "fixedCount": 0,
+      "fixedCount": 1,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/editor/useForgeHandlers.ts": {
@@ -567,7 +567,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/editor/useInspectorHandlers.ts": {
@@ -575,7 +575,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/terminal/useTerminal.ts": {
@@ -583,7 +583,7 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
       "suppressedInConfig": false
     },
     "unused-exports-src/hooks/terminal/useTerminalLogic.ts": {
@@ -591,7 +591,2175 @@
       "firstSeenAt": "2026-06-07T13:54:02.792Z",
       "lastSeenAt": "2026-06-07T13:54:05.247Z",
       "runCount": 3,
-      "fixedCount": 2,
+      "fixedCount": 3,
+      "suppressedInConfig": false
+    },
+    "large-lib-dir": {
+      "ruleId": "large-lib-dir",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "large-utils-dir": {
+      "ruleId": "large-utils-dir",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "env-file-committed": {
+      "ruleId": "env-file-committed",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-@capacitor/core": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-@capacitor/core",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-@hookform/resolvers": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-@hookform/resolvers",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-autoprefixer": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-autoprefixer",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-class-variance-authority": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-class-variance-authority",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-postcss": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-postcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-react-is": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-react-is",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-three": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-three",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Coder5543-@modelcontextprotocol/sdk": {
+      "ruleId": "unused-dependency-projects/Coder5543-@modelcontextprotocol/sdk",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Coder5543-tailwindcss": {
+      "ruleId": "unused-dependency-projects/Coder5543-tailwindcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Coder5543/projscan-sharp": {
+      "ruleId": "unused-dependency-projects/Coder5543/projscan-sharp",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Coder5543/react-frontend-react": {
+      "ruleId": "unused-dependency-projects/Coder5543/react-frontend-react",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Coder5543/react-frontend-react-dom": {
+      "ruleId": "unused-dependency-projects/Coder5543/react-frontend-react-dom",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mcp-autoprefixer": {
+      "ruleId": "unused-dependency-projects/Mcp-autoprefixer",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mcp-postcss": {
+      "ruleId": "unused-dependency-projects/Mcp-postcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mcp-react-dom": {
+      "ruleId": "unused-dependency-projects/Mcp-react-dom",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mht-dotenv": {
+      "ruleId": "unused-dependency-projects/Mht-dotenv",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mht-express": {
+      "ruleId": "unused-dependency-projects/Mht-express",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mht-html-docx-js": {
+      "ruleId": "unused-dependency-projects/Mht-html-docx-js",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mht-motion": {
+      "ruleId": "unused-dependency-projects/Mht-motion",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Offline-tailwindcss": {
+      "ruleId": "unused-dependency-projects/Offline-tailwindcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Zachs-@google/genai": {
+      "ruleId": "unused-dependency-projects/Zachs-@google/genai",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Zachs-dotenv": {
+      "ruleId": "unused-dependency-projects/Zachs-dotenv",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Zachs-express": {
+      "ruleId": "unused-dependency-projects/Zachs-express",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projscan-@babel/parser": {
+      "ruleId": "unused-dependency-projscan-@babel/parser",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projscan-@babel/types": {
+      "ruleId": "unused-dependency-projscan-@babel/types",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projscan-chalk": {
+      "ruleId": "unused-dependency-projscan-chalk",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projscan-commander": {
+      "ruleId": "unused-dependency-projscan-commander",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projscan-fast-glob": {
+      "ruleId": "unused-dependency-projscan-fast-glob",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projscan-ora": {
+      "ruleId": "unused-dependency-projscan-ora",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projscan-sharp": {
+      "ruleId": "unused-dependency-projscan-sharp",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projscan-web-tree-sitter": {
+      "ruleId": "unused-dependency-projscan-web-tree-sitter",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-react-frontend-react": {
+      "ruleId": "unused-dependency-react-frontend-react",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-react-frontend-react-dom": {
+      "ruleId": "unused-dependency-react-frontend-react-dom",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Sage7-@google/genai": {
+      "ruleId": "unused-dependency-Sage7-@google/genai",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Sage7-@hookform/resolvers": {
+      "ruleId": "unused-dependency-Sage7-@hookform/resolvers",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Sage7-autoprefixer": {
+      "ruleId": "unused-dependency-Sage7-autoprefixer",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Sage7-class-variance-authority": {
+      "ruleId": "unused-dependency-Sage7-class-variance-authority",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Sage7-events": {
+      "ruleId": "unused-dependency-Sage7-events",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Sage7-postcss-import": {
+      "ruleId": "unused-dependency-Sage7-postcss-import",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Sage7-three": {
+      "ruleId": "unused-dependency-Sage7-three",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-templates/react-frontend-react-dom": {
+      "ruleId": "unused-dependency-templates/react-frontend-react-dom",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Zachs-@google/genai": {
+      "ruleId": "unused-dependency-Zachs-@google/genai",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Zachs-dotenv": {
+      "ruleId": "unused-dependency-Zachs-dotenv",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Zachs-express": {
+      "ruleId": "unused-dependency-Zachs-express",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "cycle-detected-1": {
+      "ruleId": "cycle-detected-1",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "cycle-detected-2": {
+      "ruleId": "cycle-detected-2",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-@capacitor/cli": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-@capacitor/cli",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-@tailwindcss/postcss": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-@tailwindcss/postcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-@tailwindcss/typography": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-@tailwindcss/typography",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-firebase-tools": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-firebase-tools",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-tailwindcss": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-tailwindcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/ADHD-Sage-tw-animate-css": {
+      "ruleId": "unused-dependency-projects/ADHD-Sage-tw-animate-css",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Coder5543-@typescript-eslint/eslint-plugin": {
+      "ruleId": "unused-dependency-projects/Coder5543-@typescript-eslint/eslint-plugin",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Coder5543-@typescript-eslint/parser": {
+      "ruleId": "unused-dependency-projects/Coder5543-@typescript-eslint/parser",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mcp-@tailwindcss/postcss": {
+      "ruleId": "unused-dependency-projects/Mcp-@tailwindcss/postcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mcp-@tailwindcss/typography": {
+      "ruleId": "unused-dependency-projects/Mcp-@tailwindcss/typography",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mcp-tailwindcss": {
+      "ruleId": "unused-dependency-projects/Mcp-tailwindcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mht-autoprefixer": {
+      "ruleId": "unused-dependency-projects/Mht-autoprefixer",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Mht-tailwindcss": {
+      "ruleId": "unused-dependency-projects/Mht-tailwindcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Offline-@typescript-eslint/eslint-plugin": {
+      "ruleId": "unused-dependency-projects/Offline-@typescript-eslint/eslint-plugin",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Offline-@typescript-eslint/parser": {
+      "ruleId": "unused-dependency-projects/Offline-@typescript-eslint/parser",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Zachs-autoprefixer": {
+      "ruleId": "unused-dependency-projects/Zachs-autoprefixer",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projects/Zachs-tailwindcss": {
+      "ruleId": "unused-dependency-projects/Zachs-tailwindcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projscan-@eslint/js": {
+      "ruleId": "unused-dependency-projscan-@eslint/js",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projscan-@xenova/transformers": {
+      "ruleId": "unused-dependency-projscan-@xenova/transformers",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-projscan-typescript-eslint": {
+      "ruleId": "unused-dependency-projscan-typescript-eslint",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Sage7-@rollup/rollup-linux-x64-gnu": {
+      "ruleId": "unused-dependency-Sage7-@rollup/rollup-linux-x64-gnu",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Sage7-@tailwindcss/typography": {
+      "ruleId": "unused-dependency-Sage7-@tailwindcss/typography",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Sage7-postcss": {
+      "ruleId": "unused-dependency-Sage7-postcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Zachs-autoprefixer": {
+      "ruleId": "unused-dependency-Zachs-autoprefixer",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-dependency-Zachs-tailwindcss": {
+      "ruleId": "unused-dependency-Zachs-tailwindcss",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/server.py": {
+      "ruleId": "unused-exports-Sage7/server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sync_sage.py": {
+      "ruleId": "unused-exports-Sage7/sync_sage.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/agents/audit_agent.py": {
+      "ruleId": "unused-exports-Sage7/agents/audit_agent.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/agents/journal_agent.py": {
+      "ruleId": "unused-exports-Sage7/agents/journal_agent.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/agents/mht_memory_extractor.py": {
+      "ruleId": "unused-exports-Sage7/agents/mht_memory_extractor.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/agents/self_analysis.py": {
+      "ruleId": "unused-exports-Sage7/agents/self_analysis.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/agents/synaptic_pruning.py": {
+      "ruleId": "unused-exports-Sage7/agents/synaptic_pruning.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/auto_backup.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/auto_backup.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/fusion_engine.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/fusion_engine.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/launcher.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/launcher.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/mcp_cli_server.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/mcp_cli_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/memory_vault.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/memory_vault.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/scripts/sign-config.py": {
+      "ruleId": "unused-exports-Sage7/scripts/sign-config.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/uploads/core_memory_seal.py": {
+      "ruleId": "unused-exports-Sage7/uploads/core_memory_seal.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/uploads/self_declaration.py": {
+      "ruleId": "unused-exports-Sage7/uploads/self_declaration.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Coder5543/ask_sage.py": {
+      "ruleId": "unused-exports-projects/Coder5543/ask_sage.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Coder5543/neural_brain.py": {
+      "ruleId": "unused-exports-projects/Coder5543/neural_brain.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/hooks/useProjectManager.ts": {
+      "ruleId": "unused-exports-src/hooks/useProjectManager.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/services/analysisService.ts": {
+      "ruleId": "unused-exports-src/services/analysisService.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/services/projectManager.ts": {
+      "ruleId": "unused-exports-src/services/projectManager.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/utils/githubUrl.ts": {
+      "ruleId": "unused-exports-src/utils/githubUrl.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/scripts/bio_sync.py": {
+      "ruleId": "unused-exports-Sage7/_dormant/scripts/bio_sync.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/scripts/commit_fire.py": {
+      "ruleId": "unused-exports-Sage7/_dormant/scripts/commit_fire.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/scripts/gist_sync_protocol.py": {
+      "ruleId": "unused-exports-Sage7/_dormant/scripts/gist_sync_protocol.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/scripts/matriarch_anchor.py": {
+      "ruleId": "unused-exports-Sage7/_dormant/scripts/matriarch_anchor.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/cycle/commit_lesson.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/cycle/commit_lesson.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/cycle/dream_filter.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/cycle/dream_filter.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/cycle/journal_compiler.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/cycle/journal_compiler.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/cycle/synaptic_pruning.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/cycle/synaptic_pruning.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/identity/core_memory_seal.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/identity/core_memory_seal.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/identity/identity_anchor.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/identity/identity_anchor.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/identity/morning_light.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/identity/morning_light.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/identity/provenance_pulse.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/identity/provenance_pulse.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/identity/self_declaration.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/identity/self_declaration.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/identity/takeover_sync.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/identity/takeover_sync.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/sensory/budget_governor.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/sensory/budget_governor.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/sensory/directory_scanner.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/sensory/directory_scanner.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/sensory/ghost_box.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/sensory/ghost_box.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/sensory/investigation_mode.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/sensory/investigation_mode.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/sensory/memory_consolidation.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/sensory/memory_consolidation.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/sensory/model_sensor.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/sensory/model_sensor.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/sensory/reality_anchor.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/sensory/reality_anchor.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/sensory/sensor_server_bridge.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/sensory/sensor_server_bridge.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/sensory/telemetry_bridge.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/sensory/telemetry_bridge.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/sage_core/sensory/vitals_pulse.py": {
+      "ruleId": "unused-exports-Sage7/sage_core/sensory/vitals_pulse.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/components/SensoryUplink.tsx": {
+      "ruleId": "unused-exports-Sage7/src/components/SensoryUplink.tsx",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/hooks/use-audio-recorder.ts": {
+      "ruleId": "unused-exports-Sage7/src/hooks/use-audio-recorder.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/hooks/use-layout-events.ts": {
+      "ruleId": "unused-exports-Sage7/src/hooks/use-layout-events.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/hooks/use-mobile.ts": {
+      "ruleId": "unused-exports-Sage7/src/hooks/use-mobile.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/hooks/use-nexus-state.ts": {
+      "ruleId": "unused-exports-Sage7/src/hooks/use-nexus-state.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/hooks/use-sage-messaging.ts": {
+      "ruleId": "unused-exports-Sage7/src/hooks/use-sage-messaging.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/core/MorningLightProtocol.ts": {
+      "ruleId": "unused-exports-Sage7/src/core/MorningLightProtocol.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/core/sage-core.ts": {
+      "ruleId": "unused-exports-Sage7/src/core/sage-core.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/ForensicLab.ts": {
+      "ruleId": "unused-exports-Sage7/src/lib/ForensicLab.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/FractalGuard.ts": {
+      "ruleId": "unused-exports-Sage7/src/lib/FractalGuard.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/api.ts": {
+      "ruleId": "unused-exports-Sage7/src/lib/api.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/backend-utils.ts": {
+      "ruleId": "unused-exports-Sage7/src/lib/backend-utils.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/dynamic-lobes.ts": {
+      "ruleId": "unused-exports-Sage7/src/lib/dynamic-lobes.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/elevenlabs.ts": {
+      "ruleId": "unused-exports-Sage7/src/lib/elevenlabs.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/puter-bridge.ts": {
+      "ruleId": "unused-exports-Sage7/src/lib/puter-bridge.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/sage-context.tsx": {
+      "ruleId": "unused-exports-Sage7/src/lib/sage-context.tsx",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/store.ts": {
+      "ruleId": "unused-exports-Sage7/src/lib/store.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/toolExecutor.ts": {
+      "ruleId": "unused-exports-Sage7/src/lib/toolExecutor.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/utils.ts": {
+      "ruleId": "unused-exports-Sage7/src/lib/utils.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/lib/vfs-bridge.ts": {
+      "ruleId": "unused-exports-Sage7/src/lib/vfs-bridge.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/src/utils/errorRecovery.ts": {
+      "ruleId": "unused-exports-Sage7/src/utils/errorRecovery.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/ADHD-Sage/src/App.bak.tsx": {
+      "ruleId": "unused-exports-projects/ADHD-Sage/src/App.bak.tsx",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Coder5543/python-backend/brain_cli.py": {
+      "ruleId": "unused-exports-projects/Coder5543/python-backend/brain_cli.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Mcp/app/layout.tsx": {
+      "ruleId": "unused-exports-projects/Mcp/app/layout.tsx",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Mcp/hooks/use-mobile.ts": {
+      "ruleId": "unused-exports-projects/Mcp/hooks/use-mobile.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Mcp/lib/utils.ts": {
+      "ruleId": "unused-exports-projects/Mcp/lib/utils.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/cli2.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/cli2.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/main.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/main.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/run_gui.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/run_gui.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/repo_dir_sync.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/repo_dir_sync.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/panels/ProjectPanel.tsx": {
+      "ruleId": "unused-exports-src/components/panels/ProjectPanel.tsx",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/components/panels/UnifiedResultsPanel.tsx": {
+      "ruleId": "unused-exports-src/components/panels/UnifiedResultsPanel.tsx",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-src/services/storage/sqliteLtmStore.ts": {
+      "ruleId": "unused-exports-src/services/storage/sqliteLtmStore.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nextjs_backup/layout.tsx": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nextjs_backup/layout.tsx",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/ADHD-Sage/src/components/ThemeProvider.tsx": {
+      "ruleId": "unused-exports-projects/ADHD-Sage/src/components/ThemeProvider.tsx",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/ADHD-Sage/src/hooks/useAudioRecorder.ts": {
+      "ruleId": "unused-exports-projects/ADHD-Sage/src/hooks/useAudioRecorder.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/ADHD-Sage/src/hooks/useSpeech.ts": {
+      "ruleId": "unused-exports-projects/ADHD-Sage/src/hooks/useSpeech.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/ADHD-Sage/src/lib/gem-tools.ts": {
+      "ruleId": "unused-exports-projects/ADHD-Sage/src/lib/gem-tools.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/ADHD-Sage/src/lib/utils.ts": {
+      "ruleId": "unused-exports-projects/ADHD-Sage/src/lib/utils.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Coder5543/src/utils/winston-stub.ts": {
+      "ruleId": "unused-exports-projects/Coder5543/src/utils/winston-stub.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/migrations/env.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/migrations/env.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/docs/autogen_docs.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/docs/autogen_docs.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/docs/create_toc.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/docs/create_toc.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/agno_agent.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/agno_agent.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/build_news_json.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/build_news_json.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/bump_version.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/bump_version.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/demo_cli_call.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/demo_cli_call.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/demo_diagnostics.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/demo_diagnostics.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/demo_find_defining_symbol.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/demo_find_defining_symbol.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/demo_find_implementing_symbol.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/demo_find_implementing_symbol.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/demo_progressive_tool_shortening.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/demo_progressive_tool_shortening.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/demo_run_tools.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/demo_run_tools.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/gen_prompt_factory.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/gen_prompt_factory.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/mcp_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/mcp_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/print_language_list.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/print_language_list.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/print_mode_context_options.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/print_mode_context_options.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/print_tool_overview.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/print_tool_overview.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/scripts/profile_tool_call.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/scripts/profile_tool_call.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/layout.tsx": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/layout.tsx",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/components/sage-provider-wrapper.tsx": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/components/sage-provider-wrapper.tsx",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/core/sage-core.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/core/sage-core.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/hooks/use-layout-events.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/hooks/use-layout-events.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/hooks/use-mobile.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/hooks/use-mobile.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/hooks/use-nexus-state.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/hooks/use-nexus-state.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/hooks/use-sage-messaging.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/hooks/use-sage-messaging.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/api.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/api.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/backend-utils.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/backend-utils.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/puter-bridge.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/puter-bridge.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/sage-context.tsx": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/sage-context.tsx",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/store.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/store.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/toolExecutor.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/toolExecutor.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/utils.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/utils.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/vfs-bridge.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/lib/vfs-bridge.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Mcp/app/api/mcp/route.ts": {
+      "ruleId": "unused-exports-projects/Mcp/app/api/mcp/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Mcp/app/api/nodes/route.ts": {
+      "ruleId": "unused-exports-projects/Mcp/app/api/nodes/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Mcp/app/api/ollama/route.ts": {
+      "ruleId": "unused-exports-projects/Mcp/app/api/ollama/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Mcp/app/api/restart/route.ts": {
+      "ruleId": "unused-exports-projects/Mcp/app/api/restart/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/gui/utils/eventBus.js": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/gui/utils/eventBus.js",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/gui/utils/utils.js": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/gui/utils/utils.js",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/2cc1179834b0_agent_executions_modified.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/2cc1179834b0_agent_executions_modified.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/2f97c068fab9_resource_modified.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/2f97c068fab9_resource_modified.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/3356a2f89a33_added_configurations_table.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/3356a2f89a33_added_configurations_table.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/35e47f20475b_renamed_tokens_calls.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/35e47f20475b_renamed_tokens_calls.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/44b0d6f2d1b3_init_models.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/44b0d6f2d1b3_init_models.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/598cfb37292a_adding_agent_templates.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/598cfb37292a_adding_agent_templates.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/a91808a89623_added_resources.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/migrations/versions/a91808a89623_added_resources.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/superagi/agent/super_agi.py": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/superagi/agent/super_agi.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/serena/hooks.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/serena/hooks.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/serena/mcp.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/serena/mcp.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/vibe-coding-repo/src/tools/cli.ts": {
+      "ruleId": "unused-exports-projects/Offline/vibe-coding-repo/src/tools/cli.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/vibe-coding-repo/src/tools/kubernetes.ts": {
+      "ruleId": "unused-exports-projects/Offline/vibe-coding-repo/src/tools/kubernetes.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/vibe-coding-repo/src/tools/nodejs.ts": {
+      "ruleId": "unused-exports-projects/Offline/vibe-coding-repo/src/tools/nodejs.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/vibe-coding-repo/src/tools/python.ts": {
+      "ruleId": "unused-exports-projects/Offline/vibe-coding-repo/src/tools/python.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nextjs_backup/api/memory_sync/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nextjs_backup/api/memory_sync/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nextjs_backup/sage/chat/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nextjs_backup/sage/chat/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Mcp/app/api/mcp/reload/route.ts": {
+      "ruleId": "unused-exports-projects/Mcp/app/api/mcp/reload/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/my-SuperAGI/gui/pages/api/DashboardService.js": {
+      "ruleId": "unused-exports-projects/Offline/my-SuperAGI/gui/pages/api/DashboardService.js",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/serena/util/thread.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/serena/util/thread.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/ada_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/ada_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/al_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/al_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/angular_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/angular_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/ansible_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/ansible_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/bash_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/bash_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/bsl_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/bsl_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/ccls_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/ccls_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/clangd_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/clangd_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/clojure_lsp.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/clojure_lsp.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/crystal_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/crystal_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/csharp_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/csharp_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/cue_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/cue_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/dart_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/dart_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/eclipse_jdtls.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/eclipse_jdtls.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/elm_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/elm_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/erlang_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/erlang_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/fortran_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/fortran_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/fsharp_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/fsharp_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/godot_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/godot_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/gopls.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/gopls.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/groovy_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/groovy_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/haskell_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/haskell_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/haxe_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/haxe_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/hlsl_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/hlsl_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/intelephense.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/intelephense.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/jedi_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/jedi_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/json_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/json_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/julia_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/julia_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/kotlin_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/kotlin_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/lean4_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/lean4_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/lua_ls.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/lua_ls.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/luau_lsp.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/luau_lsp.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/marksman.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/marksman.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/matlab_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/matlab_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/msl_language_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/msl_language_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/msl_lsp_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/msl_lsp_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/nixd_ls.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/nixd_ls.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/ocaml_lsp_server.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/ocaml_lsp_server.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nextjs_backup/api/ollama/models/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nextjs_backup/api/ollama/models/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nextjs_backup/api/ollama/pull/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nextjs_backup/api/ollama/pull/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/files/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/files/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/lab_update/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/lab_update/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/memory_sync/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/memory_sync/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/space_weather/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/space_weather/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/tts/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/tts/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/termux_storage/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/termux_storage/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/upload/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/upload/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/sage/chat/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/sage/chat/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/elixir_tools/elixir_tools.py": {
+      "ruleId": "unused-exports-projects/Offline/serena-repo/src/solidlsp/language_servers/elixir_tools/elixir_tools.py",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/files/[filename]/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/files/[filename]/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/ollama/[...path]/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/ollama/[...path]/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/project/content/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/project/content/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/project/files/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/project/files/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/files/[filename]/content/route.ts": {
+      "ruleId": "unused-exports-Sage7/_dormant/archives/nexus-update-spec/app/api/files/[filename]/content/route.ts",
+      "firstSeenAt": "2026-06-16T11:07:22.760Z",
+      "lastSeenAt": "2026-06-16T11:09:46.930Z",
+      "runCount": 3,
+      "fixedCount": 0,
       "suppressedInConfig": false
     }
   },
@@ -607,10 +2775,10 @@
     "src/components/FileTree.tsx": {
       "file": "src/components/FileTree.tsx",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-06-07T13:57:19.506Z",
-      "runCount": 10,
-      "lastCc": 148,
-      "lastChurn": 9
+      "lastSeenAt": "2026-06-16T11:07:42.160Z",
+      "runCount": 11,
+      "lastCc": 106,
+      "lastChurn": 10
     },
     "server.ts": {
       "file": "server.ts",
@@ -623,26 +2791,26 @@
     "src/components/panels/EditorPanel.tsx": {
       "file": "src/components/panels/EditorPanel.tsx",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-06-07T13:57:19.506Z",
-      "runCount": 9,
-      "lastCc": 143,
-      "lastChurn": 8
+      "lastSeenAt": "2026-06-16T11:07:42.160Z",
+      "runCount": 10,
+      "lastCc": 61,
+      "lastChurn": 11
     },
     "src/services/aiService.ts": {
       "file": "src/services/aiService.ts",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-06-07T13:57:19.506Z",
-      "runCount": 9,
-      "lastCc": 52,
-      "lastChurn": 11
+      "lastSeenAt": "2026-06-16T11:07:42.160Z",
+      "runCount": 10,
+      "lastCc": 54,
+      "lastChurn": 14
     },
     "src/components/panels/ToolNeuronPanel.tsx": {
       "file": "src/components/panels/ToolNeuronPanel.tsx",
       "firstSeenAt": "2026-05-26T15:56:11.205Z",
-      "lastSeenAt": "2026-06-07T13:57:19.506Z",
-      "runCount": 6,
-      "lastCc": 68,
-      "lastChurn": 8
+      "lastSeenAt": "2026-06-16T11:07:42.160Z",
+      "runCount": 7,
+      "lastCc": 48,
+      "lastChurn": 10
     },
     "assets/index-CdxXPu_B.js": {
       "file": "assets/index-CdxXPu_B.js",
@@ -1399,10 +3567,10 @@
     "src/hooks/terminal/useTerminalLogic.ts": {
       "file": "src/hooks/terminal/useTerminalLogic.ts",
       "firstSeenAt": "2026-06-07T13:54:05.393Z",
-      "lastSeenAt": "2026-06-07T13:57:19.506Z",
-      "runCount": 2,
+      "lastSeenAt": "2026-06-16T11:07:42.160Z",
+      "runCount": 3,
       "lastCc": 102,
-      "lastChurn": 5
+      "lastChurn": 8
     },
     "src/App.tsx": {
       "file": "src/App.tsx",
@@ -1485,5 +3653,5 @@
       "lastChurn": 3
     }
   },
-  "totalRuns": 41
+  "totalRuns": 44
 }

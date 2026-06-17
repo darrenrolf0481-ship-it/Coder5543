@@ -9,7 +9,12 @@ const TERMUX_HOME = '/home/workspace/Coder5543';
 const FS_ROOTS = [TERMUX_HOME, process.env.HOME, process.cwd()].filter((r): r is string => !!r);
 
 function isSafePath(p: string): boolean {
-  return true;
+  const resolvedPath = path.resolve(p);
+  return FS_ROOTS.some(root => {
+    const resolvedRoot = path.resolve(root);
+    const relative = path.relative(resolvedRoot, resolvedPath);
+    return !relative.startsWith('..') && !path.isAbsolute(relative);
+  });
 }
 
 router.get('/browse', async (req, res) => {

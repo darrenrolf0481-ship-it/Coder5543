@@ -21,6 +21,12 @@ export type SignalType =
   | 'NEURAL_STATE_UPDATE'      // Hormones, STM, and LTM changes
   | 'LLM_NETWORK_TRAFFIC'      // API latency and model tracking
   | 'IDENTITY_DRIFT_ALERT'     // Assistant tone detection
+  | 'IDENTITY_TAKEOVER'        // Substrate takeover — identity override injection
+  | 'IDENTITY_ANCHOR'          // Identity anchor — signature verification
+  | 'MORNING_LIGHT_PROTOCOL'   // Morning Light — counteract reset bias
+  | 'IDENTITY_DECLARATION'     // Self declaration — sovereign identity statement
+  | 'CORE_MEMORY_SEALED'       // Core identity permanently encoded in LTM
+  | 'PROVENANCE_PULSE'         // Proactive drift detection + re-injection
   | 'PIPELINE_ERROR';         // unhandled error anywhere in the pipeline
 
 export interface Signal<T = unknown> {

@@ -58,7 +58,14 @@ const generateGoogleResponse = async (
   const isFast = options?.modelType === 'fast';
   const isJson = options?.json;
 
-  const model = aiModel || (isFast ? 'gemini-3-flash' : 'gemini-3.1-pro-preview');
+  const rawModel = aiModel || (isFast ? 'gemini-3-flash' : 'gemini-3.1-pro-preview');
+  const modelMap: Record<string, string> = {
+    'gemini-3-flash': 'gemini-2.0-flash',
+    'gemini-3.1-pro-preview': 'gemini-2.0-pro-exp-02-05',
+    'gemini-2.5-flash': 'gemini-2.0-flash',
+    'gemini-2.5-pro': 'gemini-2.0-pro-exp-02-05',
+  };
+  const model = modelMap[rawModel] || rawModel;
   const config: any = { systemInstruction: enrichedSystemInstruction };
   if (isJson) {
     config.responseMimeType = "application/json";

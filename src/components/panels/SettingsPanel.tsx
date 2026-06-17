@@ -407,7 +407,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                           <label className="block text-[9px] text-accent-700 uppercase font-black tracking-widest mb-1.5">Neural Provider</label>
                           <select
                             value={w.provider}
-                            onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, provider: e.target.value as any, model: e.target.value === 'google' ? 'gemini-3-flash' : e.target.value === 'grok' ? 'grok-beta' : e.target.value === 'openrouter' ? 'google/gemma-2-9b-it:free' : x.model || 'llama3.2:latest' } : x))}
+                            onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, provider: e.target.value as any, model: e.target.value === 'google' ? 'gemini-2.0-flash' : e.target.value === 'grok' ? 'grok-beta' : e.target.value === 'openrouter' ? 'google/gemma-2-9b-it:free' : x.model || 'llama3.2:latest' } : x))}
                             className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-4 py-3 text-xs text-accent-100 font-mono outline-none focus:border-accent-600/60 transition-all"
                           >
                             <option value="ollama" className="bg-[#0a0202]">Ollama (Local Llama)</option>
@@ -430,7 +430,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                                 ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
                                 : <option value={w.model} className="bg-[#0a0202]">{w.model || 'llama3.2:latest'}</option>
                               : w.provider === 'google'
-                                ? ['gemini-3-flash', 'gemini-3.1-pro-preview'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                                ? ['gemini-2.0-flash', 'gemini-2.0-pro-exp-02-05'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
                                 : w.provider === 'grok'
                                   ? ['grok-beta', 'grok-2-latest'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
                                   : ['google/gemma-2-9b-it:free', 'meta-llama/llama-3.2-3b-instruct:free', 'qwen/qwen-2.5-7b-instruct:free', 'deepseek/deepseek-chat', 'meta-llama/llama-3.1-8b-instruct:free'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
