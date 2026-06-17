@@ -3,7 +3,7 @@ import { List } from 'react-window';
 import {
   ChevronDown, Folder, FolderOpen, FileCode, Edit2, Check,
   GitBranch, Plus, Trash2, Search, X, FolderPlus, FilePlus,
-  Copy, Archive, MoreVertical, ChevronRight, Github,
+  Copy, Archive, MoreVertical, ChevronRight, Github, HardDrive,
 } from 'lucide-react';
 import { TermuxBrowser } from './TermuxBrowser';
 

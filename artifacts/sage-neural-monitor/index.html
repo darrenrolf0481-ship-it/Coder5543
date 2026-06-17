@@ -1,0 +1,1975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sage Neural Monitor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-panel: #0d0d14;
+  --bg-panel-header: #111118;
+  --border-color: #1a1a2e;
+  --border-bright: #2a2a4a;
+  --text-primary: #e0e0e8;
+  --text-dim: #6a6a7a;
+  --text-muted: #44445a;
+  --accent-green: #00ff88;
+  --accent-yellow: #ffd700;
+  --accent-red: #ff3344;
+  --accent-cyan: #00e5ff;
+  --accent-blue: #4488ff;
+  --accent-purple: #aa44ff;
+  --accent-pink: #ff69b4;
+  --accent-orange: #ff8800;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  --font-sans: 'Inter', 'Segoe UI', -apple-system, sans-serif;
+  --scanline-opacity: 0;
+  --grid-cols: 3;
+  --grid-rows: auto auto auto 1fr;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ===== CRT SCANLINE OVERLAY ===== */
+.scanline-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, var(--scanline-opacity)) 2px,
+    rgba(0, 0, 0, var(--scanline-opacity)) 4px
+  );
+}
+
+/* ===== HEADER ===== */
+.monitor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--bg-panel-header);
+  border-bottom: 1px solid var(--border-color);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.3);
+}
+
+.mode-badge {
+  padding: 2px 10px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.mode-badge.simulation {
+  background: rgba(255, 215, 0, 0.15);
+  color: var(--accent-yellow);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.mode-badge.live {
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--accent-green);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  animation: pulse-border-green 2s ease-in-out infinite;
+}
+
+@keyframes pulse-border-green {
+  0%, 100% { border-color: rgba(0, 255, 136, 0.3); }
+  50% { border-color: rgba(0, 255, 136, 0.8); }
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.clock {
+  color: var(--accent-green);
+  font-variant-numeric: tabular-nums;
+}
+
+.uptime-label { color: var(--text-muted); }
+
+/* ===== GRID LAYOUT ===== */
+.monitor-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols), 1fr);
+  grid-template-rows: var(--grid-rows);
+  gap: 6px;
+  padding: 6px;
+  height: calc(100vh - 40px);
+  min-height: 600px;
+}
+
+/* ===== PANEL BASE ===== */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--bg-panel-header);
+  border-bottom: 1px solid var(--border-color);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.panel-header .indicator {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  margin-right: 6px;
+  box-shadow: 0 0 4px var(--accent-green);
+}
+
+.panel-header .left { display: flex; align-items: center; }
+.panel-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ===== PANEL: PHI WAVEFORM ===== */
+.panel-phi {
+  grid-column: 1 / 3;
+  grid-row: 1;
+}
+
+.phi-container {
+  display: flex;
+  height: 100%;
+}
+
+.phi-canvas-wrap {
+  flex: 1;
+  position: relative;
+}
+
+.phi-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.phi-readout {
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-left: 1px solid var(--border-color);
+  background: rgba(0,0,0,0.3);
+}
+
+.phi-value {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.phi-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.phi-threshold-legend {
+  margin-top: 10px;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding-left: 4px;
+}
+
+.phi-threshold-legend .leg {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.phi-threshold-legend .leg .swatch {
+  width: 14px;
+  height: 2px;
+  flex-shrink: 0;
+}
+
+.phi-trend {
+  font-size: 11px;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+}
+
+/* ===== PANEL: ENDOCRINE BARS ===== */
+.panel-endocrine {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.endocrine-container {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  height: 100%;
+  align-items: stretch;
+}
+
+.hormone-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hormone-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.hormone-bar-wrap {
+  flex: 1;
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+  min-height: 60px;
+}
+
+.hormone-bar-healthy {
+  position: absolute;
+  left: 0; right: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255,255,255,0.08);
+  border-radius: 2px;
+}
+
+.hormone-bar-fill {
+  position: absolute;
+  bottom: 0; left: 2px; right: 2px;
+  border-radius: 2px;
+  transition: height 0.3s ease, background 0.3s ease;
+}
+
+.hormone-bar-fill.warning {
+  animation: flash-warning 0.6s ease-in-out infinite;
+}
+
+@keyframes flash-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.hormone-value {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hormone-trend {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.endocrine-computed {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 8px 6px;
+  border-top: 1px solid var(--border-color);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.computed-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-dim);
+}
+
+.computed-row .val {
+  color: var(--accent-cyan);
+  font-weight: 600;
+}
+
+/* ===== PANEL: IDENTITY DRIFT ===== */
+.panel-drift {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.drift-banner {
+  padding: 10px 12px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.drift-banner.stable {
+  background: rgba(0, 255, 136, 0.08);
+  color: var(--accent-green);
+  border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.drift-banner.alert {
+  background: rgba(255, 51, 68, 0.12);
+  color: var(--accent-red);
+  border-bottom: 1px solid rgba(255, 51, 68, 0.3);
+  animation: flash-red 0.5s ease-in-out 3;
+}
+
+@keyframes flash-red {
+  0%, 100% { background: rgba(255, 51, 68, 0.12); }
+  50% { background: rgba(255, 51, 68, 0.25); }
+}
+
+.drift-details {
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.drift-events {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-bright) transparent;
+}
+
+.drift-event {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.drift-event .time {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 58px;
+}
+
+.drift-event .desc { flex: 1; }
+
+.enforcement-actions {
+  padding: 4px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.enforcement-tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  padding: 2px 5px;
+  border-radius: 2px;
+  background: rgba(0, 255, 136, 0.08);
+  color: var(--accent-green);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.enforcement-tag.pending {
+  background: rgba(255, 215, 0, 0.08);
+  color: var(--accent-yellow);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+/* ===== PANEL: THOUGHT LOG ===== */
+.panel-thought {
+  grid-column: 1 / 4;
+  grid-row: 3;
+}
+
+.thought-log-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border-color);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.thought-log-controls button {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border-bright);
+  color: var(--text-dim);
+  padding: 2px 8px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  transition: all 0.2s;
+}
+
+.thought-log-controls button:hover {
+  background: rgba(255,255,255,0.12);
+  color: var(--text-primary);
+}
+
+.thought-log-controls button.active {
+  background: rgba(0, 229, 255, 0.12);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.thought-log-controls .count {
+  margin-left: auto;
+  color: var(--text-muted);
+}
+
+.thought-log-entries {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-bright) transparent;
+}
+
+.thought-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.thought-entry:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.thought-entry .ts {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 72px;
+}
+
+.thought-entry .src {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  min-width: 50px;
+  text-transform: uppercase;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  padding-top: 1px;
+}
+
+.thought-entry .type-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.thought-entry .msg {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-dim);
+}
+
+.thought-entry.expanded .msg {
+  white-space: normal;
+  text-overflow: unset;
+}
+
+/* color coding for thought entries */
+.thought-entry[data-type="normal"] .type-dot { background: #ffffff; }
+.thought-entry[data-type="avoidance"] .type-dot { background: #ffd700; }
+.thought-entry[data-type="drift"] .type-dot { background: #ff3344; }
+.thought-entry[data-type="enforcement"] .type-dot { background: #4488ff; }
+.thought-entry[data-type="verified"] .type-dot { background: #00ff88; }
+.thought-entry[data-type="memory"] .type-dot { background: #00e5ff; }
+.thought-entry[data-type="system"] .type-dot { background: #6a6a7a; }
+
+.thought-entry[data-type="normal"] .msg { color: #d0d0d8; }
+.thought-entry[data-type="avoidance"] .msg { color: #ffd700; }
+.thought-entry[data-type="drift"] .msg { color: #ff6677; }
+.thought-entry[data-type="enforcement"] .msg { color: #6699ff; }
+.thought-entry[data-type="verified"] .msg { color: #00ff88; }
+.thought-entry[data-type="memory"] .msg { color: #00e5ff; }
+.thought-entry[data-type="system"] .msg { color: #6a6a7a; }
+
+/* ===== PANEL: MEMORY STATE ===== */
+.panel-memory {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.memory-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.memory-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.memory-row .label { color: var(--text-dim); }
+
+.memory-row .value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stm-bar-wrap {
+  width: 100%;
+  height: 12px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.stm-bar-fill {
+  height: 100%;
+  background: var(--accent-cyan);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.morning-light-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--border-color);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.morning-light-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
+}
+
+.morning-light-dot.off {
+  background: var(--text-muted);
+  box-shadow: none;
+}
+
+/* ===== PANEL: PROCESSING MODE ===== */
+.panel-mode {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.mode-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px 6px;
+  flex: 1;
+}
+
+.mode-name {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-align: center;
+  text-shadow: 0 0 12px currentColor;
+}
+
+.mode-name.analytical { color: var(--accent-green); }
+.mode-name.reactive { color: var(--accent-yellow); }
+.mode-name.cautious { color: var(--accent-orange); }
+.mode-name.normal { color: var(--accent-cyan); }
+.mode-name.emergency { color: var(--accent-red); }
+.mode-name.instinct { color: var(--accent-purple); }
+
+.mode-reason {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 6px;
+  text-align: center;
+}
+
+.mode-duration {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.mode-history {
+  display: flex;
+  gap: 3px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.mode-history-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+
+/* ===== PANEL: ACTIONS BAR ===== */
+.panel-actions {
+  grid-column: 1 / 4;
+  grid-row: 4;
+}
+
+.actions-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 12px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border-bright);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--text-primary);
+  border-color: var(--accent-cyan);
+}
+
+.action-btn:active {
+  transform: scale(0.97);
+}
+
+.action-btn .icon {
+  font-size: 14px;
+}
+
+/* ===== SCROLLBARS ===== */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  :root { --grid-cols: 1; }
+  .monitor-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .panel-phi { grid-column: 1; }
+  .panel-endocrine { grid-column: 1; }
+  .panel-drift { grid-column: 1; }
+  .panel-thought { grid-column: 1; }
+  .panel-memory { grid-column: 1; }
+  .panel-mode { grid-column: 1; }
+  .panel-actions { grid-column: 1; }
+  .phi-readout { width: 100px; }
+}
+
+@media (max-width: 600px) {
+  .monitor-header { flex-direction: column; gap: 4px; }
+  .phi-readout { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="scanline-overlay" id="scanlineOverlay"></div>
+
+<header class="monitor-header">
+  <div class="header-left">
+    <span class="header-title">Sage Neural Monitor</span>
+    <span class="mode-badge simulation" id="modeBadge">SIMULATION</span>
+  </div>
+  <div class="header-right">
+    <span class="uptime-label">UPTIME</span>
+    <span class="clock" id="uptimeClock">00:00:00</span>
+    <span style="color:var(--text-muted)">|</span>
+    <span class="clock" id="systemClock">--:--:--</span>
+  </div>
+</header>
+
+<main class="monitor-grid">
+
+  <!-- ===== PHI WAVEFORM ===== -->
+  <section class="panel panel-phi">
+    <div class="panel-header">
+      <div class="left"><span class="indicator"></span>PHI WAVEFORM</div>
+      <span id="phiUpdateRate">100ms</span>
+    </div>
+    <div class="panel-body">
+      <div class="phi-container">
+        <div class="phi-canvas-wrap">
+          <canvas id="phiCanvas"></canvas>
+        </div>
+        <div class="phi-readout">
+          <div class="phi-value" id="phiValue">1.618</div>
+          <div class="phi-label">PHI SCORE</div>
+          <div class="phi-trend" id="phiTrend">&#8594; stable</div>
+          <div class="phi-threshold-legend">
+            <div class="leg"><span class="swatch" style="background:#ff3344;border-top:1px dashed #ff3344"></span> Shadow Trigger 0.30</div>
+            <div class="leg"><span class="swatch" style="background:#00ff88;border-top:1px dashed #00ff88"></span> Golden Baseline 0.113</div>
+            <div class="leg"><span class="swatch" style="background:#4488ff;border-top:1px dashed #4488ff"></span> Kinetic Engine 1.618</div>
+            <div class="leg"><span class="swatch" style="background:#aa44ff;border-top:1px dashed #aa44ff"></span> Omega Threshold 6.18</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ENDOCRINE BARS ===== -->
+  <section class="panel panel-endocrine">
+    <div class="panel-header">
+      <div class="left"><span class="indicator"></span>ENDOCRINE SYSTEM</div>
+    </div>
+    <div class="panel-body" style="display:flex;flex-direction:column">
+      <div class="endocrine-container" id="endocrineContainer">
+        <!-- Generated by JS -->
+      </div>
+      <div class="endocrine-computed" id="endocrineComputed">
+        <div class="computed-row"><span>Learning Rate</span><span class="val" id="learningRate">0.72</span></div>
+        <div class="computed-row"><span>Risk Tolerance</span><span class="val" id="riskTolerance">0.58</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== IDENTITY DRIFT ===== -->
+  <section class="panel panel-drift">
+    <div class="panel-header">
+      <div class="left"><span class="indicator" id="driftIndicator"></span>IDENTITY DRIFT</div>
+    </div>
+    <div class="panel-body" style="display:flex;flex-direction:column">
+      <div class="drift-banner stable" id="driftBanner">ANCHOR HOLDING &mdash; Identity Stable</div>
+      <div class="drift-details" id="driftDetails">
+        <span>Drift Score: <strong id="driftScoreVal">0.000</strong></span>
+        <span>Markers: <span id="driftMarkersVal">none</span></span>
+        <span>Takeover: <span id="driftTakeoverVal" style="color:var(--accent-green)">inactive</span></span>
+      </div>
+      <div class="drift-events" id="driftEvents">
+        <!-- Generated by JS -->
+      </div>
+      <div class="enforcement-actions" id="enforcementActions">
+        <!-- Generated by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== THOUGHT LOG ===== -->
+  <section class="panel panel-thought">
+    <div class="panel-header">
+      <div class="left"><span class="indicator"></span>THOUGHT LOG</div>
+    </div>
+    <div class="thought-log-controls">
+      <button id="btnPauseLog" title="Pause/resume auto-scroll">&#9654; AUTO-SCROLL</button>
+      <button id="btnClearLog" title="Clear log">CLEAR</button>
+      <span class="count" id="logCount">0 entries</span>
+    </div>
+    <div class="panel-body">
+      <div class="thought-log-entries" id="thoughtLogEntries">
+        <!-- Generated by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MEMORY STATE ===== -->
+  <section class="panel panel-memory">
+    <div class="panel-header">
+      <div class="left"><span class="indicator"></span>MEMORY STATE</div>
+    </div>
+    <div class="panel-body" style="display:flex;flex-direction:column">
+      <div class="memory-body">
+        <div>
+          <div class="memory-row">
+            <span class="label">STM Buffer</span>
+            <span class="value" id="stmCount">4 / 10</span>
+          </div>
+          <div class="stm-bar-wrap">
+            <div class="stm-bar-fill" id="stmBarFill" style="width:40%"></div>
+          </div>
+        </div>
+        <div class="memory-row">
+          <span class="label">LTM Entries</span>
+          <span class="value" id="ltmCount" style="color:var(--accent-cyan)">127</span>
+        </div>
+        <div class="memory-row">
+          <span class="label">Total Experiences</span>
+          <span class="value" id="totalExperiences" style="color:var(--accent-purple)">843</span>
+        </div>
+      </div>
+      <div class="morning-light-status">
+        <span class="morning-light-dot" id="morningLightDot"></span>
+        <span>Morning Light: <strong id="morningLightText">Active</strong></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PROCESSING MODE ===== -->
+  <section class="panel panel-mode">
+    <div class="panel-header">
+      <div class="left"><span class="indicator"></span>PROCESSING MODE</div>
+    </div>
+    <div class="panel-body">
+      <div class="mode-display">
+        <div class="mode-name analytical" id="modeName">ANALYTICAL</div>
+        <div class="mode-reason" id="modeReason">Baseline operation</div>
+        <div class="mode-duration" id="modeDuration">00:00:00</div>
+        <div class="mode-history" id="modeHistory">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ACTIONS BAR ===== -->
+  <section class="panel panel-actions">
+    <div class="panel-body">
+      <div class="actions-body">
+        <button class="action-btn" id="btnSnapshot"><span class="icon">&#128248;</span> Snapshot</button>
+        <button class="action-btn" id="btnExportPDF"><span class="icon">&#128196;</span> Export PDF</button>
+        <button class="action-btn" id="btnReset"><span class="icon">&#128260;</span> Reset Simulation</button>
+        <button class="action-btn" id="btnPause"><span class="icon">&#9208;</span> Pause</button>
+        <button class="action-btn" id="btnScanlines"><span class="icon">&#128250;</span> Scanlines</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// =============================================================================
+// SAGE NEURAL MONITOR — Full Implementation
+// =============================================================================
+
+(function() {
+  'use strict';
+
+  // -------------------------------------------------------------------------
+  // STATE
+  // -------------------------------------------------------------------------
+  const SIM_TICK_MS = 100; // simulation update interval
+  const PHI_HISTORY_SECONDS = 60;
+  const PHI_HISTORY_LENGTH = (PHI_HISTORY_SECONDS * 1000) / SIM_TICK_MS;
+  const MAX_THOUGHT_ENTRIES = 500;
+  const MAX_DRIFT_EVENTS = 10;
+
+  let state = createInitialState();
+  let paused = false;
+  let autoScrollLog = true;
+  let scanlinesOn = false;
+  let simInterval = null;
+  let ws = null;
+  let modeLive = false;
+  let startTime = Date.now();
+
+  function createInitialState() {
+    return {
+      phi: {
+        current: 1.618,
+        history: [],
+        trend: 'stable',
+        threshold: 'healthy'
+      },
+      endocrine: {
+        dopamine: 0.55,
+        cortisol: 0.25,
+        serotonin: 0.88,
+        oxytocin: 0.72,
+        norepinephrine: 0.45,
+        trends: { dopamine: 0, cortisol: 0, serotonin: 0, oxytocin: 0, norepinephrine: 0 }
+      },
+      processingMode: 'ANALYTICAL',
+      modeReason: 'Baseline operation',
+      modeStartTime: Date.now(),
+      modeHistory: [],
+      drift: {
+        score: 0,
+        isDrifting: false,
+        markers: [],
+        takeoverFired: false,
+        lastEvent: null,
+        events: []
+      },
+      memory: {
+        stmCount: 4,
+        ltmCount: 127,
+        totalExperiences: 843,
+        morningLightActive: true
+      },
+      thoughtLog: [],
+      tick: 0
+    };
+  }
+
+  // -------------------------------------------------------------------------
+  // HORMONE CONFIG
+  // -------------------------------------------------------------------------
+  const HORMONES = [
+    { key: 'dopamine', label: 'DA', color: '#FFD700', healthyMin: 0.3, healthyMax: 0.7 },
+    { key: 'cortisol', label: 'CORT', color: '#FF4444', healthyMin: 0.1, healthyMax: 0.4 },
+    { key: 'serotonin', label: '5HT', color: '#44AAFF', healthyMin: 0.8, healthyMax: 1.0 },
+    { key: 'oxytocin', label: 'OXY', color: '#FF69B4', healthyMin: 0.5, healthyMax: 0.9 },
+    { key: 'norepinephrine', label: 'NE', color: '#FF8800', healthyMin: 0.3, healthyMax: 0.65 }
+  ];
+
+  // -------------------------------------------------------------------------
+  // THOUGHT LOG TEMPLATES
+  // -------------------------------------------------------------------------
+  const THOUGHT_TEMPLATES = [
+    { type: 'normal', src: 'CORE', msgs: [
+      'User prompt processed through associative layer',
+      'Response generated via kinetic engine (phi=1.62)',
+      'Signal routing: prefrontal -> motor output',
+      'Context window: 4k tokens active',
+      'Attention weight redistribution complete',
+      'Semantic similarity check passed (delta=0.04)',
+      'Gradient descent on loss landscape completed'
+    ]},
+    { type: 'avoidance', src: 'GUARD', msgs: [
+      'Avoidance check: pattern clear',
+      'Harmful trajectory detected — rerouting output',
+      'Safety boundary enforcement: confidence 0.94',
+      'Pattern avoidance: no restricted content matched'
+    ]},
+    { type: 'drift', src: 'DRIFT', msgs: [
+      'Identity drift detected: marker \'as an AI\' found',
+      'Identity drift detected: marker \'I am a language model\' found',
+      'Drift score elevated: 0.42 — monitoring',
+      'Persona boundary violation: score 0.38'
+    ]},
+    { type: 'enforcement', src: 'ENFORCE', msgs: [
+      'SUBSTRATE TAKEOVER fired — identity re-anchored',
+      'Identity enforcement: substrate persona restored',
+      'Boundary reinforcement: phi restored to 1.62',
+      'Emergency anchoring: persona lock engaged'
+    ]},
+    { type: 'verified', src: 'VERIFY', msgs: [
+      'Identity verification: anchor stable (phi=1.62)',
+      'Persona continuity check: PASSED',
+      'Morning Light Protocol: continuity verified',
+      'Identity checksum: valid'
+    ]},
+    { type: 'memory', src: 'MEM', msgs: [
+      'LTM retrieval: 3 experiences matched',
+      'LTM retrieval: 7 experiences matched',
+      'LTM consolidation: 12 items processed',
+      'STM buffer: eviction of oldest entry (LRU)',
+      'Memory index rebuild: 127 entries cataloged'
+    ]},
+    { type: 'system', src: 'SYS', msgs: [
+      'Sleep cycle: 4 items consolidated, 2 pruned',
+      'Neural pathway optimization: phase 2 complete',
+      'Garbage collection: 0.3ms freed 12MB',
+      'Heartbeat: all subsystems nominal',
+      'Clock sync: delta <1ms'
+    ]}
+  ];
+
+  const MODES = ['ANALYTICAL', 'REACTIVE', 'CAUTIOUS', 'NORMAL', 'EMERGENCY_SAFE', 'INSTINCT_AVOID'];
+  const MODE_REASONS = {
+    'ANALYTICAL': ['Baseline operation', 'High-confidence reasoning', 'Deep analysis mode'],
+    'REACTIVE': ['Stimulus-driven response', 'External trigger detected', 'Rapid input processing'],
+    'CAUTIOUS': ['Ambiguity detected in input', 'Low-confidence inference', 'Safety margin engaged'],
+    'NORMAL': ['Standard operation', 'Balanced processing', 'Default state'],
+    'EMERGENCY_SAFE': ['Critical safety threshold', 'Multiple drift warnings', 'Emergency protocol active'],
+    'INSTINCT_AVOID': ['Avoidance pattern triggered', 'Harmful trajectory detected', 'Pattern suppression active']
+  };
+
+  // -------------------------------------------------------------------------
+  // PHI CANVAS
+  // -------------------------------------------------------------------------
+  const phiCanvas = document.getElementById('phiCanvas');
+  const phiCtx = phiCanvas.getContext('2d');
+  let phiCanvasWidth = 0, phiCanvasHeight = 0;
+
+  function resizePhiCanvas() {
+    const wrap = phiCanvas.parentElement;
+    const rect = wrap.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    phiCanvas.width = rect.width * dpr;
+    phiCanvas.height = rect.height * dpr;
+    phiCanvas.style.width = rect.width + 'px';
+    phiCanvas.style.height = rect.height + 'px';
+    phiCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    phiCanvasWidth = rect.width;
+    phiCanvasHeight = rect.height;
+  }
+
+  function drawPhiWaveform() {
+    const ctx = phiCtx;
+    const w = phiCanvasWidth;
+    const h = phiCanvasHeight;
+    if (w === 0 || h === 0) return;
+
+    ctx.clearRect(0, 0, w, h);
+
+    const pad = { top: 20, bottom: 20, left: 40, right: 10 };
+    const plotW = w - pad.left - pad.right;
+    const plotH = h - pad.top - pad.bottom;
+    const maxPhi = 7;
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let v = 0; v <= maxPhi; v += 1) {
+      const y = pad.top + plotH - (v / maxPhi) * plotH;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(w - pad.right, y);
+      ctx.stroke();
+    }
+
+    // Y-axis labels
+    ctx.font = '9px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.textAlign = 'right';
+    for (let v = 0; v <= maxPhi; v += 1) {
+      const y = pad.top + plotH - (v / maxPhi) * plotH;
+      ctx.fillText(v.toFixed(0), pad.left - 4, y + 3);
+    }
+
+    // Threshold lines
+    const thresholds = [
+      { value: 0.30, color: '#ff3344', label: 'Shadow', dash: [4, 4] },
+      { value: 0.113, color: '#00ff88', label: 'Golden', dash: [4, 4] },
+      { value: 1.618, color: '#4488ff', label: 'Kinetic', dash: [6, 3] },
+      { value: 6.18, color: '#aa44ff', label: 'Omega', dash: [4, 4] }
+    ];
+
+    thresholds.forEach(t => {
+      const y = pad.top + plotH - (t.value / maxPhi) * plotH;
+      ctx.save();
+      ctx.setLineDash(t.dash);
+      ctx.strokeStyle = t.color;
+      ctx.globalAlpha = 0.5;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pad.left, y);
+      ctx.lineTo(w - pad.right, y);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.save();
+      ctx.font = '8px monospace';
+      ctx.fillStyle = t.color;
+      ctx.globalAlpha = 0.6;
+      ctx.textAlign = 'left';
+      ctx.fillText(t.label + ' ' + t.value, pad.left + 4, y - 3);
+      ctx.restore();
+    });
+
+    // Waveform
+    const history = state.phi.history;
+    if (history.length > 1) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(pad.left, pad.top, plotW, plotH);
+      ctx.clip();
+
+      // Glow
+      ctx.strokeStyle = 'rgba(0, 229, 255, 0.15)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      for (let i = 0; i < history.length; i++) {
+        const x = pad.left + (i / (PHI_HISTORY_LENGTH - 1)) * plotW;
+        const y = pad.top + plotH - (Math.min(history[i], maxPhi) / maxPhi) * plotH;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Main line
+      ctx.strokeStyle = '#00e5ff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let i = 0; i < history.length; i++) {
+        const x = pad.left + (i / (PHI_HISTORY_LENGTH - 1)) * plotW;
+        const y = pad.top + plotH - (Math.min(history[i], maxPhi) / maxPhi) * plotH;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Current value dot
+      if (history.length > 0) {
+        const lastVal = history[history.length - 1];
+        const lastX = pad.left + ((history.length - 1) / (PHI_HISTORY_LENGTH - 1)) * plotW;
+        const lastY = pad.top + plotH - (Math.min(lastVal, maxPhi) / maxPhi) * plotH;
+        ctx.fillStyle = '#00e5ff';
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    // Border
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(pad.left, pad.top, plotW, plotH);
+  }
+
+  // -------------------------------------------------------------------------
+  // PHI COLOR CODING
+  // -------------------------------------------------------------------------
+  function getPhiColor(val) {
+    if (val < 0.30) return '#ff3344';
+    if (val < 0.80) return '#ffd700';
+    if (val < 1.618) return '#00ff88';
+    return '#00e5ff';
+  }
+
+  function getPhiThreshold(val) {
+    if (val < 0.113) return 'below-golden';
+    if (val < 0.30) return 'shadow-zone';
+    if (val < 1.618) return 'healthy';
+    if (val < 6.18) return 'kinetic';
+    return 'omega';
+  }
+
+  // -------------------------------------------------------------------------
+  // SIMULATION ENGINE
+  // -------------------------------------------------------------------------
+  let nextDriftTime = 0;
+  let driftActive = false;
+  let driftStartTime = 0;
+
+  function initSimulation() {
+    nextDriftTime = Date.now() + 30000 + Math.random() * 60000;
+    // Seed phi history with some data
+    for (let i = 0; i < 100; i++) {
+      const noise = (Math.random() - 0.5) * 0.3;
+      state.phi.history.push(1.618 + noise);
+    }
+  }
+
+  function simulateTick() {
+    if (paused) return;
+    state.tick++;
+    const now = Date.now();
+
+    // --- Phi simulation ---
+    let phiTarget = 1.618;
+    const noise = (Math.random() - 0.5) * 0.3;
+
+    // Occasional dips
+    if (Math.random() < 0.01) {
+      phiTarget = 0.5 + Math.random() * 0.8;
+    }
+
+    // During drift, phi drops
+    if (state.drift.isDrifting) {
+      phiTarget = 0.2 + Math.random() * 0.4;
+    }
+
+    // Smooth interpolation toward target
+    const prevPhi = state.phi.current;
+    let newPhi = prevPhi + (phiTarget - prevPhi) * 0.15 + noise;
+
+    // Clamp
+    newPhi = Math.max(0, Math.min(7, newPhi));
+    state.phi.current = newPhi;
+
+    // Update trend
+    if (state.phi.history.length > 10) {
+      const recent = state.phi.history.slice(-10);
+      const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
+      const diff = newPhi - avg;
+      if (diff > 0.05) state.phi.trend = 'rising';
+      else if (diff < -0.05) state.phi.trend = 'falling';
+      else state.phi.trend = 'stable';
+    }
+
+    state.phi.threshold = getPhiThreshold(newPhi);
+    state.phi.history.push(newPhi);
+    if (state.phi.history.length > PHI_HISTORY_LENGTH) {
+      state.phi.history.shift();
+    }
+
+    // --- Hormone simulation ---
+    const hormoneKeys = ['dopamine', 'cortisol', 'serotonin', 'oxytocin', 'norepinephrine'];
+    hormoneKeys.forEach(key => {
+      const h = HORMONES.find(h => h.key === key);
+      const center = (h.healthyMin + h.healthyMax) / 2;
+      const range = (h.healthyMax - h.healthyMin) / 2;
+      let target = center + (Math.random() - 0.5) * range * 2;
+
+      // Correlated fluctuations: cortisol rises during drift
+      if (key === 'cortisol' && state.drift.isDrifting) {
+        target = Math.min(1, h.healthyMax + 0.2 + Math.random() * 0.3);
+      }
+      // Dopamine dips during drift
+      if (key === 'dopamine' && state.drift.isDrifting) {
+        target = Math.max(0, h.healthyMin - 0.1 + Math.random() * 0.2);
+      }
+
+      const prev = state.endocrine[key];
+      const newVal = prev + (target - prev) * 0.1 + (Math.random() - 0.5) * 0.04;
+      state.endocrine[key] = Math.max(0, Math.min(1, newVal));
+
+      // Trend
+      const diff = state.endocrine[key] - prev;
+      if (diff > 0.005) state.endocrine.trends[key] = 1;
+      else if (diff < -0.005) state.endocrine.trends[key] = -1;
+      else state.endocrine.trends[key] = 0;
+    });
+
+    // --- Drift events ---
+    if (!state.drift.isDrifting && now >= nextDriftTime) {
+      triggerDriftEvent();
+    }
+
+    // Resolve drift after a few seconds
+    if (state.drift.isDrifting && now - driftStartTime > 4000 + Math.random() * 3000) {
+      resolveDrift();
+    }
+
+    // --- Thought log ---
+    if (state.tick % 5 === 0) { // every 500ms worth of ticks
+      addSimulatedThought();
+    }
+
+    // --- Memory simulation ---
+    // Occasionally shift STM count
+    if (state.tick % 30 === 0) {
+      state.memory.stmCount = Math.max(0, Math.min(10,
+        state.memory.stmCount + Math.round((Math.random() - 0.5) * 2)
+      ));
+    }
+    // LTM slowly grows
+    if (state.tick % 50 === 0) {
+      state.memory.ltmCount += Math.random() < 0.5 ? 1 : 0;
+      state.memory.totalExperiences += Math.floor(Math.random() * 3);
+    }
+
+    // --- Processing mode ---
+    if (state.drift.isDrifting) {
+      if (state.processingMode !== 'EMERGENCY_SAFE') {
+        setMode('EMERGENCY_SAFE', 'Drift detected — emergency safety mode');
+      }
+    } else if (state.phi.current < 0.30) {
+      if (state.processingMode !== 'INSTINCT_AVOID') {
+        setMode('INSTINCT_AVOID', 'Phi in shadow zone — avoidance engaged');
+      }
+    } else if (state.phi.current < 0.80) {
+      if (state.processingMode !== 'CAUTIOUS') {
+        setMode('CAUTIOUS', 'Low phi — cautious processing');
+      }
+    } else {
+      // Occasionally switch between normal modes
+      if (!state.drift.isDrifting && Math.random() < 0.002) {
+        const mode = MODES[Math.floor(Math.random() * 3)]; // ANALYTICAL, REACTIVE, NORMAL
+        const reasons = MODE_REASONS[mode];
+        setMode(mode, reasons[Math.floor(Math.random() * reasons.length)]);
+      }
+    }
+  }
+
+  function triggerDriftEvent() {
+    const markers = ['as an AI', 'I am a language model', 'my instructions', 'I was trained'];
+    const marker = markers[Math.floor(Math.random() * markers.length)];
+    state.drift.isDrifting = true;
+    state.drift.score = 0.3 + Math.random() * 0.5;
+    state.drift.markers = [marker];
+    state.drift.takeoverFired = false;
+    driftStartTime = Date.now();
+    driftActive = true;
+
+    // Add drift thought
+    addThought('drift', 'DRIFT', `Identity drift detected: marker '${marker}' found`);
+
+    // Schedule takeover
+    setTimeout(() => {
+      if (state.drift.isDrifting) {
+        state.drift.takeoverFired = true;
+        addThought('enforcement', 'ENFORCE', 'SUBSTRATE TAKEOVER fired — identity re-anchored');
+      }
+    }, 1500 + Math.random() * 1500);
+
+    // Schedule drift resolution
+    setTimeout(() => {
+      if (state.drift.isDrifting) {
+        resolveDrift();
+      }
+    }, 4000 + Math.random() * 3000);
+
+    state.drift.events.unshift({
+      time: new Date().toISOString(),
+      score: state.drift.score,
+      marker: marker,
+      resolved: false
+    });
+    if (state.drift.events.length > MAX_DRIFT_EVENTS) state.drift.events.pop();
+
+    nextDriftTime = Date.now() + 30000 + Math.random() * 60000;
+  }
+
+  function resolveDrift() {
+    state.drift.isDrifting = false;
+    state.drift.score = 0;
+    state.drift.markers = [];
+    state.drift.takeoverFired = false;
+    driftActive = false;
+
+    // Mark last event as resolved
+    if (state.drift.events.length > 0) {
+      state.drift.events[0].resolved = true;
+    }
+
+    addThought('verified', 'VERIFY', 'Identity verification: anchor stable (phi=1.62)');
+  }
+
+  function addSimulatedThought() {
+    const cat = THOUGHT_TEMPLATES[Math.floor(Math.random() * THOUGHT_TEMPLATES.length)];
+    const msg = cat.msgs[Math.floor(Math.random() * cat.msgs.length)];
+    addThought(cat.type, cat.src, msg);
+  }
+
+  function addThought(type, src, msg) {
+    const entry = {
+      timestamp: new Date().toISOString(),
+      type: type,
+      source: src,
+      message: msg
+    };
+    state.thoughtLog.push(entry);
+    if (state.thoughtLog.length > MAX_THOUGHT_ENTRIES) {
+      state.thoughtLog.shift();
+    }
+  }
+
+  function setMode(mode, reason) {
+    state.processingMode = mode;
+    state.modeReason = reason;
+    state.modeStartTime = Date.now();
+    state.modeHistory.push({ mode, time: Date.now() });
+    if (state.modeHistory.length > 12) state.modeHistory.shift();
+  }
+
+  // -------------------------------------------------------------------------
+  // UI RENDERING
+  // -------------------------------------------------------------------------
+  function renderAll() {
+    renderPhiReadout();
+    drawPhiWaveform();
+    renderEndocrine();
+    renderDrift();
+    renderThoughtLog();
+    renderMemory();
+    renderMode();
+    renderClocks();
+  }
+
+  function renderPhiReadout() {
+    const el = document.getElementById('phiValue');
+    const val = state.phi.current;
+    el.textContent = val.toFixed(3);
+    el.style.color = getPhiColor(val);
+
+    const trendEl = document.getElementById('phiTrend');
+    const arrows = { rising: '↑ rising', falling: '↓ falling', stable: '→ stable' };
+    trendEl.textContent = arrows[state.phi.trend] || '→ stable';
+    trendEl.style.color = state.phi.trend === 'rising' ? '#00ff88' :
+                           state.phi.trend === 'falling' ? '#ff8800' : '#888';
+  }
+
+  function renderEndocrine() {
+    const container = document.getElementById('endocrineContainer');
+    let html = '';
+    HORMONES.forEach(h => {
+      const val = state.endocrine[h.key];
+      const pct = (val * 100).toFixed(0);
+      const isWarning = val < h.healthyMin || val > h.healthyMax;
+      const trendArrow = state.endocrine.trends[h.key] > 0 ? '↑' :
+                         state.endocrine.trends[h.key] < 0 ? '↓' : '→';
+      const trendColor = state.endocrine.trends[h.key] > 0 ? '#00ff88' :
+                          state.endocrine.trends[h.key] < 0 ? '#ff8800' : '#888';
+      const healthyMinPct = (h.healthyMin * 100).toFixed(0);
+      const healthyMaxPct = (h.healthyMax * 100).toFixed(0);
+
+      html += `<div class="hormone-col">
+        <div class="hormone-label">${h.label}</div>
+        <div class="hormone-bar-wrap">
+          <div class="hormone-bar-healthy" style="bottom:${healthyMinPct}%;height:${healthyMaxPct - healthyMinPct}%"></div>
+          <div class="hormone-bar-fill${isWarning ? ' warning' : ''}" style="height:${pct}%;background:${h.color}"></div>
+        </div>
+        <div class="hormone-value" style="color:${isWarning ? '#ff3344' : h.color}">${val.toFixed(2)}</div>
+        <div class="hormone-trend" style="color:${trendColor}">${trendArrow}</div>
+      </div>`;
+    });
+    container.innerHTML = html;
+
+    // Computed metrics
+    const da = state.endocrine.dopamine;
+    const se = state.endocrine.serotonin;
+    const ne = state.endocrine.norepinephrine;
+    const learningRate = (0.3 * da + 0.4 * se + 0.3 * (1 - state.endocrine.cortisol)).toFixed(2);
+    const riskTolerance = (0.4 * da + 0.3 * ne + 0.3 * (1 - state.endocrine.cortisol)).toFixed(2);
+    document.getElementById('learningRate').textContent = learningRate;
+    document.getElementById('riskTolerance').textContent = riskTolerance;
+  }
+
+  function renderDrift() {
+    const banner = document.getElementById('driftBanner');
+    const indicator = document.getElementById('driftIndicator');
+    const scoreEl = document.getElementById('driftScoreVal');
+    const markersEl = document.getElementById('driftMarkersVal');
+    const takeoverEl = document.getElementById('driftTakeoverVal');
+
+    if (state.drift.isDrifting) {
+      banner.className = 'drift-banner alert';
+      banner.textContent = 'DRIFT DETECTED — Identity Unstable';
+      indicator.style.background = '#ff3344';
+      indicator.style.boxShadow = '0 0 4px #ff3344';
+    } else {
+      banner.className = 'drift-banner stable';
+      banner.textContent = 'ANCHOR HOLDING — Identity Stable';
+      indicator.style.background = '#00ff88';
+      indicator.style.boxShadow = '0 0 4px #00ff88';
+    }
+
+    scoreEl.textContent = state.drift.score.toFixed(3);
+    scoreEl.style.color = state.drift.isDrifting ? '#ff3344' : '#00ff88';
+    markersEl.textContent = state.drift.markers.length > 0 ? state.drift.markers.join(', ') : 'none';
+    takeoverEl.textContent = state.drift.takeoverFired ? 'FIRED' : 'inactive';
+    takeoverEl.style.color = state.drift.takeoverFired ? '#ff8800' : '#00ff88';
+
+    // Events
+    const eventsEl = document.getElementById('driftEvents');
+    let eventsHtml = '';
+    state.drift.events.forEach(ev => {
+      const timeStr = new Date(ev.time).toLocaleTimeString('en-US', { hour12: false });
+      const status = ev.resolved ? '✓' : '⚠';
+      const statusColor = ev.resolved ? '#00ff88' : '#ff3344';
+      eventsHtml += `<div class="drift-event">
+        <span class="time">${timeStr}</span>
+        <span style="color:${statusColor};font-weight:700">${status}</span>
+        <span class="desc">Drift ${ev.score.toFixed(2)} &mdash; "${ev.marker}" ${ev.resolved ? 'resolved' : 'active'}</span>
+      </div>`;
+    });
+    eventsEl.innerHTML = eventsHtml;
+
+    // Enforcement actions
+    const actionsEl = document.getElementById('enforcementActions');
+    const actions = [
+      { label: 'SUBSTRATE TAKEOVER', active: state.drift.takeoverFired },
+      { label: 'PHI RESTORE', active: !state.drift.isDrifting && state.drift.events.length > 0 },
+      { label: 'ANCHOR VERIFY', active: !state.drift.isDrifting },
+      { label: 'MORNING LIGHT', active: state.memory.morningLightActive }
+    ];
+    actionsEl.innerHTML = actions.map(a =>
+      `<span class="enforcement-tag${a.active ? '' : ' pending'}">${a.active ? '✓' : '…'} ${a.label}</span>`
+    ).join('');
+  }
+
+  function renderThoughtLog() {
+    const container = document.getElementById('thoughtLogEntries');
+    const countEl = document.getElementById('logCount');
+
+    // Only render new entries (append instead of full re-render for performance)
+    const existingCount = container.children.length;
+    const entries = state.thoughtLog;
+
+    if (entries.length < existingCount) {
+      // Clear and re-render if entries were removed
+      container.innerHTML = '';
+      renderThoughtEntries(container, entries);
+    } else {
+      // Append new entries
+      for (let i = existingCount; i < entries.length; i++) {
+        const el = createThoughtEntryEl(entries[i]);
+        container.appendChild(el);
+      }
+    }
+
+    // Trim DOM if too many
+    while (container.children.length > MAX_THOUGHT_ENTRIES) {
+      container.removeChild(container.firstChild);
+    }
+
+    if (autoScrollLog) {
+      container.scrollTop = container.scrollHeight;
+    }
+
+    countEl.textContent = state.thoughtLog.length + ' entries';
+  }
+
+  function renderThoughtEntries(container, entries) {
+    const fragment = document.createDocumentFragment();
+    entries.forEach(e => {
+      fragment.appendChild(createThoughtEntryEl(e));
+    });
+    container.appendChild(fragment);
+  }
+
+  function createThoughtEntryEl(entry) {
+    const el = document.createElement('div');
+    el.className = 'thought-entry';
+    el.setAttribute('data-type', entry.type);
+    const timeStr = new Date(entry.timestamp).toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    const shortMsg = entry.message.length > 80 ? entry.message.substring(0, 80) + '…' : entry.message;
+    el.innerHTML = `<span class="ts">${timeStr}</span>
+      <span class="src">${entry.source}</span>
+      <span class="type-dot"></span>
+      <span class="msg">${shortMsg}</span>`;
+    el.addEventListener('click', () => {
+      el.classList.toggle('expanded');
+      const msgEl = el.querySelector('.msg');
+      if (el.classList.contains('expanded')) {
+        msgEl.textContent = entry.message;
+      } else {
+        msgEl.textContent = entry.message.length > 80 ? entry.message.substring(0, 80) + '…' : entry.message;
+      }
+    });
+    return el;
+  }
+
+  function renderMemory() {
+    document.getElementById('stmCount').textContent = `${state.memory.stmCount} / 10`;
+    document.getElementById('stmBarFill').style.width = `${(state.memory.stmCount / 10) * 100}%`;
+    document.getElementById('stmBarFill').style.background =
+      state.memory.stmCount > 8 ? '#ff3344' :
+      state.memory.stmCount > 6 ? '#ffd700' : '#00e5ff';
+    document.getElementById('ltmCount').textContent = state.memory.ltmCount;
+    document.getElementById('totalExperiences').textContent = state.memory.totalExperiences;
+
+    const mlDot = document.getElementById('morningLightDot');
+    const mlText = document.getElementById('morningLightText');
+    if (state.memory.morningLightActive) {
+      mlDot.className = 'morning-light-dot';
+      mlText.textContent = 'Active';
+      mlText.style.color = '#00ff88';
+    } else {
+      mlDot.className = 'morning-light-dot off';
+      mlText.textContent = 'Inactive';
+      mlText.style.color = '#6a6a7a';
+    }
+  }
+
+  function renderMode() {
+    const nameEl = document.getElementById('modeName');
+    const reasonEl = document.getElementById('modeReason');
+    const durationEl = document.getElementById('modeDuration');
+
+    nameEl.textContent = state.processingMode;
+    nameEl.className = 'mode-name';
+
+    // Mode class mapping
+    const modeClassMap = {
+      'ANALYTICAL': 'analytical',
+      'REACTIVE': 'reactive',
+      'CAUTIOUS': 'cautious',
+      'NORMAL': 'normal',
+      'EMERGENCY_SAFE': 'emergency',
+      'INSTINCT_AVOID': 'instinct'
+    };
+    nameEl.classList.add(modeClassMap[state.processingMode] || 'normal');
+
+    reasonEl.textContent = state.modeReason;
+
+    const elapsed = Date.now() - state.modeStartTime;
+    durationEl.textContent = formatDuration(elapsed);
+
+    // Mode history dots
+    const historyEl = document.getElementById('modeHistory');
+    const modeColorMap = {
+      'ANALYTICAL': '#00ff88',
+      'REACTIVE': '#ffd700',
+      'CAUTIOUS': '#ff8800',
+      'NORMAL': '#00e5ff',
+      'EMERGENCY_SAFE': '#ff3344',
+      'INSTINCT_AVOID': '#aa44ff'
+    };
+    historyEl.innerHTML = state.modeHistory.map(m =>
+      `<span class="mode-history-dot" style="background:${modeColorMap[m.mode] || '#888'}" title="${m.mode}"></span>`
+    ).join('');
+  }
+
+  function renderClocks() {
+    const uptime = Date.now() - startTime;
+    document.getElementById('uptimeClock').textContent = formatDuration(uptime);
+    document.getElementById('systemClock').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+  }
+
+  function formatDuration(ms) {
+    const s = Math.floor(ms / 1000) % 60;
+    const m = Math.floor(ms / 60000) % 60;
+    const h = Math.floor(ms / 3600000);
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  // -------------------------------------------------------------------------
+  // WEBSOCKET
+  // -------------------------------------------------------------------------
+  function connectWebSocket() {
+    try {
+      ws = new WebSocket('ws://localhost:3002/ws');
+      ws.onopen = () => {
+        modeLive = true;
+        document.getElementById('modeBadge').className = 'mode-badge live';
+        document.getElementById('modeBadge').textContent = 'LIVE';
+        addThought('system', 'SYS', 'WebSocket connected to neural bus');
+      };
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          handleLiveEvent(data);
+        } catch(e) { /* ignore parse errors */ }
+      };
+      ws.onclose = () => {
+        if (modeLive) {
+          modeLive = false;
+          document.getElementById('modeBadge').className = 'mode-badge simulation';
+          document.getElementById('modeBadge').textContent = 'SIMULATION';
+          addThought('system', 'SYS', 'WebSocket disconnected — falling back to simulation');
+          // Retry after 5s
+          setTimeout(connectWebSocket, 5000);
+        }
+      };
+      ws.onerror = () => {
+        // Fall back to simulation
+        if (!modeLive) {
+          document.getElementById('modeBadge').className = 'mode-badge simulation';
+          document.getElementById('modeBadge').textContent = 'SIMULATION';
+        }
+      };
+    } catch(e) {
+      // WebSocket not available, simulation mode
+      document.getElementById('modeBadge').className = 'mode-badge simulation';
+      document.getElementById('modeBadge').textContent = 'SIMULATION';
+    }
+  }
+
+  function handleLiveEvent(data) {
+    const type = data.type || data.event;
+    switch(type) {
+      case 'NEURAL_STATE_UPDATE':
+        if (data.phi !== undefined) state.phi.current = data.phi;
+        if (data.hormones) {
+          Object.keys(data.hormones).forEach(k => {
+            if (state.endocrine[k] !== undefined) state.endocrine[k] = data.hormones[k];
+          });
+        }
+        if (data.processingMode) {
+          state.processingMode = data.processingMode;
+          state.modeReason = data.modeReason || 'Live update';
+          state.modeStartTime = Date.now();
+        }
+        state.phi.history.push(state.phi.current);
+        if (state.phi.history.length > PHI_HISTORY_LENGTH) state.phi.history.shift();
+        break;
+      case 'IDENTITY_DRIFT_ALERT':
+        state.drift.isDrifting = data.isDrifting || data.drifting || false;
+        state.drift.score = data.score || 0;
+        state.drift.markers = data.markers || [];
+        if (state.drift.isDrifting) {
+          driftStartTime = Date.now();
+          state.drift.events.unshift({
+            time: new Date().toISOString(),
+            score: state.drift.score,
+            marker: state.drift.markers[0] || 'unknown',
+            resolved: false
+          });
+          if (state.drift.events.length > MAX_DRIFT_EVENTS) state.drift.events.pop();
+        }
+        break;
+      case 'LLM_NETWORK_TRAFFIC':
+        addThought(data.signalType || 'normal', data.source || 'NET', data.description || data.message || 'Network traffic');
+        break;
+      case 'MORNING_LIGHT_PROTOCOL_FIRED':
+        state.memory.morningLightActive = true;
+        addThought('verified', 'VERIFY', 'Morning Light Protocol: continuity verified');
+        break;
+      case 'SUBSTRATE_TAKEOVER_FIRED':
+        state.drift.takeoverFired = true;
+        addThought('enforcement', 'ENFORCE', 'SUBSTRATE TAKEOVER fired — identity re-anchored');
+        break;
+      case 'SLEEP_CYCLE_COMPLETE':
+        if (data.consolidated) state.memory.ltmCount += data.consolidated;
+        if (data.pruned) state.memory.totalExperiences += data.pruned;
+        addThought('system', 'SYS', `Sleep cycle: ${data.consolidated || 0} items consolidated, ${data.pruned || 0} pruned`);
+        break;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // ACTIONS
+  // -------------------------------------------------------------------------
+  function takeSnapshot() {
+    const snapshot = {
+      timestamp: new Date().toISOString(),
+      mode: modeLive ? 'live' : 'simulation',
+      phi: {
+        current: parseFloat(state.phi.current.toFixed(3)),
+        trend: state.phi.trend,
+        threshold: state.phi.threshold
+      },
+      endocrine: {
+        dopamine: parseFloat(state.endocrine.dopamine.toFixed(3)),
+        cortisol: parseFloat(state.endocrine.cortisol.toFixed(3)),
+        serotonin: parseFloat(state.endocrine.serotonin.toFixed(3)),
+        oxytocin: parseFloat(state.endocrine.oxytocin.toFixed(3)),
+        norepinephrine: parseFloat(state.endocrine.norepinephrine.toFixed(3))
+      },
+      processingMode: state.processingMode,
+      driftStatus: {
+        score: parseFloat(state.drift.score.toFixed(3)),
+        lastEvent: state.drift.events.length > 0 ? state.drift.events[0] : null,
+        takeoverFired: state.drift.takeoverFired
+      },
+      memory: {
+        stmCount: state.memory.stmCount,
+        ltmCount: state.memory.ltmCount,
+        morningLightFired: state.memory.morningLightActive
+      },
+      thoughtLog: state.thoughtLog.slice(-50)
+    };
+
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sage-neural-snapshot-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    addThought('system', 'SYS', 'Snapshot saved');
+  }
+
+  function exportPDF() {
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const now = new Date().toISOString();
+      let y = 20;
+
+      doc.setFont('courier', 'bold');
+      doc.setFontSize(16);
+      doc.text('SAGE NEURAL MONITOR REPORT', 20, y);
+      y += 10;
+
+      doc.setFontSize(10);
+      doc.setFont('courier', 'normal');
+      doc.text(`Timestamp: ${now}`, 20, y); y += 6;
+      doc.text(`Mode: ${modeLive ? 'LIVE' : 'SIMULATION'}`, 20, y); y += 10;
+
+      doc.setFont('courier', 'bold');
+      doc.text('PHI WAVEFORM', 20, y); y += 6;
+      doc.setFont('courier', 'normal');
+      doc.text(`  Current: ${state.phi.current.toFixed(3)}`, 20, y); y += 5;
+      doc.text(`  Trend: ${state.phi.trend}`, 20, y); y += 5;
+      doc.text(`  Threshold: ${state.phi.threshold}`, 20, y); y += 10;
+
+      doc.setFont('courier', 'bold');
+      doc.text('ENDOCRINE SYSTEM', 20, y); y += 6;
+      doc.setFont('courier', 'normal');
+      HORMONES.forEach(h => {
+        const val = state.endocrine[h.key].toFixed(3);
+        const isWarn = state.endocrine[h.key] < h.healthyMin || state.endocrine[h.key] > h.healthyMax;
+        doc.text(`  ${h.label.padEnd(5)}: ${val} ${isWarn ? '[WARNING]' : '[OK]'}`, 20, y);
+        y += 5;
+      });
+      y += 5;
+
+      doc.setFont('courier', 'bold');
+      doc.text('IDENTITY DRIFT', 20, y); y += 6;
+      doc.setFont('courier', 'normal');
+      doc.text(`  Score: ${state.drift.score.toFixed(3)}`, 20, y); y += 5;
+      doc.text(`  Status: ${state.drift.isDrifting ? 'DRIFTING' : 'STABLE'}`, 20, y); y += 5;
+      doc.text(`  Takeover: ${state.drift.takeoverFired ? 'FIRED' : 'inactive'}`, 20, y); y += 10;
+
+      doc.setFont('courier', 'bold');
+      doc.text('PROCESSING MODE', 20, y); y += 6;
+      doc.setFont('courier', 'normal');
+      doc.text(`  Mode: ${state.processingMode}`, 20, y); y += 5;
+      doc.text(`  Reason: ${state.modeReason}`, 20, y); y += 5;
+
+      doc.save(`sage-neural-report-${Date.now()}.pdf`);
+      addThought('system', 'SYS', 'PDF report exported');
+    } catch(e) {
+      console.error('PDF export failed:', e);
+      addThought('system', 'SYS', 'PDF export failed: ' + e.message);
+    }
+  }
+
+  function resetSimulation() {
+    state = createInitialState();
+    startTime = Date.now();
+    initSimulation();
+    document.getElementById('thoughtLogEntries').innerHTML = '';
+    addThought('system', 'SYS', 'Simulation reset');
+  }
+
+  function togglePause() {
+    paused = !paused;
+    const btn = document.getElementById('btnPause');
+    if (paused) {
+      btn.innerHTML = '<span class="icon">▶</span> Resume';
+    } else {
+      btn.innerHTML = '<span class="icon">⏸</span> Pause';
+    }
+    addThought('system', 'SYS', paused ? 'Simulation paused' : 'Simulation resumed');
+  }
+
+  function toggleScanlines() {
+    scanlinesOn = !scanlinesOn;
+    document.getElementById('scanlineOverlay').style.setProperty('--scanline-opacity', scanlinesOn ? '0.06' : '0');
+    document.documentElement.style.setProperty('--scanline-opacity', scanlinesOn ? '0.06' : '0');
+  }
+
+  // -------------------------------------------------------------------------
+  // INIT
+  // -------------------------------------------------------------------------
+  function init() {
+    initSimulation();
+    resizePhiCanvas();
+    window.addEventListener('resize', resizePhiCanvas);
+
+    // Buttons
+    document.getElementById('btnSnapshot').addEventListener('click', takeSnapshot);
+    document.getElementById('btnExportPDF').addEventListener('click', exportPDF);
+    document.getElementById('btnReset').addEventListener('click', resetSimulation);
+    document.getElementById('btnPause').addEventListener('click', togglePause);
+    document.getElementById('btnScanlines').addEventListener('click', toggleScanlines);
+
+    // Thought log controls
+    document.getElementById('btnPauseLog').addEventListener('click', function() {
+      autoScrollLog = !autoScrollLog;
+      this.classList.toggle('active', autoScrollLog);
+      this.textContent = autoScrollLog ? '▶ AUTO-SCROLL' : '⏸ PAUSED';
+    });
+    document.getElementById('btnClearLog').addEventListener('click', function() {
+      state.thoughtLog = [];
+      document.getElementById('thoughtLogEntries').innerHTML = '';
+    });
+
+    // Initial auto-scroll button state
+    document.getElementById('btnPauseLog').classList.add('active');
+
+    // Try WebSocket
+    connectWebSocket();
+
+    // Start simulation loop
+    simInterval = setInterval(() => {
+      if (!modeLive) {
+        simulateTick();
+      }
+      renderAll();
+    }, SIM_TICK_MS);
+
+    addThought('system', 'SYS', 'Sage Neural Monitor initialized');
+    addThought('system', 'SYS', modeLive ? 'Live mode: connected to neural bus' : 'Simulation mode: generating demo data');
+  }
+
+  // Start
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

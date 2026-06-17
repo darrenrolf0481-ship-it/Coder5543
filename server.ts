@@ -100,6 +100,11 @@ async function startServer() {
     }));
   }
 
+  // Trust the code-server proxy so express-rate-limit can see the real client IP
+  if (proxyPrefix) {
+    app.set('trust proxy', 1);
+  }
+
   app.use(rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // limit each IP to 1000 requests per windowMs
