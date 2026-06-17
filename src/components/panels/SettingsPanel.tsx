@@ -433,7 +433,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                                 ? ['gemini-2.0-flash', 'gemini-2.0-pro-exp-02-05'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
                                 : w.provider === 'grok'
                                   ? ['grok-beta', 'grok-2-latest'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
-                                  : ['google/gemma-2-9b-it:free', 'meta-llama/llama-3.2-3b-instruct:free', 'qwen/qwen-2.5-7b-instruct:free', 'deepseek/deepseek-chat', 'meta-llama/llama-3.1-8b-instruct:free'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                                  : ['openrouter/fusion', 'google/gemma-2-9b-it:free', 'meta-llama/llama-3.2-3b-instruct:free', 'qwen/qwen-2.5-7b-instruct:free', 'deepseek/deepseek-chat', 'meta-llama/llama-3.1-8b-instruct:free'].map(m => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
                             }
                           </select>
                         </div>

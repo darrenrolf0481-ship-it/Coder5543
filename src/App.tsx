@@ -1481,7 +1481,7 @@ function AppInner() {
                               : w.provider === 'grok'
                                 ? ['grok-beta', 'grok-2-latest'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
                                 : w.provider === 'openrouter'
-                                  ? ['meta-llama/llama-3.3-70b-instruct:free', 'deepseek/deepseek-chat', 'google/gemini-2.5-flash', 'meta-llama/llama-3-8b-instruct:free'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
+                                  ? ['openrouter/fusion', 'meta-llama/llama-3.3-70b-instruct:free', 'deepseek/deepseek-chat', 'google/gemini-2.5-flash', 'meta-llama/llama-3-8b-instruct:free'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
                                   : <option value={w.model} className="bg-[#0a0202]">{w.model}</option>}
                         </select>
                       </div>
