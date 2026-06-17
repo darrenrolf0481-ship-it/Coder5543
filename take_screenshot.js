@@ -12,9 +12,11 @@ import puppeteer from 'puppeteer';
 
   await page.setViewport({ width: 1280, height: 800 });
   
-  console.log('Navigating to http://localhost:3002...');
+  const targetUrl = process.argv[2] || `http://localhost:${process.env.PORT || '3002'}`;
+
+  console.log(`Navigating to ${targetUrl}...`);
   try {
-    await page.goto('http://localhost:3002', { waitUntil: 'networkidle0', timeout: 15000 });
+    await page.goto(targetUrl, { waitUntil: 'networkidle0', timeout: 15000 });
     console.log('Page loaded. Waiting 3 seconds for rendering...');
     await new Promise(r => setTimeout(r, 3000));
     

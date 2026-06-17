@@ -58,7 +58,7 @@ interface SettingsPanelProps {
   isAiProcessing: boolean;
   setIsAiProcessing: (v: boolean) => void;
   setTerminalOutput: React.Dispatch<React.SetStateAction<string[]>>;
-  setActiveTab: (tab: 'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain') => void;
+  setActiveTab: (tab: 'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain' | 'results') => void;
   generateAIResponse: (prompt: string, system: string, opts?: any) => Promise<string>;
   activePersonality: Personality;
   prepareContext: (input: string, personalityId?: number) => Promise<any>;

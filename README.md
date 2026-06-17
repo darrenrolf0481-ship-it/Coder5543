@@ -26,4 +26,29 @@ Don't worry! Crimson OS has a **"Magic Memory"**. Every time you change somethin
 ### 📡 Does it work without internet?
 Yes! Because we set up a **"Service Worker"** (think of it like a little robot helper inside your phone), the app will load even if you don't have Wi-Fi!
 
+---
+
+### 💻 Terminal
+Crimson OS has a built-in command-line terminal with two runtimes:
+
+- **Node Bridge** (default) — runs real shell commands on the workspace.
+- **Local Core** — an isolated WebContainer WASM sandbox (limited to simple commands).
+
+Special terminal commands:
+- `clear` — clear the screen.
+- `help` — show this help.
+- `ai <question>` — ask ADHD Sage for help.
+- `do <plain English>` — translate a request into a shell command and confirm before running.
+  - Example: `do show git status` proposes `git status`.
+- `ask <plain English>` — translate a request and explain the command without running it.
+  - Example: `ask how big is my src folder`.
+- `mcp list` / `mcp call <tool>` — interact with MCP tools.
+
+Keyboard shortcuts:
+- `ArrowUp` / `ArrowDown` — browse command history.
+- `Tab` — cycle suggestions.
+- `Ctrl+C` — interrupt a running process.
+- `Ctrl+L` — clear the screen.
+- `Escape` — cancel a pending natural-language command.
+
 Have fun, little hacker! 🔴💻

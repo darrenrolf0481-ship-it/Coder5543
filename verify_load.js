@@ -1,14 +1,16 @@
 import puppeteer from 'puppeteer';
 
 (async () => {
+  const targetUrl = process.argv[2] || `http://localhost:${process.env.PORT || '3002'}`;
+
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   const page = await browser.newPage();
-  
-  console.log('Loading http://localhost:3000...');
+
+  console.log(`Loading ${targetUrl}...`);
   try {
-    await page.goto('http://localhost:3000', { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 30000 });
     
     // Wait for splash screen to be removed (React useEffect removes it)
     console.log('Waiting for splash screen removal...');

@@ -37,9 +37,11 @@
     "lib",
     "assets",
     "dist",
-    "projscan",
     "Coder5543",
     "Zachs",
+    "Sage7",
+    "Mht",
+    "hermes-briefing",
     "server.ts",
     "serena",
     "projects"

@@ -39,7 +39,7 @@ interface ToolNeuronPanelProps {
   activePersonality: Personality;
   tnKnowledgePacks: KnowledgePack[];
   handleKnowledgeUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  setActiveTab: (tab: 'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain') => void;
+  setActiveTab: (tab: 'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain' | 'results') => void;
   onApplyCode: (code: string, mode: 'refactor' | 'replace') => void;
   onSaveReport: (text: string) => void;
 }

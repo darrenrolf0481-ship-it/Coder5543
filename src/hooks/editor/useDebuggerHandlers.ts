@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { Type } from '../../services/googleGenAiStub';
+import { extractJson } from '../../utils/helpers';
 
 export function useDebuggerHandlers(
   editorContent: string,
@@ -75,7 +76,7 @@ export function useDebuggerHandlers(
         }
       );
 
-      const result = JSON.parse(response || '{}');
+      const result = extractJson(response || '{}', {});
       setDebugState({
         isActive: true,
         currentLine: result.currentLine || 1,
@@ -138,7 +139,7 @@ export function useDebuggerHandlers(
         }
       );
 
-      const result = JSON.parse(response || '{}');
+      const result = extractJson(response || '{}', {});
       setDebugState({
         ...debugState,
         currentLine: result.currentLine,
@@ -188,7 +189,7 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`;
         }
       );
 
-      const result = JSON.parse(response || '{}');
+      const result = extractJson(response || '{}', {});
       setDebugRefactorResult(result);
     } catch (error) {
       console.warn('Debug refactor failed:', error);

@@ -1,20 +1,22 @@
 import puppeteer from 'puppeteer';
 
 (async () => {
+  const targetUrl = process.argv[2] || `http://localhost:${process.env.PORT || '3002'}`;
+
   console.log('Connecting to Firefox...');
   const browser = await puppeteer.connect({
     browserWSEndpoint: 'ws://127.0.0.1:9222'
   });
   const page = await browser.newPage();
-  
+
   const logs = [];
   page.on('console', msg => logs.push(`[CONSOLE] ${msg.type()}: ${msg.text()}`));
   page.on('pageerror', err => logs.push(`[PAGE ERROR]: ${err.message}`));
   page.on('requestfailed', request => logs.push(`[NET ERROR]: ${request.failure() ? request.failure().errorText : 'failed'} ${request.url()}`));
 
-  console.log('Loading http://localhost:3001...');
+  console.log(`Loading ${targetUrl}...`);
   try {
-    await page.goto('http://localhost:3001', { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
     
     // Wait a bit for potential async crashes
     await new Promise(r => setTimeout(r, 4000));

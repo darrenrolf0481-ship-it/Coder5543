@@ -9,7 +9,10 @@ const puppeteer = require('puppeteer');
     console.log('REQUEST FAILED:', request.url(), request.failure().errorText),
   );
 
-  await page.goto('http://localhost:3002', { waitUntil: 'networkidle2' });
+  const targetUrl = process.argv[2] || `http://localhost:${process.env.PORT || '3002'}`;
+
+  console.log(`Loading ${targetUrl}...`);
+  await page.goto(targetUrl, { waitUntil: 'networkidle2' });
   await new Promise((r) => setTimeout(r, 2000));
   await browser.close();
 })();

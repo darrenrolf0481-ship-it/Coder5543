@@ -1,9 +1,9 @@
 import { Server as SocketServer } from 'socket.io';
 import { Server as HttpServer } from 'http';
-import { spawn } from 'child_process';
 import chokidar, { FSWatcher } from 'chokidar';
 import { broker, Signal } from '../messageBroker.js';
 import logger from '../../utils/logger.js';
+import { ShellSession } from '../terminal/ShellSession.js';
 
 const TERMUX_HOME_DIR = '/home/workspace/Coder5543';
 
@@ -11,6 +11,7 @@ export class WebSocketBridge {
   private io: SocketServer | null = null;
   private proxyIo: SocketServer | null = null;
   private watcher: FSWatcher | null = null;
+  private sessions = new Map<string, ShellSession>();
 
   constructor(httpServer: HttpServer) {
     const port = process.env.PORT || '3002';
@@ -48,36 +49,42 @@ export class WebSocketBridge {
           logger.info(`[WS] Socket ${socket.id} joined room: ${room}`);
         });
 
-        socket.on('terminal_exec', (payload: { cmd: string; cwd?: string }) => {
+        const session = new ShellSession(TERMUX_HOME_DIR);
+        this.sessions.set(socket.id, session);
+
+        socket.on('terminal_exec', async (payload: { cmd: string; cwd?: string }) => {
           const { cmd, cwd } = payload;
-          const workingDir = cwd || TERMUX_HOME_DIR;
-          logger.info(`[WS] Executing terminal command: ${cmd}`);
 
-          const child = spawn(cmd, {
-            cwd: workingDir,
-            shell: '/bin/sh',
-            env: { ...process.env, TERM: 'dumb', NO_COLOR: '1' },
+          // Handle directory changes synchronously so the session cwd persists.
+          if (/^cd(\s|$)/.test(cmd.trim())) {
+            const result = await session.changeDirectory(cmd);
+            if (result.stderr) {
+              socket.emit('terminal_stderr', { text: result.stderr });
+            }
+            socket.emit('terminal_close', { exitCode: result.exitCode, newCwd: result.newCwd });
+            return;
+          }
+
+          const accepted = await session.run(cmd, cwd || session.cwd, {
+            onStdout: (text) => socket.emit('terminal_stdout', { text }),
+            onStderr: (text) => socket.emit('terminal_stderr', { text }),
+            onClose: (exitCode) => socket.emit('terminal_close', { exitCode }),
           });
 
-          child.stdout.on('data', (data) => {
-            socket.emit('terminal_stdout', { text: data.toString() });
-          });
+          if (!accepted) {
+            socket.emit('terminal_stderr', { text: '[ERROR] A command is already running. Use Ctrl+C or terminal_kill to stop it.' });
+            socket.emit('terminal_close', { exitCode: 1 });
+          }
+        });
 
-          child.stderr.on('data', (data) => {
-            socket.emit('terminal_stderr', { text: data.toString() });
-          });
-
-          child.on('close', (code) => {
-            socket.emit('terminal_close', { exitCode: code });
-          });
-
-          socket.on('terminal_kill', () => {
-            child.kill();
-          });
+        socket.on('terminal_kill', () => {
+          session.kill();
         });
 
         socket.on('disconnect', () => {
           logger.info(`[WS] Client disconnected: ${socket.id}`);
+          session.dispose();
+          this.sessions.delete(socket.id);
         });
       });
     };

@@ -42,6 +42,7 @@ import { AnalysisPanel } from './components/panels/AnalysisPanel';
 import { NodeBridgePanel } from './components/panels/NodeBridgePanel';
 import { StoragePanel } from './components/panels/StoragePanel';
 import { BrainPanel } from './components/panels/BrainPanel';
+import { UnifiedResultsPanel } from './components/panels/UnifiedResultsPanel';
 import { SettingsPanel } from './components/panels/SettingsPanel';
 
 // Modals & Registry
@@ -76,7 +77,7 @@ export default function App() {
 function AppInner() {
   // Navigation & Theme
   const [activeTab, setActiveTab] = useState<
-    'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain'
+    'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain' | 'results'
   >('toolneuron');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -136,7 +137,7 @@ function AppInner() {
   } = usePersonalities();
 
   // Initialize WebSocket Real-time Uplink
-  const { isConnected: isWsConnected, wasConnected, lastSignal: lastWsSignal, execTerminal, subscribeFsChange, reconnect: reconnectWs } = useWebSockets(activePersonality.id);
+  const { isConnected: isWsConnected, wasConnected, lastSignal: lastWsSignal, execTerminal, killTerminal, subscribeFsChange, reconnect: reconnectWs } = useWebSockets(activePersonality.id);
 
   // Terminal
   const terminal = useTerminal('~/crimson-node/sd-webui', '/home/workspace/Coder5543');
@@ -188,6 +189,13 @@ function AppInner() {
       root.style.removeProperty('--accent-950');
       root.style.setProperty('--pulse-color', '#ef4444');
     }
+  }, [activePersonality]);
+
+  // Keep mobile theme-color meta tag in sync with the active personality accent.
+  useEffect(() => {
+    const themeColor = activePersonality.id === 7 ? '#06b6d4' : '#ef4444';
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', themeColor);
   }, [activePersonality]);
 
   // Neural Core & Golden Ratio Layout
@@ -504,10 +512,12 @@ function AppInner() {
     personalities,
     activePersonality,
     setIsAiProcessing,
+    isAiProcessing,
     prepareContext,
     recordInteraction,
     generateAIResponse,
     execTerminal,
+    killTerminal,
     terminalSource,
     execLocalCore: (cmd: string, args: string[], onStdout?: (data: string) => void) => execWebContainer(cmd, args, onStdout),
   });
@@ -1057,6 +1067,7 @@ function AppInner() {
                 handleTermKeyDown={terminalState.handleTermKeyDown}
                 handleTerminalCommand={terminalState.handleTerminalCommand}
                 realCwd={terminal.realCwd}
+                isMultiLine={terminal.isMultiLine}
                 terminalSource={terminalSource}
                 setTerminalSource={setTerminalSource}
                 localCoreStatus={localCoreStatus}
@@ -1120,11 +1131,10 @@ function AppInner() {
                 handleExplainCode={chatState.handleExplainCode}
                 handleFullProjectAnalysis={analysisState.handleFullProjectAnalysis}
                 handleDeepProjectAudit={analysisState.handleDeepProjectAudit}
-                handleGenerateDocs={debuggerState.handleToggleCurrentLineBreakpoint /* Dummy JSDoc wrapper placeholder stub */}
+                handleGenerateDocs={chatState.handleGenerateDocs}
                 handleFormatCode={forgeState.handleFormatCode}
                 handleRefactorCode={forgeState.handleRefactorCode}
                 handleRefactorAllFiles={forgeState.handleRefactorAllFiles}
-                handleReviewCode={chatState.handleReviewCode}
                 handleAnalyzeData={chatState.handleAnalyzeData}
                 handleGenerateCode={forgeState.handleGenerateCode}
                 breakpoints={debuggerLogic.breakpoints}
@@ -1207,6 +1217,8 @@ function AppInner() {
             )}
 
             {activeTab === 'brain' && <BrainPanel />}
+
+            {activeTab === 'results' && <UnifiedResultsPanel />}
 
             {activeTab === 'settings' && (
               <SettingsPanel

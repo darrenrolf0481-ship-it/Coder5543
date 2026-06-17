@@ -1,14 +1,16 @@
 import puppeteer from 'puppeteer';
 
 (async () => {
+  const targetUrl = process.argv[2] || `http://localhost:${process.env.PORT || '3002'}`;
+
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   const page = await browser.newPage();
-  
-  console.log('Navigating to http://localhost:3000...');
+
+  console.log(`Navigating to ${targetUrl}...`);
   try {
-    await page.goto('http://localhost:3000', { waitUntil: 'networkidle0', timeout: 15000 });
+    await page.goto(targetUrl, { waitUntil: 'networkidle0', timeout: 15000 });
     console.log('Page loaded. Reading select options...');
     
     const selectsData = await page.evaluate(() => {

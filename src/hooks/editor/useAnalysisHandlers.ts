@@ -201,8 +201,7 @@ export function useAnalysisHandlers(
       const response = await generateAIResponse(
         prompt,
         activePersonality.instruction,
-        { modelType: 'fast' },
-        { brainContext }
+        { modelType: 'fast', brainContext }
       );
       const suggestions = (response?.split('\n') || [])
         .map((s) =>

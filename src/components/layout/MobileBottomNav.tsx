@@ -7,6 +7,7 @@ import {
   Brain,
   Smartphone,
   HardDrive,
+  Layers,
   Settings as SettingsIcon
 } from 'lucide-react';
 
@@ -26,6 +27,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, set
         ['brain',      <Brain size={18} />],
         ['termux',     <Smartphone size={18} />],
         ['storage',    <HardDrive size={18} />],
+        ['results',    <Layers size={18} />],
         ['settings',   <SettingsIcon size={18} />],
       ] as [string, React.ReactNode][]).map(([tab, icon]) => (
         <button

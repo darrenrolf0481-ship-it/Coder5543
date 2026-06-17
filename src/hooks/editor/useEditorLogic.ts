@@ -61,8 +61,23 @@ export function useEditorLogic(
     }
   }, [activeFileId, projectFiles]);
 
+  // Auto-switch HTML files to preview mode and non-HTML files out of preview
+  useEffect(() => {
+    if (editorLanguage === 'html') {
+      setEditorMode('preview');
+    } else {
+      setEditorMode((prev) => (prev === 'preview' ? 'code' : prev));
+    }
+  }, [editorLanguage]);
+
   const handleEditorDidMount = (editor: any) => {
     monacoEditorRef.current = editor;
+
+    editor.onDidChangeCursorSelection((e: any) => {
+      const line = e.selection?.startLineNumber ?? e.position?.lineNumber ?? 1;
+      setCursorLine(line);
+    });
+
     editor.onDidBlurEditorText(() => {
       setProjectFiles((prev: any[]) => {
         const current = prev.find((f) => f.id === activeFileId);

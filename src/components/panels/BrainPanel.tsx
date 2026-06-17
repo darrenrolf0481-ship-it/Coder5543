@@ -1,5 +1,5 @@
 import React from 'react';
-import { Brain, Zap, AlertTriangle, Activity, Moon, RefreshCw, Shield, Globe, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Brain, Zap, AlertTriangle, Activity, Moon, RefreshCw, Shield, Globe, Clock, CheckCircle, XCircle, Crosshair } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
 
 export const BrainPanel: React.FC = () => {
@@ -11,7 +11,8 @@ export const BrainPanel: React.FC = () => {
     setIsBrainActive,
     traffic,
     driftAlert,
-    clearDriftAlert
+    clearDriftAlert,
+    activePersonality
   } = useAppContext();
 
   const getDopamineColor = (val: number) => {
@@ -21,9 +22,17 @@ export const BrainPanel: React.FC = () => {
   };
 
   const getCortisolColor = (val: number) => {
-    if (val > 0.7) return 'text-accent-500';
-    if (val > 0.4) return 'text-accent-300';
-    return 'text-accent-100/40';
+    // Stress signal stays red regardless of personality accent theme.
+    if (val > 0.7) return 'text-red-500';
+    if (val > 0.4) return 'text-red-300';
+    return 'text-red-100/40';
+  };
+
+  const getNorepinephrineColor = (val: number) => {
+    // Focus/panic signal: cyan scale.
+    if (val > 0.7) return 'text-cyan-400';
+    if (val > 0.4) return 'text-cyan-200';
+    return 'text-cyan-100/40';
   };
 
   if (!endocrine) {
@@ -43,7 +52,9 @@ export const BrainPanel: React.FC = () => {
             <Brain size={20} />
           </div>
           <div>
-            <h2 className="text-sm font-bold tracking-widest uppercase text-white/90">Neural Core</h2>
+            <h2 className="text-sm font-bold tracking-widest uppercase text-white/90">
+              {activePersonality?.id === 7 ? activePersonality.name : 'Neural Core'}
+            </h2>
             <p className="text-[10px] text-white/40 uppercase tracking-tighter">Biological Logic Simulation</p>
           </div>
         </div>
@@ -97,8 +108,8 @@ export const BrainPanel: React.FC = () => {
             <Activity size={14} className="text-purple-400" />
             <h3 className="text-[10px] font-black uppercase tracking-widest text-white/60">Endocrine System</h3>
           </div>
-          
-          <div className="grid grid-cols-2 gap-4">
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="bg-accent-950/10 border border-accent-900/20 backdrop-blur-md rounded-xl p-4 shadow-[inset_0_0_15px_var(--color-accent-700)/05]">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-[10px] font-bold uppercase text-white/40">Dopamine</span>
@@ -106,12 +117,27 @@ export const BrainPanel: React.FC = () => {
               </div>
               <div className="text-2xl font-black text-white mb-2">{(endocrine.dopamine * 100).toFixed(0)}%</div>
               <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-yellow-400 transition-all duration-700 ease-out" 
+                <div
+                  className="h-full bg-yellow-400 transition-all duration-700 ease-out"
                   style={{ width: `${endocrine.dopamine * 100}%` }}
                 />
               </div>
               <p className="text-[9px] text-white/30 mt-2 italic">Drives learning & exploration</p>
+            </div>
+
+            <div className="bg-accent-950/10 border border-accent-900/20 backdrop-blur-md rounded-xl p-4 shadow-[inset_0_0_15px_var(--color-accent-700)/05]">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[10px] font-bold uppercase text-white/40">Norepinephrine</span>
+                <Crosshair size={12} className={getNorepinephrineColor(endocrine.norepinephrine)} />
+              </div>
+              <div className="text-2xl font-black text-white mb-2">{(endocrine.norepinephrine * 100).toFixed(0)}%</div>
+              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-cyan-400 transition-all duration-700 ease-out"
+                  style={{ width: `${endocrine.norepinephrine * 100}%` }}
+                />
+              </div>
+              <p className="text-[9px] text-white/30 mt-2 italic">Focus / panic signal</p>
             </div>
 
             <div className="bg-accent-950/10 border border-accent-900/20 backdrop-blur-md rounded-xl p-4 shadow-[inset_0_0_15px_var(--color-accent-700)/05]">
@@ -121,8 +147,8 @@ export const BrainPanel: React.FC = () => {
               </div>
               <div className="text-2xl font-black text-white mb-2">{(endocrine.cortisol * 100).toFixed(0)}%</div>
               <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-accent-500 transition-all duration-700 ease-out" 
+                <div
+                  className="h-full bg-red-500 transition-all duration-700 ease-out"
                   style={{ width: `${endocrine.cortisol * 100}%` }}
                 />
               </div>

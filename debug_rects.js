@@ -1,10 +1,13 @@
 import puppeteer from 'puppeteer';
 
 (async () => {
+  const targetUrl = process.argv[2] || `http://localhost:${process.env.PORT || '3002'}`;
+
   const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 800 });
-  await page.goto('http://localhost:3000', { waitUntil: 'networkidle0', timeout: 15000 });
+  console.log(`Loading ${targetUrl}...`);
+  await page.goto(targetUrl, { waitUntil: 'networkidle0', timeout: 15000 });
   await new Promise(r => setTimeout(r, 6500)); // wait past 6s splash timeout
   
   const layout = await page.evaluate(() => {

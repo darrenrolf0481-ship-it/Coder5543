@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { Personality } from '../data/personalities';
 import { runSwarmCycle, AIResponseFn } from '../services/swarm/swarmEngine';
 import { AgentRunResult, SwarmEngineContext } from '../services/swarm/types';
+import { eventBus } from '../services/eventBus';
 import { UseSwarmStateReturn } from './useSwarmState';
 
 export interface UseSwarmProps {
@@ -71,6 +72,22 @@ export function useSwarm({
     (result: AgentRunResult) => {
       const agent = swarmAgents.find(a => a.id === result.agentId);
       if (!agent) return;
+
+      setRuntimeAgents(prev =>
+        prev.map(a =>
+          a.id === result.agentId
+            ? {
+                ...a,
+                status: result.status === 'fulfilled' ? 'done' : 'error',
+                response: result.status === 'fulfilled' ? result.response : undefined,
+                keyClaims: result.status === 'fulfilled' ? result.keyClaims : undefined,
+                confidence: result.status === 'fulfilled' ? result.confidence : undefined,
+                error: result.status === 'rejected' ? result.error : undefined,
+              }
+            : a
+        )
+      );
+
       if (result.status === 'fulfilled' && result.response) {
         const claims = result.keyClaims?.length ? result.keyClaims.join('\n- ') : 'No key claims extracted.';
         onAgentChatUpdate?.(
@@ -82,7 +99,7 @@ export function useSwarm({
         onAgentChatUpdate?.(agent.name, `**${agent.name}** failed: ${result.error}`, 'claim');
       }
     },
-    [swarmAgents, onAgentChatUpdate]
+    [swarmAgents, onAgentChatUpdate, setRuntimeAgents]
   );
 
   const triggerSwarmCycle = useCallback(
@@ -96,6 +113,11 @@ export function useSwarm({
       const activeAgents = swarmAgents.filter(a => a.active);
       if (activeAgents.length === 0) {
         addLog('pain', 'No active agents. Activate at least one agent.');
+        return;
+      }
+
+      if (isRunning) {
+        addLog('pain', 'Swarm cycle already in progress. Wait for completion before starting another.');
         return;
       }
 
@@ -138,6 +160,7 @@ export function useSwarm({
       } catch (err: any) {
         const msg = err instanceof Error ? err.message : String(err);
         addLog('pain', `Swarm cycle failed: ${msg}`);
+        eventBus.emit('swarm:error', { error: msg, mission }, 'useSwarm');
       } finally {
         setIsRunning(false);
       }

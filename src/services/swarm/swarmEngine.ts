@@ -1,4 +1,5 @@
 import { broker } from '../messageBroker';
+import { eventBus } from '../eventBus';
 import { buildRepoContextForAgent } from './repoContext';
 import { getSwarmMode } from './swarmModes';
 import { formatBoostResultsForAgent, runMcpBoost } from './swarmMcpBoost';
@@ -128,6 +129,11 @@ export async function runSwarmCycle(
     { mode: ctx.mode, mission: ctx.mission, agentCount: activeAgents.length },
     'swarm'
   );
+  eventBus.emit(
+    'swarm:started',
+    { mode: ctx.mode, mission: ctx.mission, agentCount: activeAgents.length },
+    'swarm'
+  );
 
   const projectCtx = buildProjectContext(ctx);
 
@@ -184,17 +190,29 @@ export async function runSwarmCycle(
         latencyMs,
       };
       onAgentComplete?.(result);
+      eventBus.emit(
+        'swarm:agent_update',
+        { agentId: agent.id, agentName: agent.name, status: 'done', output: response, keyClaims: result.keyClaims, confidence: result.confidence },
+        'swarm'
+      );
       return result;
     } catch (err: any) {
       const latencyMs = Math.round(performance.now() - start);
       onAgentStatus?.(agent.id, 'error', err.message);
+      const errorMsg = err instanceof Error ? err.message : String(err);
       const result: AgentRunResult = {
         agentId: agent.id,
         status: 'rejected' as const,
-        error: err instanceof Error ? err.message : String(err),
+        error: errorMsg,
         latencyMs,
       };
       onAgentComplete?.(result);
+      eventBus.emit(
+        'swarm:agent_update',
+        { agentId: agent.id, agentName: agent.name, status: 'error', output: errorMsg },
+        'swarm'
+      );
+      eventBus.emit('swarm:error', { agentId: agent.id, agentName: agent.name, error: errorMsg }, 'swarm');
       return result;
     }
   });
@@ -239,6 +257,11 @@ export async function runSwarmCycle(
   broker.publish(
     'SWARM_CONSENSUS',
     { report: finalReport, agreementCount: report.agreements.length, conflictCount: report.conflicts.length },
+    'swarm'
+  );
+  eventBus.emit(
+    'swarm:completed',
+    { report: finalReport, mission: ctx.mission, agreementCount: report.agreements.length, conflictCount: report.conflicts.length },
     'swarm'
   );
 

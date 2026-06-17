@@ -1,19 +1,21 @@
 import puppeteer from 'puppeteer';
 
 (async () => {
+  const targetUrl = process.argv[2] || `http://localhost:${process.env.PORT || '3002'}`;
+
   const browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   const page = await browser.newPage();
-  
+
   const logs = [];
   page.on('console', msg => logs.push(`[CONSOLE] ${msg.type()}: ${msg.text()}`));
   page.on('pageerror', err => logs.push(`[PAGE ERROR]: ${err.message}`));
   page.on('requestfailed', request => logs.push(`[NET ERROR]: ${request.failure().errorText} ${request.url()}`));
 
-  console.log('Loading http://localhost:3001...');
+  console.log(`Loading ${targetUrl}...`);
   try {
-    await page.goto('http://localhost:3001', { waitUntil: 'networkidle2', timeout: 30000 });
+    await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 30000 });
     
     // Wait a bit for potential async crashes
     await new Promise(r => setTimeout(r, 2000));

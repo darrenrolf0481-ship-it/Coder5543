@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer';
 
 (async () => {
-  const url = process.argv[2] || 'http://localhost:3000';
+  const url = process.argv[2] || `http://localhost:${process.env.PORT || '3002'}`;
   console.log(`Diagnostic targeting: ${url}`);
 
   const browser = await puppeteer.launch({

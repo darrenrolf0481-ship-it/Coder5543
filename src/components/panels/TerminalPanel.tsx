@@ -18,6 +18,7 @@ interface TerminalPanelProps {
   handleTermKeyDown: (e: React.KeyboardEvent) => void;
   handleTerminalCommand: (e: React.FormEvent) => void;
   realCwd?: string;
+  isMultiLine?: boolean;
   terminalSource: 'node_bridge' | 'local_core';
   setTerminalSource: (s: 'node_bridge' | 'local_core') => void;
   localCoreStatus: string;
@@ -28,6 +29,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
   termInput, setTermInput, termSuggestion, setTermSuggestion,
   termSuggestions, setTermSuggestions, selectedSuggestionIndex,
   handleTermInputChange, handleTermKeyDown, handleTerminalCommand, realCwd,
+  isMultiLine,
   terminalSource, setTerminalSource, localCoreStatus,
 }) => {
   const terminalEndRef = useRef<HTMLDivElement>(null);
@@ -132,7 +134,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
             value={termInput}
             onChange={(e) => handleTermInputChange(e.target.value)}
             onKeyDown={handleTermKeyDown}
-            placeholder={`${realCwd ?? '~'} $ `}
+            placeholder={isMultiLine ? '... ' : `${realCwd ?? '~'} $ `}
             className="w-full bg-transparent border-none outline-none font-mono text-base text-accent-100 placeholder:text-accent-950 relative z-10"
           />
         </div>
