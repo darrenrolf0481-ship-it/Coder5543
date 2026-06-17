@@ -12,14 +12,14 @@ export function useEditorLogic(
   setEditorLanguage: any,
   setEditorOutput: any,
   gitRepo: any,
-  setGitRepo: any
+  setGitRepo: any,
 ) {
   const [editorContent, setEditorContent] = useState(
-    projectFiles.find((f) => f.id === activeFileId)?.content ?? ''
+    projectFiles.find((f) => f.id === activeFileId)?.content ?? '',
   );
   const debouncedEditorContent = useDebounce(editorContent, 150);
   const [editorMode, setEditorMode] = useState<'code' | 'preview' | 'debug' | 'git' | 'settings'>(
-    'code'
+    'code',
   );
   const [isRunningCode, setIsRunningCode] = useState(false);
   const [isLivePreviewEnabled, setIsLivePreviewEnabled] = useState(true);
@@ -55,7 +55,7 @@ export function useEditorLogic(
 
   // Sync editorContent when projectFiles changes (e.g. from FileTree)
   useEffect(() => {
-    const file = projectFiles.find(f => f.id === activeFileId);
+    const file = projectFiles.find((f) => f.id === activeFileId);
     if (file && file.content !== undefined && file.content !== editorContent) {
       setEditorContent(file.content);
     }
@@ -83,9 +83,7 @@ export function useEditorLogic(
         const current = prev.find((f) => f.id === activeFileId);
         if (current && current.content !== editorContent) {
           setLastSavedTime(new Date().toLocaleTimeString());
-          return prev.map((f) =>
-            f.id === activeFileId ? { ...f, content: editorContent } : f
-          );
+          return prev.map((f) => (f.id === activeFileId ? { ...f, content: editorContent } : f));
         }
         return prev;
       });
@@ -95,7 +93,7 @@ export function useEditorLogic(
   const forceSave = useCallback(() => {
     if (!activeFileId) return;
     setProjectFiles((prev: any[]) =>
-      prev.map((f) => (f.id === activeFileId ? { ...f, content: editorContent } : f))
+      prev.map((f) => (f.id === activeFileId ? { ...f, content: editorContent } : f)),
     );
     markFileDirty(activeFileId);
     setLastSavedTime(new Date().toLocaleTimeString());
@@ -103,7 +101,13 @@ export function useEditorLogic(
       const fileName = projectFiles.find((f: any) => f.id === activeFileId)?.name ?? activeFileId;
       localStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({ fileId: activeFileId, fileName, content: editorContent, ts: Date.now(), sessionId: SESSION_ID })
+        JSON.stringify({
+          fileId: activeFileId,
+          fileName,
+          content: editorContent,
+          ts: Date.now(),
+          sessionId: SESSION_ID,
+        }),
       );
     } catch {}
   }, [activeFileId, editorContent, projectFiles, markFileDirty]);
@@ -141,26 +145,44 @@ export function useEditorLogic(
   }, [activeFileId, editorContent, projectFiles]);
 
   return {
-    editorContent, setEditorContent,
+    editorContent,
+    setEditorContent,
     debouncedEditorContent,
-    editorMode, setEditorMode,
-    isRunningCode, setIsRunningCode,
-    isLivePreviewEnabled, setIsLivePreviewEnabled,
-    isPairProgrammerActive, setIsPairProgrammerActive,
-    isMobileFileTreeOpen, setIsMobileFileTreeOpen,
-    isScanningCode, setIsScanningCode,
-    scanResults, setScanResults,
-    editorAssistantInput, setEditorAssistantInput,
-    editorAssistantMessages, setEditorAssistantMessages,
-    isEditorAssistantOpen, setIsEditorAssistantOpen,
-    cursorLine, setCursorLine,
-    contextMenu, setContextMenu,
-    lastSavedTime, setLastSavedTime,
-    isInspectorActive, setIsInspectorActive,
-    inspectedElement, setInspectedElement,
-    previewContainerRef, inspectedElementRef, monacoEditorRef,
+    editorMode,
+    setEditorMode,
+    isRunningCode,
+    setIsRunningCode,
+    isLivePreviewEnabled,
+    setIsLivePreviewEnabled,
+    isPairProgrammerActive,
+    setIsPairProgrammerActive,
+    isMobileFileTreeOpen,
+    setIsMobileFileTreeOpen,
+    isScanningCode,
+    setIsScanningCode,
+    scanResults,
+    setScanResults,
+    editorAssistantInput,
+    setEditorAssistantInput,
+    editorAssistantMessages,
+    setEditorAssistantMessages,
+    isEditorAssistantOpen,
+    setIsEditorAssistantOpen,
+    cursorLine,
+    setCursorLine,
+    contextMenu,
+    setContextMenu,
+    lastSavedTime,
+    setLastSavedTime,
+    isInspectorActive,
+    setIsInspectorActive,
+    inspectedElement,
+    setInspectedElement,
+    previewContainerRef,
+    inspectedElementRef,
+    monacoEditorRef,
     handleEditorDidMount,
     forceSave,
-    saveToFile
+    saveToFile,
   };
 }

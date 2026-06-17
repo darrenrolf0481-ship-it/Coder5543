@@ -1,12 +1,7 @@
 import chalk from 'chalk';
 
 import { program, getRootPath, getFormat, setupLogLevel, maybeCompactBanner } from '../_shared.js';
-import {
-  loadSession,
-  resetSession,
-  type Session,
-  type SessionTouch,
-} from '../../core/session.js';
+import { loadSession, resetSession, type Session, type SessionTouch } from '../../core/session.js';
 
 /**
  * `projscan session` — inspect the durable cross-invocation session that
@@ -80,9 +75,12 @@ async function runTouched(opts: { source?: string; limit?: number }): Promise<vo
     const all = Object.values(sess.touchedFiles);
     const filtered = opts.source ? all.filter((t) => t.source === opts.source) : all;
     filtered.sort((a, b) => b.lastTouchedAt.localeCompare(a.lastTouchedAt));
-    const limited = typeof opts.limit === 'number' && opts.limit > 0 ? filtered.slice(0, opts.limit) : filtered;
+    const limited =
+      typeof opts.limit === 'number' && opts.limit > 0 ? filtered.slice(0, opts.limit) : filtered;
     if (format === 'json') {
-      console.log(JSON.stringify({ sessionId: sess.id, total: filtered.length, touched: limited }, null, 2));
+      console.log(
+        JSON.stringify({ sessionId: sess.id, total: filtered.length, touched: limited }, null, 2),
+      );
       return;
     }
     printTouched(sess, limited, filtered.length);
@@ -100,9 +98,12 @@ async function runEvents(opts: { limit?: number }): Promise<void> {
   try {
     const { session: sess } = await loadSession(rootPath);
     const reversed = [...sess.events].reverse();
-    const limited = typeof opts.limit === 'number' && opts.limit > 0 ? reversed.slice(0, opts.limit) : reversed;
+    const limited =
+      typeof opts.limit === 'number' && opts.limit > 0 ? reversed.slice(0, opts.limit) : reversed;
     if (format === 'json') {
-      console.log(JSON.stringify({ sessionId: sess.id, total: reversed.length, events: limited }, null, 2));
+      console.log(
+        JSON.stringify({ sessionId: sess.id, total: reversed.length, events: limited }, null, 2),
+      );
       return;
     }
     printEvents(sess, limited, reversed.length);
@@ -139,7 +140,9 @@ function printSummary(session: Session, created: boolean): void {
   console.log(chalk.bold('Session'));
   console.log(chalk.dim('────────────────────────────────────────'));
   console.log(`  id:           ${session.id}`);
-  console.log(`  status:       ${created ? chalk.cyan('fresh (just created)') : chalk.green('active')}`);
+  console.log(
+    `  status:       ${created ? chalk.cyan('fresh (just created)') : chalk.green('active')}`,
+  );
   console.log(`  started:      ${session.startedAt}`);
   console.log(`  last activity: ${session.lastActivityAt}`);
   if (ageMs !== null) {

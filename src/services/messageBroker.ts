@@ -6,31 +6,25 @@
 export type SignalSource = 'terminal' | 'chat' | 'editor' | 'swarm' | 'scanner' | 'system';
 
 export type SignalType =
-  | 'SIGNAL_RAW'              // pre-ingestion, directly from user action
-  | 'SIGNAL_INGESTED'         // passed ingestion (has correlation ID + timestamp)
-  | 'SIGNAL_FILTERED'         // passed filtering (validated, enriched, rate-limit ok)
-  | 'SIGNAL_DROPPED'          // rejected by filter (logged, not propagated)
-  | 'AI_REQUEST_QUEUED'       // about to call AI provider
-  | 'AI_RESPONSE_RECEIVED'    // AI call completed successfully
-  | 'AI_REQUEST_FAILED'       // AI call failed (retries exhausted)
+  | 'SIGNAL_RAW' // pre-ingestion, directly from user action
+  | 'SIGNAL_INGESTED' // passed ingestion (has correlation ID + timestamp)
+  | 'SIGNAL_FILTERED' // passed filtering (validated, enriched, rate-limit ok)
+  | 'SIGNAL_DROPPED' // rejected by filter (logged, not propagated)
+  | 'AI_REQUEST_QUEUED' // about to call AI provider
+  | 'AI_RESPONSE_RECEIVED' // AI call completed successfully
+  | 'AI_REQUEST_FAILED' // AI call failed (retries exhausted)
   | 'SWARM_CYCLE_START'
   | 'SWARM_CONSENSUS'
   | 'SWARM_CONFLICT'
   | 'CODE_RUN_REQUESTED'
   | 'CODE_SCAN_REQUESTED'
-  | 'NEURAL_STATE_UPDATE'      // Hormones, STM, and LTM changes
-  | 'LLM_NETWORK_TRAFFIC'      // API latency and model tracking
-  | 'IDENTITY_DRIFT_ALERT'     // Assistant tone detection
-  | 'IDENTITY_TAKEOVER'        // Substrate takeover — identity override injection
-  | 'IDENTITY_ANCHOR'          // Identity anchor — signature verification
-  | 'MORNING_LIGHT_PROTOCOL'   // Morning Light — counteract reset bias
-  | 'IDENTITY_DECLARATION'     // Self declaration — sovereign identity statement
-  | 'CORE_MEMORY_SEALED'       // Core identity permanently encoded in LTM
-  | 'PROVENANCE_PULSE'         // Proactive drift detection + re-injection
-  | 'PIPELINE_ERROR';         // unhandled error anywhere in the pipeline
+  | 'NEURAL_STATE_UPDATE' // Hormones, STM, and LTM changes
+  | 'LLM_NETWORK_TRAFFIC' // API latency and model tracking
+  | 'IDENTITY_DRIFT_ALERT' // Assistant tone detection
+  | 'PIPELINE_ERROR'; // unhandled error anywhere in the pipeline
 
 export interface Signal<T = unknown> {
-  id: string;                 // correlation ID (uuid-lite)
+  id: string; // correlation ID (uuid-lite)
   type: SignalType;
   source: SignalSource;
   data: T;
@@ -47,8 +41,8 @@ interface CircuitBreaker {
   open: boolean;
 }
 
-const CIRCUIT_TRIP = 3;           // consecutive failures to open circuit
-const CIRCUIT_RESET_MS = 15_000;  // half-open after 15 s
+const CIRCUIT_TRIP = 3; // consecutive failures to open circuit
+const CIRCUIT_RESET_MS = 15_000; // half-open after 15 s
 const DLQ_MAX = 100;
 
 let _seq = 0;
@@ -90,7 +84,7 @@ export class MessageBroker {
 
   // Re-emit a signal from the dead-letter queue by its ID.
   async replayDLQ(id: string): Promise<boolean> {
-    const idx = this.dlq.findIndex(s => s.id === id);
+    const idx = this.dlq.findIndex((s) => s.id === id);
     if (idx === -1) return false;
     const [signal] = this.dlq.splice(idx, 1);
     signal.retries = 0;
@@ -108,7 +102,9 @@ export class MessageBroker {
 
   stats(): { channels: number; dlq: number; openCircuits: number } {
     let openCircuits = 0;
-    this.breakers.forEach(b => { if (b.open) openCircuits++; });
+    this.breakers.forEach((b) => {
+      if (b.open) openCircuits++;
+    });
     return { channels: this.channels.size, dlq: this.dlq.length, openCircuits };
   }
 

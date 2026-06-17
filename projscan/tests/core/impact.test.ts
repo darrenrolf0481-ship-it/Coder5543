@@ -17,7 +17,12 @@ function file(
       typeOnly: false,
       line: 1,
     })),
-    exports: exportsList.map((name) => ({ name, kind: 'function' as const, typeOnly: false, line: 1 })),
+    exports: exportsList.map((name) => ({
+      name,
+      kind: 'function' as const,
+      typeOnly: false,
+      line: 1,
+    })),
     callSites,
     lineCount: 0,
     cyclomaticComplexity: 1,
@@ -129,10 +134,7 @@ describe('computeImpact (file mode)', () => {
 
   it('does not report truncated when graph is exhausted within maxDistance', () => {
     // chain a -> b. query b with maxDistance=10. truncated = false.
-    const g = makeGraph(
-      [file('src/a.ts'), file('src/b.ts')],
-      [['src/a.ts', 'src/b.ts']],
-    );
+    const g = makeGraph([file('src/a.ts'), file('src/b.ts')], [['src/a.ts', 'src/b.ts']]);
     const r = computeImpact(g, { kind: 'file', value: 'src/b.ts' });
     expect(r.truncated).toBe(false);
   });
@@ -146,11 +148,7 @@ describe('computeImpact (symbol mode)', () => {
   });
 
   it('lists definition files when only definitions exist', () => {
-    const g = makeGraph(
-      [file('src/a.ts', ['foo'])],
-      [],
-      { foo: ['src/a.ts'] },
-    );
+    const g = makeGraph([file('src/a.ts', ['foo'])], [], { foo: ['src/a.ts'] });
     const r = computeImpact(g, { kind: 'symbol', value: 'foo' });
     // Defined but not called - directCallers is empty, definitionFiles populated,
     // overall available because definitions exist.

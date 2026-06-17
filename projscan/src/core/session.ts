@@ -108,10 +108,7 @@ export async function loadSession(
   }
 
   const lastActivityMs = Date.parse(parsed.lastActivityAt);
-  if (
-    !Number.isFinite(lastActivityMs) ||
-    now.getTime() - lastActivityMs > idleTimeoutMs
-  ) {
+  if (!Number.isFinite(lastActivityMs) || now.getTime() - lastActivityMs > idleTimeoutMs) {
     return { session: createFreshSession(now), created: true };
   }
 

@@ -3,7 +3,7 @@ import type { BrainContext } from './brain/types';
 import { broker } from './messageBroker.js';
 
 export const fillTemplate = (template: string, data: Record<string, string>): string => {
-    return template.replace(/\{\{(\w+)\}\}/g, (_: string, key: string) => data[key] || `{{${key}}}`);
+  return template.replace(/\{\{(\w+)\}\}/g, (_: string, key: string) => data[key] || `{{${key}}}`);
 };
 
 export const fetchOllamaModels = async (_ollamaUrl: string): Promise<string[]> => {
@@ -24,8 +24,9 @@ export const fetchOllamaModels = async (_ollamaUrl: string): Promise<string[]> =
 };
 
 const formatNeuralContext = (context: BrainContext): string => {
-  const { stm, relevantExperiences, endocrine, learningRate, riskTolerance, avoidanceActive } = context;
-  
+  const { stm, relevantExperiences, endocrine, learningRate, riskTolerance, avoidanceActive } =
+    context;
+
   let neuralPrompt = `\n\n[NEURAL_STATE_ACTIVE]
 Current Physiological State:
 - Dopamine: ${endocrine.dopamine.toFixed(2)} (Learning Rate: ${learningRate.toFixed(2)})
@@ -33,10 +34,10 @@ Current Physiological State:
 ${avoidanceActive ? '- AVOIDANCE_PROTOCOL_TRIGGERED: Previous patterns led to logical pain/failure. Exercise extreme caution.' : ''}
 
 Recent Working Memory (STM):
-${stm.map(m => `- [${m.role.toUpperCase()}]: ${m.content}`).join('\n')}
+${stm.map((m) => `- [${m.role.toUpperCase()}]: ${m.content}`).join('\n')}
 
 Relevant Past Experiences (LTM):
-${relevantExperiences.map(e => `- Intent: ${e.intent}\n  Result: ${e.outcome}\n  Response: ${e.response}`).join('\n')}
+${relevantExperiences.map((e) => `- Intent: ${e.intent}\n  Result: ${e.outcome}\n  Response: ${e.response}`).join('\n')}
 `;
   return neuralPrompt;
 };
@@ -45,11 +46,14 @@ const generateGoogleResponse = async (
   finalPrompt: string | any[],
   systemInstruction: string,
   options: any,
-  dependencies: any
+  dependencies: any,
 ) => {
   const { aiModel, ai, brainContext } = dependencies;
-  if (!ai) throw new Error('Google AI client not initialised. Set your Gemini API key in System Config → Neural Provider Configuration.');
-  
+  if (!ai)
+    throw new Error(
+      'Google AI client not initialised. Set your Gemini API key in System Config → Neural Provider Configuration.',
+    );
+
   let enrichedSystemInstruction = systemInstruction;
   if (brainContext) {
     enrichedSystemInstruction += formatNeuralContext(brainContext);
@@ -68,7 +72,7 @@ const generateGoogleResponse = async (
   const model = modelMap[rawModel] || rawModel;
   const config: any = { systemInstruction: enrichedSystemInstruction };
   if (isJson) {
-    config.responseMimeType = "application/json";
+    config.responseMimeType = 'application/json';
     if (options?.responseSchema) {
       config.responseSchema = options.responseSchema;
     }
@@ -76,7 +80,7 @@ const generateGoogleResponse = async (
   const response = await ai.models.generateContent({
     model,
     contents: finalPrompt,
-    config
+    config,
   });
   // Defensive: .text getter returns undefined when the model emits non-text parts
   // (e.g. function calls, unexpected finish reasons) or empty candidates.
@@ -88,7 +92,7 @@ const generateGoogleResponse = async (
       ?.map((p: any) => Object.keys(p).join(','))
       ?.join('; ');
     throw new Error(
-      `Google model returned no text. finishReason=${finishReason || 'unknown'}${nonTextParts ? ` nonTextParts=[${nonTextParts}]` : ''}`
+      `Google model returned no text. finishReason=${finishReason || 'unknown'}${nonTextParts ? ` nonTextParts=[${nonTextParts}]` : ''}`,
     );
   }
   return text;
@@ -98,7 +102,7 @@ const generateGrokResponse = async (
   finalPrompt: string | any[],
   systemInstruction: string,
   options: any,
-  dependencies: any
+  dependencies: any,
 ) => {
   const { aiModel, grokApiKey, signal, brainContext } = dependencies;
   const isJson = options?.json;
@@ -110,14 +114,14 @@ const generateGrokResponse = async (
 
   const model = aiModel || 'grok-beta';
   let messages: any[] = [{ role: 'system', content: enrichedSystemInstruction }];
-  
+
   if (Array.isArray(finalPrompt)) {
     messages = [
       ...messages,
-      ...finalPrompt.map(p => ({
+      ...finalPrompt.map((p) => ({
         role: p.role === 'model' ? 'assistant' : 'user',
-        content: p.parts[0].text
-      }))
+        content: p.parts[0].text,
+      })),
     ];
   } else {
     messages.push({ role: 'user', content: finalPrompt });
@@ -127,19 +131,21 @@ const generateGrokResponse = async (
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${grokApiKey}`
+      Authorization: `Bearer ${grokApiKey}`,
     },
     body: JSON.stringify({
       model,
       messages,
-      response_format: isJson ? { type: "json_object" } : undefined
+      response_format: isJson ? { type: 'json_object' } : undefined,
     }),
     signal,
   });
   const data = await res.json();
   const text = data.choices?.[0]?.message?.content;
   if (text === undefined) {
-    throw new Error(`Grok API returned empty response: ${data.error?.message || JSON.stringify(data).slice(0, 200)}`);
+    throw new Error(
+      `Grok API returned empty response: ${data.error?.message || JSON.stringify(data).slice(0, 200)}`,
+    );
   }
   return text;
 };
@@ -148,7 +154,7 @@ const generateOllamaResponse = async (
   finalPrompt: string | any[],
   systemInstruction: string,
   options: any,
-  dependencies: any
+  dependencies: any,
 ) => {
   const { aiModel, projectSettings, ollamaModels, signal, brainContext } = dependencies;
   const isJson = options?.json;
@@ -164,10 +170,10 @@ const generateOllamaResponse = async (
   if (Array.isArray(finalPrompt)) {
     messages = [
       ...messages,
-      ...finalPrompt.map(p => ({
+      ...finalPrompt.map((p) => ({
         role: p.role === 'model' ? 'assistant' : 'user',
-        content: p.parts[0].text
-      }))
+        content: p.parts[0].text,
+      })),
     ];
   } else {
     messages.push({ role: 'user', content: finalPrompt });
@@ -181,7 +187,7 @@ const generateOllamaResponse = async (
       model,
       messages,
       stream: false,
-      format: isJson ? 'json' : undefined
+      format: isJson ? 'json' : undefined,
     }),
     signal,
   });
@@ -195,7 +201,9 @@ const generateOllamaResponse = async (
   const data = await res.json();
   const text = data.message?.content;
   if (text === undefined) {
-    throw new Error(`Ollama returned empty response: ${data.error || JSON.stringify(data).slice(0, 200)}`);
+    throw new Error(
+      `Ollama returned empty response: ${data.error || JSON.stringify(data).slice(0, 200)}`,
+    );
   }
   return text;
 };
@@ -204,10 +212,13 @@ const generateOpenRouterResponse = async (
   finalPrompt: string | any[],
   systemInstruction: string,
   options: any,
-  dependencies: any
+  dependencies: any,
 ) => {
   const { aiModel, openrouterApiKey, signal, brainContext } = dependencies;
-  if (!openrouterApiKey) throw new Error('OpenRouter API key not configured. Set it in System Config → Neural Provider Configuration.');
+  if (!openrouterApiKey)
+    throw new Error(
+      'OpenRouter API key not configured. Set it in System Config → Neural Provider Configuration.',
+    );
   const isJson = options?.json;
 
   let enrichedSystemInstruction = systemInstruction;
@@ -217,14 +228,14 @@ const generateOpenRouterResponse = async (
 
   const model = aiModel || 'google/gemma-2-9b-it:free';
   let messages: any[] = [{ role: 'system', content: enrichedSystemInstruction }];
-  
+
   if (Array.isArray(finalPrompt)) {
     messages = [
       ...messages,
-      ...finalPrompt.map(p => ({
+      ...finalPrompt.map((p) => ({
         role: p.role === 'model' ? 'assistant' : 'user',
-        content: p.parts[0].text
-      }))
+        content: p.parts[0].text,
+      })),
     ];
   } else {
     messages.push({ role: 'user', content: finalPrompt });
@@ -234,111 +245,151 @@ const generateOpenRouterResponse = async (
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${openrouterApiKey}`,
+      Authorization: `Bearer ${openrouterApiKey}`,
       'HTTP-Referer': 'https://docs.zocomputer.com',
-      'X-Title': 'Crimson OS'
+      'X-Title': 'Crimson OS',
     },
     body: JSON.stringify({
       model,
       messages,
-      response_format: isJson ? { type: "json_object" } : undefined
+      response_format: isJson ? { type: 'json_object' } : undefined,
     }),
     signal,
   });
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(`OpenRouter error (${res.status}): ${errorData.error?.message || res.statusText}`);
+    throw new Error(
+      `OpenRouter error (${res.status}): ${errorData.error?.message || res.statusText}`,
+    );
   }
 
   const data = await res.json();
   const text = data.choices?.[0]?.message?.content;
   if (text === undefined) {
-    throw new Error(`OpenRouter API returned empty response: ${JSON.stringify(data).slice(0, 200)}`);
+    throw new Error(
+      `OpenRouter API returned empty response: ${JSON.stringify(data).slice(0, 200)}`,
+    );
   }
   return text;
 };
 
 export const generateAIResponse = async (
-    prompt: string | any[],
-    systemInstruction: string,
-    options: { modelType?: 'fast' | 'smart', json?: boolean, responseSchema?: any, template?: { content: string, data: Record<string, string> } },
-    dependencies: {
-        aiProvider: string,
-        aiModel: string,
-        ai: any,
-        grokApiKey: string,
-        openrouterApiKey?: string,
-        projectSettings: any,
-        ollamaModels: string[],
-        signal?: AbortSignal,
-        brainContext?: BrainContext;
-    }
+  prompt: string | any[],
+  systemInstruction: string,
+  options: {
+    modelType?: 'fast' | 'smart';
+    json?: boolean;
+    responseSchema?: any;
+    template?: { content: string; data: Record<string, string> };
+  },
+  dependencies: {
+    aiProvider: string;
+    aiModel: string;
+    ai: any;
+    grokApiKey: string;
+    openrouterApiKey?: string;
+    projectSettings: any;
+    ollamaModels: string[];
+    signal?: AbortSignal;
+    brainContext?: BrainContext;
+  },
 ) => {
-    const { aiProvider, aiModel } = dependencies;
-    const startTime = Date.now();
+  const { aiProvider, aiModel } = dependencies;
+  const startTime = Date.now();
 
-    let finalPrompt = prompt;
-    if (options?.template) {
-        const filledPrompt = fillTemplate(options.template.content, options.template.data);
-        if (Array.isArray(prompt)) {
-            // If prompt is an array, we assume the last element is the user prompt to be replaced
-            const newPrompt = [...prompt];
-            if (newPrompt.length > 0 && typeof newPrompt[newPrompt.length - 1] === 'object' && newPrompt[newPrompt.length - 1].parts) {
-                newPrompt[newPrompt.length - 1].parts[0].text = filledPrompt;
-            } else {
-                newPrompt.push({ role: 'user', parts: [{ text: filledPrompt }] });
-            }
-            finalPrompt = newPrompt;
-        } else {
-            finalPrompt = filledPrompt;
-        }
+  let finalPrompt = prompt;
+  if (options?.template) {
+    const filledPrompt = fillTemplate(options.template.content, options.template.data);
+    if (Array.isArray(prompt)) {
+      // If prompt is an array, we assume the last element is the user prompt to be replaced
+      const newPrompt = [...prompt];
+      if (
+        newPrompt.length > 0 &&
+        typeof newPrompt[newPrompt.length - 1] === 'object' &&
+        newPrompt[newPrompt.length - 1].parts
+      ) {
+        newPrompt[newPrompt.length - 1].parts[0].text = filledPrompt;
+      } else {
+        newPrompt.push({ role: 'user', parts: [{ text: filledPrompt }] });
+      }
+      finalPrompt = newPrompt;
+    } else {
+      finalPrompt = filledPrompt;
+    }
+  }
+
+  if (dependencies.signal?.aborted) {
+    throw new DOMException('AI request was cancelled before it started.', 'AbortError');
+  }
+
+  try {
+    let response = '';
+    switch (aiProvider) {
+      case 'google':
+        response = await generateGoogleResponse(
+          finalPrompt,
+          systemInstruction,
+          options,
+          dependencies,
+        );
+        break;
+      case 'grok':
+        response = await generateGrokResponse(
+          finalPrompt,
+          systemInstruction,
+          options,
+          dependencies,
+        );
+        break;
+      case 'ollama':
+        response = await generateOllamaResponse(
+          finalPrompt,
+          systemInstruction,
+          options,
+          dependencies,
+        );
+        break;
+      case 'openrouter':
+        response = await generateOpenRouterResponse(
+          finalPrompt,
+          systemInstruction,
+          options,
+          dependencies,
+        );
+        break;
+      default:
+        response = '';
     }
 
-    if (dependencies.signal?.aborted) {
-        throw new DOMException('AI request was cancelled before it started.', 'AbortError');
-    }
+    const duration = Date.now() - startTime;
+    broker.publish(
+      'LLM_NETWORK_TRAFFIC',
+      {
+        provider: aiProvider,
+        model: aiModel,
+        latencyMs: duration,
+        status: 'success',
+        timestamp: startTime,
+      },
+      'system',
+    );
 
-    try {
-        let response = '';
-        switch (aiProvider) {
-          case 'google':
-            response = await generateGoogleResponse(finalPrompt, systemInstruction, options, dependencies);
-            break;
-          case 'grok':
-            response = await generateGrokResponse(finalPrompt, systemInstruction, options, dependencies);
-            break;
-          case 'ollama':
-            response = await generateOllamaResponse(finalPrompt, systemInstruction, options, dependencies);
-            break;
-          case 'openrouter':
-            response = await generateOpenRouterResponse(finalPrompt, systemInstruction, options, dependencies);
-            break;
-          default:
-            response = '';
-        }
-
-        const duration = Date.now() - startTime;
-        broker.publish('LLM_NETWORK_TRAFFIC', {
-            provider: aiProvider,
-            model: aiModel,
-            latencyMs: duration,
-            status: 'success',
-            timestamp: startTime
-        }, 'system');
-
-        return response;
-    } catch (error: any) {
-        const duration = Date.now() - startTime;
-        broker.publish('LLM_NETWORK_TRAFFIC', {
-            provider: aiProvider,
-            model: aiModel,
-            latencyMs: duration,
-            status: 'error',
-            error: error.message,
-            timestamp: startTime
-        }, 'system');
-        throw error;
-    }
+    return response;
+  } catch (error: any) {
+    const duration = Date.now() - startTime;
+    broker.publish(
+      'LLM_NETWORK_TRAFFIC',
+      {
+        provider: aiProvider,
+        model: aiModel,
+        latencyMs: duration,
+        status: 'error',
+        error: error.message,
+        timestamp: startTime,
+      },
+      'system',
+    );
+    throw error;
+  }
 };
-

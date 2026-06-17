@@ -17,7 +17,7 @@ export type AIResponseFn = (
   prompt: string,
   systemInstruction: string,
   options?: { modelType?: 'fast' | 'smart'; json?: boolean; responseSchema?: any },
-  domain?: string
+  domain?: string,
 ) => Promise<string>;
 
 const MAX_PROJECT_CONTEXT_CHARS = 8_000;
@@ -30,19 +30,26 @@ function buildProjectContext(ctx: SwarmEngineContext): string {
   }
   if (ctx.editorContent && ctx.editorLanguage) {
     const trimmed = ctx.editorContent.slice(0, MAX_PROJECT_CONTEXT_CHARS);
-    parts.push(`\n[ACTIVE FILE - ${ctx.activeFileId || 'unknown'}]\n\`\`\`${ctx.editorLanguage}\n${trimmed}\n\`\`\``);
+    parts.push(
+      `\n[ACTIVE FILE - ${ctx.activeFileId || 'unknown'}]\n\`\`\`${ctx.editorLanguage}\n${trimmed}\n\`\`\``,
+    );
   }
   if (ctx.projectFiles && ctx.projectFiles.length > 0) {
     const fileList = ctx.projectFiles
-      .filter(f => f.type === 'file')
-      .map(f => `- ${f.name}${f.language ? ` (${f.language})` : ''}`)
+      .filter((f) => f.type === 'file')
+      .map((f) => `- ${f.name}${f.language ? ` (${f.language})` : ''}`)
       .join('\n');
     parts.push(`\n[PROJECT FILES]\n${fileList}`);
   }
   return parts.join('\n\n');
 }
 
-function buildAgentPrompt(agent: SwarmAgent, mode: ReturnType<typeof getSwarmMode>, ctx: SwarmEngineContext, boostCtx: string): string {
+function buildAgentPrompt(
+  agent: SwarmAgent,
+  mode: ReturnType<typeof getSwarmMode>,
+  ctx: SwarmEngineContext,
+  boostCtx: string,
+): string {
   const repoCtx = buildRepoContextForAgent(agent, ctx.repos || []);
   const projectCtx = buildProjectContext(ctx);
 
@@ -115,10 +122,10 @@ export async function runSwarmCycle(
   ctx: SwarmEngineContext,
   generate: AIResponseFn,
   onAgentStatus?: (agentId: string, status: SwarmAgentStatus, meta?: string) => void,
-  onAgentComplete?: (result: AgentRunResult) => void
+  onAgentComplete?: (result: AgentRunResult) => void,
 ): Promise<SwarmReport> {
   const mode = getSwarmMode(ctx.mode);
-  const activeAgents = ctx.agents.filter(a => a.active);
+  const activeAgents = ctx.agents.filter((a) => a.active);
 
   if (activeAgents.length === 0) {
     throw new Error('No active agents in the swarm.');
@@ -127,7 +134,7 @@ export async function runSwarmCycle(
   broker.publish(
     'SWARM_CYCLE_START',
     { mode: ctx.mode, mission: ctx.mission, agentCount: activeAgents.length },
-    'swarm'
+    'swarm',
   );
   eventBus.emit(
     'swarm:started',
@@ -141,7 +148,11 @@ export async function runSwarmCycle(
   let boostResults: BoostResult[] = [];
   const enabledBoosts = ctx.enabledBoosts || [];
   if (enabledBoosts.length > 0) {
-    broker.publish('SWARM_CONSENSUS', { message: `Running MCP boosts: ${enabledBoosts.join(', ')}` }, 'swarm');
+    broker.publish(
+      'SWARM_CONSENSUS',
+      { message: `Running MCP boosts: ${enabledBoosts.join(', ')}` },
+      'swarm',
+    );
     for (const boostId of enabledBoosts) {
       try {
         const results = await runMcpBoost(boostId);
@@ -159,11 +170,16 @@ export async function runSwarmCycle(
     }
   }
   const boostCtx = enabledBoosts
-    .map(id => formatBoostResultsForAgent(boostResults.filter(r => r.boostId === id), id))
+    .map((id) =>
+      formatBoostResultsForAgent(
+        boostResults.filter((r) => r.boostId === id),
+        id,
+      ),
+    )
     .join('\n\n---\n\n');
 
   // Phase 1: run all agents in parallel
-  const runPromises = activeAgents.map(async agent => {
+  const runPromises = activeAgents.map(async (agent) => {
     const start = performance.now();
     onAgentStatus?.(agent.id, 'reading_repos');
     const repoCtx = buildRepoContextForAgent(agent, ctx.repos || []);
@@ -177,7 +193,7 @@ export async function runSwarmCycle(
         prompt,
         agent.systemPrompt,
         { modelType: 'smart' },
-        `swarm-agent-${agent.id}`
+        `swarm-agent-${agent.id}`,
       );
       const latencyMs = Math.round(performance.now() - start);
       onAgentStatus?.(agent.id, 'done');
@@ -221,8 +237,18 @@ export async function runSwarmCycle(
 
   // Phase 2 (optional): critique + refinement
   if (ctx.enableCritique && activeAgents.length >= 2) {
-    broker.publish('SWARM_CONFLICT', { message: 'Starting critique and refinement round' }, 'swarm');
-    agentResults = await runCritiqueAndRefinement(activeAgents, agentResults, ctx, generate, onAgentStatus);
+    broker.publish(
+      'SWARM_CONFLICT',
+      { message: 'Starting critique and refinement round' },
+      'swarm',
+    );
+    agentResults = await runCritiqueAndRefinement(
+      activeAgents,
+      agentResults,
+      ctx,
+      generate,
+      onAgentStatus,
+    );
   }
 
   // Phase 3: synthesize
@@ -231,7 +257,10 @@ export async function runSwarmCycle(
 
   let rawSynthesis = '';
   try {
-    rawSynthesis = await generate(synthesisPrompt, synthesisSystem, { modelType: 'smart', json: true });
+    rawSynthesis = await generate(synthesisPrompt, synthesisSystem, {
+      modelType: 'smart',
+      json: true,
+    });
   } catch (err: any) {
     broker.publish('AI_REQUEST_FAILED', { stage: 'swarm-synthesis', error: err.message }, 'swarm');
     rawSynthesis = JSON.stringify({
@@ -256,8 +285,12 @@ export async function runSwarmCycle(
 
   broker.publish(
     'SWARM_CONSENSUS',
-    { report: finalReport, agreementCount: report.agreements.length, conflictCount: report.conflicts.length },
-    'swarm'
+    {
+      report: finalReport,
+      agreementCount: report.agreements.length,
+      conflictCount: report.conflicts.length,
+    },
+    'swarm',
   );
   eventBus.emit(
     'swarm:completed',
@@ -273,9 +306,9 @@ async function runCritiqueAndRefinement(
   initialResults: AgentRunResult[],
   ctx: SwarmEngineContext,
   generate: AIResponseFn,
-  onAgentStatus?: (agentId: string, status: SwarmAgentStatus, meta?: string) => void
+  onAgentStatus?: (agentId: string, status: SwarmAgentStatus, meta?: string) => void,
 ): Promise<AgentRunResult[]> {
-  const resultsById = new Map(initialResults.map(r => [r.agentId, r]));
+  const resultsById = new Map(initialResults.map((r) => [r.agentId, r]));
 
   // Each agent critiques the two agents that follow them in the roster
   const critiquePromises = activeAgents.map(async (agent, index) => {
@@ -284,7 +317,7 @@ async function runCritiqueAndRefinement(
       activeAgents[(index + 2) % activeAgents.length],
     ];
     const targetResults = targets
-      .map(t => resultsById.get(t.id))
+      .map((t) => resultsById.get(t.id))
       .filter((r): r is AgentRunResult => !!r && r.status === 'fulfilled');
     if (targetResults.length === 0) return { agentId: agent.id, critiques: [] as string[] };
 
@@ -293,10 +326,12 @@ async function runCritiqueAndRefinement(
 2. One gap or weakness (what they missed or misjudged)
 3. One specific question that would improve their analysis
 
-${targetResults.map(r => `--- RESPONSE FROM ${r.agentId} ---\n${r.response}`).join('\n\n')}`;
+${targetResults.map((r) => `--- RESPONSE FROM ${r.agentId} ---\n${r.response}`).join('\n\n')}`;
 
     try {
-      const critiqueText = await generate(critiquePrompt, agent.systemPrompt, { modelType: 'smart' });
+      const critiqueText = await generate(critiquePrompt, agent.systemPrompt, {
+        modelType: 'smart',
+      });
       return { agentId: agent.id, critiques: [critiqueText] };
     } catch {
       return { agentId: agent.id, critiques: [] as string[] };
@@ -304,16 +339,17 @@ ${targetResults.map(r => `--- RESPONSE FROM ${r.agentId} ---\n${r.response}`).jo
   });
 
   const critiques = await Promise.all(critiquePromises);
-  const critiquesByAgent = new Map(critiques.map(c => [c.agentId, c.critiques]));
+  const critiquesByAgent = new Map(critiques.map((c) => [c.agentId, c.critiques]));
 
   // Refinement pass
-  const refinementPromises: Promise<AgentRunResult>[] = activeAgents.map(async agent => {
+  const refinementPromises: Promise<AgentRunResult>[] = activeAgents.map(async (agent) => {
     const initial = resultsById.get(agent.id);
     if (!initial || initial.status === 'rejected') return initial!;
 
     onAgentStatus?.(agent.id, 'thinking', 'refining');
     const start = performance.now();
-    const feedback = critiquesByAgent.get(agent.id)?.join('\n\n') || 'No external critiques received.';
+    const feedback =
+      critiquesByAgent.get(agent.id)?.join('\n\n') || 'No external critiques received.';
 
     const refinePrompt = `You are ${agent.name}. Here is your initial analysis:
 
@@ -349,15 +385,15 @@ function buildSynthesisPrompt(
   mode: ReturnType<typeof getSwarmMode>,
   mission: string,
   results: AgentRunResult[],
-  projectCtx: string
+  projectCtx: string,
 ): string {
   const agentSections = results
-    .map(r => {
+    .map((r) => {
       const header = `[AGENT: ${r.agentId}]`;
       if (r.status === 'rejected') {
         return `${header}\nFAILED: ${r.error}`;
       }
-      return `${header}\nResponse:\n${r.response}\nKey Claims:\n${(r.keyClaims || []).map(c => `- ${c}`).join('\n')}\nConfidence: ${r.confidence ?? 'unknown'}`;
+      return `${header}\nResponse:\n${r.response}\nKey Claims:\n${(r.keyClaims || []).map((c) => `- ${c}`).join('\n')}\nConfidence: ${r.confidence ?? 'unknown'}`;
     })
     .join('\n\n---\n\n');
 
@@ -378,11 +414,19 @@ function parseSynthesisReport(raw: string) {
     const parsed = JSON.parse(cleaned);
     return {
       summary: String(parsed.summary || fallback.summary),
-      agreements: Array.isArray(parsed.agreements) ? parsed.agreements.map(String) : fallback.agreements,
-      conflicts: Array.isArray(parsed.conflicts) ? parsed.conflicts.map(String) : fallback.conflicts,
-      recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations.map(String) : fallback.recommendations,
+      agreements: Array.isArray(parsed.agreements)
+        ? parsed.agreements.map(String)
+        : fallback.agreements,
+      conflicts: Array.isArray(parsed.conflicts)
+        ? parsed.conflicts.map(String)
+        : fallback.conflicts,
+      recommendations: Array.isArray(parsed.recommendations)
+        ? parsed.recommendations.map(String)
+        : fallback.recommendations,
       bestCourseOfAction: String(parsed.bestCourseOfAction || fallback.bestCourseOfAction),
-      riskNotes: Array.isArray(parsed.riskNotes) ? parsed.riskNotes.map(String) : fallback.riskNotes,
+      riskNotes: Array.isArray(parsed.riskNotes)
+        ? parsed.riskNotes.map(String)
+        : fallback.riskNotes,
     };
   } catch {
     return fallback;

@@ -12,7 +12,9 @@ import { reportPrDiffHtml } from '../../reporters/htmlReporter.js';
 export function registerPrDiff(): void {
   program
     .command('pr-diff')
-    .description('Structural (AST) diff between two refs - what changed in exports, imports, calls, CC, fan-in')
+    .description(
+      'Structural (AST) diff between two refs - what changed in exports, imports, calls, CC, fan-in',
+    )
     .option('--base <ref>', 'base ref (default: origin/main, falling back to main/master/HEAD~1)')
     .option('--head <ref>', 'head ref (default: HEAD)')
     .option('--package <name>', 'monorepo: scope diff to a single workspace package')

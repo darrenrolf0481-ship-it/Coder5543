@@ -11,11 +11,11 @@ describe('generateAIResponse', () => {
       models: {
         generateContent: vi.fn().mockResolvedValue({
           text: 'Google response',
-          functionCalls: () => []
-        })
-      }
+          functionCalls: () => [],
+        }),
+      },
     };
-    
+
     const response = await generateAIResponse(
       'test prompt',
       'system instruction',
@@ -26,10 +26,10 @@ describe('generateAIResponse', () => {
         ai: mockAi,
         grokApiKey: '',
         projectSettings: {},
-        ollamaModels: []
-      }
+        ollamaModels: [],
+      },
     );
-    
+
     expect(response).toBe('Google response');
     expect(mockAi.models.generateContent).toHaveBeenCalled();
   });
@@ -37,9 +37,9 @@ describe('generateAIResponse', () => {
   it('should call Grok API', async () => {
     (fetch as any).mockResolvedValue({
       ok: true,
-      json: vi.fn().mockResolvedValue({ choices: [{ message: { content: 'Grok response' } }] })
+      json: vi.fn().mockResolvedValue({ choices: [{ message: { content: 'Grok response' } }] }),
     });
-    
+
     const response = await generateAIResponse(
       'test prompt',
       'system instruction',
@@ -50,10 +50,10 @@ describe('generateAIResponse', () => {
         ai: {},
         grokApiKey: 'test-key',
         projectSettings: {},
-        ollamaModels: []
-      }
+        ollamaModels: [],
+      },
     );
-    
+
     expect(response).toBe('Grok response');
     expect(fetch).toHaveBeenCalledWith('https://api.x.ai/v1/chat/completions', expect.any(Object));
   });
@@ -61,9 +61,9 @@ describe('generateAIResponse', () => {
   it('should call Ollama API', async () => {
     (fetch as any).mockResolvedValue({
       ok: true,
-      json: vi.fn().mockResolvedValue({ message: { content: 'Ollama response' } })
+      json: vi.fn().mockResolvedValue({ message: { content: 'Ollama response' } }),
     });
-    
+
     const response = await generateAIResponse(
       'test prompt',
       'system instruction',
@@ -74,10 +74,10 @@ describe('generateAIResponse', () => {
         ai: {},
         grokApiKey: '',
         projectSettings: { ollamaUrl: 'http://localhost:11434' },
-        ollamaModels: ['llama3']
-      }
+        ollamaModels: ['llama3'],
+      },
     );
-    
+
     expect(response).toBe('Ollama response');
     expect(fetch).toHaveBeenCalledWith('./api/ollama/chat', expect.any(Object));
   });
@@ -87,11 +87,11 @@ describe('generateAIResponse', () => {
       models: {
         generateContent: vi.fn().mockResolvedValue({
           text: 'Template response',
-          functionCalls: () => []
-        })
-      }
+          functionCalls: () => [],
+        }),
+      },
     };
-    
+
     const response = await generateAIResponse(
       'original prompt',
       'system instruction',
@@ -102,13 +102,15 @@ describe('generateAIResponse', () => {
         ai: mockAi,
         grokApiKey: '',
         projectSettings: {},
-        ollamaModels: []
-      }
+        ollamaModels: [],
+      },
     );
-    
+
     expect(response).toBe('Template response');
-    expect(mockAi.models.generateContent).toHaveBeenCalledWith(expect.objectContaining({
-      contents: 'Hello World'
-    }));
+    expect(mockAi.models.generateContent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contents: 'Hello World',
+      }),
+    );
   });
 });

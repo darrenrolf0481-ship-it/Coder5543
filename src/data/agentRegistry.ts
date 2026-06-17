@@ -11,12 +11,12 @@ export interface AgentDefinition {
 
 export const AGENTS: AgentDefinition[] = agentsData as AgentDefinition[];
 
-export const AGENT_DOMAINS = [...new Set(AGENTS.map(a => a.domain))].sort();
+export const AGENT_DOMAINS = [...new Set(AGENTS.map((a) => a.domain))].sort();
 
 export function getAgent(id: string): AgentDefinition | undefined {
-  return AGENTS.find(a => a.id === id);
+  return AGENTS.find((a) => a.id === id);
 }
 
 export function getAgentsByDomain(domain: string): AgentDefinition[] {
-  return AGENTS.filter(a => a.domain === domain);
+  return AGENTS.filter((a) => a.domain === domain);
 }

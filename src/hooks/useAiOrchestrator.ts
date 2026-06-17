@@ -11,11 +11,11 @@ export function useAiOrchestrator(
   grokApiKey: string,
   geminiApiKey: string,
   openrouterApiKey: string,
-  projectSettings: any
+  projectSettings: any,
 ) {
   const googleAiClient = useMemo(
     () => (geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null),
-    [geminiApiKey]
+    [geminiApiKey],
   );
 
   const abortRefs = useRef<Record<string, AbortController>>({});
@@ -37,21 +37,21 @@ export function useAiOrchestrator(
     async (
       prompt: string | any[],
       systemInstruction: string,
-      options?: { 
-        modelType?: 'fast' | 'smart'; 
-        json?: boolean; 
-        responseSchema?: any; 
-        brainContext?: any; 
-        mcpTools?: string[] 
+      options?: {
+        modelType?: 'fast' | 'smart';
+        json?: boolean;
+        responseSchema?: any;
+        brainContext?: any;
+        mcpTools?: string[];
       },
-      domain?: string
+      domain?: string,
     ) => {
-      const active = workers.filter(w => w.enabled);
+      const active = workers.filter((w) => w.enabled);
       if (active.length === 0) return Promise.reject(new Error('No workers enabled'));
-      
+
       const { brainContext, ...serviceOptions } = options || {};
-      
-      const activePersonality = personalities.find(p => p.active) || personalities[0];
+
+      const activePersonality = personalities.find((p) => p.active) || personalities[0];
       const mergedOptions = {
         ...serviceOptions,
         mcpTools: serviceOptions.mcpTools || activePersonality?.mcpTools || [],
@@ -85,7 +85,7 @@ export function useAiOrchestrator(
       // isolated signal so parallel feature calls don't abort each other.
       const sharedSignal = domain ? getSignal(domain) : undefined;
       const results = await Promise.allSettled(
-        active.map(w =>
+        active.map((w) =>
           generateAIResponseService(prompt as string, buildInstruction(w), mergedOptions, {
             aiProvider: w.provider,
             aiModel: w.model,
@@ -96,20 +96,30 @@ export function useAiOrchestrator(
             ollamaModels: w.models ?? [],
             signal: sharedSignal ?? getSignal(),
             brainContext,
-          })
-        )
+          }),
+        ),
       );
 
-      const first = results.find(r => r.status === 'fulfilled' && (r as PromiseFulfilledResult<string>).value);
+      const first = results.find(
+        (r) => r.status === 'fulfilled' && (r as PromiseFulfilledResult<string>).value,
+      );
       if (!first) {
         const errors = results
-          .filter(r => r.status === 'rejected')
-          .map(r => (r as PromiseRejectedResult).reason?.message || 'Unknown error');
+          .filter((r) => r.status === 'rejected')
+          .map((r) => (r as PromiseRejectedResult).reason?.message || 'Unknown error');
         throw new Error(`All workers failed: ${errors.join(', ')}`);
       }
       return (first as PromiseFulfilledResult<string>).value;
     },
-    [workers, googleAiClient, grokApiKey, openrouterApiKey, projectSettings, personalities, getSignal]
+    [
+      workers,
+      googleAiClient,
+      grokApiKey,
+      openrouterApiKey,
+      projectSettings,
+      personalities,
+      getSignal,
+    ],
   );
 
   return { generateAIResponse, googleAiClient };

@@ -47,12 +47,16 @@ async function runInit(rootPath: string, force: boolean): Promise<void> {
   if (exists && !force) {
     console.log('');
     console.log(chalk.yellow('⚠ .projscanrc.json already exists. Refusing to overwrite.'));
-    console.log(chalk.dim('  Pass --force to overwrite, or merge manually with the defaults below:'));
+    console.log(
+      chalk.dim('  Pass --force to overwrite, or merge manually with the defaults below:'),
+    );
     console.log('');
     console.log(prefixIndent(JSON.stringify(DEFAULT_CONFIG, null, 2), '  '));
     console.log('');
     console.log(
-      chalk.dim('  See https://github.com/abhiyoheswaran1/projscan#projscanrc for the field reference.'),
+      chalk.dim(
+        '  See https://github.com/abhiyoheswaran1/projscan#projscanrc for the field reference.',
+      ),
     );
     return;
   }

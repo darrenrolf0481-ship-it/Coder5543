@@ -26,9 +26,9 @@ export const GenerateModal: React.FC<GenerateModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8 bg-black/95 backdrop-blur-3xl animate-in fade-in zoom-in duration-300">
-    <div className="w-full max-w-2xl bg-[#0d0404] border border-accent-900/30 rounded-[30px] md:rounded-[40px] shadow-[0_0_100px_var(--color-accent-800)/20] overflow-hidden flex flex-col max-h-[90vh]">
-      {/* Header */}
-      <div className="p-6 border-b border-accent-900/20 bg-black/40 flex items-center justify-between shrink-0">
+      <div className="w-full max-w-2xl bg-[#0d0404] border border-accent-900/30 rounded-[30px] md:rounded-[40px] shadow-[0_0_100px_var(--color-accent-800)/20] overflow-hidden flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="p-6 border-b border-accent-900/20 bg-black/40 flex items-center justify-between shrink-0">
           <div className="space-y-1">
             <h3 className="text-xl md:text-2xl font-black text-accent-100 uppercase tracking-tighter">
               Neural Forge

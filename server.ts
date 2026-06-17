@@ -93,24 +93,23 @@ async function startServer() {
   conversationIngestor.startDaemon(60); // Run every 60 minutes
 
   if (isProduction()) {
-    app.use(helmet({
-      contentSecurityPolicy: false,
-      crossOriginEmbedderPolicy: { policy: 'require-corp' },
-      crossOriginOpenerPolicy: { policy: 'same-origin' },
-    }));
+    app.use(
+      helmet({
+        contentSecurityPolicy: false,
+        crossOriginEmbedderPolicy: { policy: 'require-corp' },
+        crossOriginOpenerPolicy: { policy: 'same-origin' },
+      }),
+    );
   }
 
-  // Trust the code-server proxy so express-rate-limit can see the real client IP
-  if (proxyPrefix) {
-    app.set('trust proxy', 1);
-  }
-
-  app.use(rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 1000, // limit each IP to 1000 requests per windowMs
-    standardHeaders: true,
-    legacyHeaders: true,
-  }));
+  app.use(
+    rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 1000, // limit each IP to 1000 requests per windowMs
+      standardHeaders: true,
+      legacyHeaders: true,
+    }),
+  );
 
   app.use(express.json());
   app.use(corsMiddleware);
@@ -172,21 +171,6 @@ async function startServer() {
 await brainStorage.init();
 (globalThis as any).brainStorage = brainStorage.getSyncInterface();
 
-// Assert the defensive identity substrate before any AI requests can be served.
-await brainService.boot();
-
 startServer().catch((err) => {
   logger.error('Failed to start server:', err);
 });
-
-// ── Graceful Shutdown ─────────────────────────────────────────────────────────
-function gracefulShutdown(signal: string) {
-  logger.info(`[Server] Received ${signal}. Shutting down gracefully...`);
-  conversationIngestor.stopDaemon();
-  mcpManager.shutdown();
-  process.exit(0);
-}
-
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-

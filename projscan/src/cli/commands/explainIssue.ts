@@ -12,7 +12,9 @@ import { reportExplainIssueMarkdown } from '../../reporters/markdownReporter.js'
 export function registerExplainIssue(): void {
   program
     .command('explain-issue <issue_id>')
-    .description('Deep dive on one open issue: code excerpt, related issues, past fixes, suggested action')
+    .description(
+      'Deep dive on one open issue: code excerpt, related issues, past fixes, suggested action',
+    )
     .action(async (issueId: string) => {
       setupLogLevel();
       maybeCompactBanner();
@@ -27,7 +29,9 @@ export function registerExplainIssue(): void {
         if (spinner) spinner.stop();
 
         if (!explanation) {
-          console.error(chalk.red(`\n  No open issue with id "${issueId}" in current doctor run.\n`));
+          console.error(
+            chalk.red(`\n  No open issue with id "${issueId}" in current doctor run.\n`),
+          );
           process.exit(1);
         }
 

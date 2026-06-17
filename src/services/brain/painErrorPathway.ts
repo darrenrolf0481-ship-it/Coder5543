@@ -5,9 +5,9 @@ import type { AvoidanceMap } from './avoidanceMap';
 
 // Per-type hormonal signature: [cortisolWeight, norepinephrineWeight]
 const PAIN_SIGNATURES: Record<PainType, [number, number]> = {
-  [PainType.BUILD_FAILURE]:         [0.5, 0.3], // frustration + urgency
+  [PainType.BUILD_FAILURE]: [0.5, 0.3], // frustration + urgency
   [PainType.LOGICAL_INCONSISTENCY]: [0.25, 0.5], // confusion → high NE (conflict)
-  [PainType.USER_REJECTION]:        [0.6, 0.1], // shame/withdrawal → high cortisol
+  [PainType.USER_REJECTION]: [0.6, 0.1], // shame/withdrawal → high cortisol
 };
 
 export class PainErrorPathway {

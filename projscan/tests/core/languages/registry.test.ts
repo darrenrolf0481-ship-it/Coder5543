@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { getAdapterFor, isAdapterParseable, listAdapters } from '../../../src/core/languages/registry.js';
+import {
+  getAdapterFor,
+  isAdapterParseable,
+  listAdapters,
+} from '../../../src/core/languages/registry.js';
 
 describe('language registry', () => {
   it('returns the JavaScript adapter for JS/TS extensions', () => {

@@ -15,11 +15,17 @@ export class STMBuffer {
     try {
       const raw = storage.getItem(STORAGE_KEY);
       if (raw) this.buffer = JSON.parse(raw);
-    } catch { this.buffer = []; }
+    } catch {
+      this.buffer = [];
+    }
   }
 
   private persist(): void {
-    try { storage.setItem(STORAGE_KEY, JSON.stringify(this.buffer)); } catch { /* ignore */ }
+    try {
+      storage.setItem(STORAGE_KEY, JSON.stringify(this.buffer));
+    } catch {
+      /* ignore */
+    }
   }
 
   push(entry: WorkingMemory): void {

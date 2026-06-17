@@ -10,7 +10,6 @@ const LAST_INGEST_KEY = 'last_conversation_ingest_timestamp';
 
 export class ConversationIngestor {
   private isProcessing = false;
-  private intervalId: NodeJS.Timeout | null = null;
 
   /**
    * Scans conversations.json and ingests new messages into LTM.
@@ -35,7 +34,7 @@ export class ConversationIngestor {
 
       // 3. Filter by last ingest timestamp
       const lastIngest = parseInt(storage.getItem(LAST_INGEST_KEY) || '0', 10);
-      const newMessages = conversations.filter(c => {
+      const newMessages = conversations.filter((c) => {
         const ts = new Date(c.timestamp).getTime();
         return ts > lastIngest;
       });
@@ -45,7 +44,9 @@ export class ConversationIngestor {
         return 0;
       }
 
-      logger.info(`[Ingestor] Found ${newMessages.length} new messages. Starting contextual indexing...`);
+      logger.info(
+        `[Ingestor] Found ${newMessages.length} new messages. Starting contextual indexing...`,
+      );
 
       let count = 0;
       let newestTimestamp = lastIngest;
@@ -66,14 +67,16 @@ export class ConversationIngestor {
           emotionalWeight: 0.1, // Historical conversations are slightly positive weighted
           tags: ['historical', 'archive'],
           timestamp: ts,
-          accessCount: 0
+          accessCount: 0,
         };
 
         try {
           await ltmStore.save(experience);
           count++;
           if (count % 10 === 0) {
-            logger.info(`[Ingestor] Contextually indexed ${count}/${newMessages.length} messages...`);
+            logger.info(
+              `[Ingestor] Contextually indexed ${count}/${newMessages.length} messages...`,
+            );
           }
         } catch (err: any) {
           logger.error(`[Ingestor] Error indexing message ${ts}:`, err.message);
@@ -84,7 +87,6 @@ export class ConversationIngestor {
       storage.setItem(LAST_INGEST_KEY, newestTimestamp.toString());
       logger.info(`[Ingestor] Completed. ${count} historical context nodes added to the Vault.`);
       return count;
-
     } catch (err: any) {
       logger.error('[Ingestor] Critical error during ingestion:', err);
       return 0;
@@ -102,17 +104,12 @@ export class ConversationIngestor {
     // Initial run after a short delay
     setTimeout(() => this.ingestNew(), 5000);
 
-    this.intervalId = setInterval(() => {
-      this.ingestNew();
-    }, intervalMinutes * 60 * 1000);
-  }
-
-  stopDaemon() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-      logger.info('[Ingestor] Contextual Memory Daemon stopped');
-    }
+    setInterval(
+      () => {
+        this.ingestNew();
+      },
+      intervalMinutes * 60 * 1000,
+    );
   }
 }
 

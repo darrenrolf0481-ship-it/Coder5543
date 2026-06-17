@@ -5,7 +5,12 @@ export { analyzeDependencies } from './core/dependencyAnalyzer.js';
 export { collectIssues } from './core/issueEngine.js';
 export { analyzeHotspots, computeRiskScore } from './core/hotspotAnalyzer.js';
 export { inspectFile } from './core/fileInspector.js';
-export { buildImportGraph, toPackageName, isPackageUsed, filesImporting } from './core/importGraph.js';
+export {
+  buildImportGraph,
+  toPackageName,
+  isPackageUsed,
+  filesImporting,
+} from './core/importGraph.js';
 export { detectOutdated } from './core/outdatedDetector.js';
 export { runAudit, auditFindingsToIssues } from './core/auditRunner.js';
 export { previewUpgrade, isValidPackageName } from './core/upgradePreview.js';
@@ -27,7 +32,13 @@ export { startWatcher } from './core/watcher.js';
 export type { WatchEvent, WatchOptions, WatchHandle } from './core/watcher.js';
 export { loadCachedGraph, saveCachedGraph, invalidateCache } from './core/indexCache.js';
 export { applyBudget, estimateTokens } from './mcp/tokenBudget.js';
-export { paginate, encodeCursor, decodeCursor, listChecksum, readPageParams } from './mcp/pagination.js';
+export {
+  paginate,
+  encodeCursor,
+  decodeCursor,
+  listChecksum,
+  readPageParams,
+} from './mcp/pagination.js';
 export { toContentBlocks } from './mcp/chunker.js';
 export { emitProgress, withProgress } from './mcp/progress.js';
 export {
@@ -45,19 +56,24 @@ export {
   DEFAULT_MODEL,
   EMBEDDING_DIM,
 } from './core/embeddings.js';
-export {
-  buildSemanticIndex,
-  semanticSearch,
-  reciprocalRankFusion,
-} from './core/semanticSearch.js';
+export { buildSemanticIndex, semanticSearch, reciprocalRankFusion } from './core/semanticSearch.js';
 export { findDependencyLines } from './utils/packageJsonLocator.js';
-export { parse as parseSemver, compare as compareSemver, drift as semverDrift } from './utils/semver.js';
+export {
+  parse as parseSemver,
+  compare as compareSemver,
+  drift as semverDrift,
+} from './utils/semver.js';
 export { walkFiles } from './utils/fileWalker.js';
 export { loadConfig, applyConfigToIssues } from './utils/config.js';
 export { getChangedFiles } from './utils/changedFiles.js';
 export { issuesToSarif } from './reporters/sarifReporter.js';
 export { computeReview } from './core/review.js';
-export { suggestFixForIssue, previewSuggestionForIssue, syntheticIssue, findIssue } from './core/fixSuggest.js';
+export {
+  suggestFixForIssue,
+  previewSuggestionForIssue,
+  syntheticIssue,
+  findIssue,
+} from './core/fixSuggest.js';
 export { explainIssue } from './core/explainIssue.js';
 export { computeImpact } from './core/impact.js';
 export { buildChunks } from './core/semanticSearch.js';

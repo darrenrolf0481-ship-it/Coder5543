@@ -18,7 +18,10 @@ router.get('/memory/vault', async (_req, res) => {
 
 router.post('/context', async (req, res) => {
   const { input, personalityId } = req.body as { input?: string; personalityId?: number };
-  if (!input) { res.status(400).json({ error: 'input required' }); return; }
+  if (!input) {
+    res.status(400).json({ error: 'input required' });
+    return;
+  }
   const [context, mode] = await Promise.all([
     brainService.prepareContext(input, personalityId),
     brainService.resolveOperationMode(input), // resolveOperationMode could also benefit from personalityId in future
@@ -32,10 +35,13 @@ router.get('/endocrine', (_req, res) => {
 
 router.post('/feedback', async (req, res) => {
   const { context, success, errorIntensity } = req.body as {
-    context?: string; success?: boolean; errorIntensity?: number;
+    context?: string;
+    success?: boolean;
+    errorIntensity?: number;
   };
   if (context === undefined || success === undefined) {
-    res.status(400).json({ error: 'context and success required' }); return;
+    res.status(400).json({ error: 'context and success required' });
+    return;
   }
   await brainService.processFeedback(context, success, errorIntensity ?? 0.5);
   res.json({ ok: true, endocrine: brainService.getEndocrineState() });
@@ -43,13 +49,17 @@ router.post('/feedback', async (req, res) => {
 
 router.post('/pain', async (req, res) => {
   const { type, intensity, context } = req.body as {
-    type?: string; intensity?: number; context?: string;
+    type?: string;
+    intensity?: number;
+    context?: string;
   };
   if (!type || !context || intensity === undefined) {
-    res.status(400).json({ error: 'type, intensity, and context required' }); return;
+    res.status(400).json({ error: 'type, intensity, and context required' });
+    return;
   }
   if (!Object.values(PainType).includes(type as PainType)) {
-    res.status(400).json({ error: `type must be one of: ${Object.values(PainType).join(', ')}` }); return;
+    res.status(400).json({ error: `type must be one of: ${Object.values(PainType).join(', ')}` });
+    return;
   }
   await brainService.getPainPathway().processPainSignal(type as PainType, intensity, context);
   res.json({ ok: true, endocrine: brainService.getEndocrineState() });
@@ -62,7 +72,9 @@ router.post('/sleep', async (_req, res) => {
 
 router.post('/record', async (req, res) => {
   const { input, response, outcome } = req.body as {
-    input?: string; response?: string; outcome?: 'success' | 'failure' | 'neutral';
+    input?: string;
+    response?: string;
+    outcome?: 'success' | 'failure' | 'neutral';
   };
   if (!input || !response || !outcome) {
     res.status(400).json({ error: 'input, response, and outcome required' });
@@ -100,8 +112,12 @@ router.post('/python-process', (req, res) => {
   let stdout = '';
   let stderr = '';
 
-  python.stdout.on('data', (data: Buffer) => { stdout += data.toString(); });
-  python.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
+  python.stdout.on('data', (data: Buffer) => {
+    stdout += data.toString();
+  });
+  python.stderr.on('data', (data: Buffer) => {
+    stderr += data.toString();
+  });
 
   python.on('close', (code) => {
     if (code !== 0) {

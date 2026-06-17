@@ -41,10 +41,28 @@ const baselinePath = path.join(root, 'stability-baseline.json');
 // this list ONLY on a major version bump; otherwise additions go through
 // the baseline-diff path automatically.
 const STABLE_CLI_COMMANDS = [
-  'analyze', 'doctor', 'ci', 'hotspots', 'coupling', 'pr-diff', 'review',
-  'fix-suggest', 'explain-issue', 'impact', 'watch',
-  'dependencies', 'outdated', 'audit', 'coverage', 'search', 'structure',
-  'explain', 'badge', 'diff', 'workspaces', 'mcp',
+  'analyze',
+  'doctor',
+  'ci',
+  'hotspots',
+  'coupling',
+  'pr-diff',
+  'review',
+  'fix-suggest',
+  'explain-issue',
+  'impact',
+  'watch',
+  'dependencies',
+  'outdated',
+  'audit',
+  'coverage',
+  'search',
+  'structure',
+  'explain',
+  'badge',
+  'diff',
+  'workspaces',
+  'mcp',
 ];
 
 const STABLE_EXIT_CODES = {
@@ -91,9 +109,7 @@ for (const tool of manifest.tools) {
 if (updateMode) {
   await writeFile(baselinePath, JSON.stringify(liveSurface, null, 2) + '\n', 'utf-8');
   console.log(`✓ stability baseline updated at ${path.relative(root, baselinePath)}`);
-  console.log(
-    '  Only do this on a deliberate major version bump or when intentionally',
-  );
+  console.log('  Only do this on a deliberate major version bump or when intentionally');
   console.log('  expanding the stable surface (e.g. promoting a tool to GA).');
   process.exit(0);
 }
@@ -145,7 +161,9 @@ for (const name of baselineToolNames) {
   }
   for (const r of baseRequired) {
     if (!liveRequired.has(r)) {
-      issues.push(`required arg ${r} in ${name} is no longer required (allowed but flag for review)`);
+      issues.push(
+        `required arg ${r} in ${name} is no longer required (allowed but flag for review)`,
+      );
     }
   }
 }

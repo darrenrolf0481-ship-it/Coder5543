@@ -15,9 +15,21 @@ afterEach(async () => {
   await fs.rm(tmp, { recursive: true, force: true });
 });
 
-function git(args: string[], cwd: string = tmp): Promise<{ code: number; stdout: string; stderr: string }> {
+function git(
+  args: string[],
+  cwd: string = tmp,
+): Promise<{ code: number; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
-    const c = spawn('git', args, { cwd, env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@x', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@x' } });
+    const c = spawn('git', args, {
+      cwd,
+      env: {
+        ...process.env,
+        GIT_AUTHOR_NAME: 't',
+        GIT_AUTHOR_EMAIL: 't@x',
+        GIT_COMMITTER_NAME: 't',
+        GIT_COMMITTER_EMAIL: 't@x',
+      },
+    });
     let so = '';
     let se = '';
     c.stdout.on('data', (d) => (so += d.toString()));
@@ -121,10 +133,7 @@ export function bar(x) {
     await setupRepo();
     await write('package.json', JSON.stringify({ name: 'x' }));
     // Base has a benign reader.
-    await write(
-      'src/handler.ts',
-      `export function handler() { return 1; }\n`,
-    );
+    await write('src/handler.ts', `export function handler() { return 1; }\n`);
     await git(['add', '.']);
     await git(['commit', '-q', '-m', 'init']);
 

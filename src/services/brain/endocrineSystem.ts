@@ -2,11 +2,11 @@ import { storage } from './storage';
 import type { EndocrineState, ProcessingMode } from './types';
 
 const STORAGE_KEY = 'brain_endocrine';
-const DECAY_RATE = 0.05;            // per hour (dopamine/cortisol)
-const NE_DECAY_RATE = 0.08;         // norepinephrine decays faster than cortisol
+const DECAY_RATE = 0.05; // per hour (dopamine/cortisol)
+const NE_DECAY_RATE = 0.08; // norepinephrine decays faster than cortisol
 const DOPAMINE_BOOST = 0.25;
 const CORTISOL_BOOST = 0.35;
-const NE_BOOST = 0.30;
+const NE_BOOST = 0.3;
 const DOPAMINE_FLOOR = 0.1;
 const CORTISOL_FLOOR = 0.0;
 const NE_FLOOR = 0.1;
@@ -20,12 +20,18 @@ function load(): EndocrineState {
       if (state.norepinephrine === undefined) state.norepinephrine = 0.5;
       return state;
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return { dopamine: 0.5, cortisol: 0.1, norepinephrine: 0.5, lastUpdated: Date.now() };
 }
 
 function save(state: EndocrineState): void {
-  try { storage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch { /* ignore */ }
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    /* ignore */
+  }
 }
 
 function applyTimeDecay(state: EndocrineState): EndocrineState {
@@ -97,6 +103,6 @@ export class EndocrineSystem {
   // High NE (panic) or high cortisol (stress) → REACTIVE; calm → ANALYTICAL
   getProcessingMode(): ProcessingMode {
     const { norepinephrine, cortisol } = this.state;
-    return (norepinephrine > 0.65 || cortisol > 0.7) ? 'REACTIVE' : 'ANALYTICAL';
+    return norepinephrine > 0.65 || cortisol > 0.7 ? 'REACTIVE' : 'ANALYTICAL';
   }
 }

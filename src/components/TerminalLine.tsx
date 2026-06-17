@@ -10,7 +10,11 @@ const renderContent = (line: string): React.ReactNode => {
     );
   }
   if (line.startsWith('NEURAL_LINK:')) {
-    return <span className="text-accent-500 font-black drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]">{line}</span>;
+    return (
+      <span className="text-accent-500 font-black drop-shadow-[0_0_8px_rgba(239,68,68,0.4)]">
+        {line}
+      </span>
+    );
   }
   if (line.startsWith('COMMAND_INTEL:')) {
     return <span className="text-accent-400 italic opacity-80">{line}</span>;
@@ -18,7 +22,8 @@ const renderContent = (line: string): React.ReactNode => {
 
   const parts: React.ReactNode[] = [];
   let currentIndex = 0;
-  const regex = /(\[ERROR\]|\[WARN\]|\[INFO\]|\[SYSTEM\]|\[SUCCESS\]|CRIMSON OS|Kernel:|"[^"]*"|'[^']*'|\b\/(?:[\w.-]+\/)*[\w.-]+|\.\/(?:[\w.-]+\/)*[\w.-]+)/g;
+  const regex =
+    /(\[ERROR\]|\[WARN\]|\[INFO\]|\[SYSTEM\]|\[SUCCESS\]|CRIMSON OS|Kernel:|"[^"]*"|'[^']*'|\b\/(?:[\w.-]+\/)*[\w.-]+|\.\/(?:[\w.-]+\/)*[\w.-]+)/g;
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(line)) !== null) {
@@ -26,7 +31,7 @@ const renderContent = (line: string): React.ReactNode => {
       parts.push(
         <span key={`t-${currentIndex}`} className="text-accent-100/60">
           {line.substring(currentIndex, match.index)}
-        </span>
+        </span>,
       );
     }
     const m = match[0];
@@ -36,10 +41,16 @@ const renderContent = (line: string): React.ReactNode => {
     else if (m === '[INFO]') cls = 'text-blue-400 font-black bg-blue-950/50 px-1 rounded';
     else if (m === '[SYSTEM]') cls = 'text-purple-400 font-black bg-purple-950/50 px-1 rounded';
     else if (m === '[SUCCESS]') cls = 'text-green-400 font-black bg-green-950/50 px-1 rounded';
-    else if (m === 'CRIMSON OS' || m === 'Kernel:') cls = 'text-accent-500 font-black tracking-widest';
+    else if (m === 'CRIMSON OS' || m === 'Kernel:')
+      cls = 'text-accent-500 font-black tracking-widest';
     else if (m.startsWith('"') || m.startsWith("'")) cls = 'text-green-400/80';
-    else if (m.startsWith('/') || m.startsWith('./')) cls = 'text-blue-300/80 underline decoration-blue-900/50 underline-offset-2';
-    parts.push(<span key={`m-${match.index}`} className={cls}>{m}</span>);
+    else if (m.startsWith('/') || m.startsWith('./'))
+      cls = 'text-blue-300/80 underline decoration-blue-900/50 underline-offset-2';
+    parts.push(
+      <span key={`m-${match.index}`} className={cls}>
+        {m}
+      </span>,
+    );
     currentIndex = regex.lastIndex;
   }
 
@@ -47,7 +58,7 @@ const renderContent = (line: string): React.ReactNode => {
     parts.push(
       <span key={`t-${currentIndex}`} className="text-accent-100/60">
         {line.substring(currentIndex)}
-      </span>
+      </span>,
     );
   }
 

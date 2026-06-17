@@ -6,9 +6,36 @@ import { Check, Copy } from 'lucide-react';
 
 const PURIFY_CFG = {
   ALLOWED_TAGS: [
-    'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's', 'code', 'pre', 'blockquote',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'table', 'thead', 'tbody',
-    'tr', 'th', 'td', 'hr', 'a', 'span', 'div'
+    'p',
+    'br',
+    'strong',
+    'em',
+    'b',
+    'i',
+    'u',
+    's',
+    'code',
+    'pre',
+    'blockquote',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'ul',
+    'ol',
+    'li',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
+    'hr',
+    'a',
+    'span',
+    'div',
   ],
   ALLOWED_ATTR: ['href', 'class', 'id', 'target', 'rel'],
   FORCE_BODY: true,
@@ -18,7 +45,10 @@ const PURIFY_CFG = {
   ALLOW_DATA_ATTR: false,
 };
 
-export const CodeBlock: React.FC<{ children: any; className?: string }> = ({ children, className }) => {
+export const CodeBlock: React.FC<{ children: any; className?: string }> = ({
+  children,
+  className,
+}) => {
   const [copied, setCopied] = useState(false);
   const code = String(children).replace(/\n$/, '');
 
@@ -54,7 +84,10 @@ export const SafeMarkdown: React.FC<{ children: string }> = ({ children }) => {
           return !inline ? (
             <CodeBlock className={className}>{children}</CodeBlock>
           ) : (
-            <code className={`${className} bg-accent-950/30 px-1 rounded text-accent-400`} {...props}>
+            <code
+              className={`${className} bg-accent-950/30 px-1 rounded text-accent-400`}
+              {...props}
+            >
               {children}
             </code>
           );

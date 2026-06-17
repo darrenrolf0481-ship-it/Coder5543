@@ -74,9 +74,7 @@ export const workspaceGraphTool: McpTool = {
         return await fileImportersView(workspace, rootPath, file, repo);
       }
       default:
-        throw new Error(
-          `Unknown action "${action}". Valid: list, graph, file_importers.`,
-        );
+        throw new Error(`Unknown action "${action}". Valid: list, graph, file_importers.`);
     }
   },
 };

@@ -19,11 +19,11 @@ function isSafePath(p: string): boolean {
 
 router.get('/browse', async (req, res) => {
   const dirPath = (req.query.path as string) || TERMUX_HOME;
-  
+
   if (!isSafePath(dirPath)) {
     logger.warn(`[FS] Security Rejection: Attempted to browse unsafe path: ${dirPath}`);
-    res.status(403).json({ error: 'Path not allowed' }); 
-    return; 
+    res.status(403).json({ error: 'Path not allowed' });
+    return;
   }
 
   try {
@@ -33,8 +33,8 @@ router.get('/browse', async (req, res) => {
       path: dirPath,
       parent: path.dirname(dirPath),
       entries: entries
-        .filter(e => !e.name.startsWith('.'))
-        .map(e => ({
+        .filter((e) => !e.name.startsWith('.'))
+        .map((e) => ({
           name: e.name,
           type: e.isDirectory() ? 'dir' : 'file',
           path: path.join(dirPath, e.name),
@@ -52,12 +52,15 @@ router.get('/browse', async (req, res) => {
 
 router.get('/read', async (req, res) => {
   const filePath = req.query.path as string;
-  if (!filePath) { res.status(400).json({ error: 'path required' }); return; }
-  
+  if (!filePath) {
+    res.status(400).json({ error: 'path required' });
+    return;
+  }
+
   if (!isSafePath(filePath)) {
     logger.warn(`[FS] Security Rejection: Attempted to read unsafe path: ${filePath}`);
-    res.status(403).json({ error: 'Path not allowed' }); 
-    return; 
+    res.status(403).json({ error: 'Path not allowed' });
+    return;
   }
 
   try {
@@ -72,12 +75,15 @@ router.get('/read', async (req, res) => {
 
 router.post('/write', async (req, res) => {
   const { path: filePath, content, encoding } = req.body;
-  if (!filePath) { res.status(400).json({ error: 'path required' }); return; }
-  
+  if (!filePath) {
+    res.status(400).json({ error: 'path required' });
+    return;
+  }
+
   if (!isSafePath(filePath)) {
     logger.warn(`[FS] Security Rejection: Attempted to write unsafe path: ${filePath}`);
-    res.status(403).json({ error: 'Path not allowed' }); 
-    return; 
+    res.status(403).json({ error: 'Path not allowed' });
+    return;
   }
 
   try {
@@ -98,12 +104,15 @@ router.post('/write', async (req, res) => {
 
 router.post('/create-directory', async (req, res) => {
   const { path: dirPath } = req.body;
-  if (!dirPath) { res.status(400).json({ error: 'path required' }); return; }
-  
+  if (!dirPath) {
+    res.status(400).json({ error: 'path required' });
+    return;
+  }
+
   if (!isSafePath(dirPath)) {
     logger.warn(`[FS] Security Rejection: Attempted to create unsafe directory: ${dirPath}`);
-    res.status(403).json({ error: 'Path not allowed' }); 
-    return; 
+    res.status(403).json({ error: 'Path not allowed' });
+    return;
   }
 
   try {
@@ -118,12 +127,15 @@ router.post('/create-directory', async (req, res) => {
 
 router.post('/delete', async (req, res) => {
   const { path: targetPath } = req.body;
-  if (!targetPath) { res.status(400).json({ error: 'path required' }); return; }
-  
+  if (!targetPath) {
+    res.status(400).json({ error: 'path required' });
+    return;
+  }
+
   if (!isSafePath(targetPath)) {
     logger.warn(`[FS] Security Rejection: Attempted to delete unsafe path: ${targetPath}`);
-    res.status(403).json({ error: 'Path not allowed' }); 
-    return; 
+    res.status(403).json({ error: 'Path not allowed' });
+    return;
   }
 
   try {
@@ -137,4 +149,3 @@ router.post('/delete', async (req, res) => {
 });
 
 export default router;
-

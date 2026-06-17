@@ -13,7 +13,10 @@ export function useWebSockets(activePersonalityId?: number) {
   const [wasConnected, setWasConnected] = useState(false);
 
   // Callbacks for specific stream types
-  const onTerminalOutputRef = useRef<((data: { type: 'stdout' | 'stderr' | 'close'; text?: string; exitCode?: number }) => void) | null>(null);
+  const onTerminalOutputRef = useRef<
+    | ((data: { type: 'stdout' | 'stderr' | 'close'; text?: string; exitCode?: number }) => void)
+    | null
+  >(null);
   const onFsChangeRef = useRef<((data: { event: string; path: string }) => void) | null>(null);
 
   useEffect(() => {
@@ -99,7 +102,9 @@ export function useWebSockets(activePersonalityId?: number) {
 
   const subscribeFsChange = (callback: (data: { event: string; path: string }) => void) => {
     onFsChangeRef.current = callback;
-    return () => { onFsChangeRef.current = null; };
+    return () => {
+      onFsChangeRef.current = null;
+    };
   };
 
   const reconnect = useCallback(() => {

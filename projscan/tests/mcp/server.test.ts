@@ -3,7 +3,10 @@ import path from 'node:path';
 import { createMcpServer } from '../../src/mcp/server.js';
 import { getToolDefinitions } from '../../src/mcp/tools.js';
 
-async function send(server: ReturnType<typeof createMcpServer>, message: unknown): Promise<unknown> {
+async function send(
+  server: ReturnType<typeof createMcpServer>,
+  message: unknown,
+): Promise<unknown> {
   const line = JSON.stringify(message);
   const raw = await server.handleMessage(line);
   return raw === null ? null : JSON.parse(raw);
@@ -11,13 +14,18 @@ async function send(server: ReturnType<typeof createMcpServer>, message: unknown
 
 describe('MCP server', () => {
   it('responds to initialize with protocol + server info', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 1,
       method: 'initialize',
       params: { protocolVersion: '2024-11-05' },
-    })) as { id: number; result: { serverInfo: { name: string }; capabilities: { tools: unknown } } };
+    })) as {
+      id: number;
+      result: { serverInfo: { name: string }; capabilities: { tools: unknown } };
+    };
 
     expect(response.id).toBe(1);
     expect(response.result.serverInfo.name).toBe('projscan');
@@ -25,7 +33,9 @@ describe('MCP server', () => {
   });
 
   it('ignores notifications (no response)', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = await send(server, {
       jsonrpc: '2.0',
       method: 'notifications/initialized',
@@ -34,7 +44,9 @@ describe('MCP server', () => {
   });
 
   it('returns tool definitions on tools/list', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 2,
@@ -50,7 +62,9 @@ describe('MCP server', () => {
   });
 
   it('returns MethodNotFound for unknown method', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 3,
@@ -60,7 +74,9 @@ describe('MCP server', () => {
   });
 
   it('returns ParseError for invalid JSON', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const raw = await server.handleMessage('{not json');
     expect(raw).not.toBeNull();
     const response = JSON.parse(raw as string) as { error: { code: number } };
@@ -68,7 +84,9 @@ describe('MCP server', () => {
   });
 
   it('returns InvalidRequest when jsonrpc version is missing', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const raw = await server.handleMessage(JSON.stringify({ id: 1, method: 'ping' }));
     expect(raw).not.toBeNull();
     const response = JSON.parse(raw as string) as { error: { code: number } };
@@ -76,7 +94,9 @@ describe('MCP server', () => {
   });
 
   it('handles tools/call with unknown tool name', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 4,
@@ -87,7 +107,9 @@ describe('MCP server', () => {
   });
 
   it('tools/call returns content with text JSON payload', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 5,
@@ -108,7 +130,9 @@ describe('MCP server', () => {
   });
 
   it('projscan_explain rejects paths outside the root', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 6,
@@ -131,7 +155,9 @@ describe('MCP server', () => {
     // sense for real result payloads) must not appear inside the error
     // content — otherwise an agent inspecting `result.content[0].text`
     // would see a JSON envelope instead of the error message.
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 99,
@@ -151,7 +177,9 @@ describe('MCP server', () => {
   });
 
   it('returns method-not-found for unknown tools without crashing the dispatcher', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 100,
@@ -170,7 +198,9 @@ describe('MCP server', () => {
   });
 
   it('returns invalid-params for tools/call with no name', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 102,
@@ -182,7 +212,9 @@ describe('MCP server', () => {
   });
 
   it('returns method-not-found for entirely unknown JSON-RPC method', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 103,
@@ -199,7 +231,9 @@ describe('MCP server', () => {
   });
 
   it('initialize advertises tools, prompts, and resources capabilities', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 99,
@@ -216,7 +250,9 @@ describe('MCP server', () => {
   });
 
   it('prompts/list returns the prompts', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 10,
@@ -228,7 +264,9 @@ describe('MCP server', () => {
   });
 
   it('prompts/get prioritize_refactoring returns a user message', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 11,
@@ -240,7 +278,9 @@ describe('MCP server', () => {
   });
 
   it('prompts/get investigate_file requires a file arg', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 12,
@@ -252,7 +292,9 @@ describe('MCP server', () => {
   });
 
   it('resources/list returns the canonical resources', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 13,
@@ -265,7 +307,9 @@ describe('MCP server', () => {
   });
 
   it('resources/read returns JSON content', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 14,
@@ -282,7 +326,9 @@ describe('MCP server', () => {
   });
 
   it('resources/read rejects unknown URIs', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 15,
@@ -293,7 +339,9 @@ describe('MCP server', () => {
   });
 
   it('projscan_file tool returns hotspot + issues + exports in one payload', async () => {
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'));
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+    );
     const response = (await send(server, {
       jsonrpc: '2.0',
       id: 16,

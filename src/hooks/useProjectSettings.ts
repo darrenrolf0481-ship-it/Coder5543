@@ -42,7 +42,10 @@ export function useProjectSettings() {
 
     if (!settings.buildPath.trim()) {
       errors.buildPath = 'Build path is required';
-    } else if (!/^[\.\/a-zA-Z0-9_-]+$/.test(settings.buildPath) || settings.buildPath.split('/').some(seg => seg === '..')) {
+    } else if (
+      !/^[\.\/a-zA-Z0-9_-]+$/.test(settings.buildPath) ||
+      settings.buildPath.split('/').some((seg) => seg === '..')
+    ) {
       errors.buildPath =
         'Invalid path format (use alphanumeric, dots, slashes, underscores, hyphens; ".." not allowed)';
     }

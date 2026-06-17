@@ -67,9 +67,9 @@ export function useBrain(lastSignal?: any) {
           setEndocrine(lastSignal.data.endocrine);
         }
         break;
-      
+
       case 'LLM_NETWORK_TRAFFIC':
-        setTraffic(prev => [lastSignal.data, ...prev].slice(0, 10));
+        setTraffic((prev) => [lastSignal.data, ...prev].slice(0, 10));
         break;
 
       case 'IDENTITY_DRIFT_ALERT':
@@ -80,37 +80,43 @@ export function useBrain(lastSignal?: any) {
 
   const clearDriftAlert = useCallback(() => setDriftAlert(null), []);
 
-  const prepareContext = useCallback(async (input: string, personalityId?: number): Promise<BrainContext | null> => {
-    if (!isBrainActive) return null;
-    try {
-      const res = await fetch(`${API_BASE}/context`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input, personalityId }),
-      });
-      if (!res.ok) throw new Error('Failed to prepare context');
-      const { context } = await res.json();
-      return context;
-    } catch (err) {
-      console.error('[useBrain] Error preparing context:', err);
-      return null;
-    }
-  }, [isBrainActive]);
+  const prepareContext = useCallback(
+    async (input: string, personalityId?: number): Promise<BrainContext | null> => {
+      if (!isBrainActive) return null;
+      try {
+        const res = await fetch(`${API_BASE}/context`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input, personalityId }),
+        });
+        if (!res.ok) throw new Error('Failed to prepare context');
+        const { context } = await res.json();
+        return context;
+      } catch (err) {
+        console.error('[useBrain] Error preparing context:', err);
+        return null;
+      }
+    },
+    [isBrainActive],
+  );
 
-  const recordInteraction = useCallback(async (input: string, response: string, outcome: 'success' | 'failure' | 'neutral') => {
-    try {
-      const res = await fetch(`${API_BASE}/record`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ input, response, outcome }),
-      });
-      if (!res.ok) throw new Error('Failed to record interaction');
-      const data = await res.json();
-      setEndocrine(data.endocrine);
-    } catch (err) {
-      console.error('[useBrain] Error recording interaction:', err);
-    }
-  }, []);
+  const recordInteraction = useCallback(
+    async (input: string, response: string, outcome: 'success' | 'failure' | 'neutral') => {
+      try {
+        const res = await fetch(`${API_BASE}/record`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input, response, outcome }),
+        });
+        if (!res.ok) throw new Error('Failed to record interaction');
+        const data = await res.json();
+        setEndocrine(data.endocrine);
+      } catch (err) {
+        console.error('[useBrain] Error recording interaction:', err);
+      }
+    },
+    [],
+  );
 
   const sleep = useCallback(async () => {
     try {
@@ -142,7 +148,6 @@ export function useBrain(lastSignal?: any) {
     driftAlert,
     clearDriftAlert,
     vaultMemories,
-    fetchVault
+    fetchVault,
   };
 }
-

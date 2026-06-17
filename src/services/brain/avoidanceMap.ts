@@ -9,7 +9,7 @@ function hashPattern(pattern: string): string {
   // Simple djb2 hash, good enough for this purpose
   let h = 5381;
   for (let i = 0; i < pattern.length; i++) {
-    h = ((h << 5) + h) + pattern.charCodeAt(i);
+    h = (h << 5) + h + pattern.charCodeAt(i);
     h = h & h; // 32-bit
   }
   return (h >>> 0).toString(36);
@@ -43,15 +43,19 @@ export class AvoidanceMap {
       const raw = storage.getItem(STORAGE_KEY);
       if (raw) {
         const entries: AvoidanceEntry[] = JSON.parse(raw);
-        entries.forEach(e => this.map.set(e.hash, e));
+        entries.forEach((e) => this.map.set(e.hash, e));
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   private persist(): void {
     try {
       storage.setItem(STORAGE_KEY, JSON.stringify([...this.map.values()]));
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   // Record a painful/failed interaction to build avoidance
@@ -64,7 +68,13 @@ export class AvoidanceMap {
       existing.count++;
       existing.lastTriggered = Date.now();
     } else {
-      this.map.set(hash, { hash, pattern, strength: 0.3 * magnitude, count: 1, lastTriggered: Date.now() });
+      this.map.set(hash, {
+        hash,
+        pattern,
+        strength: 0.3 * magnitude,
+        count: 1,
+        lastTriggered: Date.now(),
+      });
     }
     this.persist();
   }
@@ -94,7 +104,9 @@ export class AvoidanceMap {
     const entry = this.map.get(hash);
     if (entry) {
       entry.strength = Math.max(0, decayedStrength(entry) - 0.2);
-      if (entry.strength < 0.05) { this.map.delete(hash); }
+      if (entry.strength < 0.05) {
+        this.map.delete(hash);
+      }
       this.persist();
     }
   }

@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  FolderOpen,
-  Gauge,
-  UserCircle,
-} from 'lucide-react';
+import { FolderOpen, Gauge, UserCircle } from 'lucide-react';
 import { AgentDefinition, AGENT_DOMAINS, getAgentsByDomain } from '../../data/agentRegistry';
 import { WorkerConfig } from '../../hooks/useAiWorkers';
 import { Personality } from '../../data/personalities';
@@ -60,62 +56,140 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
           title="Configure Ollama models"
           aria-label="Configure Ollama models"
         >
-          <span className={`w-2 h-2 rounded-full shrink-0 ${ollamaStatus === 'connected' ? 'bg-green-500' : ollamaStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-accent-700'}`} />
-          <span className="text-[10px] font-black text-accent-200 uppercase tracking-wider">Ollama</span>
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${ollamaStatus === 'connected' ? 'bg-green-500' : ollamaStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' : 'bg-accent-700'}`}
+          />
+          <span className="text-[10px] font-black text-accent-200 uppercase tracking-wider">
+            Ollama
+          </span>
           <span className="text-[9px] text-accent-400">▾</span>
         </button>
 
         {/* DESKTOP: full inline worker slots */}
         <div className="hidden md:flex items-center gap-2">
           {workers.map((w) => (
-            <div key={w.id} className={`flex items-center gap-1 border rounded-full px-2 py-0.5 transition-all ${w.enabled ? 'bg-accent-950/40 border-accent-800/40' : 'bg-accent-950/10 border-accent-900/20 opacity-50'}`}>
+            <div
+              key={w.id}
+              className={`flex items-center gap-1 border rounded-full px-2 py-0.5 transition-all ${w.enabled ? 'bg-accent-950/40 border-accent-800/40' : 'bg-accent-950/10 border-accent-900/20 opacity-50'}`}
+            >
               <button
-                onClick={() => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, enabled: !x.enabled } : x))}
+                onClick={() =>
+                  setWorkers((prev) =>
+                    prev.map((x) => (x.id === w.id ? { ...x, enabled: !x.enabled } : x)),
+                  )
+                }
                 className={`text-[7px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center shrink-0 transition-all ${w.enabled ? 'bg-accent-600 text-white shadow-[0_0_6px_rgba(220,38,38,0.6)]' : 'bg-accent-900/40 text-accent-700'}`}
                 title={w.enabled ? `Disable W${w.id}` : `Enable W${w.id}`}
                 aria-label={w.enabled ? `Disable W${w.id}` : `Enable W${w.id}`}
-              >{w.id}</button>
+              >
+                {w.id}
+              </button>
               <select
                 value={w.provider}
-                onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, provider: e.target.value as any, model: e.target.value === 'google' ? 'gemini-2.5-flash' : e.target.value === 'grok' ? 'grok-beta' : e.target.value === 'openrouter' ? 'meta-llama/llama-3.3-70b-instruct:free' : x.model || 'llama3.2:latest' } : x))}
+                onChange={(e) =>
+                  setWorkers((prev) =>
+                    prev.map((x) =>
+                      x.id === w.id
+                        ? {
+                            ...x,
+                            provider: e.target.value as any,
+                            model:
+                              e.target.value === 'google'
+                                ? 'gemini-2.5-flash'
+                                : e.target.value === 'grok'
+                                  ? 'grok-beta'
+                                  : e.target.value === 'openrouter'
+                                    ? 'meta-llama/llama-3.3-70b-instruct:free'
+                                    : x.model || 'llama3.2:latest',
+                          }
+                        : x,
+                    ),
+                  )
+                }
                 className={`bg-transparent text-[9px] font-black outline-none cursor-pointer w-14 truncate transition-colors ${w.enabled ? 'text-accent-300' : 'text-accent-900 pointer-events-none'}`}
                 title="Provider"
                 aria-label={`Provider for W${w.id}`}
               >
-                <option value="ollama" className="bg-[#0a0202] text-accent-200">Ollama</option>
-                <option value="google" className="bg-[#0a0202] text-accent-200">Google</option>
-                <option value="grok" className="bg-[#0a0202] text-accent-200">Grok</option>
-                <option value="openrouter" className="bg-[#0a0202] text-accent-200">OpenRouter</option>
+                <option value="ollama" className="bg-[#0a0202] text-accent-200">
+                  Ollama
+                </option>
+                <option value="google" className="bg-[#0a0202] text-accent-200">
+                  Google
+                </option>
+                <option value="grok" className="bg-[#0a0202] text-accent-200">
+                  Grok
+                </option>
+                <option value="openrouter" className="bg-[#0a0202] text-accent-200">
+                  OpenRouter
+                </option>
               </select>
               <select
                 value={w.model}
-                onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, model: e.target.value } : x))}
+                onChange={(e) =>
+                  setWorkers((prev) =>
+                    prev.map((x) => (x.id === w.id ? { ...x, model: e.target.value } : x)),
+                  )
+                }
                 className={`bg-transparent text-[10px] font-black outline-none cursor-pointer w-24 truncate transition-colors ${w.enabled ? 'text-accent-300' : 'text-accent-900 pointer-events-none'}`}
                 aria-label={`Model for W${w.id}`}
               >
-                {w.provider === 'ollama' && availableModels.length > 0
-                  ? availableModels.map(m => <option key={m} value={m} className="bg-[#0a0202] text-accent-200">{m}</option>)
-                  : w.provider === 'google'
-                    ? ['gemini-2.5-flash', 'gemini-2.5-pro'].map(m => <option key={m} value={m} className="bg-[#0a0202] text-accent-200">{m}</option>)
-                    : w.provider === 'grok'
-                      ? ['grok-beta', 'grok-2-latest'].map(m => <option key={m} value={m} className="bg-[#0a0202] text-accent-200">{m}</option>)
-                      : w.provider === 'openrouter'
-                        ? ['openrouter/fusion', 'meta-llama/llama-3.3-70b-instruct:free', 'deepseek/deepseek-chat', 'google/gemini-2.5-flash', 'meta-llama/llama-3-8b-instruct:free'].map(m => <option key={m} value={m} className="bg-[#0a0202] text-accent-200">{m}</option>)
-                        : <option value={w.model} className="bg-[#0a0202]">{w.model || 'llama3'}</option>
-                }
+                {w.provider === 'ollama' && availableModels.length > 0 ? (
+                  availableModels.map((m) => (
+                    <option key={m} value={m} className="bg-[#0a0202] text-accent-200">
+                      {m}
+                    </option>
+                  ))
+                ) : w.provider === 'google' ? (
+                  ['gemini-2.5-flash', 'gemini-2.5-pro'].map((m) => (
+                    <option key={m} value={m} className="bg-[#0a0202] text-accent-200">
+                      {m}
+                    </option>
+                  ))
+                ) : w.provider === 'grok' ? (
+                  ['grok-beta', 'grok-2-latest'].map((m) => (
+                    <option key={m} value={m} className="bg-[#0a0202] text-accent-200">
+                      {m}
+                    </option>
+                  ))
+                ) : w.provider === 'openrouter' ? (
+                  [
+                    'meta-llama/llama-3.3-70b-instruct:free',
+                    'deepseek/deepseek-chat',
+                    'google/gemini-2.5-flash',
+                    'meta-llama/llama-3-8b-instruct:free',
+                  ].map((m) => (
+                    <option key={m} value={m} className="bg-[#0a0202] text-accent-200">
+                      {m}
+                    </option>
+                  ))
+                ) : (
+                  <option value={w.model} className="bg-[#0a0202]">
+                    {w.model || 'llama3'}
+                  </option>
+                )}
               </select>
               <select
                 value={w.agentId || ''}
-                onChange={(e) => setWorkers(prev => prev.map(x => x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x))}
+                onChange={(e) =>
+                  setWorkers((prev) =>
+                    prev.map((x) =>
+                      x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x,
+                    ),
+                  )
+                }
                 className={`bg-transparent text-[9px] font-black outline-none cursor-pointer max-w-[80px] truncate transition-colors ${w.enabled ? 'text-accent-400' : 'text-accent-900 pointer-events-none'}`}
                 title="Agent role"
                 aria-label={`Agent role for W${w.id}`}
               >
-                <option value="" className="bg-[#0a0202] text-accent-200">🤖 General</option>
-                {AGENT_DOMAINS.map(domain => (
+                <option value="" className="bg-[#0a0202] text-accent-200">
+                  🤖 General
+                </option>
+                {AGENT_DOMAINS.map((domain) => (
                   <optgroup key={domain} label={domain} className="bg-[#0a0202]">
-                    {getAgentsByDomain(domain).map(a => (
-                      <option key={a.id} value={a.id} className="bg-[#0a0202] text-accent-200">{a.emoji} {a.label}</option>
+                    {getAgentsByDomain(domain).map((a) => (
+                      <option key={a.id} value={a.id} className="bg-[#0a0202] text-accent-200">
+                        {a.emoji} {a.label}
+                      </option>
                     ))}
                   </optgroup>
                 ))}
@@ -127,7 +201,9 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
             className={`text-[11px] transition-colors shrink-0 ${ollamaStatus === 'connected' ? 'text-green-500 hover:text-green-400' : ollamaStatus === 'connecting' ? 'text-yellow-500 animate-pulse' : 'text-accent-700 hover:text-accent-400'}`}
             title={`Ollama: ${ollamaStatus}`}
             aria-label="Refresh Ollama models"
-          >↻</button>
+          >
+            ↻
+          </button>
         </div>
 
         {/* Personality Selector */}
@@ -137,9 +213,7 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
             value={personalities.find((p) => p.active)?.id || ''}
             onChange={(e) => {
               const id = parseInt(e.target.value);
-              setPersonalities((prev) =>
-                prev.map((pers) => ({ ...pers, active: pers.id === id }))
-              );
+              setPersonalities((prev) => prev.map((pers) => ({ ...pers, active: pers.id === id })));
             }}
             className="bg-transparent text-[10px] font-black text-accent-400 outline-none cursor-pointer uppercase tracking-widest max-w-[120px] truncate"
             aria-label="Select active personality"
@@ -166,24 +240,33 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
         </div>
         <div className="flex items-center gap-3 md:gap-4 shrink-0">
           <div className="flex flex-col items-end">
-            <span className="hidden xs:block text-[7px] font-black text-accent-900 uppercase tracking-widest leading-none mb-1">Local Core</span>
+            <span className="hidden xs:block text-[7px] font-black text-accent-900 uppercase tracking-widest leading-none mb-1">
+              Local Core
+            </span>
             <div
               title={`Local Core (WebContainer): ${localCoreStatus}`}
               className={`w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full transition-all duration-500 ${
-                localCoreStatus === 'online' ? 'bg-cyan-500 glow-cyan shadow-[0_0_10px_rgba(6,182,212,0.6)]' :
-                localCoreStatus === 'booting' ? 'bg-yellow-500 animate-pulse' :
-                localCoreStatus === 'error' ? 'bg-red-500' :
-                'bg-accent-950/40 border border-accent-900/30'
+                localCoreStatus === 'online'
+                  ? 'bg-cyan-500 glow-cyan shadow-[0_0_10px_rgba(6,182,212,0.6)]'
+                  : localCoreStatus === 'booting'
+                    ? 'bg-yellow-500 animate-pulse'
+                    : localCoreStatus === 'error'
+                      ? 'bg-red-500'
+                      : 'bg-accent-950/40 border border-accent-900/30'
               }`}
               aria-label={`Local Core status: ${localCoreStatus}`}
             />
           </div>
           <div className="flex flex-col items-end">
-            <span className="hidden xs:block text-[7px] font-black text-accent-900 uppercase tracking-widest leading-none mb-1">Node Bridge</span>
+            <span className="hidden xs:block text-[7px] font-black text-accent-900 uppercase tracking-widest leading-none mb-1">
+              Node Bridge
+            </span>
             <div
               title={termuxStatus === 'connected' ? 'Node Bridge Online' : 'Node Bridge Offline'}
               className={`w-2.5 h-2.5 md:w-3.5 md:h-3.5 rounded-full transition-all duration-500 ${termuxStatus === 'connected' ? 'bg-accent-500 glow-accent' : 'bg-accent-950/40 border border-accent-900/30'}`}
-              aria-label={termuxStatus === 'connected' ? 'Node Bridge Online' : 'Node Bridge Offline'}
+              aria-label={
+                termuxStatus === 'connected' ? 'Node Bridge Online' : 'Node Bridge Offline'
+              }
             />
           </div>
         </div>

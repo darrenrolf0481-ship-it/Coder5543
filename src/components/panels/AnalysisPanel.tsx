@@ -34,7 +34,8 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         <div className="flex-1 min-h-0 flex flex-col border-r border-accent-900/30">
           <div className="h-12 border-b border-accent-900/30 flex items-center px-4 bg-[#0a0202]">
             <span className="text-[10px] font-black text-accent-500 uppercase tracking-widest flex items-center gap-2">
-              <FileCode className="w-3.5 h-3.5" /> Original: {projectFiles.find(f => f.id === activeFileId)?.name || 'No file'}
+              <FileCode className="w-3.5 h-3.5" /> Original:{' '}
+              {projectFiles.find((f) => f.id === activeFileId)?.name || 'No file'}
             </span>
           </div>
           <div className="flex-1 p-4 overflow-auto custom-scrollbar">
@@ -59,12 +60,15 @@ export const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                   <div className="w-2 h-2 bg-accent-600 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
                   <div className="w-2 h-2 bg-accent-600 rounded-full animate-bounce"></div>
                 </div>
-                <span className="text-[10px] font-black text-accent-700 uppercase tracking-[0.3em]">Analyzing Code Structure...</span>
+                <span className="text-[10px] font-black text-accent-700 uppercase tracking-[0.3em]">
+                  Analyzing Code Structure...
+                </span>
               </div>
             ) : (
               <div className="text-[12px] leading-relaxed text-accent-100 markdown-body">
                 <SafeMarkdown>
-                  {editorOutput || "No analysis generated yet. Enter a prompt below to analyze the current file."}
+                  {editorOutput ||
+                    'No analysis generated yet. Enter a prompt below to analyze the current file.'}
                 </SafeMarkdown>
               </div>
             )}

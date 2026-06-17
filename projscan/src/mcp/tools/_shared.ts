@@ -78,7 +78,11 @@ export function sliceTree(node: DirectoryNode, targetPath: string): DirectoryNod
   return null;
 }
 
-export function explainFile(absolutePath: string, content: string, rootPath: string): FileExplanation {
+export function explainFile(
+  absolutePath: string,
+  content: string,
+  rootPath: string,
+): FileExplanation {
   const lines = content.split('\n');
   const imports = extractImports(content);
   const exports = extractExports(content);

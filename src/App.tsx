@@ -42,7 +42,6 @@ import { AnalysisPanel } from './components/panels/AnalysisPanel';
 import { NodeBridgePanel } from './components/panels/NodeBridgePanel';
 import { StoragePanel } from './components/panels/StoragePanel';
 import { BrainPanel } from './components/panels/BrainPanel';
-import { UnifiedResultsPanel } from './components/panels/UnifiedResultsPanel';
 import { SettingsPanel } from './components/panels/SettingsPanel';
 
 // Modals & Registry
@@ -77,7 +76,7 @@ export default function App() {
 function AppInner() {
   // Navigation & Theme
   const [activeTab, setActiveTab] = useState<
-    'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain' | 'results'
+    'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain'
   >('toolneuron');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -121,7 +120,6 @@ function AppInner() {
     return () => clearTimeout(timer);
   }, []);
 
-
   // Model slots & Personalities
   const {
     personalities,
@@ -133,11 +131,16 @@ function AppInner() {
     openrouterApiKey,
     setOpenrouterApiKey,
     googleAiClient,
-    activePersonality
+    activePersonality,
   } = usePersonalities();
 
   // Initialize WebSocket Real-time Uplink
-  const { isConnected: isWsConnected, wasConnected, lastSignal: lastWsSignal, execTerminal, killTerminal, subscribeFsChange, reconnect: reconnectWs } = useWebSockets(activePersonality.id);
+  const {
+    isConnected: isWsConnected,
+    lastSignal: lastWsSignal,
+    execTerminal,
+    subscribeFsChange,
+  } = useWebSockets(activePersonality.id);
 
   // Terminal
   const terminal = useTerminal('~/crimson-node/sd-webui', '/home/workspace/Coder5543');
@@ -191,27 +194,20 @@ function AppInner() {
     }
   }, [activePersonality]);
 
-  // Keep mobile theme-color meta tag in sync with the active personality accent.
-  useEffect(() => {
-    const themeColor = activePersonality.id === 7 ? '#06b6d4' : '#ef4444';
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', themeColor);
-  }, [activePersonality]);
-
   // Neural Core & Golden Ratio Layout
-  const { 
-    endocrine, 
-    isBrainActive, 
-    setIsBrainActive, 
-    prepareContext, 
-    recordInteraction, 
-    sleep, 
+  const {
+    endocrine,
+    isBrainActive,
+    setIsBrainActive,
+    prepareContext,
+    recordInteraction,
+    sleep,
     refreshState,
     traffic,
     driftAlert,
     clearDriftAlert,
     vaultMemories,
-    fetchVault
+    fetchVault,
   } = useBrain(lastWsSignal);
   const phi = usePhi(endocrine);
 
@@ -220,12 +216,13 @@ function AppInner() {
     if (lastWsSignal) {
       terminal.setTerminalOutput((prev: any[]) => [
         ...prev,
-        `[SIGNAL] ${lastWsSignal.type} from ${lastWsSignal.source}`
+        `[SIGNAL] ${lastWsSignal.type} from ${lastWsSignal.source}`,
       ]);
     }
   }, [lastWsSignal]);
 
-  const { projectSettings, setProjectSettings, validationErrors, validateProjectSettings } = useProjectSettings();
+  const { projectSettings, setProjectSettings, validationErrors, validateProjectSettings } =
+    useProjectSettings();
 
   // Chat & Studio State
   const [chatMessages, setChatMessages] = useState<any[]>([
@@ -241,30 +238,40 @@ function AppInner() {
   const [isAiProcessing, setIsAiProcessing] = useState(false);
 
   // Workers
-  const { workers, setWorkers, availableModels, ollamaStatus, refreshOllamaModels } = useAiWorkers(setChatMessages);
+  const { workers, setWorkers, availableModels, ollamaStatus, refreshOllamaModels } =
+    useAiWorkers(setChatMessages);
 
   // AI Orchestration
-  const { generateAIResponse } = useAiOrchestrator(workers, personalities, grokApiKey, geminiApiKey, openrouterApiKey, projectSettings);
+  const { generateAIResponse } = useAiOrchestrator(
+    workers,
+    personalities,
+    grokApiKey,
+    geminiApiKey,
+    openrouterApiKey,
+    projectSettings,
+  );
   const pipeline = usePipeline(generateAIResponse as any);
   const ai = useAiRequest(generateAIResponse);
 
   // System States
   const {
-    termuxStatus, setTermuxStatus,
-    termuxFiles, setTermuxFiles,
-    storageFiles, setStorageFiles,
-    isVaultUnlocked, setIsVaultUnlocked,
-    negativePrompt, setNegativePrompt,
-    sdParams, setSdParams
+    termuxStatus,
+    setTermuxStatus,
+    termuxFiles,
+    setTermuxFiles,
+    storageFiles,
+    setStorageFiles,
+    isVaultUnlocked,
+    setIsVaultUnlocked,
+    negativePrompt,
+    setNegativePrompt,
+    sdParams,
+    setSdParams,
   } = useSystemStates();
 
   // Sync WebSocket connection status to termuxStatus state
-  // Debounced to avoid flashing "disconnected" during brief reconnects
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setTermuxStatus(isWsConnected ? 'connected' : 'disconnected');
-    }, 300);
-    return () => clearTimeout(timer);
+    setTermuxStatus(isWsConnected ? 'connected' : 'disconnected');
   }, [isWsConnected, setTermuxStatus]);
 
   // Modals & Extra UI
@@ -299,11 +306,14 @@ function AppInner() {
   });
   const setGitRepoRef = useRef<any>(() => {});
 
-  const gitRepoProxy = new Proxy({}, {
-    get(_, prop) {
-      return gitRepoRef.current[prop];
-    }
-  });
+  const gitRepoProxy = new Proxy(
+    {},
+    {
+      get(_, prop) {
+        return gitRepoRef.current[prop];
+      },
+    },
+  );
   const setGitRepoProxy = useCallback((val: any) => {
     setGitRepoRef.current(val);
   }, []);
@@ -323,27 +333,22 @@ function AppInner() {
       terminal.setTerminalOutput(val);
     },
     setTermuxFiles,
-    setStorageFiles
+    setStorageFiles,
   );
 
   // Local Core (WebContainer)
-  const { status: localCoreStatus, error: localCoreError, boot: bootLocalCore, exec: execWebContainer } = useWebContainer();
+  const {
+    status: localCoreStatus,
+    error: localCoreError,
+    boot: bootLocalCore,
+    exec: execWebContainer,
+  } = useWebContainer();
 
   // VFS Sync for WebContainer
   useEffect(() => {
     if (localCoreStatus === 'online') {
       const tree = transformToWebContainerTree(fsState.projectFiles);
-      localCore.mount(tree).catch(err => console.warn('[LocalCore] VFS sync failed:', err));
-    }
-  }, [localCoreStatus, fsState.projectFiles]);
-
-  // Initial VFS sync when WebContainer first comes online
-  const vfsSyncedRef = useRef(false);
-  useEffect(() => {
-    if (localCoreStatus === 'online' && !vfsSyncedRef.current && fsState.projectFiles) {
-      vfsSyncedRef.current = true;
-      const tree = transformToWebContainerTree(fsState.projectFiles);
-      localCore.mount(tree).catch(err => console.warn('[LocalCore] Initial VFS sync failed:', err));
+      localCore.mount(tree).catch((err) => console.warn('[LocalCore] VFS sync failed:', err));
     }
   }, [localCoreStatus, fsState.projectFiles]);
 
@@ -355,7 +360,7 @@ function AppInner() {
       const val = typeof updater === 'function' ? updater(editorOutputRef.current) : updater;
       setEditorOutput(val);
     },
-    fsState.activeFileId
+    fsState.activeFileId,
   );
 
   // Sync references
@@ -376,7 +381,7 @@ function AppInner() {
       setEditorOutput(val);
     },
     gitState.gitRepo,
-    gitState.setGitRepo
+    gitState.setGitRepo,
   );
 
   // Track editor/terminal output refs to avoid dependencies loops
@@ -414,7 +419,7 @@ function AppInner() {
     generateAIResponse,
     prepareContext,
     editorState.setIsRunningCode,
-    editorState.setEditorMode
+    editorState.setEditorMode,
   );
 
   // Code Forger State
@@ -438,7 +443,7 @@ function AppInner() {
     editorState.monacoEditorRef,
     gitState.setGitRepo,
     setIsTemplateModalOpen,
-    generateAIResponse
+    generateAIResponse,
   );
 
   // Visual Inspector State
@@ -448,7 +453,7 @@ function AppInner() {
     editorState.setInspectedElement,
     editorState.inspectedElementRef,
     editorState.previewContainerRef,
-    editorState.setEditorContent
+    editorState.setEditorContent,
   );
 
   // Debugger Logic & Handlers
@@ -471,7 +476,7 @@ function AppInner() {
     editorState.cursorLine,
     activePersonality,
     generateAIResponse,
-    prepareContext
+    prepareContext,
   );
 
   // Swarm Setup
@@ -486,7 +491,7 @@ function AppInner() {
     editorLanguage: fsState.editorLanguage,
     onAgentChatUpdate: (agentName, text, phase) => {
       const prefix = phase === 'start' ? '🔵' : phase === 'claim' ? '✅' : '🏁';
-      setChatMessages(prev => [
+      setChatMessages((prev) => [
         ...prev,
         {
           role: 'ai',
@@ -512,14 +517,13 @@ function AppInner() {
     personalities,
     activePersonality,
     setIsAiProcessing,
-    isAiProcessing,
     prepareContext,
     recordInteraction,
     generateAIResponse,
     execTerminal,
-    killTerminal,
     terminalSource,
-    execLocalCore: (cmd: string, args: string[], onStdout?: (data: string) => void) => execWebContainer(cmd, args, onStdout),
+    execLocalCore: (cmd: string, args: string[], onStdout?: (data: string) => void) =>
+      execWebContainer(cmd, args, onStdout),
   });
 
   // Chat & assistant Submit handlers
@@ -550,7 +554,7 @@ function AppInner() {
     fsState.markFileDirty,
     setEditorOutput,
     generateAIResponse,
-    prepareContext
+    prepareContext,
   );
 
   // Pipeline Event Synchronization
@@ -558,7 +562,7 @@ function AppInner() {
     const unsub = pipeline.onResponse((result: PatternResult) => {
       if (result.responseType === 'code_output') {
         setEditorOutput(
-          typeof result.payload === 'string' ? result.payload : '[ERROR] Empty response.'
+          typeof result.payload === 'string' ? result.payload : '[ERROR] Empty response.',
         );
         editorState.setIsRunningCode(false);
       } else if (result.responseType === 'scan_result') {
@@ -581,7 +585,7 @@ function AppInner() {
           ...prev,
         ]);
         swarmState.setSwarmAnxiety((prev) =>
-          update.consensus ? Math.max(0.05, prev - 0.02) : Math.min(1.0, prev + 0.15)
+          update.consensus ? Math.max(0.05, prev - 0.02) : Math.min(1.0, prev + 0.15),
         );
         setIsAiProcessing(false);
       }
@@ -612,7 +616,10 @@ function AppInner() {
   };
 
   const confirmGitCommit = () => {
-    const message = commitMessage.replace(/[^\w\s\-.,!?():]/g, '').trim().slice(0, 200);
+    const message = commitMessage
+      .replace(/[^\w\s\-.,!?():]/g, '')
+      .trim()
+      .slice(0, 200);
     if (!message || gitState.gitRepo.staged.length === 0) return;
     setIsCommitModalOpen(false);
     setCommitMessage('');
@@ -630,7 +637,7 @@ function AppInner() {
       staged: [],
     }));
     setEditorOutput(
-      (prev) => prev + `[GIT] Committed ${gitState.gitRepo.staged.length} files: ${message}\n`
+      (prev) => prev + `[GIT] Committed ${gitState.gitRepo.staged.length} files: ${message}\n`,
     );
     setPostCommitModalOpen(true);
   };
@@ -648,7 +655,7 @@ function AppInner() {
       };
 
       setEditorOutput(
-        (out) => out + `[GIT] Committed ${newStaged.length} files: WIP: Automated save\n`
+        (out) => out + `[GIT] Committed ${newStaged.length} files: WIP: Automated save\n`,
       );
 
       return {
@@ -681,8 +688,19 @@ function AppInner() {
   const handleTermuxImport = (name: string, content: string, path: string) => {
     const ext = name.split('.').pop() ?? 'text';
     const langMap: Record<string, string> = {
-      py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript', jsx: 'javascript',
-      html: 'html', css: 'css', rs: 'rust', go: 'go', cpp: 'cpp', json: 'json', md: 'markdown', sh: 'shell'
+      py: 'python',
+      js: 'javascript',
+      ts: 'typescript',
+      tsx: 'typescript',
+      jsx: 'javascript',
+      html: 'html',
+      css: 'css',
+      rs: 'rust',
+      go: 'go',
+      cpp: 'cpp',
+      json: 'json',
+      md: 'markdown',
+      sh: 'shell',
     };
     const newFile = {
       id: `termux_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -720,21 +738,21 @@ function AppInner() {
     for (const file of Array.from(files)) {
       try {
         const packName = file.name.replace(/\.[^/.]+$/, '');
-        const packId = newPacks.find(p => p.name === packName)?.id;
+        const packId = newPacks.find((p) => p.name === packName)?.id;
 
         await knowledgeService.ingestFile(file, activePersonality.id, (progress) => {
           if (packId) {
             setTnKnowledgePacks((prev) =>
               prev.map((p) => {
                 if (p.id === packId) {
-                  return { 
-                    ...p, 
+                  return {
+                    ...p,
                     status: progress.status === 'complete' ? 'indexed' : 'indexing',
-                    progress: Math.round((progress.current / progress.total) * 100)
+                    progress: Math.round((progress.current / progress.total) * 100),
                   };
                 }
                 return p;
-              })
+              }),
             );
           }
         });
@@ -895,7 +913,11 @@ function AppInner() {
     handleGitPop: () => {
       gitState.setGitRepo((prev: any) => {
         if (prev.stash.length === 0) return prev;
-        return { ...prev, stash: prev.stash.slice(0, -1), modified: [...new Set([...prev.modified, ...prev.stash[prev.stash.length - 1]])] };
+        return {
+          ...prev,
+          stash: prev.stash.slice(0, -1),
+          modified: [...new Set([...prev.modified, ...prev.stash[prev.stash.length - 1]])],
+        };
       });
       setEditorOutput((prev: string) => prev + '[GIT] Popped stash.\n');
     },
@@ -974,14 +996,21 @@ function AppInner() {
     chatSummary,
     setChatSummary,
     validationErrors,
-    validateProjectSettings
+    validateProjectSettings,
   };
 
   return (
     <AppProvider value={contextValue}>
       <div
         className="flex flex-col md:flex-row w-full bg-[#0a0202] text-white font-sans selection:bg-accent-900/40 overflow-hidden"
-        style={{ height: '100vh', opacity: 1, visibility: 'visible', display: 'flex', position: 'relative', zIndex: 1 }}
+        style={{
+          height: '100vh',
+          opacity: 1,
+          visibility: 'visible',
+          display: 'flex',
+          position: 'relative',
+          zIndex: 1,
+        }}
       >
         {/* φ Pulse Column — fixed right edge, doesn't affect layout */}
         <div
@@ -1067,7 +1096,6 @@ function AppInner() {
                 handleTermKeyDown={terminalState.handleTermKeyDown}
                 handleTerminalCommand={terminalState.handleTerminalCommand}
                 realCwd={terminal.realCwd}
-                isMultiLine={terminal.isMultiLine}
                 terminalSource={terminalSource}
                 setTerminalSource={setTerminalSource}
                 localCoreStatus={localCoreStatus}
@@ -1131,10 +1159,13 @@ function AppInner() {
                 handleExplainCode={chatState.handleExplainCode}
                 handleFullProjectAnalysis={analysisState.handleFullProjectAnalysis}
                 handleDeepProjectAudit={analysisState.handleDeepProjectAudit}
-                handleGenerateDocs={chatState.handleGenerateDocs}
+                handleGenerateDocs={
+                  debuggerState.handleToggleCurrentLineBreakpoint /* Dummy JSDoc wrapper placeholder stub */
+                }
                 handleFormatCode={forgeState.handleFormatCode}
                 handleRefactorCode={forgeState.handleRefactorCode}
                 handleRefactorAllFiles={forgeState.handleRefactorAllFiles}
+                handleReviewCode={chatState.handleReviewCode}
                 handleAnalyzeData={chatState.handleAnalyzeData}
                 handleGenerateCode={forgeState.handleGenerateCode}
                 breakpoints={debuggerLogic.breakpoints}
@@ -1155,13 +1186,22 @@ function AppInner() {
                 handleGitPull={handleGitPull}
                 handleGitPush={() => gitState.handleGitPush(setIsAiProcessing)}
                 handleGitStash={() => {
-                  gitState.setGitRepo((prev: any) => ({ ...prev, stash: [...prev.stash, prev.modified] }));
+                  gitState.setGitRepo((prev: any) => ({
+                    ...prev,
+                    stash: [...prev.stash, prev.modified],
+                  }));
                   setEditorOutput((prev: string) => prev + '[GIT] Stashed modifications.\n');
                 }}
                 handleGitPop={() => {
                   gitState.setGitRepo((prev: any) => {
                     if (prev.stash.length === 0) return prev;
-                    return { ...prev, stash: prev.stash.slice(0, -1), modified: [...new Set([...prev.modified, ...prev.stash[prev.stash.length - 1]])] };
+                    return {
+                      ...prev,
+                      stash: prev.stash.slice(0, -1),
+                      modified: [
+                        ...new Set([...prev.modified, ...prev.stash[prev.stash.length - 1]]),
+                      ],
+                    };
                   });
                   setEditorOutput((prev: string) => prev + '[GIT] Popped stash.\n');
                 }}
@@ -1218,8 +1258,6 @@ function AppInner() {
 
             {activeTab === 'brain' && <BrainPanel />}
 
-            {activeTab === 'results' && <UnifiedResultsPanel />}
-
             {activeTab === 'settings' && (
               <SettingsPanel
                 theme={theme}
@@ -1269,8 +1307,12 @@ function AppInner() {
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
             <div className="w-full max-w-sm bg-[#0d0404] border border-accent-900/30 rounded-[30px] shadow-[0_0_60px_var(--color-accent-800)/20] overflow-hidden">
               <div className="p-6 space-y-4">
-                <h3 className="text-lg font-black text-accent-100 uppercase tracking-tighter">Delete Item?</h3>
-                <p className="text-sm text-accent-100/60">This will permanently remove the item and all its contents. This cannot be undone.</p>
+                <h3 className="text-lg font-black text-accent-100 uppercase tracking-tighter">
+                  Delete Item?
+                </h3>
+                <p className="text-sm text-accent-100/60">
+                  This will permanently remove the item and all its contents. This cannot be undone.
+                </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => fsState.confirmDeleteItem(fsState.deleteConfirmId!)}
@@ -1302,9 +1344,15 @@ function AppInner() {
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-2xl animate-in fade-in duration-300">
             <div className="w-full max-w-sm bg-[#0d0404] border border-accent-900/30 rounded-[30px] shadow-[0_0_60px_var(--color-accent-800)/20] overflow-hidden">
               <div className="p-6 space-y-4">
-                <h3 className="text-lg font-black text-accent-100 uppercase tracking-tighter">Load Template?</h3>
+                <h3 className="text-lg font-black text-accent-100 uppercase tracking-tighter">
+                  Load Template?
+                </h3>
                 <p className="text-sm text-accent-100/60">
-                  Loading <span className="text-accent-400 font-bold">"{PROJECT_TEMPLATES[forgeState.templateConfirmKey].name}"</span> will overwrite your current project.
+                  Loading{' '}
+                  <span className="text-accent-400 font-bold">
+                    "{PROJECT_TEMPLATES[forgeState.templateConfirmKey].name}"
+                  </span>{' '}
+                  will overwrite your current project.
                 </p>
                 <div className="flex gap-3">
                   <button
@@ -1394,7 +1442,10 @@ function AppInner() {
 
         {/* Worker Config Bottom Sheet — mobile only */}
         {workerSheetOpen && (
-          <div className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end" onClick={() => setWorkerSheetOpen(false)}>
+          <div
+            className="md:hidden fixed inset-0 z-[60] flex flex-col justify-end"
+            onClick={() => setWorkerSheetOpen(false)}
+          >
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
             <div
               className="relative bg-[#0a0202] border-t border-accent-900/40 rounded-t-3xl p-6 shadow-[0_-20px_60px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh]"
@@ -1402,8 +1453,12 @@ function AppInner() {
             >
               <div className="flex items-center justify-between mb-4 shrink-0">
                 <div>
-                  <h3 className="text-sm font-black text-accent-100 uppercase tracking-widest">Neural Workers</h3>
-                  <p className="text-[10px] text-accent-700 mt-0.5">{availableModels.length} Ollama models available</p>
+                  <h3 className="text-sm font-black text-accent-100 uppercase tracking-widest">
+                    Neural Workers
+                  </h3>
+                  <p className="text-[10px] text-accent-700 mt-0.5">
+                    {availableModels.length} Ollama models available
+                  </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <button
@@ -1412,16 +1467,21 @@ function AppInner() {
                   >
                     ↻ {ollamaStatus}
                   </button>
-                  <button onClick={() => setWorkerSheetOpen(false)} className="text-accent-700 hover:text-accent-400 text-lg leading-none">
+                  <button
+                    onClick={() => setWorkerSheetOpen(false)}
+                    className="text-accent-700 hover:text-accent-400 text-lg leading-none"
+                  >
                     ✕
                   </button>
                 </div>
               </div>
-              
+
               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1">
                 {availableModels.length === 0 && ollamaStatus !== 'connecting' && (
                   <div className="rounded-2xl border border-accent-900/30 bg-accent-950/10 p-4 space-y-2">
-                    <p className="text-xs font-black text-accent-500 uppercase tracking-widest">Ollama Not Connected</p>
+                    <p className="text-xs font-black text-accent-500 uppercase tracking-widest">
+                      Ollama Not Connected
+                    </p>
                     {ollamaStatus === 'error' && (
                       <p className="text-[11px] text-accent-300 font-mono bg-black/40 rounded-lg px-3 py-2 break-all">
                         Connection failed. Check Ollama server.
@@ -1436,16 +1496,27 @@ function AppInner() {
                   </div>
                 )}
                 {workers.map((w) => (
-                  <div key={w.id} className={`p-5 rounded-[30px] border transition-all ${w.enabled ? 'bg-accent-950/20 border-accent-800/30' : 'bg-black/20 border-accent-900/10 opacity-60'}`}>
+                  <div
+                    key={w.id}
+                    className={`p-5 rounded-[30px] border transition-all ${w.enabled ? 'bg-accent-950/20 border-accent-800/30' : 'bg-black/20 border-accent-900/10 opacity-60'}`}
+                  >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${w.enabled ? 'bg-accent-600 text-white shadow-lg' : 'bg-accent-900/40 text-accent-700'}`}>
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs ${w.enabled ? 'bg-accent-600 text-white shadow-lg' : 'bg-accent-900/40 text-accent-700'}`}
+                        >
                           W{w.id}
                         </div>
-                        <span className="text-[11px] font-black text-accent-200 uppercase tracking-widest">Worker Node {w.id}</span>
+                        <span className="text-[11px] font-black text-accent-200 uppercase tracking-widest">
+                          Worker Node {w.id}
+                        </span>
                       </div>
                       <button
-                        onClick={() => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, enabled: !x.enabled } : x)))}
+                        onClick={() =>
+                          setWorkers((prev) =>
+                            prev.map((x) => (x.id === w.id ? { ...x, enabled: !x.enabled } : x)),
+                          )
+                        }
                         className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase transition-all ${w.enabled ? 'bg-accent-500/20 text-accent-400 border border-accent-500/30' : 'bg-accent-950/40 text-accent-800 border border-accent-900/20'}`}
                       >
                         {w.enabled ? 'Enabled' : 'Disabled'}
@@ -1453,52 +1524,132 @@ function AppInner() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1.5 font-black">Provider</p>
+                        <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1.5 font-black">
+                          Provider
+                        </p>
                         <select
                           value={w.provider}
-                          onChange={(e) => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, provider: e.target.value as any, model: e.target.value === 'google' ? 'gemini-2.5-flash' : e.target.value === 'grok' ? 'grok-beta' : e.target.value === 'openrouter' ? 'meta-llama/llama-3.3-70b-instruct:free' : x.model || 'llama3.2:latest' } : x)))}
+                          onChange={(e) =>
+                            setWorkers((prev) =>
+                              prev.map((x) =>
+                                x.id === w.id
+                                  ? {
+                                      ...x,
+                                      provider: e.target.value as any,
+                                      model:
+                                        e.target.value === 'google'
+                                          ? 'gemini-2.5-flash'
+                                          : e.target.value === 'grok'
+                                            ? 'grok-beta'
+                                            : e.target.value === 'openrouter'
+                                              ? 'meta-llama/llama-3.3-70b-instruct:free'
+                                              : x.model || 'llama3.2:latest',
+                                    }
+                                  : x,
+                              ),
+                            )
+                          }
                           disabled={!w.enabled}
                           className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-3 py-2.5 text-xs text-accent-300 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
                         >
-                          <option value="ollama" className="bg-[#0a0202]">Ollama</option>
-                          <option value="google" className="bg-[#0a0202]">Google Gemini</option>
-                          <option value="grok" className="bg-[#0a0202]">xAI Grok</option>
-                          <option value="openrouter" className="bg-[#0a0202]">OpenRouter</option>
+                          <option value="ollama" className="bg-[#0a0202]">
+                            Ollama
+                          </option>
+                          <option value="google" className="bg-[#0a0202]">
+                            Google Gemini
+                          </option>
+                          <option value="grok" className="bg-[#0a0202]">
+                            xAI Grok
+                          </option>
+                          <option value="openrouter" className="bg-[#0a0202]">
+                            OpenRouter
+                          </option>
                         </select>
                       </div>
                       <div>
-                        <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1.5 font-black">Model</p>
+                        <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1.5 font-black">
+                          Model
+                        </p>
                         <select
                           value={w.model}
-                          onChange={(e) => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, model: e.target.value } : x)))}
+                          onChange={(e) =>
+                            setWorkers((prev) =>
+                              prev.map((x) =>
+                                x.id === w.id ? { ...x, model: e.target.value } : x,
+                              ),
+                            )
+                          }
                           disabled={!w.enabled}
                           className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-3 py-2.5 text-xs text-accent-300 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
                         >
-                          {w.provider === 'ollama' && availableModels.length > 0
-                            ? availableModels.map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
-                            : w.provider === 'google'
-                              ? ['gemini-2.5-flash', 'gemini-2.5-pro'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
-                              : w.provider === 'grok'
-                                ? ['grok-beta', 'grok-2-latest'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
-                                : w.provider === 'openrouter'
-                                  ? ['openrouter/fusion', 'meta-llama/llama-3.3-70b-instruct:free', 'deepseek/deepseek-chat', 'google/gemini-2.5-flash', 'meta-llama/llama-3-8b-instruct:free'].map((m) => <option key={m} value={m} className="bg-[#0a0202]">{m}</option>)
-                                  : <option value={w.model} className="bg-[#0a0202]">{w.model}</option>}
+                          {w.provider === 'ollama' && availableModels.length > 0 ? (
+                            availableModels.map((m) => (
+                              <option key={m} value={m} className="bg-[#0a0202]">
+                                {m}
+                              </option>
+                            ))
+                          ) : w.provider === 'google' ? (
+                            ['gemini-2.5-flash', 'gemini-2.5-pro'].map((m) => (
+                              <option key={m} value={m} className="bg-[#0a0202]">
+                                {m}
+                              </option>
+                            ))
+                          ) : w.provider === 'grok' ? (
+                            ['grok-beta', 'grok-2-latest'].map((m) => (
+                              <option key={m} value={m} className="bg-[#0a0202]">
+                                {m}
+                              </option>
+                            ))
+                          ) : w.provider === 'openrouter' ? (
+                            [
+                              'meta-llama/llama-3.3-70b-instruct:free',
+                              'deepseek/deepseek-chat',
+                              'google/gemini-2.5-flash',
+                              'meta-llama/llama-3-8b-instruct:free',
+                            ].map((m) => (
+                              <option key={m} value={m} className="bg-[#0a0202]">
+                                {m}
+                              </option>
+                            ))
+                          ) : (
+                            <option value={w.model} className="bg-[#0a0202]">
+                              {w.model}
+                            </option>
+                          )}
                         </select>
                       </div>
                     </div>
                     <div className="mt-4">
-                      <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1.5 font-black">Agent Archetype</p>
+                      <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1.5 font-black">
+                        Agent Archetype
+                      </p>
                       <select
                         value={w.agentId || ''}
-                        onChange={(e) => setWorkers((prev) => prev.map((x) => (x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x)))}
+                        onChange={(e) =>
+                          setWorkers((prev) =>
+                            prev.map((x) =>
+                              x.id === w.id ? { ...x, agentId: e.target.value || undefined } : x,
+                            ),
+                          )
+                        }
                         disabled={!w.enabled}
                         className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-4 py-3 text-[11px] text-accent-300 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
                       >
-                        <option value="" className="bg-[#0a0202]">🤖 Default (Generalist)</option>
+                        <option value="" className="bg-[#0a0202]">
+                          🤖 Default (Generalist)
+                        </option>
                         {AGENT_DOMAINS.map((domain) => (
-                          <optgroup key={domain} label={domain.toUpperCase()} className="bg-[#0a0202] text-accent-600">
+                          <optgroup
+                            key={domain}
+                            label={domain.toUpperCase()}
+                            className="bg-[#0a0202] text-accent-600"
+                          >
                             {getAgentsByDomain(domain).map((a) => (
-                              <option key={a.id} value={a.id} className="bg-[#0a0202] text-accent-200">
+                              <option
+                                key={a.id}
+                                value={a.id}
+                                className="bg-[#0a0202] text-accent-200"
+                              >
                                 {a.emoji} {a.label}
                               </option>
                             ))}

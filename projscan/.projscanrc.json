@@ -6,10 +6,7 @@
     "tests/fixtures/python-mixed/**",
     "tests/fixtures/python-namespace-pkg/**"
   ],
-  "disableRules": [
-    "large-utils-dir",
-    "unused-dependency-tree-sitter-python"
-  ],
+  "disableRules": ["large-utils-dir", "unused-dependency-tree-sitter-python"],
   "hotspots": {
     "limit": 10,
     "since": "12 months ago"

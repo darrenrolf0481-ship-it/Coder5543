@@ -26,7 +26,11 @@ export async function ensureClone(url: string, baseRoot: string): Promise<string
   }
 
   const hash = crypto.createHash('md5').update(url).digest('hex').slice(0, 8);
-  const repoName = url.split('/').pop()?.replace(/\.git$/, '') ?? 'repo';
+  const repoName =
+    url
+      .split('/')
+      .pop()
+      ?.replace(/\.git$/, '') ?? 'repo';
   const targetDir = path.join(cacheRoot, `${repoName}-${hash}`);
 
   if (existsSync(targetDir)) {
@@ -43,6 +47,8 @@ export async function ensureClone(url: string, baseRoot: string): Promise<string
     execSync(`git clone --depth 1 --quiet ${url} "${targetDir}"`, { stdio: 'inherit' });
     return targetDir;
   } catch (err) {
-    throw new Error(`Failed to clone repository: ${err instanceof Error ? err.message : String(err)}`);
+    throw new Error(
+      `Failed to clone repository: ${err instanceof Error ? err.message : String(err)}`,
+    );
   }
 }

@@ -6,20 +6,21 @@ This document centralizes all AI-related assets, including Skills, MCP Servers, 
 
 The primary MCP (Model Context Protocol) servers currently configured in the environment.
 
-| Server ID | Type | Command / Source | Config Path |
-| :--- | :--- | :--- | :--- |
-| **filesystem** | stdio | `python3 /home/workspace/mcp-servers/filesystem.py` | `/etc/zo/mcpo/config.json` |
-| **shell** | stdio | `python3 /home/workspace/mcp-servers/shell.py` | `/etc/zo/mcpo/config.json` |
-| **projscan** | stdio | `projscan mcp` | `/etc/zo/mcpo/config.json` |
-| **fetch** | stdio | `python3 /home/workspace/mcp-servers/fetch.py` | `/etc/zo/mcpo/config.json` |
-| **memory** | stdio | `python3 /home/workspace/mcp-servers/memory.py` | `/etc/zo/mcpo/config.json` |
-| **dbmcp** | stdio | `haymon-db-mcp` (Inactive) | `/home/workspace/ADHD-Sage/mcp-servers.json` |
+| Server ID      | Type  | Command / Source                                    | Config Path                                  |
+| :------------- | :---- | :-------------------------------------------------- | :------------------------------------------- |
+| **filesystem** | stdio | `python3 /home/workspace/mcp-servers/filesystem.py` | `/etc/zo/mcpo/config.json`                   |
+| **shell**      | stdio | `python3 /home/workspace/mcp-servers/shell.py`      | `/etc/zo/mcpo/config.json`                   |
+| **projscan**   | stdio | `projscan mcp`                                      | `/etc/zo/mcpo/config.json`                   |
+| **fetch**      | stdio | `python3 /home/workspace/mcp-servers/fetch.py`      | `/etc/zo/mcpo/config.json`                   |
+| **memory**     | stdio | `python3 /home/workspace/mcp-servers/memory.py`     | `/etc/zo/mcpo/config.json`                   |
+| **dbmcp**      | stdio | `haymon-db-mcp` (Inactive)                          | `/home/workspace/ADHD-Sage/mcp-servers.json` |
 
 ## 🧠 AI Skills & Specialized Guidance
 
 High-level behavioral instructions and specialized capabilities.
 
 ### 🏠 Local Workspace Skills (Coder5543)
+
 - `.gemini/skills/clean-code.md`
 - `.gemini/skills/code-review-excellence.md`
 - `.gemini/skills/nodejs-best-practices.md`
@@ -28,6 +29,7 @@ High-level behavioral instructions and specialized capabilities.
 - `.gemini/skills/typescript-expert.md`
 
 ### 🏗️ Global Skills Library
+
 - `/home/workspace/Skills/zo-gemini-bridge/SKILL.md`
 - `/home/workspace/Skills/zo-generate-pdf/SKILL.md`
 - `/home/workspace/Skills/zo-code-server-setup/SKILL.md`
@@ -38,6 +40,7 @@ High-level behavioral instructions and specialized capabilities.
 - `/home/workspace/Mcp/antigravity-awesome-skills/CATALOG.md` (Index of 1,500+ community skills)
 
 ### 📚 External Repositories (Referential)
+
 - `/home/workspace/awesome-mcp-clients` (Curated list of MCP clients)
 - `/home/workspace/awesome-mcp-servers` (Curated list of MCP servers)
 
@@ -64,4 +67,5 @@ Foundational scripts and neuro-constants defining SAGE-7.
 - `HANDOVER.md`: Migration context from Termux to Coder Server.
 
 ---
-*Generated: 2026-06-07 | Use this file as the primary lookup for AI assets.*
+
+_Generated: 2026-06-07 | Use this file as the primary lookup for AI assets._

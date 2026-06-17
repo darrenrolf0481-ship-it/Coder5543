@@ -15,15 +15,18 @@ export const ActionButton: React.FC<{
     setTimeout(() => setActive(false), 2000);
   };
 
-  const colors = variant === 'emerald'
-    ? 'bg-emerald-700 border-emerald-500 hover:bg-emerald-600'
-    : 'bg-accent-950/30 border-accent-900/30 hover:bg-accent-900/30';
+  const colors =
+    variant === 'emerald'
+      ? 'bg-emerald-700 border-emerald-500 hover:bg-emerald-600'
+      : 'bg-accent-950/30 border-accent-900/30 hover:bg-accent-900/30';
 
   return (
     <button
       onClick={handleAction}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 border ${
-        active ? 'bg-emerald-700/30 border-emerald-600/40 text-emerald-400' : `text-accent-400 ${colors}`
+        active
+          ? 'bg-emerald-700/30 border-emerald-600/40 text-emerald-400'
+          : `text-accent-400 ${colors}`
       }`}
     >
       {active ? <Check className="w-3 h-3 text-emerald-400" /> : <Icon className="w-3 h-3" />}

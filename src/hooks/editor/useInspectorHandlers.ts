@@ -6,7 +6,7 @@ export function useInspectorHandlers(
   setInspectedElement: any,
   inspectedElementRef: React.MutableRefObject<HTMLElement | null>,
   previewContainerRef: React.MutableRefObject<HTMLDivElement | null>,
-  setEditorContent: any
+  setEditorContent: any,
 ) {
   const handleInspectMouseMove = (e: React.MouseEvent) => {
     if (!isInspectorActive || !previewContainerRef.current) return;
@@ -89,7 +89,7 @@ export function useInspectorHandlers(
 
       setTimeout(() => {
         const reFoundElement = previewContainerRef.current?.querySelector(
-          '[data-neural-inspect]'
+          '[data-neural-inspect]',
         ) as HTMLElement;
         if (reFoundElement) {
           inspectedElementRef.current = reFoundElement;
@@ -101,6 +101,6 @@ export function useInspectorHandlers(
   return {
     handleInspectMouseMove,
     handleInspectClick,
-    handleStyleChange
+    handleStyleChange,
   };
 }

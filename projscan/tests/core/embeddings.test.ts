@@ -41,25 +41,21 @@ describe('embedBatch', () => {
     __resetEmbeddingsCache();
   });
 
-  it(
-    'produces EMBEDDING_DIM-length vectors, with semantic clustering of related strings',
-    async () => {
-      const texts = [
-        'authenticate a user with a password',
-        'verify login credentials before issuing a session token',
-        'add two numbers together and return the sum',
-      ];
-      const vectors = await embedBatch(texts);
-      expect(vectors).not.toBeNull();
-      expect(vectors!).toHaveLength(3);
-      expect(vectors![0].length).toBe(EMBEDDING_DIM);
+  it('produces EMBEDDING_DIM-length vectors, with semantic clustering of related strings', async () => {
+    const texts = [
+      'authenticate a user with a password',
+      'verify login credentials before issuing a session token',
+      'add two numbers together and return the sum',
+    ];
+    const vectors = await embedBatch(texts);
+    expect(vectors).not.toBeNull();
+    expect(vectors!).toHaveLength(3);
+    expect(vectors![0].length).toBe(EMBEDDING_DIM);
 
-      // The two auth-related strings should be closer to each other than
-      // either is to the arithmetic string.
-      const authPair = cosineSimilarity(vectors![0], vectors![1]);
-      const authVsMath = cosineSimilarity(vectors![0], vectors![2]);
-      expect(authPair).toBeGreaterThan(authVsMath);
-    },
-    60_000,
-  );
+    // The two auth-related strings should be closer to each other than
+    // either is to the arithmetic string.
+    const authPair = cosineSimilarity(vectors![0], vectors![1]);
+    const authVsMath = cosineSimilarity(vectors![0], vectors![2]);
+    expect(authPair).toBeGreaterThan(authVsMath);
+  }, 60_000);
 });

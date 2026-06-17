@@ -1,5 +1,5 @@
 const DB_NAME = 'crimson_files';
-const STORE   = 'file_contents';
+const STORE = 'file_contents';
 const VERSION = 1;
 
 // ── φ Quota Partitioning ──────────────────────────────────────────────────────
@@ -10,9 +10,9 @@ const VERSION = 1;
 // When storage pressure rises, ephemeral records are evicted first,
 // preserving the primary partition until the last possible moment.
 
-const PHI_INV         = 0.618;
-const EPHEMERAL_SHARE = 0.382;    // 38.2% for low-priority content
-const WARN_RATIO      = PHI_INV;  // warn at 61.8% total usage
+const PHI_INV = 0.618;
+const EPHEMERAL_SHARE = 0.382; // 38.2% for low-priority content
+const WARN_RATIO = PHI_INV; // warn at 61.8% total usage
 
 type Priority = 'primary' | 'ephemeral';
 
@@ -28,24 +28,26 @@ function openDB(): Promise<IDBDatabase> {
     const req = indexedDB.open(DB_NAME, VERSION);
     req.onupgradeneeded = () => req.result.createObjectStore(STORE, { keyPath: 'id' });
     req.onsuccess = () => resolve(req.result);
-    req.onerror  = () => reject(req.error);
+    req.onerror = () => reject(req.error);
   });
 }
 
 export async function saveFileContents(
-  files: Array<{ id: string; content: string; priority?: Priority }>
+  files: Array<{ id: string; content: string; priority?: Priority }>,
 ): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite');
     const store = tx.objectStore(STORE);
-    files.forEach(f => store.put({
-      ...f,
-      priority: f.priority ?? 'primary',
-      lastAccessed: Date.now(),
-    }));
+    files.forEach((f) =>
+      store.put({
+        ...f,
+        priority: f.priority ?? 'primary',
+        lastAccessed: Date.now(),
+      }),
+    );
     tx.oncomplete = () => resolve();
-    tx.onerror    = () => reject(tx.error);
+    tx.onerror = () => reject(tx.error);
   });
 }
 
@@ -71,7 +73,7 @@ export async function deleteFileContent(id: string): Promise<void> {
     const tx = db.transaction(STORE, 'readwrite');
     tx.objectStore(STORE).delete(id);
     tx.oncomplete = () => resolve();
-    tx.onerror    = () => reject(tx.error);
+    tx.onerror = () => reject(tx.error);
   });
 }
 
@@ -99,12 +101,12 @@ export async function enforcePhiQuota(): Promise<'ok' | 'warn' | 'evicted' | 'cr
     const tx = db.transaction(STORE, 'readonly');
     const req = tx.objectStore(STORE).getAll();
     req.onsuccess = () => res(req.result as FileRecord[]);
-    req.onerror   = () => rej(req.error);
+    req.onerror = () => rej(req.error);
   });
 
   // Sort ephemeral records oldest-first
   const ephemeral = records
-    .filter(r => (r.priority ?? 'primary') === 'ephemeral')
+    .filter((r) => (r.priority ?? 'primary') === 'ephemeral')
     .sort((a, b) => (a.lastAccessed ?? 0) - (b.lastAccessed ?? 0));
 
   if (ephemeral.length === 0) return 'critical';
@@ -116,12 +118,14 @@ export async function enforcePhiQuota(): Promise<'ok' | 'warn' | 'evicted' | 'cr
   await new Promise<void>((res, rej) => {
     const tx = db.transaction(STORE, 'readwrite');
     const store = tx.objectStore(STORE);
-    toEvict.forEach(r => store.delete(r.id));
+    toEvict.forEach((r) => store.delete(r.id));
     tx.oncomplete = () => res();
-    tx.onerror    = () => rej(tx.error);
+    tx.onerror = () => rej(tx.error);
   });
 
-  console.info(`[φ-Quota] Evicted ${evictCount} ephemeral record(s). Usage ratio: ${(ratio * 100).toFixed(1)}%`);
+  console.info(
+    `[φ-Quota] Evicted ${evictCount} ephemeral record(s). Usage ratio: ${(ratio * 100).toFixed(1)}%`,
+  );
   return 'evicted';
 }
 
@@ -136,17 +140,17 @@ export async function markEphemeral(ids: string[]): Promise<void> {
     const tx = db.transaction(STORE, 'readonly');
     const req = tx.objectStore(STORE).getAll();
     req.onsuccess = () => res(req.result as FileRecord[]);
-    req.onerror   = () => rej(req.error);
+    req.onerror = () => rej(req.error);
   });
 
-  const targets = records.filter(r => ids.includes(r.id));
+  const targets = records.filter((r) => ids.includes(r.id));
   if (targets.length === 0) return;
 
   await new Promise<void>((res, rej) => {
     const tx = db.transaction(STORE, 'readwrite');
     const store = tx.objectStore(STORE);
-    targets.forEach(r => store.put({ ...r, priority: 'ephemeral' }));
+    targets.forEach((r) => store.put({ ...r, priority: 'ephemeral' }));
     tx.oncomplete = () => res();
-    tx.onerror    = () => rej(tx.error);
+    tx.onerror = () => rej(tx.error);
   });
 }

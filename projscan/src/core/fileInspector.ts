@@ -190,7 +190,10 @@ function isInsideRoot(absolutePath: string, resolvedRoot: string): boolean {
   return absolutePath === resolvedRoot || absolutePath.startsWith(resolvedRoot + path.sep);
 }
 
-function findHotspotForFile(report: HotspotReport | undefined, relativePath: string): FileHotspot | null {
+function findHotspotForFile(
+  report: HotspotReport | undefined,
+  relativePath: string,
+): FileHotspot | null {
   if (!report || !report.available) return null;
   return report.hotspots.find((h) => h.relativePath === relativePath) ?? null;
 }
@@ -222,7 +225,8 @@ export function extractImports(content: string): ImportInfo[] {
   };
 
   // ES import - optional `type` keyword for type-only imports.
-  const esImportRegex = /import\s+(?:type\s+)?(?:(?:\{[^}]*\}|[\w*]+(?:\s*,\s*\{[^}]*\})?|\*\s+as\s+\w+)\s+from\s+)?['"]([^'"]+)['"]/gm;
+  const esImportRegex =
+    /import\s+(?:type\s+)?(?:(?:\{[^}]*\}|[\w*]+(?:\s*,\s*\{[^}]*\})?|\*\s+as\s+\w+)\s+from\s+)?['"]([^'"]+)['"]/gm;
   let match: RegExpExecArray | null;
   while ((match = esImportRegex.exec(content)) !== null) {
     addSource(match[1]);
@@ -230,7 +234,8 @@ export function extractImports(content: string): ImportInfo[] {
 
   // ES re-export - `export ... from '...'` counts as an import from the
   // importer's point of view for graph-building purposes.
-  const esReexportRegex = /export\s+(?:type\s+)?(?:\{[^}]*\}|\*(?:\s+as\s+\w+)?)\s+from\s+['"]([^'"]+)['"]/gm;
+  const esReexportRegex =
+    /export\s+(?:type\s+)?(?:\{[^}]*\}|\*(?:\s+as\s+\w+)?)\s+from\s+['"]([^'"]+)['"]/gm;
   while ((match = esReexportRegex.exec(content)) !== null) {
     addSource(match[1]);
   }
@@ -242,7 +247,8 @@ export function extractImports(content: string): ImportInfo[] {
   }
 
   // CommonJS require
-  const requireRegex = /(?:const|let|var)\s+(?:\{[^}]*\}|\w+)\s*=\s*require\(\s*['"]([^'"]+)['"]\s*\)/gm;
+  const requireRegex =
+    /(?:const|let|var)\s+(?:\{[^}]*\}|\w+)\s*=\s*require\(\s*['"]([^'"]+)['"]\s*\)/gm;
   while ((match = requireRegex.exec(content)) !== null) {
     addSource(match[1]);
   }
@@ -303,10 +309,16 @@ const NAME_RULES: ReadonlyArray<{
   { pred: (n) => n.includes('middleware'), label: 'Middleware handler' },
   { pred: (n) => n.includes('controller'), label: 'Request controller' },
   { pred: (n) => n.includes('service'), label: 'Service layer logic' },
-  { pred: (n) => n.includes('model') || n.includes('schema'), label: 'Data model / schema definition' },
+  {
+    pred: (n) => n.includes('model') || n.includes('schema'),
+    label: 'Data model / schema definition',
+  },
   { pred: (n) => n.includes('util') || n.includes('helper'), label: 'Utility functions' },
   { pred: (n) => n.includes('hook'), label: 'Custom hook' },
-  { pred: (n) => n.includes('context') || n.includes('provider'), label: 'Context / state provider' },
+  {
+    pred: (n) => n.includes('context') || n.includes('provider'),
+    label: 'Context / state provider',
+  },
   { pred: (n) => n.includes('type') || n.includes('interface'), label: 'Type definitions' },
   { pred: (n) => n.includes('constant'), label: 'Constants / configuration' },
   { pred: (n) => n.includes('migration'), label: 'Database migration' },

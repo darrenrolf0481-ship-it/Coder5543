@@ -76,7 +76,10 @@ describe('MCP _cost sidecar (1.5+)', () => {
     const server = createMcpServer(tmp);
     await init(server);
     // Force truncation by setting an absurdly small max_tokens.
-    const result = await callTool(server, 1, 'projscan_explain', { file: 'src/a.ts', max_tokens: 5 });
+    const result = await callTool(server, 1, 'projscan_explain', {
+      file: 'src/a.ts',
+      max_tokens: 5,
+    });
     expect(result._cost).toBeDefined();
     expect(result._budget).toBeDefined();
     server.close();

@@ -44,10 +44,7 @@ describe('analyzeDependencies (single-package)', () => {
   });
 
   it('flags deprecated packages', async () => {
-    await write(
-      'package.json',
-      JSON.stringify({ name: 'x', dependencies: { moment: '^2.0.0' } }),
-    );
+    await write('package.json', JSON.stringify({ name: 'x', dependencies: { moment: '^2.0.0' } }));
     const r = await analyzeDependencies(tmp);
     const moment = r!.risks.find((rk) => rk.name === 'moment');
     expect(moment).toBeDefined();

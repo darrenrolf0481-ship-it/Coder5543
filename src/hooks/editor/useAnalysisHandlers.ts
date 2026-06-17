@@ -20,7 +20,7 @@ export function useAnalysisHandlers(
   generateAIResponse: any,
   prepareContext: any,
   setIsRunningCode: any,
-  setEditorMode: any
+  setEditorMode: any,
 ) {
   const [debugAnalysis, setDebugAnalysis] = useState<{
     static: {
@@ -48,12 +48,20 @@ export function useAnalysisHandlers(
       const response = await generateAIResponse(
         `Perform a static analysis of the following ${editorLanguage} code. Identify errors, warnings, and info-level issues. Return a JSON array of objects with fields: type ("error"|"warning"|"info"), message (string), line (number|null).\n\nCode:\n${editorContent}`,
         'You are an expert static analysis engine. Return ONLY a valid JSON array, no markdown. Each item: { "type": "error"|"warning"|"info", "message": "...", "line": number|null }',
-        { modelType: 'fast', json: true }
+        { modelType: 'fast', json: true },
       );
-      const issues = extractJson(response, [{ type: 'info', message: 'Could not parse analysis results.', line: undefined }]);
+      const issues = extractJson(response, [
+        { type: 'info', message: 'Could not parse analysis results.', line: undefined },
+      ]);
       setDebugAnalysis((prev) => ({ ...prev, static: { status: 'done', issues } }));
     } catch {
-      setDebugAnalysis((prev) => ({ ...prev, static: { status: 'done', issues: [{ type: 'error', message: 'Static analysis engine offline.', line: undefined }] } }));
+      setDebugAnalysis((prev) => ({
+        ...prev,
+        static: {
+          status: 'done',
+          issues: [{ type: 'error', message: 'Static analysis engine offline.', line: undefined }],
+        },
+      }));
     }
   };
 
@@ -63,13 +71,16 @@ export function useAnalysisHandlers(
       const response = await generateAIResponse(
         `Simulate a dynamic trace of the following ${editorLanguage} code. Return a JSON array of trace log strings, simulating execution flow, variable mutations, and any exceptions.\n\nCode:\n${editorContent}`,
         'You are a dynamic execution tracer. Return ONLY a JSON array of strings — each string is a trace log line prefixed with [TRACE], [WARN], [EXEC], or [ERROR]. No markdown.',
-        { modelType: 'fast', json: true }
+        { modelType: 'fast', json: true },
       );
       const logs = extractJson(response, ['[TRACE] Unable to parse trace output.']);
       let i = 0;
       const interval = setInterval(() => {
         if (i < logs.length) {
-          setDebugAnalysis((prev) => ({ ...prev, tracing: { ...prev.tracing, logs: [...prev.tracing.logs, logs[i]] } }));
+          setDebugAnalysis((prev) => ({
+            ...prev,
+            tracing: { ...prev.tracing, logs: [...prev.tracing.logs, logs[i]] },
+          }));
           i++;
         } else {
           clearInterval(interval);
@@ -77,7 +88,10 @@ export function useAnalysisHandlers(
         }
       }, 400);
     } catch {
-      setDebugAnalysis((prev) => ({ ...prev, tracing: { status: 'done', logs: ['[ERROR] Trace engine offline.'] } }));
+      setDebugAnalysis((prev) => ({
+        ...prev,
+        tracing: { status: 'done', logs: ['[ERROR] Trace engine offline.'] },
+      }));
     }
   };
 
@@ -107,12 +121,17 @@ export function useAnalysisHandlers(
     setIsAiProcessing(true);
     setEditorOutput('Analyzing code structure...\n');
     const prompt = makePrompt({
-      lang: editorLanguage, code: editorContent,
+      lang: editorLanguage,
+      code: editorContent,
       instruction: `Analyze this code based on this request: "${editorAssistantInput}"`,
-      extra: 'Provide a detailed, structured analysis pointing out vulnerabilities, performance issues, or architectural improvements.',
+      extra:
+        'Provide a detailed, structured analysis pointing out vulnerabilities, performance issues, or architectural improvements.',
     });
     try {
-      const response = await generateAIResponse(prompt, 'You are an elite code analyst. Provide a detailed, side-by-side style analysis. Format your response clearly.');
+      const response = await generateAIResponse(
+        prompt,
+        'You are an elite code analyst. Provide a detailed, side-by-side style analysis. Format your response clearly.',
+      );
       if (response) {
         setEditorOutput(response);
         await recordInteraction(prompt, response, 'success');
@@ -134,9 +153,12 @@ export function useAnalysisHandlers(
       const response = await generateAIResponse(
         `Analyze this entire project. Provide a comprehensive overview of the architecture, potential bugs, and optimization strategies.\n\nProject Context:\n${projectContext}`,
         'You are a world-class software architect. Provide a deep, holistic analysis of the entire project. Focus on inter-file dependencies and overall design patterns.',
-        { modelType: 'smart' }
+        { modelType: 'smart' },
       );
-      setEditorAssistantMessages((prev: any) => [...prev, { role: 'ai', text: `FULL_PROJECT_ANALYSIS:\n${response}` }]);
+      setEditorAssistantMessages((prev: any) => [
+        ...prev,
+        { role: 'ai', text: `FULL_PROJECT_ANALYSIS:\n${response}` },
+      ]);
       setIsEditorAssistantOpen(true);
     } catch {
       setEditorOutput((prev: string) => prev + '[ERROR] Neural project analysis failed.\n');
@@ -157,11 +179,17 @@ export function useAnalysisHandlers(
         3. Refactoring Opportunities
         Project Context:\n${projectContext}`,
         'You are a senior security researcher and lead software engineer. Your goal is to find flaws, inefficiencies, and risks in the codebase. Be thorough and critical.',
-        { modelType: 'smart' }
+        { modelType: 'smart' },
       );
-      setEditorAssistantMessages((prev: any) => [...prev, { role: 'ai', text: `DEEP_PROJECT_AUDIT:\n${response}` }]);
+      setEditorAssistantMessages((prev: any) => [
+        ...prev,
+        { role: 'ai', text: `DEEP_PROJECT_AUDIT:\n${response}` },
+      ]);
       setIsEditorAssistantOpen(true);
-      setEditorOutput((prev: string) => prev + '[SYSTEM] Deep project audit complete. Check Neural Assistant for details.\n');
+      setEditorOutput(
+        (prev: string) =>
+          prev + '[SYSTEM] Deep project audit complete. Check Neural Assistant for details.\n',
+      );
     } catch {
       setEditorOutput((prev: string) => prev + '[ERROR] Deep project audit failed.\n');
     } finally {
@@ -179,7 +207,7 @@ export function useAnalysisHandlers(
         'CODE_RUN_REQUESTED',
         'editor',
         { language: editorLanguage, code: editorContent },
-        { meta: { subtype: 'run' } }
+        { meta: { subtype: 'run' } },
       );
     } catch {
       setIsRunningCode(false);
@@ -201,7 +229,8 @@ export function useAnalysisHandlers(
       const response = await generateAIResponse(
         prompt,
         activePersonality.instruction,
-        { modelType: 'fast', brainContext }
+        { modelType: 'fast' },
+        { brainContext },
       );
       const suggestions = (response?.split('\n') || [])
         .map((s) =>
@@ -209,7 +238,7 @@ export function useAnalysisHandlers(
             .replace(/^[\s\d\.\-\*\)"]+/, '')
             .replace(/^["]+/, '')
             .replace(/["]+$/, '')
-            .trim()
+            .trim(),
         )
         .filter((s) => s.length > 10)
         .slice(0, 3);
@@ -233,7 +262,8 @@ export function useAnalysisHandlers(
   };
 
   return {
-    debugAnalysis, setDebugAnalysis,
+    debugAnalysis,
+    setDebugAnalysis,
     runStaticAnalysis,
     runDynamicTracing,
     handleScanCode,
@@ -242,6 +272,6 @@ export function useAnalysisHandlers(
     handleDeepProjectAudit,
     buildProjectContext,
     handleRunCode,
-    getRefactoringSuggestions
+    getRefactoringSuggestions,
   };
 }

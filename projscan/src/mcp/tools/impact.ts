@@ -10,7 +10,7 @@ import type { McpTool } from './_shared.js';
 export const impactTool: McpTool = {
   name: 'projscan_impact',
   description:
-    'Transitive blast-radius analysis. Given a `file` (repo-relative path), returns every file that transitively imports it, ranked by BFS distance (1 = direct importer). Given a `symbol` (export name), returns the symbol\'s definition file(s), the files that directly call it, and their transitive importers. Use this BEFORE renaming or deleting to see what breaks. Cycle-safe; depth-bounded by `max_distance` (default 10).',
+    "Transitive blast-radius analysis. Given a `file` (repo-relative path), returns every file that transitively imports it, ranked by BFS distance (1 = direct importer). Given a `symbol` (export name), returns the symbol's definition file(s), the files that directly call it, and their transitive importers. Use this BEFORE renaming or deleting to see what breaks. Cycle-safe; depth-bounded by `max_distance` (default 10).",
   inputSchema: {
     type: 'object',
     properties: {
@@ -24,7 +24,8 @@ export const impactTool: McpTool = {
       },
       max_distance: {
         type: 'number',
-        description: 'Maximum BFS hops from the target. Default 10. Reports `truncated: true` when exceeded.',
+        description:
+          'Maximum BFS hops from the target. Default 10. Reports `truncated: true` when exceeded.',
       },
       cross_repo: {
         type: 'boolean',
@@ -59,7 +60,9 @@ export const impactTool: McpTool = {
     await saveCachedGraph(rootPath, graph);
 
     emitProgress(2, 3, 'computing impact');
-    const target = file ? { kind: 'file' as const, value: file } : { kind: 'symbol' as const, value: symbol! };
+    const target = file
+      ? { kind: 'file' as const, value: file }
+      : { kind: 'symbol' as const, value: symbol! };
     const crossRepo = args.cross_repo === true;
     const crossRepoGraphs = crossRepo ? await buildCrossRepoGraphs(rootPath) : undefined;
     const report = computeImpact(graph, target, {

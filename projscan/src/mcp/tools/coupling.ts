@@ -16,7 +16,8 @@ export const couplingTool: McpTool = {
     properties: {
       file: {
         type: 'string',
-        description: "Optional. When set, the response includes only this file's coupling row (cycles list still returned in full).",
+        description:
+          "Optional. When set, the response includes only this file's coupling row (cycles list still returned in full).",
       },
       direction: {
         type: 'string',
@@ -32,7 +33,8 @@ export const couplingTool: McpTool = {
       },
       url: {
         type: 'string',
-        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+        description:
+          'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
       },
     },
   },
@@ -57,7 +59,13 @@ export const couplingTool: McpTool = {
     if (file) files = files.filter((f) => f.relativePath === file);
     if (typeof args.package === 'string' && args.package.length > 0) {
       const ws2 = await detectWorkspaces(rootPath);
-      const allowed = new Set(filterFilesByPackage(ws2, args.package, files.map((f) => f.relativePath)));
+      const allowed = new Set(
+        filterFilesByPackage(
+          ws2,
+          args.package,
+          files.map((f) => f.relativePath),
+        ),
+      );
       files = files.filter((f) => allowed.has(f.relativePath));
     }
     files = files.slice(0, limit);

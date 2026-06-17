@@ -15,7 +15,7 @@ export class WebSocketBridge {
 
   constructor(httpServer: HttpServer) {
     const port = process.env.PORT || '3002';
-    
+
     // Primary IO (local)
     this.io = new SocketServer(httpServer, {
       cors: { origin: '*', methods: ['GET', 'POST'] },
@@ -120,7 +120,9 @@ export class WebSocketBridge {
       if (this.proxyIo) {
         this.proxyIo.emit('BROKER_SIGNAL', signal);
         if (signal.meta?.personalityId) {
-          this.proxyIo.to(`personality_${signal.meta.personalityId}`).emit('SIGNAL_PERSONALITY', signal);
+          this.proxyIo
+            .to(`personality_${signal.meta.personalityId}`)
+            .emit('SIGNAL_PERSONALITY', signal);
         }
       }
     });

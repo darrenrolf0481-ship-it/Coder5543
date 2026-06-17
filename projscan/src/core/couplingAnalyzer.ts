@@ -21,10 +21,7 @@ import { findPackageForFile } from './monorepo.js';
  * import graph (file -> imported file). Computed via Tarjan's SCC, iterative
  * to survive deep monorepos.
  */
-export function computeCoupling(
-  graph: CodeGraph,
-  workspaces?: WorkspaceInfo,
-): CouplingReport {
+export function computeCoupling(graph: CodeGraph, workspaces?: WorkspaceInfo): CouplingReport {
   // Build outgoing local-edge adjacency by inverting localImporters.
   // (localImporters[X] = files that import X. Invert to get
   //  localImports[Y] = files that Y imports.)

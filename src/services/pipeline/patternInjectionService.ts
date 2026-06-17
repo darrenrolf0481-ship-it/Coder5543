@@ -8,7 +8,6 @@
 // service stays decoupled from React state and can be unit-tested independently.
 
 import { broker, Signal, SignalSource } from '../messageBroker';
-import { injectIdentity } from '../identity/identityInjection.js';
 
 export type AIExecutor = (
   prompt: string,
@@ -16,10 +15,7 @@ export type AIExecutor = (
   opts?: { modelType?: 'fast' | 'smart'; json?: boolean },
 ) => Promise<string>;
 
-export type PatternHandler = (
-  signal: Signal,
-  execute: AIExecutor,
-) => Promise<PatternResult>;
+export type PatternHandler = (signal: Signal, execute: AIExecutor) => Promise<PatternResult>;
 
 export interface PatternResult {
   responseType: 'ai_output' | 'swarm_update' | 'code_output' | 'scan_result' | 'noop';
@@ -43,7 +39,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promis
       return await fn();
     } catch (err) {
       if (attempt === retries) throw err;
-      await new Promise(r => setTimeout(r, BASE_DELAY_MS * 2 ** attempt));
+      await new Promise((r) => setTimeout(r, BASE_DELAY_MS * 2 ** attempt));
     }
   }
   throw new Error('Unreachable');
@@ -56,9 +52,9 @@ async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promis
 //
 // Applied to the raw AI confidence score to produce a phi-stabilised value.
 
-const PHI     = 1.618;
-const PHI_INV = 0.618;   // primary weight  (61.8%)
-const PHI_MIN = 0.382;   // minority weight (38.2%  = 1 - 1/φ)
+const PHI = 1.618;
+const PHI_INV = 0.618; // primary weight  (61.8%)
+const PHI_MIN = 0.382; // minority weight (38.2%  = 1 - 1/φ)
 
 /**
  * Stabilise a raw [0,1] confidence score using φ weighting.
@@ -83,28 +79,29 @@ function phiStabilise(rawConfidence: number, consensus: boolean): number {
   }
 }
 
-
 const builtinPatterns: Pattern[] = [
   {
     id: 'chat_message',
-    match: s => s.source === 'chat',
+    match: (s) => s.source === 'chat',
     handler: async (signal, execute) => {
       const prompt = (signal.data as { prompt: string; system: string; ctx?: string }).prompt;
-      const system = injectIdentity((signal.data as any).system ?? 'You are a helpful AI assistant.');
-      const ctx    = (signal.data as any).ctx ?? '';
-      const result = await withRetry(() => execute(ctx ? `${ctx}\n\n${prompt}` : prompt, system, { modelType: 'smart' }));
+      const system = (signal.data as any).system ?? 'You are a helpful AI assistant.';
+      const ctx = (signal.data as any).ctx ?? '';
+      const result = await withRetry(() =>
+        execute(ctx ? `${ctx}\n\n${prompt}` : prompt, system, { modelType: 'smart' }),
+      );
       return { responseType: 'ai_output', payload: result, correlationId: signal.id };
     },
   },
   {
     id: 'code_run',
-    match: s => s.source === 'editor' && (signal => !!(signal.meta?.subtype === 'run'))(s),
+    match: (s) => s.source === 'editor' && ((signal) => !!(signal.meta?.subtype === 'run'))(s),
     handler: async (signal, execute) => {
       const { language, code } = signal.data as { language: string; code: string };
       const result = await withRetry(() =>
         execute(
           `Execute this ${language} code in a simulated environment and return terminal-style output:\n${code}`,
-          injectIdentity('You are the Crimson OS Neural Runtime. Simulate execution and produce realistic terminal output.'),
+          'You are the Crimson OS Neural Runtime. Simulate execution and produce realistic terminal output.',
           { modelType: 'smart' },
         ),
       );
@@ -113,24 +110,28 @@ const builtinPatterns: Pattern[] = [
   },
   {
     id: 'code_scan',
-    match: s => s.source === 'scanner',
+    match: (s) => s.source === 'scanner',
     handler: async (signal, execute) => {
       const { language, code } = signal.data as { language: string; code: string };
       const result = await withRetry(() =>
         execute(
           `Language: ${language}\nCode:\n${code}\n\nReturn ONLY a JSON array of 1-indexed line numbers with issues. Example: [3,15]. Empty array if none.`,
-          injectIdentity('You are a strict code linter. Output ONLY a valid JSON array of integers.'),
+          'You are a strict code linter. Output ONLY a valid JSON array of integers.',
           { modelType: 'fast', json: true },
         ),
       );
       let lines: number[] = [];
-      try { lines = JSON.parse(result.replace(/```json\n?|```/g, '').trim()); } catch { /* ignore */ }
+      try {
+        lines = JSON.parse(result.replace(/```json\n?|```/g, '').trim());
+      } catch {
+        /* ignore */
+      }
       return { responseType: 'scan_result', payload: lines, correlationId: signal.id };
     },
   },
   {
     id: 'swarm_cycle_legacy',
-    match: s => s.source === 'swarm' && s.type === 'SWARM_CYCLE_START',
+    match: (s) => s.source === 'swarm' && s.type === 'SWARM_CYCLE_START',
     handler: async (signal) => {
       // The real swarm engine now runs through useSwarm / swarmEngine directly.
       // This legacy handler simply acknowledges the signal so older callers don't hang.
@@ -143,14 +144,16 @@ const builtinPatterns: Pattern[] = [
   },
   {
     id: 'editor_ai',
-    match: s => s.source === 'editor',
+    match: (s) => s.source === 'editor',
     handler: async (signal, execute) => {
       const { prompt, system, modelType } = signal.data as {
         prompt: string;
         system: string;
         modelType?: 'fast' | 'smart';
       };
-      const result = await withRetry(() => execute(prompt, injectIdentity(system), { modelType: modelType ?? 'smart' }));
+      const result = await withRetry(() =>
+        execute(prompt, system, { modelType: modelType ?? 'smart' }),
+      );
       return { responseType: 'ai_output', payload: result, correlationId: signal.id };
     },
   },
@@ -170,20 +173,23 @@ export class PatternInjectionService {
   }
 
   async onFiltered(signal: Signal): Promise<void> {
-    if (!this.executor) {
-      console.warn('[PatternInjection] Executor not initialized, skipping signal:', signal.id);
-      await broker.publish('AI_RESPONSE_RECEIVED', { responseType: 'noop', payload: null, correlationId: signal.id }, signal.source);
-      return;
-    }
-
-    const pattern = this.patterns.find(p => p.match(signal));
+    const pattern = this.patterns.find((p) => p.match(signal));
     if (!pattern) {
       // No registered pattern — pass through as noop
-      await broker.publish('AI_RESPONSE_RECEIVED', { responseType: 'noop', payload: null, correlationId: signal.id }, signal.source);
+      await broker.publish(
+        'AI_RESPONSE_RECEIVED',
+        { responseType: 'noop', payload: null, correlationId: signal.id },
+        signal.source,
+      );
       return;
     }
 
-    await broker.publish('AI_REQUEST_QUEUED', { patternId: pattern.id, correlationId: signal.id }, signal.source, signal.meta);
+    await broker.publish(
+      'AI_REQUEST_QUEUED',
+      { patternId: pattern.id, correlationId: signal.id },
+      signal.source,
+      signal.meta,
+    );
 
     try {
       const result = await pattern.handler(signal, this.executor);
@@ -193,8 +199,17 @@ export class PatternInjectionService {
       });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
-      await broker.publish('AI_REQUEST_FAILED', { error: errMsg, correlationId: signal.id }, signal.source, signal.meta);
-      await broker.publish('PIPELINE_ERROR', { stage: 'pattern_injection', error: errMsg, signal }, signal.source);
+      await broker.publish(
+        'AI_REQUEST_FAILED',
+        { error: errMsg, correlationId: signal.id },
+        signal.source,
+        signal.meta,
+      );
+      await broker.publish(
+        'PIPELINE_ERROR',
+        { stage: 'pattern_injection', error: errMsg, signal },
+        signal.source,
+      );
     }
   }
 }
@@ -206,6 +221,9 @@ export function startPatternInjectionService(executor: AIExecutor): () => void {
   if (_started) return () => {};
   _started = true;
   patternInjectionService.init(executor);
-  const unsub = broker.subscribe('SIGNAL_FILTERED', s => patternInjectionService.onFiltered(s));
-  return () => { unsub(); _started = false; };
+  const unsub = broker.subscribe('SIGNAL_FILTERED', (s) => patternInjectionService.onFiltered(s));
+  return () => {
+    unsub();
+    _started = false;
+  };
 }

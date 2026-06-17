@@ -9,7 +9,9 @@ export class AsyncStorage {
 
   async getItem(key: string): Promise<string | null> {
     try {
-      const row = db.prepare('SELECT value FROM key_value_store WHERE key = ?').get(key) as { value: string } | undefined;
+      const row = db.prepare('SELECT value FROM key_value_store WHERE key = ?').get(key) as
+        | { value: string }
+        | undefined;
       return row ? row.value : null;
     } catch (e) {
       logger.error(`[AsyncStorage] Error reading ${key}:`, e);
@@ -19,8 +21,9 @@ export class AsyncStorage {
 
   async setItem(key: string, value: string): Promise<void> {
     try {
-      db.prepare('INSERT INTO key_value_store (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
-        .run(key, value);
+      db.prepare(
+        'INSERT INTO key_value_store (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+      ).run(key, value);
     } catch (e) {
       logger.error(`[AsyncStorage] Error saving ${key}:`, e);
       throw e;
@@ -39,7 +42,9 @@ export class AsyncStorage {
     return {
       getItem: (key: string) => {
         try {
-          const row = db.prepare('SELECT value FROM key_value_store WHERE key = ?').get(key) as { value: string } | undefined;
+          const row = db.prepare('SELECT value FROM key_value_store WHERE key = ?').get(key) as
+            | { value: string }
+            | undefined;
           return row ? row.value : null;
         } catch {
           return null;
@@ -47,13 +52,13 @@ export class AsyncStorage {
       },
       setItem: (key: string, value: string) => {
         try {
-          db.prepare('INSERT INTO key_value_store (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
-            .run(key, value);
+          db.prepare(
+            'INSERT INTO key_value_store (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+          ).run(key, value);
         } catch {}
-      }
+      },
     };
   }
 }
 
 export const brainStorage = new AsyncStorage();
-

@@ -116,16 +116,7 @@ const EMPTY: AstResult = {
   functions: [],
 };
 
-const SOURCE_EXTENSIONS = new Set([
-  '.ts',
-  '.tsx',
-  '.js',
-  '.jsx',
-  '.mjs',
-  '.cjs',
-  '.mts',
-  '.cts',
-]);
+const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.mts', '.cts']);
 
 /** Is this a file we should try to AST-parse at all? */
 export function isParseable(filePath: string): boolean {
@@ -189,7 +180,11 @@ export function parseSource(filePath: string, content: string): AstResult {
         callSites.push(callee.name);
       } else if (callee.type === 'MemberExpression' && callee.property.type === 'Identifier') {
         callSites.push(callee.property.name);
-      } else if (callee.type === 'Import' && n.arguments[0] && n.arguments[0].type === 'StringLiteral') {
+      } else if (
+        callee.type === 'Import' &&
+        n.arguments[0] &&
+        n.arguments[0].type === 'StringLiteral'
+      ) {
         imports.push({
           source: n.arguments[0].value,
           kind: 'dynamic',
@@ -315,7 +310,8 @@ function collectFunctions(
   }
 
   for (const key of Object.keys(node)) {
-    if (key === 'loc' || key === 'range' || key === 'leadingComments' || key === 'trailingComments') continue;
+    if (key === 'loc' || key === 'range' || key === 'leadingComments' || key === 'trailingComments')
+      continue;
     const child = (node as unknown as Record<string, unknown>)[key];
     if (!child) continue;
     if (Array.isArray(child)) {
@@ -353,7 +349,11 @@ function nameForFunctionNode(
     return id?.name ?? bindingName ?? '<anonymous>';
   }
   // ClassMethod / ObjectMethod / ClassPrivateMethod
-  if (node.type === 'ClassMethod' || node.type === 'ObjectMethod' || node.type === 'ClassPrivateMethod') {
+  if (
+    node.type === 'ClassMethod' ||
+    node.type === 'ObjectMethod' ||
+    node.type === 'ClassPrivateMethod'
+  ) {
     const key = (node as { key?: { type: string; name?: string; value?: string } }).key;
     let methodName = '<anonymous>';
     if (key) {
@@ -395,11 +395,18 @@ function analyzeBabelBody(fnNode: Node): { cc: number; callSites: string[]; refe
       decisions++;
       return;
     }
-    if (n.type === 'CallExpression' || n.type === 'OptionalCallExpression' || n.type === 'NewExpression') {
+    if (
+      n.type === 'CallExpression' ||
+      n.type === 'OptionalCallExpression' ||
+      n.type === 'NewExpression'
+    ) {
       const callee = (n as { callee?: Node }).callee;
       const name = babelCalleeName(callee);
       if (name) calls.add(name);
-      if (callee && (callee.type === 'MemberExpression' || callee.type === 'OptionalMemberExpression')) {
+      if (
+        callee &&
+        (callee.type === 'MemberExpression' || callee.type === 'OptionalMemberExpression')
+      ) {
         calleeMembers.add(callee);
       }
     }
@@ -442,7 +449,8 @@ function babelCalleeName(node: Node | null | undefined): string | null {
 function walkChildren(node: Node, visit: (n: Node) => void): void {
   if (!node || typeof node !== 'object') return;
   for (const key of Object.keys(node)) {
-    if (key === 'loc' || key === 'range' || key === 'leadingComments' || key === 'trailingComments') continue;
+    if (key === 'loc' || key === 'range' || key === 'leadingComments' || key === 'trailingComments')
+      continue;
     const child = (node as unknown as Record<string, unknown>)[key];
     if (!child) continue;
     if (Array.isArray(child)) {
@@ -459,7 +467,8 @@ function walkSkippingNestedFunctions(node: Node, visit: (n: Node) => void): void
   if (!node || typeof node !== 'object') return;
   visit(node);
   for (const key of Object.keys(node)) {
-    if (key === 'loc' || key === 'range' || key === 'leadingComments' || key === 'trailingComments') continue;
+    if (key === 'loc' || key === 'range' || key === 'leadingComments' || key === 'trailingComments')
+      continue;
     const child = (node as unknown as Record<string, unknown>)[key];
     if (!child) continue;
     if (Array.isArray(child)) {
@@ -505,11 +514,7 @@ function isDecisionPoint(n: Node): boolean {
   }
 }
 
-function visitTopLevel(
-  node: Statement,
-  imports: AstImport[],
-  exports: AstExport[],
-): void {
+function visitTopLevel(node: Statement, imports: AstImport[], exports: AstExport[]): void {
   switch (node.type) {
     case 'ImportDeclaration': {
       imports.push(importFromNode(node));
@@ -574,13 +579,17 @@ function collectNamedExport(
     imports.push({
       source: (node.source as StringLiteral).value,
       kind: 'reexport',
-      specifiers: node.specifiers.map((s) => {
-        if (s.type === 'ExportSpecifier') {
-          const exported = s.exported;
-          return exported.type === 'Identifier' ? exported.name : (exported as StringLiteral).value;
-        }
-        return '';
-      }).filter(Boolean),
+      specifiers: node.specifiers
+        .map((s) => {
+          if (s.type === 'ExportSpecifier') {
+            const exported = s.exported;
+            return exported.type === 'Identifier'
+              ? exported.name
+              : (exported as StringLiteral).value;
+          }
+          return '';
+        })
+        .filter(Boolean),
       typeOnly: node.exportKind === 'type',
       line: node.loc?.start.line ?? 0,
     });
@@ -652,7 +661,8 @@ function walk(node: Node, visit: (n: Node) => void): void {
   if (!node || typeof node !== 'object') return;
   visit(node);
   for (const key of Object.keys(node)) {
-    if (key === 'loc' || key === 'range' || key === 'leadingComments' || key === 'trailingComments') continue;
+    if (key === 'loc' || key === 'range' || key === 'leadingComments' || key === 'trailingComments')
+      continue;
     const child = (node as unknown as Record<string, unknown>)[key];
     if (!child) continue;
     if (Array.isArray(child)) {

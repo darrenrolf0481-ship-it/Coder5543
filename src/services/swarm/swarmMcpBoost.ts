@@ -37,29 +37,50 @@ export const DEFAULT_MCP_BOOSTS: McpBoostDefinition[] = [
     description: 'Semantic code retrieval and editing suggestions.',
     contextHint: 'You have access to Serena semantic code search results.',
     tools: [
-      { name: 'search', description: 'Semantic symbol search', arguments: { query: 'main architecture' } },
-      { name: 'explain', description: 'Explain a complex code region', arguments: { query: 'core logic' } },
+      {
+        name: 'search',
+        description: 'Semantic symbol search',
+        arguments: { query: 'main architecture' },
+      },
+      {
+        name: 'explain',
+        description: 'Explain a complex code region',
+        arguments: { query: 'core logic' },
+      },
     ],
   },
   {
     id: 'jetbrains',
     label: 'JetBrains Code Intelligence',
     emoji: '✈️',
-    description: 'JetBrains IDE inspections, Qodana scans, and code quality metrics. Requires a JetBrains MCP server or Qodana CLI configured.',
+    description:
+      'JetBrains IDE inspections, Qodana scans, and code quality metrics. Requires a JetBrains MCP server or Qodana CLI configured.',
     contextHint: 'You have access to JetBrains code-quality intelligence.',
     tools: [
-      { name: 'jetbrains_inspect_code', description: 'Run JetBrains IDE inspections', arguments: {} },
+      {
+        name: 'jetbrains_inspect_code',
+        description: 'Run JetBrains IDE inspections',
+        arguments: {},
+      },
       { name: 'jetbrains_qodana_scan', description: 'Run Qodana static analysis', arguments: {} },
-      { name: 'jetbrains_find_usages', description: 'Find usages of key symbols', arguments: { symbol: 'main' } },
+      {
+        name: 'jetbrains_find_usages',
+        description: 'Find usages of key symbols',
+        arguments: { symbol: 'main' },
+      },
     ],
   },
 ];
 
 export function getBoostDefinition(id: string): McpBoostDefinition | undefined {
-  return DEFAULT_MCP_BOOSTS.find(b => b.id === id);
+  return DEFAULT_MCP_BOOSTS.find((b) => b.id === id);
 }
 
-export async function callMcpTool(toolName: string, args: Record<string, any> = {}, id: string | number = Date.now()): Promise<any> {
+export async function callMcpTool(
+  toolName: string,
+  args: Record<string, any> = {},
+  id: string | number = Date.now(),
+): Promise<any> {
   const res = await fetch('/api/mcp/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -155,8 +176,8 @@ function extractTextFromMcpResult(raw: any): string {
 export function formatBoostResultsForAgent(results: BoostResult[], boostId: string): string {
   const boost = getBoostDefinition(boostId);
   const header = boost ? `[${boost.label} CONTEXT]` : `[MCP Boost: ${boostId}]`;
-  const successes = results.filter(r => r.status === 'success' && r.output.trim());
-  const errors = results.filter(r => r.status === 'error');
+  const successes = results.filter((r) => r.status === 'success' && r.output.trim());
+  const errors = results.filter((r) => r.status === 'error');
 
   if (successes.length === 0 && errors.length === 0) {
     return `${header}\nNo boost data available.`;
@@ -164,7 +185,8 @@ export function formatBoostResultsForAgent(results: BoostResult[], boostId: stri
 
   const parts: string[] = [header];
   for (const r of successes) {
-    const truncated = r.output.length > 12_000 ? r.output.slice(0, 12_000) + '\n... [truncated]' : r.output;
+    const truncated =
+      r.output.length > 12_000 ? r.output.slice(0, 12_000) + '\n... [truncated]' : r.output;
     parts.push(`\n--- ${r.toolName} ---\n${truncated}`);
   }
   for (const r of errors) {

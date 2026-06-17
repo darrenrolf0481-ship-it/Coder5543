@@ -19,7 +19,8 @@ export const doctorTool: McpTool = {
       },
       url: {
         type: 'string',
-        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+        description:
+          'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
       },
     },
   },
@@ -72,7 +73,9 @@ function shapeDoctorForBudget(
   if (tier === 'summary') {
     // Top 5 of each severity, with the heavy `description` and
     // `locations` fields stripped.
-    const top = (sev: 'error' | 'warning' | 'info'): Array<Pick<Issue, 'id' | 'title' | 'severity' | 'category'>> =>
+    const top = (
+      sev: 'error' | 'warning' | 'info',
+    ): Array<Pick<Issue, 'id' | 'title' | 'severity' | 'category'>> =>
       issues
         .filter((i) => i.severity === sev)
         .slice(0, 5)

@@ -40,6 +40,7 @@ npm run format        # Prettier
 ### Reporting Bugs
 
 Open an [issue](https://github.com/abhiyoheswaran1/projscan/issues/new?template=bug_report.md) with:
+
 - Steps to reproduce
 - Expected vs actual behavior
 - Node.js version and OS
@@ -47,6 +48,7 @@ Open an [issue](https://github.com/abhiyoheswaran1/projscan/issues/new?template=
 ### Suggesting Features
 
 Open an [issue](https://github.com/abhiyoheswaran1/projscan/issues/new?template=feature_request.md) describing:
+
 - The problem you're trying to solve
 - Your proposed solution
 - Alternative approaches you've considered
@@ -112,7 +114,7 @@ Concrete on-ramps for new contributors. Each is scoped to fit a first PR. Pre-dr
 - **New analyzers.** Issue checkers live in `src/analyzers/`. Each is a pure function `(rootPath, files) => Promise<Issue[]>`. Existing ones (`testCheck`, `prettierCheck`, `securityCheck`, `dependencyRiskCheck`, `cycleCheck`) are good shape templates. Wire into `src/core/issueEngine.ts`. Tests in `tests/analyzers/`.
 - **New reporters.** Output formatters in `src/reporters/`. Implement the same surface as `consoleReporter.ts` / `markdownReporter.ts` / `jsonReporter.ts` / `htmlReporter.ts`. Pre-drafted tickets: [HTML for `pr-diff`](.github/seed-issues/04-html-reporter-for-pr-diff.md), [HTML for `coverage`](.github/seed-issues/05-html-reporter-for-coverage.md).
 - **MCP tools.** Each tool is a `{name, description, inputSchema, handler}` object exported from `src/mcp/tools/<name>.ts` and registered in `src/mcp/tools.ts`. Mirror an existing one (e.g. `src/mcp/tools/coupling.ts` is a clean shape). Add a `tools/list` assertion to `tests/mcp/server.test.ts`.
-- **Fix-suggest templates.** The rule-driven action-prompt registry in `src/core/fixSuggest.ts` covers ~12 issue families. Each new template is ~25 LOC. Pre-drafted ticket: [eslint-* template](.github/seed-issues/06-eslint-fix-suggest-template.md).
+- **Fix-suggest templates.** The rule-driven action-prompt registry in `src/core/fixSuggest.ts` covers ~12 issue families. Each new template is ~25 LOC. Pre-drafted ticket: [eslint-\* template](.github/seed-issues/06-eslint-fix-suggest-template.md).
 - **UX polish.** Small, high-leverage CLI ergonomics. Pre-drafted ticket: [impact-symbol disambiguation warning](.github/seed-issues/07-impact-cli-symbol-disambiguation.md).
 - **Documentation.** `docs/GUIDE.md` covers the agent journey + per-command reference; tighter sections still wanted: per-analyzer "what triggers / how to silence" tables, monorepo setup walkthroughs, framework-specific guides.
 

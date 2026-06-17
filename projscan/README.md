@@ -18,9 +18,9 @@
 
 ## Why?
 
-AI coding agents are becoming the primary interface to code. Today, when you ask your agent *"which files implement auth?"* or *"what breaks if I bump React from 18 to 19?"* - it either guesses from names, or it shells out to grep and reads raw output not built for it.
+AI coding agents are becoming the primary interface to code. Today, when you ask your agent _"which files implement auth?"_ or _"what breaks if I bump React from 18 to 19?"_ - it either guesses from names, or it shells out to grep and reads raw output not built for it.
 
-**projscan is the first code-intelligence tool built for agents, not for humans.** Your agent gets a fast, AST-accurate, context-budget-aware view of your codebase through 25 structured MCP tools. It can query the import graph, find symbol definitions, preview upgrades, rank hotspots, diff structural changes between refs, surface coupling/cycle hotspots, get a one-call PR review (now with new-taint-flow detection that *blocks* unsafe merges), request structured fix-action prompts for any open issue and **mechanically apply** the safe ones with rollback, ask "what breaks if I change this?" via transitive blast-radius analysis (across registered sibling repos too), surface source-to-sink taint flows, share a durable session across multiple agent invocations, and learn from how you use it — quieting accumulated noise on this specific repo over time without ever phoning home.
+**projscan is the first code-intelligence tool built for agents, not for humans.** Your agent gets a fast, AST-accurate, context-budget-aware view of your codebase through 25 structured MCP tools. It can query the import graph, find symbol definitions, preview upgrades, rank hotspots, diff structural changes between refs, surface coupling/cycle hotspots, get a one-call PR review (now with new-taint-flow detection that _blocks_ unsafe merges), request structured fix-action prompts for any open issue and **mechanically apply** the safe ones with rollback, ask "what breaks if I change this?" via transitive blast-radius analysis (across registered sibling repos too), surface source-to-sink taint flows, share a durable session across multiple agent invocations, and learn from how you use it — quieting accumulated noise on this specific repo over time without ever phoning home.
 
 Humans get the same thing through the CLI.
 
@@ -82,31 +82,31 @@ For a comprehensive walkthrough, see the **[Full Guide](docs/GUIDE.md)**.
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `projscan analyze` | Full analysis - languages, frameworks, dependencies, issues |
-| `projscan doctor` | Health check - missing tooling, architecture smells, security risks |
-| `projscan hotspots` | Rank files by risk - churn × complexity × issues × ownership |
-| `projscan search <query>` | **BM25-ranked search** - content + symbols + path, with excerpts |
-| `projscan file <path>` | Drill into a file - purpose, risk, ownership, related issues |
-| `projscan fix` | Auto-fix issues (ESLint, Prettier, Vitest, .editorconfig) |
-| `projscan ci` | CI health gate - SARIF output, `--changed-only` PR-diff mode, exits 1 if score below threshold |
-| `projscan diff` | Compare current health **and hotspot trends** against a baseline |
-| `projscan explain <file>` | Explain a file's purpose, imports, exports, and issues |
-| `projscan diagram` | ASCII architecture diagram of your project |
-| `projscan structure` | Directory tree with file counts |
-| `projscan dependencies` | Dependency analysis - counts, risks, recommendations |
-| `projscan outdated` | Declared-vs-installed drift check (offline) |
-| `projscan audit` | `npm audit`-powered vulnerability report - SARIF-ready for Code Scanning |
-| `projscan upgrade <pkg>` | Preview upgrade impact - local CHANGELOG + importer list, offline |
-| `projscan coverage` | **Coverage × hotspots - rank the scariest untested files** (`--changed-only` for diff mode) |
-| `projscan badge` | Generate a health score badge for your README |
-| `projscan init` | *(1.6)* Scaffold `.projscanrc.json` with sensible defaults |
-| `projscan install-hook` | *(1.6)* Install a `pre-commit` hook running `projscan ci --changed-only` |
-| `projscan workspace` | *(1.6)* Register sibling repos for cross-repo intelligence (`add` / `list` / `remove`) |
-| `projscan apply-fix <id>` | *(1.6)* Mechanically execute the safe fix templates with rollback (default dry-run) |
-| `projscan taint` | *(1.6)* Source-to-sink reachability over the call graph |
-| `projscan mcp` | Run as an MCP server for AI coding agents (Claude Code, Cursor, …) |
+| Command                   | Description                                                                                    |
+| ------------------------- | ---------------------------------------------------------------------------------------------- |
+| `projscan analyze`        | Full analysis - languages, frameworks, dependencies, issues                                    |
+| `projscan doctor`         | Health check - missing tooling, architecture smells, security risks                            |
+| `projscan hotspots`       | Rank files by risk - churn × complexity × issues × ownership                                   |
+| `projscan search <query>` | **BM25-ranked search** - content + symbols + path, with excerpts                               |
+| `projscan file <path>`    | Drill into a file - purpose, risk, ownership, related issues                                   |
+| `projscan fix`            | Auto-fix issues (ESLint, Prettier, Vitest, .editorconfig)                                      |
+| `projscan ci`             | CI health gate - SARIF output, `--changed-only` PR-diff mode, exits 1 if score below threshold |
+| `projscan diff`           | Compare current health **and hotspot trends** against a baseline                               |
+| `projscan explain <file>` | Explain a file's purpose, imports, exports, and issues                                         |
+| `projscan diagram`        | ASCII architecture diagram of your project                                                     |
+| `projscan structure`      | Directory tree with file counts                                                                |
+| `projscan dependencies`   | Dependency analysis - counts, risks, recommendations                                           |
+| `projscan outdated`       | Declared-vs-installed drift check (offline)                                                    |
+| `projscan audit`          | `npm audit`-powered vulnerability report - SARIF-ready for Code Scanning                       |
+| `projscan upgrade <pkg>`  | Preview upgrade impact - local CHANGELOG + importer list, offline                              |
+| `projscan coverage`       | **Coverage × hotspots - rank the scariest untested files** (`--changed-only` for diff mode)    |
+| `projscan badge`          | Generate a health score badge for your README                                                  |
+| `projscan init`           | _(1.6)_ Scaffold `.projscanrc.json` with sensible defaults                                     |
+| `projscan install-hook`   | _(1.6)_ Install a `pre-commit` hook running `projscan ci --changed-only`                       |
+| `projscan workspace`      | _(1.6)_ Register sibling repos for cross-repo intelligence (`add` / `list` / `remove`)         |
+| `projscan apply-fix <id>` | _(1.6)_ Mechanically execute the safe fix templates with rollback (default dry-run)            |
+| `projscan taint`          | _(1.6)_ Source-to-sink reachability over the call graph                                        |
+| `projscan mcp`            | Run as an MCP server for AI coding agents (Claude Code, Cursor, …)                             |
 
 To see all commands and options, run:
 
@@ -160,28 +160,28 @@ Formats: `console` (default), `json`, `markdown`, `sarif`
 
 ### Options
 
-| Flag | Description |
-|------|-------------|
-| `--format <type>` | Output format: console, json, markdown, sarif |
-| `--config <path>` | Path to a `.projscanrc` config file |
-| `--changed-only` | Scope to files changed vs base ref (ci/analyze/doctor) |
+| Flag               | Description                                              |
+| ------------------ | -------------------------------------------------------- |
+| `--format <type>`  | Output format: console, json, markdown, sarif            |
+| `--config <path>`  | Path to a `.projscanrc` config file                      |
+| `--changed-only`   | Scope to files changed vs base ref (ci/analyze/doctor)   |
 | `--base-ref <ref>` | Git base ref for `--changed-only` (default: origin/main) |
-| `--verbose` | Enable debug output |
-| `--quiet` | Suppress non-essential output |
-| `-V, --version` | Show version |
-| `-h, --help` | Show help |
+| `--verbose`        | Enable debug output                                      |
+| `--quiet`          | Suppress non-essential output                            |
+| `-V, --version`    | Show version                                             |
+| `-h, --help`       | Show help                                                |
 
 ## Health Score
 
 Every `projscan doctor` run calculates a health score (0–100) and letter grade:
 
-| Grade | Score | Meaning |
-|-------|-------|---------|
-| A | 90–100 | Excellent - project follows best practices |
-| B | 80–89 | Good - minor improvements possible |
-| C | 70–79 | Fair - several issues to address |
-| D | 60–69 | Poor - significant issues found |
-| F | < 60 | Critical - major issues need attention |
+| Grade | Score  | Meaning                                    |
+| ----- | ------ | ------------------------------------------ |
+| A     | 90–100 | Excellent - project follows best practices |
+| B     | 80–89  | Good - minor improvements possible         |
+| C     | 70–79  | Fair - several issues to address           |
+| D     | 60–69  | Poor - significant issues found            |
+| F     | < 60   | Critical - major issues need attention     |
 
 Generate a badge for your README:
 
@@ -238,10 +238,10 @@ Cache version bumped 2 → 3 in 0.11 (CC stored per file). Existing v2 caches ar
 
 Reference numbers from `npm run bench` on an Apple M3 Pro running Node 25 (cold / warm cache, milliseconds), refreshed for 1.5.0:
 
-| Repo | Files | analyze | doctor | hotspots | coupling | search |
-|------|-------|---------|--------|----------|----------|--------|
-| projscan itself | ~120 | 650 / 576 | 659 / 574 | 794 / 622 | 405 / 186 | 485 / 277 |
-| Synthetic medium | 500 | 284 / 257 | 277 / 255 | 300 / 278 | 224 / 177 | 239 / 196 |
+| Repo             | Files | analyze   | doctor    | hotspots  | coupling  | search    |
+| ---------------- | ----- | --------- | --------- | --------- | --------- | --------- |
+| projscan itself  | ~120  | 650 / 576 | 659 / 574 | 794 / 622 | 405 / 186 | 485 / 277 |
+| Synthetic medium | 500   | 284 / 257 | 277 / 255 | 300 / 278 | 224 / 177 | 239 / 196 |
 
 For real-world numbers against larger codebases, `npm run bench:references` shallow-clones TypeScript, Django, and kubernetes/client-go into `.bench-cache/` (gitignored) and runs the same suite. First run is network-bound; later runs reuse the cache. Restrict to one target with `-- --only ts|django|k8s-client-go`.
 
@@ -251,16 +251,16 @@ Run `npm run bench` against your own machine to recalibrate.
 - **14 runtime dependencies** — still minimal
 - **~10.5 MB of vendored tree-sitter grammars**, broken down:
 
-| Grammar | Size | Languages |
-|---|---:|---|
-| `web-tree-sitter` | ~190 KB | runtime, all tree-sitter languages |
-| `tree-sitter-python` | ~450 KB | Python |
-| `tree-sitter-go` | ~210 KB | Go |
-| `tree-sitter-java` | ~405 KB | Java |
-| `tree-sitter-ruby` | ~2.0 MB | Ruby |
-| `tree-sitter-rust` | ~1.1 MB | Rust |
-| `tree-sitter-php` | ~785 KB | PHP |
-| `tree-sitter-c-sharp` | ~5.2 MB | C# |
+| Grammar               |    Size | Languages                          |
+| --------------------- | ------: | ---------------------------------- |
+| `web-tree-sitter`     | ~190 KB | runtime, all tree-sitter languages |
+| `tree-sitter-python`  | ~450 KB | Python                             |
+| `tree-sitter-go`      | ~210 KB | Go                                 |
+| `tree-sitter-java`    | ~405 KB | Java                               |
+| `tree-sitter-ruby`    | ~2.0 MB | Ruby                               |
+| `tree-sitter-rust`    | ~1.1 MB | Rust                               |
+| `tree-sitter-php`     | ~785 KB | PHP                                |
+| `tree-sitter-c-sharp` | ~5.2 MB | C#                                 |
 
 JavaScript and TypeScript use the bundled `@babel/parser` instead of a tree-sitter grammar, so they don't appear in this table.
 
@@ -291,13 +291,13 @@ projscan reads your source code so it can be useful; it does not send your sourc
 
 ### What projscan DOES do, and what it costs
 
-| Action | When | Network? | Notes |
-|---|---|---|---|
-| Read source files | every command | no | parses with tree-sitter / Babel; results cached at `.projscan-cache/` |
-| Spawn `git` | `hotspots`, `pr-diff`, `review`, `diff` | git itself may fetch if you run `git fetch` separately; **projscan never invokes `git fetch`** | `env: process.env` is passed so `git` can find its config |
-| Spawn `npm audit` | `audit` only | yes — by `npm`, not by projscan | runs against your local lockfile |
-| Load wasm grammars | first parse of a non-JS file | no | served from `dist/grammars/` inside the package; no fetch |
-| Build embeddings | semantic search opt-in only | yes — by `@xenova/transformers`, on first use | model cached locally after first download; remove the peer dep to remove this code path entirely |
+| Action             | When                                    | Network?                                                                                       | Notes                                                                                            |
+| ------------------ | --------------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Read source files  | every command                           | no                                                                                             | parses with tree-sitter / Babel; results cached at `.projscan-cache/`                            |
+| Spawn `git`        | `hotspots`, `pr-diff`, `review`, `diff` | git itself may fetch if you run `git fetch` separately; **projscan never invokes `git fetch`** | `env: process.env` is passed so `git` can find its config                                        |
+| Spawn `npm audit`  | `audit` only                            | yes — by `npm`, not by projscan                                                                | runs against your local lockfile                                                                 |
+| Load wasm grammars | first parse of a non-JS file            | no                                                                                             | served from `dist/grammars/` inside the package; no fetch                                        |
+| Build embeddings   | semantic search opt-in only             | yes — by `@xenova/transformers`, on first use                                                  | model cached locally after first download; remove the peer dep to remove this code path entirely |
 
 ### Patterns supply-chain scanners flag, and why they're benign here
 
@@ -326,13 +326,13 @@ projscan runs against itself in CI on every PR. The dogfood loop is the most dir
 
 Current state of the projscan codebase as scored by projscan itself:
 
-| Metric | Value |
-|---|---|
-| Health score | **A (100 / 100)** |
-| Open issues | 0 errors, 0 warnings, 0 info |
-| Circular imports | 0 |
-| Top hotspot | `src/reporters/consoleReporter.ts` (CC 288, 1108 lines) — known refactor candidate, not a defect |
-| Dogfood threshold | `--min-score 90` (CI fails below this) |
+| Metric            | Value                                                                                            |
+| ----------------- | ------------------------------------------------------------------------------------------------ |
+| Health score      | **A (100 / 100)**                                                                                |
+| Open issues       | 0 errors, 0 warnings, 0 info                                                                     |
+| Circular imports  | 0                                                                                                |
+| Top hotspot       | `src/reporters/consoleReporter.ts` (CC 288, 1108 lines) — known refactor candidate, not a defect |
+| Dogfood threshold | `--min-score 90` (CI fails below this)                                                           |
 
 The `--min-score 90` threshold is deliberately tight: a regression that drops the score by more than ten points fails the build. The current ten-point margin (90 → 100) is for room to breathe, not slack.
 
@@ -364,14 +364,14 @@ on:
 
 permissions:
   contents: read
-  security-events: write   # required for SARIF upload
+  security-events: write # required for SARIF upload
 
 jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }  # needed for --changed-only
+        with: { fetch-depth: 0 } # needed for --changed-only
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - uses: abhiyoheswaran1/projscan@v1
@@ -416,7 +416,7 @@ Fields:
 - `disableRules` - silence rules by id; supports wildcard `prefix-*`
 - `severityOverrides` - remap a rule's severity (`info` / `warning` / `error`)
 - `hotspots.limit` / `hotspots.since` - defaults for the `hotspots` command
-- `monorepo.importPolicy` - cross-package import allow/deny rules in monorepos *(0.14+)*
+- `monorepo.importPolicy` - cross-package import allow/deny rules in monorepos _(0.14+)_
 
 See [`docs/GUIDE.md` → Configuration](docs/GUIDE.md#configuration-projscanrc) for the full reference (field types, validation behavior, embedding config in `package.json`, monorepo `importPolicy` semantics).
 
@@ -522,7 +522,7 @@ Coverage is also automatically joined into `projscan hotspots` when one of those
 
 <img src="docs/projscan-agent-demo.gif" alt="projscan answering two agent questions: what breaks if I rename buildCodeGraph (impact analysis with definitions, direct callers, transitive reach), and where should I fix first (ranked hotspots with cyclomatic complexity)" width="700">
 
-Two questions an agent asks; structural answers in milliseconds. *"What breaks if I rename `buildCodeGraph`?"* → 31 direct callers, 97 files reachable. *"Where should I fix first?"* → ranked hotspots with AST cyclomatic complexity, churn, and ownership signals.
+Two questions an agent asks; structural answers in milliseconds. _"What breaks if I rename `buildCodeGraph`?"_ → 31 direct callers, 97 files reachable. _"Where should I fix first?"_ → ranked hotspots with AST cyclomatic complexity, churn, and ownership signals.
 
 ### Claude Code
 
@@ -620,53 +620,60 @@ Capability is advertised under `experimental.fileChanged` on `initialize` so cli
 
 ### What agents can ask
 
-- *"Who imports `src/auth/jwt.ts`?"* → `projscan_graph { file, direction: "importers" }`
-- *"Where is `runAudit` defined?"* → `projscan_search { query: "runAudit", scope: "symbols" }`
-- *"Which files implement auth?"* → `projscan_search { query: "auth", scope: "content" }`
-- *"What are the scariest untested files?"* → `projscan_coverage`
-- *"What breaks if I bump chalk to 6?"* → `projscan_upgrade { package: "chalk" }`
-- *"Where should I refactor first?"* → `projscan_hotspots`
+- _"Who imports `src/auth/jwt.ts`?"_ → `projscan_graph { file, direction: "importers" }`
+- _"Where is `runAudit` defined?"_ → `projscan_search { query: "runAudit", scope: "symbols" }`
+- _"Which files implement auth?"_ → `projscan_search { query: "auth", scope: "content" }`
+- _"What are the scariest untested files?"_ → `projscan_coverage`
+- _"What breaks if I bump chalk to 6?"_ → `projscan_upgrade { package: "chalk" }`
+- _"Where should I refactor first?"_ → `projscan_hotspots`
 
 ### The 25 MCP tools
 
 **Structural (0.6.0 / 0.11 / 0.13 / 0.14 / 0.15 - agent-native):**
+
 - **`projscan_graph`** - query the AST-based code graph. Directions: `imports`, `exports`, `importers`, `symbol_defs`, `package_importers`. Millisecond responses on a warm cache.
-- **`projscan_search`** - fast search across `symbols` (exported names), `files` (path substring), or `content` (source substring with line + excerpt). Sub-file mode (`sub_file: true`) embeds per-function for sharper semantic results *(0.15)*.
-- **`projscan_coupling`** *(0.11)* - per-file fan-in / fan-out / instability + circular-import cycles (Tarjan SCC). Filter by `direction: cycles_only | high_fan_in | high_fan_out`.
-- **`projscan_pr_diff`** *(0.11)* - structural diff between two git refs. Returns added/removed/modified files with explicit lists of exports, imports, and call sites that changed, plus ΔCC and Δfan-in.
-- **`projscan_review`** *(0.13)* - one-call PR review. Composes `pr_diff` + per-changed-file risk + new/expanded import cycles + risky function additions + dependency changes + a verdict (`ok` / `review` / `block`).
-- **`projscan_fix_suggest`** *(0.14)* - structured action prompt for any open issue: headline, why it matters, where, one-paragraph instruction, optional suggested test. Closes the diagnose → fix loop.
-- **`projscan_explain_issue`** *(0.14)* - deep dive on one issue: code excerpt, related issues in the same file, similar past commits via `git log --grep`, plus the structured FixSuggestion.
-- **`projscan_impact`** *(0.15)* - transitive blast-radius for a file or symbol. BFS over reverse imports + symbol callsites. Use BEFORE renaming or deleting to see what breaks.
+- **`projscan_search`** - fast search across `symbols` (exported names), `files` (path substring), or `content` (source substring with line + excerpt). Sub-file mode (`sub_file: true`) embeds per-function for sharper semantic results _(0.15)_.
+- **`projscan_coupling`** _(0.11)_ - per-file fan-in / fan-out / instability + circular-import cycles (Tarjan SCC). Filter by `direction: cycles_only | high_fan_in | high_fan_out`.
+- **`projscan_pr_diff`** _(0.11)_ - structural diff between two git refs. Returns added/removed/modified files with explicit lists of exports, imports, and call sites that changed, plus ΔCC and Δfan-in.
+- **`projscan_review`** _(0.13)_ - one-call PR review. Composes `pr_diff` + per-changed-file risk + new/expanded import cycles + risky function additions + dependency changes + a verdict (`ok` / `review` / `block`).
+- **`projscan_fix_suggest`** _(0.14)_ - structured action prompt for any open issue: headline, why it matters, where, one-paragraph instruction, optional suggested test. Closes the diagnose → fix loop.
+- **`projscan_explain_issue`** _(0.14)_ - deep dive on one issue: code excerpt, related issues in the same file, similar past commits via `git log --grep`, plus the structured FixSuggestion.
+- **`projscan_impact`** _(0.15)_ - transitive blast-radius for a file or symbol. BFS over reverse imports + symbol callsites. Use BEFORE renaming or deleting to see what breaks.
 
 **Analysis:**
+
 - `projscan_analyze` - full project report
 - `projscan_doctor` - health score + issues (now includes `cycle-detected-N` for circular imports as of 0.13)
-- `projscan_hotspots` - risk-ranked files (churn × **AST cyclomatic complexity** × issues × ownership × coverage; falls back to LOC for non-AST languages). Pass `view: "functions"` *(0.13)* for top-N risky individual functions.
-- `projscan_file` - per-file risk + ownership + related issues + CC + fan-in/fan-out + per-function CC table *(0.13)*
+- `projscan_hotspots` - risk-ranked files (churn × **AST cyclomatic complexity** × issues × ownership × coverage; falls back to LOC for non-AST languages). Pass `view: "functions"` _(0.13)_ for top-N risky individual functions.
+- `projscan_file` - per-file risk + ownership + related issues + CC + fan-in/fan-out + per-function CC table _(0.13)_
 - `projscan_explain` - per-file purpose, imports, exports, smells
 - `projscan_structure` - directory tree
 - `projscan_coverage` - scariest untested files (coverage × hotspots)
 
 **Dependencies:**
-- `projscan_dependencies` - declared deps, risks. In a monorepo: aggregated totals + `byWorkspace` breakdown; `package` arg scopes to one *(0.13)*.
+
+- `projscan_dependencies` - declared deps, risks. In a monorepo: aggregated totals + `byWorkspace` breakdown; `package` arg scopes to one _(0.13)_.
 - `projscan_outdated` - declared-vs-installed drift (offline). Per-package `byWorkspace`; `package` arg.
-- `projscan_audit` - normalized `npm audit`. `package` arg scopes findings to one workspace's direct deps *(0.13)*.
+- `projscan_audit` - normalized `npm audit`. `package` arg scopes findings to one workspace's direct deps _(0.13)_.
 - `projscan_upgrade` - upgrade preview (CHANGELOG + importers, offline)
 
 **Workspace (0.11):**
+
 - `projscan_workspaces` - list monorepo packages (npm/yarn/pnpm/Nx/Turbo/Lerna). Use the `name` as the `package` arg on `projscan_hotspots` / `projscan_coupling` to scope.
 
 **Session (1.4):**
-- **`projscan_session`** *(1.4)* - durable cross-invocation session. Subactions: `current` (id + counts), `touched` (files touched this session, sorted by recency, filterable by source: `tool-result` / `fs-watch` / `explicit`), `events` (chronological log), `reset` (start a fresh session). Auto-populated from every tool result and from `notifications/file_changed` push events when `--watch` is on. Lets multiple agents in the same project see "what's been touched here" without re-running git.
+
+- **`projscan_session`** _(1.4)_ - durable cross-invocation session. Subactions: `current` (id + counts), `touched` (files touched this session, sorted by recency, filterable by source: `tool-result` / `fs-watch` / `explicit`), `events` (chronological log), `reset` (start a fresh session). Auto-populated from every tool result and from `notifications/file_changed` push events when `--watch` is on. Lets multiple agents in the same project see "what's been touched here" without re-running git.
 
 **Memory (1.5):**
-- **`projscan_memory`** *(1.5)* - durable, local-only feedback loop. Records, per analyzer rule id, how many runs surfaced it and how many fixed it. Subactions: `current` (aggregate counts), `stable` (rules surfaced across ≥ 3 runs over ≥ 7 days without ever being fixed — paired with a ready-to-paste `.projscanrc.json disableRules` snippet), `runs` (every tracked rule with full history), `forget` (drop a single rule). Stored at `.projscan-memory/memory.json`; never leaves the machine. Lets an agent ask "what is this project tolerating?" and propose quieting it.
+
+- **`projscan_memory`** _(1.5)_ - durable, local-only feedback loop. Records, per analyzer rule id, how many runs surfaced it and how many fixed it. Subactions: `current` (aggregate counts), `stable` (rules surfaced across ≥ 3 runs over ≥ 7 days without ever being fixed — paired with a ready-to-paste `.projscanrc.json disableRules` snippet), `runs` (every tracked rule with full history), `forget` (drop a single rule). Stored at `.projscan-memory/memory.json`; never leaves the machine. Lets an agent ask "what is this project tolerating?" and propose quieting it.
 
 **Operator (1.6):**
-- **`projscan_workspace_graph`** *(1.6)* - cross-repo intelligence over sibling repos registered with `projscan workspace add`. Subactions: `list` (registered repos + parsed-file + export counts), `graph` (every symbol exported by ≥ 2 repos — the candidate refactor / API contract surface), `file_importers` (given a file in one repo, every other repo whose graph imports it). Read-only.
-- **`projscan_apply_fix`** *(1.6)* - mechanically execute the safe fix templates. Default is dry-run; pass `confirm: true` to write. Atomic writes, per-apply rollback record at `.projscan-cache/rollbacks/<id>.json`. Reverse with `action: "rollback", rollback_id: ...`. Six templates supported at this release: `unused-dependency-*`, `missing-test-framework`, `missing-eslint`, `missing-prettier`, `missing-editorconfig`, `missing-readme`.
-- **`projscan_taint`** *(1.6)* - source-to-sink reachability over the per-function call graph. Built-in defaults cover common JS / Python sources (`process.env`, `req.body`, etc.) and sinks (`exec`, `eval`, `db.query`, etc.). Project-specific names go in `.projscanrc.json` `taint`. `projscan_review` automatically diffs taint flows between base and head and **blocks any PR that introduces a new flow**.
+
+- **`projscan_workspace_graph`** _(1.6)_ - cross-repo intelligence over sibling repos registered with `projscan workspace add`. Subactions: `list` (registered repos + parsed-file + export counts), `graph` (every symbol exported by ≥ 2 repos — the candidate refactor / API contract surface), `file_importers` (given a file in one repo, every other repo whose graph imports it). Read-only.
+- **`projscan_apply_fix`** _(1.6)_ - mechanically execute the safe fix templates. Default is dry-run; pass `confirm: true` to write. Atomic writes, per-apply rollback record at `.projscan-cache/rollbacks/<id>.json`. Reverse with `action: "rollback", rollback_id: ...`. Six templates supported at this release: `unused-dependency-*`, `missing-test-framework`, `missing-eslint`, `missing-prettier`, `missing-editorconfig`, `missing-readme`.
+- **`projscan_taint`** _(1.6)_ - source-to-sink reachability over the per-function call graph. Built-in defaults cover common JS / Python sources (`process.env`, `req.body`, etc.) and sinks (`exec`, `eval`, `db.query`, etc.). Project-specific names go in `.projscanrc.json` `taint`. `projscan_review` automatically diffs taint flows between base and head and **blocks any PR that introduces a new flow**.
 
 ### Context-window budgeting
 
@@ -678,7 +685,7 @@ Capability is advertised under `experimental.fileChanged` on `initialize` so cli
 
 ### Semantic search (0.9.0+, opt-in)
 
-projscan ships with BM25-ranked lexical search by default. To unlock **true semantic search** - embeddings over file content so queries like *"which file implements auth"* hit files that don't literally contain the word "auth" - install the optional peer:
+projscan ships with BM25-ranked lexical search by default. To unlock **true semantic search** - embeddings over file content so queries like _"which file implements auth"_ hit files that don't literally contain the word "auth" - install the optional peer:
 
 ```bash
 npm install @xenova/transformers
@@ -686,11 +693,16 @@ projscan search "verifying user credentials" --mode semantic
 ```
 
 Or via the MCP tool:
+
 ```json
-{ "name": "projscan_search", "arguments": { "query": "verifying user credentials", "mode": "semantic" } }
+{
+  "name": "projscan_search",
+  "arguments": { "query": "verifying user credentials", "mode": "semantic" }
+}
 ```
 
 Modes on `projscan_search`:
+
 - `lexical` (default) - BM25 over content + symbol + path boosts. No peer needed.
 - `semantic` - cosine similarity on `Xenova/all-MiniLM-L6-v2` embeddings. Requires peer.
 - `hybrid` - both, fused via Reciprocal Rank Fusion. Requires peer.
@@ -712,14 +724,16 @@ All opt-in - default behavior is unchanged.
 projscan caches parsed ASTs at `.projscan-cache/graph.json` (auto-gitignored). First run populates it; subsequent runs re-parse only files whose `mtime` changed. Agent queries on a warm cache are milliseconds, not seconds.
 
 ### Prompts (6, parameterized with live project data)
+
 - `prioritize_refactoring` - ranked plan grounded in current hotspots
 - `investigate_file` - senior-engineer brief for a specific file
-- **`refactor_hotspot`** *(1.5)* - step-by-step refactor plan for one hotspot file
-- **`triage_doctor_issues`** *(1.5)* - critical / important / backlog ordering of open issues
-- **`review_this_pr`** *(1.5)* - PR-comment-ready review primed with the structural diff and verdict
-- **`safely_rename_symbol`** *(1.5)* - ordered rename + verification checklist via `projscan_impact` blast radius
+- **`refactor_hotspot`** _(1.5)_ - step-by-step refactor plan for one hotspot file
+- **`triage_doctor_issues`** _(1.5)_ - critical / important / backlog ordering of open issues
+- **`review_this_pr`** _(1.5)_ - PR-comment-ready review primed with the structural diff and verdict
+- **`safely_rename_symbol`** _(1.5)_ - ordered rename + verification checklist via `projscan_impact` blast radius
 
 ### Resources (3, readable on demand)
+
 - `projscan://health` · `projscan://hotspots` · `projscan://structure`
 
 ## Use Cases

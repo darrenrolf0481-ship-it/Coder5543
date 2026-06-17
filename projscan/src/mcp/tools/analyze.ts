@@ -18,7 +18,8 @@ export const analyzeTool: McpTool = {
     properties: {
       url: {
         type: 'string',
-        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+        description:
+          'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
       },
       package: PACKAGE_ARG_SCHEMA,
     },

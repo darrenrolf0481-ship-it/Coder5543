@@ -18,7 +18,12 @@ function file(
       typeOnly: false,
       line: 1,
     })),
-    exports: exportsList.map((name) => ({ name, kind: 'function' as const, typeOnly: false, line: 1 })),
+    exports: exportsList.map((name) => ({
+      name,
+      kind: 'function' as const,
+      typeOnly: false,
+      line: 1,
+    })),
     callSites,
     lineCount: 0,
     cyclomaticComplexity: cc,
@@ -28,7 +33,10 @@ function file(
   };
 }
 
-function makeGraph(files: GraphFile[], localImporters: Map<string, Set<string>> = new Map()): CodeGraph {
+function makeGraph(
+  files: GraphFile[],
+  localImporters: Map<string, Set<string>> = new Map(),
+): CodeGraph {
   return {
     files: new Map(files.map((f) => [f.relativePath, f])),
     packageImporters: new Map(),

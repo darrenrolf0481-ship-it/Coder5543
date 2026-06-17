@@ -9,7 +9,7 @@ import {
   HardDrive,
   Layers,
   Settings as SettingsIcon,
-  Cpu
+  Cpu,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -29,7 +29,10 @@ const SidebarIcon: React.FC<{
     aria-pressed={active}
     className={`group relative p-4 rounded-[28px] transition-all duration-500 ${active ? 'text-accent-500 bg-accent-950/20 border border-accent-700/50 shadow-[0_0_40px_var(--color-accent-600)/20] scale-110 rotate-3' : 'text-accent-950 hover:text-accent-600 hover:bg-accent-950/10 hover:scale-105'}`}
   >
-    {React.cloneElement(icon as React.ReactElement, { size: 24, strokeWidth: active ? 2.5 : 1.5 } as any)}
+    {React.cloneElement(
+      icon as React.ReactElement,
+      { size: 24, strokeWidth: active ? 2.5 : 1.5 } as any,
+    )}
     <div className="absolute left-full ml-4 px-3 py-2 bg-accent-950/90 text-accent-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all pointer-events-none border border-accent-800/40 z-50 translate-x-[-20px] group-hover:translate-x-0 whitespace-nowrap shadow-[0_10px_30px_rgba(0,0,0,0.8)] font-black uppercase tracking-[0.4em] backdrop-blur-md">
       {label}
     </div>

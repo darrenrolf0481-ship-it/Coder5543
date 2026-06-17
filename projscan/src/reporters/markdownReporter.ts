@@ -37,7 +37,9 @@ export function reportAnalysisMarkdown(report: AnalysisReport): void {
   if (frameworks) lines.push(`| Frameworks | ${frameworks} |`);
 
   if (report.dependencies) {
-    lines.push(`| Dependencies | ${report.dependencies.totalDependencies} prod, ${report.dependencies.totalDevDependencies} dev |`);
+    lines.push(
+      `| Dependencies | ${report.dependencies.totalDependencies} prod, ${report.dependencies.totalDevDependencies} dev |`,
+    );
   }
   lines.push(`| Files | ${report.scan.totalFiles} |`);
   lines.push(`| Scan Time | ${report.scan.scanDurationMs.toFixed(0)}ms |`);
@@ -87,7 +89,9 @@ export function reportHealthMarkdown(issues: Issue[]): void {
       const icon = issue.severity === 'error' ? '❌' : issue.severity === 'warning' ? '⚠️' : 'ℹ️';
       lines.push(`- ${icon} **${issue.title}** - ${issue.description}`);
       if (issue.suggestedAction) {
-        lines.push(`  - **Action:** ${issue.suggestedAction.summary} _(\`projscan fix-suggest ${issue.id}\`)_`);
+        lines.push(
+          `  - **Action:** ${issue.suggestedAction.summary} _(\`projscan fix-suggest ${issue.id}\`)_`,
+        );
       }
     }
   }
@@ -154,7 +158,9 @@ export function reportDiffMarkdown(diff: DiffResult): void {
       lines.push('| File | Before | After | Δ |');
       lines.push('| --- | ---: | ---: | ---: |');
       for (const d of hd.rose) {
-        lines.push(`| \`${d.relativePath}\` | ${d.beforeScore?.toFixed(1)} | ${d.afterScore?.toFixed(1)} | +${d.scoreDelta.toFixed(1)} |`);
+        lines.push(
+          `| \`${d.relativePath}\` | ${d.beforeScore?.toFixed(1)} | ${d.afterScore?.toFixed(1)} | +${d.scoreDelta.toFixed(1)} |`,
+        );
       }
     }
     if (hd.appeared.length > 0) {
@@ -170,7 +176,9 @@ export function reportDiffMarkdown(diff: DiffResult): void {
       lines.push('| File | Before | After | Δ |');
       lines.push('| --- | ---: | ---: | ---: |');
       for (const d of hd.fell) {
-        lines.push(`| \`${d.relativePath}\` | ${d.beforeScore?.toFixed(1)} | ${d.afterScore?.toFixed(1)} | ${d.scoreDelta.toFixed(1)} |`);
+        lines.push(
+          `| \`${d.relativePath}\` | ${d.beforeScore?.toFixed(1)} | ${d.afterScore?.toFixed(1)} | ${d.scoreDelta.toFixed(1)} |`,
+        );
       }
     }
   }
@@ -348,7 +356,9 @@ function appendFileFunctions(lines: string[], insp: FileInspection): void {
   lines.push('| ---: | ---: | --- | --- |');
   for (const fn of insp.functions.slice(0, 20)) {
     const fi = typeof fn.fanIn === 'number' ? String(fn.fanIn) : '-';
-    lines.push(`| ${fn.cyclomaticComplexity} | ${fi} | \`${fn.name}\` | L${fn.line}-${fn.endLine} |`);
+    lines.push(
+      `| ${fn.cyclomaticComplexity} | ${fi} | \`${fn.name}\` | L${fn.line}-${fn.endLine} |`,
+    );
   }
   if (insp.functions.length > 20) {
     lines.push('', `_... and ${insp.functions.length - 20} more_`);
@@ -365,7 +375,9 @@ export function reportHotspotsMarkdown(report: HotspotReport): void {
   }
 
   const { since, commitsScanned } = report.window;
-  lines.push(`_Scanned **${commitsScanned}** commit(s) since **${since}** · ranked **${report.totalFilesRanked}** file(s)_`);
+  lines.push(
+    `_Scanned **${commitsScanned}** commit(s) since **${since}** · ranked **${report.totalFilesRanked}** file(s)_`,
+  );
   lines.push('');
 
   if (report.hotspots.length === 0) {
@@ -409,7 +421,9 @@ export function reportCouplingMarkdown(report: CouplingReport): void {
     lines.push('| From package | From file | To package | To file |');
     lines.push('| --- | --- | --- | --- |');
     for (const e of report.crossPackageEdges) {
-      lines.push(`| \`${e.from.package}\` | \`${e.from.file}\` | \`${e.to.package}\` | \`${e.to.file}\` |`);
+      lines.push(
+        `| \`${e.from.package}\` | \`${e.from.file}\` | \`${e.to.package}\` | \`${e.to.file}\` |`,
+      );
     }
     lines.push('');
   }
@@ -536,7 +550,12 @@ export function reportImpactMarkdown(report: ImpactReport): void {
   console.log(lines.join('\n'));
 }
 
-export function reportFixSuggestMarkdown(result: { matched: boolean; fix?: FixSuggestion; reason?: string; synthetic?: boolean }): void {
+export function reportFixSuggestMarkdown(result: {
+  matched: boolean;
+  fix?: FixSuggestion;
+  reason?: string;
+  synthetic?: boolean;
+}): void {
   const lines: string[] = ['# Fix Suggestion', ''];
   if (!result.matched || !result.fix) {
     lines.push(`> ${result.reason ?? 'No suggestion available.'}`);
@@ -545,7 +564,10 @@ export function reportFixSuggestMarkdown(result: { matched: boolean; fix?: FixSu
   }
   const fix = result.fix;
   lines.push(`**${fix.headline}**`, '');
-  lines.push(`_severity: ${fix.severity} · category: ${fix.category} · issue: \`${fix.issueId}\`${result.synthetic ? ' (synthetic)' : ''}_`, '');
+  lines.push(
+    `_severity: ${fix.severity} · category: ${fix.category} · issue: \`${fix.issueId}\`${result.synthetic ? ' (synthetic)' : ''}_`,
+    '',
+  );
   lines.push('## Why', '', fix.why, '');
   if (fix.where.length > 0) {
     lines.push('## Where', '');
@@ -575,7 +597,11 @@ export function reportExplainIssueMarkdown(e: IssueExplanation): void {
   lines.push(`_severity: ${e.severity} · category: ${e.category} · id: \`${e.issueId}\`_`, '');
   lines.push(`**${e.headline}**`, '');
   if (e.excerpt) {
-    lines.push(`## Code (\`${e.excerpt.file}\` L${e.excerpt.startLine}-${e.excerpt.endLine})`, '', '```');
+    lines.push(
+      `## Code (\`${e.excerpt.file}\` L${e.excerpt.startLine}-${e.excerpt.endLine})`,
+      '',
+      '```',
+    );
     for (const l of e.excerpt.lines) lines.push(l);
     lines.push('```', '');
   }
@@ -687,7 +713,10 @@ function appendReviewDependencyChanges(lines: string[], report: ReviewReport): v
 
 export function reportWorkspacesMarkdown(info: WorkspaceInfo): void {
   const lines: string[] = ['# Workspaces', ''];
-  lines.push(`_kind: **${info.kind}**${info.source ? ` · source: ${info.source}` : ''} · ${info.packages.length} package(s)_`, '');
+  lines.push(
+    `_kind: **${info.kind}**${info.source ? ` · source: ${info.source}` : ''} · ${info.packages.length} package(s)_`,
+    '',
+  );
   if (info.packages.length === 0) {
     lines.push('No packages detected.');
     console.log(lines.join('\n'));
@@ -696,7 +725,9 @@ export function reportWorkspacesMarkdown(info: WorkspaceInfo): void {
   lines.push('| Package | Path | Version | Root |');
   lines.push('| --- | --- | --- | :-: |');
   for (const p of info.packages) {
-    lines.push(`| \`${p.name}\` | \`${p.relativePath || '.'}\` | ${p.version ?? '-'} | ${p.isRoot ? '✓' : ''} |`);
+    lines.push(
+      `| \`${p.name}\` | \`${p.relativePath || '.'}\` | ${p.version ?? '-'} | ${p.isRoot ? '✓' : ''} |`,
+    );
   }
   console.log(lines.join('\n'));
 }
@@ -744,7 +775,9 @@ export function reportAuditMarkdown(report: AuditReport): void {
 
   const s = report.summary;
   const total = s.critical + s.high + s.moderate + s.low + s.info;
-  lines.push(`**${total}** findings - ${s.critical} critical · ${s.high} high · ${s.moderate} moderate · ${s.low} low · ${s.info} info`);
+  lines.push(
+    `**${total}** findings - ${s.critical} critical · ${s.high} high · ${s.moderate} moderate · ${s.low} low · ${s.info} info`,
+  );
   lines.push('');
 
   if (report.findings.length === 0) {

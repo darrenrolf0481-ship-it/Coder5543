@@ -25,41 +25,46 @@ export function registerTaint(): void {
     .option('--source <name...>', 'add a custom source name (repeatable)')
     .option('--sink <name...>', 'add a custom sink name (repeatable)')
     .option('--limit <n>', 'cap flows shown', '50')
-    .action(async (pathOrUrl: string | undefined, opts: { source?: string[]; sink?: string[]; limit?: string }) => {
-      setupLogLevel();
-      maybeCompactBanner();
-      const rootPath = await resolveRootPath(pathOrUrl);
-      const format = getFormat();
-      try {
-        const config = await loadProjectConfig();
-        const scan = await scanRepository(rootPath, { ignore: config.ignore });
-        const graph = await buildCodeGraph(rootPath, scan.files);
-        const sources = [...(config.taint?.sources ?? []), ...(opts.source ?? [])];
-        const sinks = [...(config.taint?.sinks ?? []), ...(opts.sink ?? [])];
-        const limit = Math.max(1, Math.min(500, parseInt(opts.limit ?? '50', 10) || 50));
-        const report = computeTaint(graph, { sources, sinks });
+    .action(
+      async (
+        pathOrUrl: string | undefined,
+        opts: { source?: string[]; sink?: string[]; limit?: string },
+      ) => {
+        setupLogLevel();
+        maybeCompactBanner();
+        const rootPath = await resolveRootPath(pathOrUrl);
+        const format = getFormat();
+        try {
+          const config = await loadProjectConfig();
+          const scan = await scanRepository(rootPath, { ignore: config.ignore });
+          const graph = await buildCodeGraph(rootPath, scan.files);
+          const sources = [...(config.taint?.sources ?? []), ...(opts.source ?? [])];
+          const sinks = [...(config.taint?.sinks ?? []), ...(opts.sink ?? [])];
+          const limit = Math.max(1, Math.min(500, parseInt(opts.limit ?? '50', 10) || 50));
+          const report = computeTaint(graph, { sources, sinks });
 
-        if (format === 'json') {
-          console.log(
-            JSON.stringify(
-              {
-                ...report,
-                flows: report.flows.slice(0, limit),
-                truncated: report.flows.length > limit,
-              },
-              null,
-              2,
-            ),
-          );
-          return;
+          if (format === 'json') {
+            console.log(
+              JSON.stringify(
+                {
+                  ...report,
+                  flows: report.flows.slice(0, limit),
+                  truncated: report.flows.length > limit,
+                },
+                null,
+                2,
+              ),
+            );
+            return;
+          }
+
+          renderTaint(report, limit);
+        } catch (error) {
+          console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+          process.exit(1);
         }
-
-        renderTaint(report, limit);
-      } catch (error) {
-        console.error(chalk.red(error instanceof Error ? error.message : String(error)));
-        process.exit(1);
-      }
-    });
+      },
+    );
 }
 
 function renderTaint(report: TaintReport, limit: number): void {

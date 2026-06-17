@@ -42,7 +42,7 @@ router.post('/dlq/retry', (req, res) => {
     res.status(400).json({ error: 'id required' });
     return;
   }
-  const idx = serverDLQ.findIndex(s => s.id === id);
+  const idx = serverDLQ.findIndex((s) => s.id === id);
   if (idx === -1) {
     res.status(404).json({ error: 'Signal not found in DLQ' });
     return;
@@ -71,7 +71,9 @@ router.post('/inject', (req, res) => {
   try {
     const dataSize = JSON.stringify(data).length;
     if (dataSize > 64_000) {
-      logger.warn(`[Pipeline] Signal ${signal.id} payload too large (${dataSize} bytes). Moving to DLQ.`);
+      logger.warn(
+        `[Pipeline] Signal ${signal.id} payload too large (${dataSize} bytes). Moving to DLQ.`,
+      );
       if (serverDLQ.length < DLQ_MAX) serverDLQ.push(signal);
       res.status(413).json({ error: 'Payload too large — moved to DLQ', id: signal.id });
       return;
@@ -82,7 +84,9 @@ router.post('/inject', (req, res) => {
     return;
   }
 
-  logger.info(`[Pipeline] Injected signal: ${signal.type} from ${signal.source} (id: ${signal.id})`);
+  logger.info(
+    `[Pipeline] Injected signal: ${signal.type} from ${signal.source} (id: ${signal.id})`,
+  );
   serverBus.emit('signal', signal);
   res.status(202).json({ accepted: true, id: signal.id });
 });
@@ -112,4 +116,3 @@ router.get('/events', (req, res) => {
 });
 
 export default router;
-

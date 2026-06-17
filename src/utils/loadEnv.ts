@@ -24,7 +24,10 @@ function loadEnvFile(): void {
       if (index === -1) continue;
       const key = trimmed.substring(0, index).trim();
       if (key in process.env) continue; // don't clobber real env vars
-      const val = trimmed.substring(index + 1).trim().replace(/^['"]|['"]$/g, '');
+      const val = trimmed
+        .substring(index + 1)
+        .trim()
+        .replace(/^['"]|['"]$/g, '');
       process.env[key] = val;
     }
   } catch {

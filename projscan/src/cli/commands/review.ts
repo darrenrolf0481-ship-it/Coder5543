@@ -12,7 +12,9 @@ import { reportReviewHtml } from '../../reporters/htmlReporter.js';
 export function registerReview(): void {
   program
     .command('review')
-    .description('One-shot PR review: structural diff + risk + cycles + risky functions + dep changes + verdict')
+    .description(
+      'One-shot PR review: structural diff + risk + cycles + risky functions + dep changes + verdict',
+    )
     .option('--base <ref>', 'base ref (default: origin/main, falling back to main/master/HEAD~1)')
     .option('--head <ref>', 'head ref (default: HEAD)')
     .option('--package <name>', 'monorepo: scope review to a single workspace package')
@@ -37,7 +39,9 @@ export function registerReview(): void {
           const allowed = new Set(filterFilesByPackage(ws, target, allChangedPaths));
           report.prDiff.filesAdded = report.prDiff.filesAdded.filter((f) => allowed.has(f));
           report.prDiff.filesRemoved = report.prDiff.filesRemoved.filter((f) => allowed.has(f));
-          report.prDiff.filesModified = report.prDiff.filesModified.filter((f) => allowed.has(f.relativePath));
+          report.prDiff.filesModified = report.prDiff.filesModified.filter((f) =>
+            allowed.has(f.relativePath),
+          );
           report.prDiff.totalFilesChanged =
             report.prDiff.filesAdded.length +
             report.prDiff.filesRemoved.length +

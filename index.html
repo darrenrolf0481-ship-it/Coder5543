@@ -1,43 +1,96 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
     <title>Crimson OS | AI Node</title>
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#ef4444">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Crimson OS">
-    <link rel="apple-touch-icon" href="https://picsum.photos/seed/crimson-icon/192/192">
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ef4444" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Crimson OS" />
+    <link rel="apple-touch-icon" href="https://picsum.photos/seed/crimson-icon/192/192" />
     <style>
-        html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            background-color: #0a0a0c !important;
-            color: white !important;
-            height: 100% !important;
-            width: 100% !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-        }
+      html,
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background-color: #0a0a0c !important;
+        color: white !important;
+        height: 100% !important;
+        width: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+      }
     </style>
-</head>
-<body style="background-color: #0a0a0c">
+  </head>
+  <body style="background-color: #0a0a0c">
     <!-- Crimson OS Initialization Splash -->
-    <div id="splash" style="position: fixed; inset: 0; background: #0a0202; z-index: 10000; display: flex; flex-direction: column; items-center; justify-content: center; align-items: center; transition: opacity 0.5s ease;">
-        <div style="width: 200px; height: 1px; background: rgba(239, 68, 68, 0.1); border-radius: 2px; overflow: hidden; margin-bottom: 12px; border: 1px solid rgba(239, 68, 68, 0.05);">
-            <div id="splash-bar" style="width: 10%; height: 100%; background: #ef4444; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px #ef4444;"></div>
-        </div>
-        <div id="splash-label" style="color: #ef4444; font-family: monospace; font-size: 8px; text-transform: uppercase; letter-spacing: 3px; opacity: 0.8; font-weight: 900;">Initializing Substrate</div>
-        <div id="splash-logs" style="color: #ef4444; font-family: monospace; font-size: 6px; text-transform: uppercase; margin-top: 10px; opacity: 0.4; max-width: 80%; text-align: center;">Ready</div>
+    <div
+      id="splash"
+      style="position: fixed; inset: 0; background: #0a0202; z-index: 10000; display: flex; flex-direction: column; items-center; justify-content: center; align-items: center; transition: opacity 0.5s ease;"
+    >
+      <div
+        style="
+          width: 200px;
+          height: 1px;
+          background: rgba(239, 68, 68, 0.1);
+          border-radius: 2px;
+          overflow: hidden;
+          margin-bottom: 12px;
+          border: 1px solid rgba(239, 68, 68, 0.05);
+        "
+      >
+        <div
+          id="splash-bar"
+          style="
+            width: 10%;
+            height: 100%;
+            background: #ef4444;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px #ef4444;
+          "
+        ></div>
+      </div>
+      <div
+        id="splash-label"
+        style="
+          color: #ef4444;
+          font-family: monospace;
+          font-size: 8px;
+          text-transform: uppercase;
+          letter-spacing: 3px;
+          opacity: 0.8;
+          font-weight: 900;
+        "
+      >
+        Initializing Substrate
+      </div>
+      <div
+        id="splash-logs"
+        style="
+          color: #ef4444;
+          font-family: monospace;
+          font-size: 6px;
+          text-transform: uppercase;
+          margin-top: 10px;
+          opacity: 0.4;
+          max-width: 80%;
+          text-align: center;
+        "
+      >
+        Ready
+      </div>
     </div>
 
     <div id="root"></div>
 
     <script>
       var bootLogs = [];
-      window.setBootLabel = function(text) {
+      window.setBootLabel = function (text) {
         var label = document.getElementById('splash-label');
         if (label) label.textContent = text;
         bootLogs.push(text);
@@ -46,36 +99,40 @@
           logContainer.textContent = bootLogs.slice(-3).join(' > ');
         }
         console.log('BOOT:', text);
-      }
+      };
 
-      setTimeout(function() {
+      setTimeout(function () {
         var bar = document.getElementById('splash-bar');
         if (bar) bar.style.width = '45%';
         setBootLabel('Loading Neural Engine');
       }, 100);
 
-      window.addEventListener('load', function() {
+      window.addEventListener('load', function () {
         var bar = document.getElementById('splash-bar');
         if (bar) bar.style.width = '60%';
         setBootLabel('Loading Interface');
       });
 
-      window.onerror = function(msg, url, line, col, error) {
+      window.onerror = function (msg, url, line, col, error) {
         setBootLabel('FATAL ERROR: ' + msg);
         var splash = document.getElementById('splash');
         if (splash) {
-           splash.style.background = '#300';
-           setTimeout(function() { splash.remove(); }, 3000);
+          splash.style.background = '#300';
+          setTimeout(function () {
+            splash.remove();
+          }, 3000);
         }
       };
 
       // Safety timeout: if app hasn't booted in 6 seconds, force show
-      setTimeout(function() {
+      setTimeout(function () {
         var splash = document.getElementById('splash');
         if (splash && splash.parentElement) {
           console.warn('BOOT: Forced splash removal via global timeout (6s)');
           splash.style.opacity = '0';
-          setTimeout(function() { if (splash.parentElement) splash.remove(); }, 500);
+          setTimeout(function () {
+            if (splash.parentElement) splash.remove();
+          }, 500);
         }
       }, 6000);
     </script>
@@ -83,12 +140,12 @@
     <script>
       // Force unregister service worker to clear caching issues
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for(let registration of registrations) {
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          for (let registration of registrations) {
             registration.unregister();
           }
         });
       }
     </script>
-</body>
+  </body>
 </html>

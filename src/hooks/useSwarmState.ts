@@ -87,38 +87,56 @@ export function useSwarmState(): UseSwarmStateReturn {
   const [swarmMode, setSwarmMode] = useState<SwarmMode>(persisted?.mode || 'analysis');
   const [enableCritique, setEnableCritique] = useState<boolean>(persisted?.enableCritique ?? false);
   const [enabledBoosts, setEnabledBoosts] = useState<string[]>(persisted?.enabledBoosts || []);
-  const [swarmAgents, setSwarmAgents] = useState<SwarmAgent[]>(persisted?.agents || buildDefaultRoster());
+  const [swarmAgents, setSwarmAgents] = useState<SwarmAgent[]>(
+    persisted?.agents || buildDefaultRoster(),
+  );
   const [swarmRepos, setSwarmRepos] = useState<AssignedRepo[]>(persisted?.repos || []);
   const [runtimeAgents, setRuntimeAgents] = useState<RuntimeSwarmAgent[]>([]);
   const [swarmAnxiety, setSwarmAnxiety] = useState(0.12);
   const [lastReport, setLastReport] = useState<SwarmReport | null>(null);
   const [swarmLogs, setSwarmLogs] = useState<SwarmLog[]>([
-    { id: 1, type: 'info', message: 'Swarm Consensus Engine Initialized.', time: new Date().toLocaleTimeString() },
-    { id: 2, type: 'info', message: 'Configure agents and repos, then trigger a cycle.', time: new Date().toLocaleTimeString() },
+    {
+      id: 1,
+      type: 'info',
+      message: 'Swarm Consensus Engine Initialized.',
+      time: new Date().toLocaleTimeString(),
+    },
+    {
+      id: 2,
+      type: 'info',
+      message: 'Configure agents and repos, then trigger a cycle.',
+      time: new Date().toLocaleTimeString(),
+    },
   ]);
 
   // Persist on change
   useEffect(() => {
-    savePersistedState({ agents: swarmAgents, repos: swarmRepos, mode: swarmMode, enableCritique, enabledBoosts });
+    savePersistedState({
+      agents: swarmAgents,
+      repos: swarmRepos,
+      mode: swarmMode,
+      enableCritique,
+      enabledBoosts,
+    });
   }, [swarmAgents, swarmRepos, swarmMode, enableCritique, enabledBoosts]);
 
   const updateAgent = useCallback((id: string, patch: Partial<SwarmAgent>) => {
-    setSwarmAgents(prev => prev.map(a => (a.id === id ? { ...a, ...patch } : a)));
+    setSwarmAgents((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
   }, []);
 
   const toggleAgentActive = useCallback((id: string) => {
-    setSwarmAgents(prev => prev.map(a => (a.id === id ? { ...a, active: !a.active } : a)));
+    setSwarmAgents((prev) => prev.map((a) => (a.id === id ? { ...a, active: !a.active } : a)));
   }, []);
 
   const assignRepoToAgent = useCallback((agentId: string, repoId: string, assign: boolean) => {
-    setSwarmAgents(prev =>
-      prev.map(a => {
+    setSwarmAgents((prev) =>
+      prev.map((a) => {
         if (a.id !== agentId) return a;
         const current = new Set(a.assignedRepos);
         if (assign) current.add(repoId);
         else current.delete(repoId);
         return { ...a, assignedRepos: Array.from(current) };
-      })
+      }),
     );
   }, []);
 

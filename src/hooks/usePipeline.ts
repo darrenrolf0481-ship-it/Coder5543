@@ -7,7 +7,11 @@ import { useEffect, useCallback, useRef, useState } from 'react';
 import { broker, Signal, SignalSource, SignalType } from '../services/messageBroker';
 import { ingest, RawSignal } from '../services/pipeline/ingestionService';
 import { startFilteringService } from '../services/pipeline/filteringService';
-import { startPatternInjectionService, AIExecutor, PatternResult } from '../services/pipeline/patternInjectionService';
+import {
+  startPatternInjectionService,
+  AIExecutor,
+  PatternResult,
+} from '../services/pipeline/patternInjectionService';
 
 export interface PipelineStats {
   dlqCount: number;
@@ -20,7 +24,12 @@ export interface DispatchOptions {
 }
 
 export interface UsePipelineReturn {
-  dispatch: (type: SignalType, source: SignalSource, data: unknown, opts?: DispatchOptions) => Promise<string | null>;
+  dispatch: (
+    type: SignalType,
+    source: SignalSource,
+    data: unknown,
+    opts?: DispatchOptions,
+  ) => Promise<string | null>;
   stats: PipelineStats;
   onResponse: (handler: (result: PatternResult) => void) => () => void;
   onError: (handler: (err: { stage: string; error: string; signal: Signal }) => void) => () => void;
@@ -29,17 +38,18 @@ export interface UsePipelineReturn {
 }
 
 export function usePipeline(executor: AIExecutor): UsePipelineReturn {
-  const [stats, setStats] = useState<PipelineStats>({ dlqCount: 0, openCircuits: 0, queueDepth: 0 });
+  const [stats, setStats] = useState<PipelineStats>({
+    dlqCount: 0,
+    openCircuits: 0,
+    queueDepth: 0,
+  });
   const queueDepth = useRef(0);
 
   // Keep a ref to the latest executor so the pipeline always uses the current one
   // even when API keys change after initial mount.
   const executorRef = useRef<AIExecutor>(executor);
   executorRef.current = executor;
-  const stableExecutor = useCallback<AIExecutor>(
-    (...args) => executorRef.current(...args),
-    [],
-  );
+  const stableExecutor = useCallback<AIExecutor>((...args) => executorRef.current(...args), []);
 
   // ── Bootstrap services once ───────────────────────────────────────────────
   useEffect(() => {
@@ -49,7 +59,7 @@ export function usePipeline(executor: AIExecutor): UsePipelineReturn {
     // Track in-flight requests for queue depth metric
     const unsubQueued = broker.subscribe('AI_REQUEST_QUEUED', () => {
       queueDepth.current++;
-      setStats(s => ({ ...s, queueDepth: queueDepth.current }));
+      setStats((s) => ({ ...s, queueDepth: queueDepth.current }));
     });
 
     const unsubDone = broker.subscribe('AI_RESPONSE_RECEIVED', () => {
@@ -71,13 +81,18 @@ export function usePipeline(executor: AIExecutor): UsePipelineReturn {
       unsubDone();
       unsubFail();
     };
-  // executor identity is stable (wrapped in useCallback in App); only run once
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // executor identity is stable (wrapped in useCallback in App); only run once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── dispatch ──────────────────────────────────────────────────────────────
   const dispatch = useCallback(
-    async (type: SignalType, source: SignalSource, data: unknown, opts?: DispatchOptions): Promise<string | null> => {
+    async (
+      type: SignalType,
+      source: SignalSource,
+      data: unknown,
+      opts?: DispatchOptions,
+    ): Promise<string | null> => {
       const raw: RawSignal = { type, source, data, meta: opts?.meta };
       const result = await ingest(raw);
       if (!result.accepted) {
@@ -91,13 +106,15 @@ export function usePipeline(executor: AIExecutor): UsePipelineReturn {
 
   // ── response subscriber factory ───────────────────────────────────────────
   const onResponse = useCallback((handler: (result: PatternResult) => void): (() => void) => {
-    return broker.subscribe('AI_RESPONSE_RECEIVED', signal => handler(signal.data as PatternResult));
+    return broker.subscribe('AI_RESPONSE_RECEIVED', (signal) =>
+      handler(signal.data as PatternResult),
+    );
   }, []);
 
   // ── error subscriber factory ──────────────────────────────────────────────
   const onError = useCallback(
     (handler: (err: { stage: string; error: string; signal: Signal }) => void): (() => void) => {
-      return broker.subscribe('PIPELINE_ERROR', signal =>
+      return broker.subscribe('PIPELINE_ERROR', (signal) =>
         handler(signal.data as { stage: string; error: string; signal: Signal }),
       );
     },
@@ -105,7 +122,7 @@ export function usePipeline(executor: AIExecutor): UsePipelineReturn {
   );
 
   const replayDLQ = useCallback((id: string) => broker.replayDLQ(id), []);
-  const getDLQ    = useCallback(() => broker.getDLQ(), []);
+  const getDLQ = useCallback(() => broker.getDLQ(), []);
 
   return { dispatch, stats, onResponse, onError, replayDLQ, getDLQ };
 }

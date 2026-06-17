@@ -35,7 +35,9 @@ export function registerExplain(): void {
         if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
           console.error(chalk.red(`File not found: ${filePath}`));
           console.error(
-            chalk.dim(`  Tip: paths are repo-relative. Run \`projscan structure\` to see the file tree.`),
+            chalk.dim(
+              `  Tip: paths are repo-relative. Run \`projscan structure\` to see the file tree.`,
+            ),
           );
         } else {
           console.error(chalk.red(error instanceof Error ? error.message : String(error)));

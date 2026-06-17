@@ -113,11 +113,10 @@ async function diffNames(rootPath: string, baseRef: string): Promise<string[]> {
 }
 
 async function statusNames(rootPath: string): Promise<string[]> {
-  const { stdout } = await execFileAsync(
-    'git',
-    ['status', '--porcelain'],
-    { cwd: rootPath, maxBuffer: 10 * 1024 * 1024 },
-  );
+  const { stdout } = await execFileAsync('git', ['status', '--porcelain'], {
+    cwd: rootPath,
+    maxBuffer: 10 * 1024 * 1024,
+  });
   const out = new Set<string>();
   for (const raw of stdout.split('\n')) {
     const line = raw.trim();

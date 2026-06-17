@@ -18,7 +18,7 @@ export function useEditorFileSystem(
   setEditorOutput: any,
   setTerminalOutput: any,
   setTermuxFiles: any,
-  setStorageFiles: any
+  setStorageFiles: any,
 ) {
   const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([
     { id: 'root', name: 'Project', type: 'folder', parentId: null, isOpen: true },
@@ -54,11 +54,11 @@ export function useEditorFileSystem(
 
   const [activeFileId, setActiveFileId] = useState('brain.py');
   const [editorContent, setEditorContent] = useState(
-    projectFiles.find((f) => f.id === 'brain.py')?.content ?? ''
+    projectFiles.find((f) => f.id === 'brain.py')?.content ?? '',
   );
   const [editorLanguage, setEditorLanguage] = useState('python');
   const [editorMode, setEditorMode] = useState<'code' | 'preview' | 'debug' | 'git' | 'settings'>(
-    'code'
+    'code',
   );
 
   const [creatingInId, setCreatingInId] = useState<{
@@ -72,51 +72,63 @@ export function useEditorFileSystem(
   const dirtyIdsRef = useRef<Set<string>>(new Set());
   const idleHandleRef = useRef<number | null>(null);
 
-  const scheduleDirtyFlush = useCallback((files: ProjectFile[]) => {
-    if (idleHandleRef.current !== null) return;
-    const flush = () => {
-      idleHandleRef.current = null;
-      const ids = Array.from(dirtyIdsRef.current);
-      if (ids.length === 0) return;
+  const scheduleDirtyFlush = useCallback(
+    (files: ProjectFile[]) => {
+      if (idleHandleRef.current !== null) return;
+      const flush = () => {
+        idleHandleRef.current = null;
+        const ids = Array.from(dirtyIdsRef.current);
+        if (ids.length === 0) return;
 
-      dirtyIdsRef.current.clear();
+        dirtyIdsRef.current.clear();
 
-      const toWrite = files
-        .filter(f => f.type === 'file' && ids.includes(f.id))
-        .map(f => ({ id: f.id, content: f.content ?? '' }));
+        const toWrite = files
+          .filter((f) => f.type === 'file' && ids.includes(f.id))
+          .map((f) => ({ id: f.id, content: f.content ?? '' }));
 
-      if (toWrite.length === 0) return;
-      phi.beginTx();
-      saveFileContents(toWrite)
-        .then(() => phi.commitTx())
-        .catch(err => { phi.rollbackTx(); console.warn('[IdleFlush]', err); });
-    };
+        if (toWrite.length === 0) return;
+        phi.beginTx();
+        saveFileContents(toWrite)
+          .then(() => phi.commitTx())
+          .catch((err) => {
+            phi.rollbackTx();
+            console.warn('[IdleFlush]', err);
+          });
+      };
 
-    if (typeof requestIdleCallback !== 'undefined') {
-      idleHandleRef.current = requestIdleCallback(flush, { timeout: 2000 });
-    } else {
-      idleHandleRef.current = setTimeout(flush, 2000) as unknown as number;
-    }
-  }, [phi]);
+      if (typeof requestIdleCallback !== 'undefined') {
+        idleHandleRef.current = requestIdleCallback(flush, { timeout: 2000 });
+      } else {
+        idleHandleRef.current = setTimeout(flush, 2000) as unknown as number;
+      }
+    },
+    [phi],
+  );
 
-  const markFileDirty = useCallback((id: string) => {
-    dirtyIdsRef.current.add(id);
-    scheduleDirtyFlush(projectFiles);
-  }, [projectFiles, scheduleDirtyFlush]);
+  const markFileDirty = useCallback(
+    (id: string) => {
+      dirtyIdsRef.current.add(id);
+      scheduleDirtyFlush(projectFiles);
+    },
+    [projectFiles, scheduleDirtyFlush],
+  );
 
-  const handleFileSwitch = useCallback((fileId: string) => {
-    setProjectFiles((prev) =>
-      prev.map((f) => (f.id === activeFileId ? { ...f, content: editorContent } : f))
-    );
+  const handleFileSwitch = useCallback(
+    (fileId: string) => {
+      setProjectFiles((prev) =>
+        prev.map((f) => (f.id === activeFileId ? { ...f, content: editorContent } : f)),
+      );
 
-    const file = projectFiles.find((f) => f.id === fileId);
-    if (file && file.type === 'file') {
-      setActiveFileId(fileId);
-      setEditorContent(file.content || '');
-      setEditorLanguage(file.language || 'text');
-      setEditorMode(file.language === 'html' ? 'preview' : 'code');
-    }
-  }, [activeFileId, editorContent, projectFiles]);
+      const file = projectFiles.find((f) => f.id === fileId);
+      if (file && file.type === 'file') {
+        setActiveFileId(fileId);
+        setEditorContent(file.content || '');
+        setEditorLanguage(file.language || 'text');
+        setEditorMode(file.language === 'html' ? 'preview' : 'code');
+      }
+    },
+    [activeFileId, editorContent, projectFiles],
+  );
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -130,7 +142,7 @@ export function useEditorFileSystem(
       if (folderCache[fullPath]) return folderCache[fullPath];
 
       const existingFolder = projectFiles.find(
-        (f) => f.name === path && f.parentId === parentId && f.type === 'folder'
+        (f) => f.name === path && f.parentId === parentId && f.type === 'folder',
       );
       if (existingFolder) {
         folderCache[fullPath] = existingFolder.id;
@@ -138,7 +150,7 @@ export function useEditorFileSystem(
       }
 
       const batchFolder = newFiles.find(
-        (f) => f.name === path && f.parentId === parentId && f.type === 'folder'
+        (f) => f.name === path && f.parentId === parentId && f.type === 'folder',
       );
       if (batchFolder) {
         folderCache[fullPath] = batchFolder.id;
@@ -162,7 +174,7 @@ export function useEditorFileSystem(
       try {
         const content = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = (event) => resolve(event.target?.result as string ?? '');
+          reader.onload = (event) => resolve((event.target?.result as string) ?? '');
           reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
           reader.readAsText(file);
         });
@@ -222,7 +234,7 @@ export function useEditorFileSystem(
             type: f.name.split('.').pop() ?? 'unknown',
             category:
               f.name.endsWith('.safetensors') || f.name.endsWith('.ckpt') ? 'model' : 'asset',
-          }) as any
+          }) as any,
       );
       setTermuxFiles((prev: any[]) => [...prev, ...news]);
       setTerminalOutput((prev: any[]) => [
@@ -256,7 +268,7 @@ export function useEditorFileSystem(
       return;
     }
     setProjectFiles((prev) =>
-      prev.map((f) => (f.id === renamingId ? { ...f, name: newName.trim() } : f))
+      prev.map((f) => (f.id === renamingId ? { ...f, name: newName.trim() } : f)),
     );
     setRenamingId(null);
     setNewName('');
@@ -272,7 +284,13 @@ export function useEditorFileSystem(
     if (creatingInId.type === 'file') {
       const ext = newName.split('.').pop();
       const langMap: Record<string, string> = {
-        py: 'python', js: 'javascript', ts: 'typescript', html: 'html', css: 'css', rs: 'rust', cpp: 'cpp',
+        py: 'python',
+        js: 'javascript',
+        ts: 'typescript',
+        html: 'html',
+        css: 'css',
+        rs: 'rust',
+        cpp: 'cpp',
       };
       const newFile = {
         id,
@@ -326,7 +344,7 @@ export function useEditorFileSystem(
     }
 
     setProjectFiles((prev) => prev.filter((f) => !toDelete.has(f.id)));
-    toDelete.forEach(fid => deleteFileContent(fid).catch(console.warn));
+    toDelete.forEach((fid) => deleteFileContent(fid).catch(console.warn));
 
     if (gitRepo.initialized) {
       setGitRepo((prev: any) => ({
@@ -343,15 +361,24 @@ export function useEditorFileSystem(
   };
 
   return {
-    projectFiles, setProjectFiles,
-    activeFileId, setActiveFileId,
-    editorContent, setEditorContent,
-    editorLanguage, setEditorLanguage,
-    editorMode, setEditorMode,
-    creatingInId, setCreatingInId,
-    renamingId, setRenamingId,
-    newName, setNewName,
-    deleteConfirmId, setDeleteConfirmId,
+    projectFiles,
+    setProjectFiles,
+    activeFileId,
+    setActiveFileId,
+    editorContent,
+    setEditorContent,
+    editorLanguage,
+    setEditorLanguage,
+    editorMode,
+    setEditorMode,
+    creatingInId,
+    setCreatingInId,
+    renamingId,
+    setRenamingId,
+    newName,
+    setNewName,
+    deleteConfirmId,
+    setDeleteConfirmId,
     markFileDirty,
     handleFileSwitch,
     handleFileUpload,
@@ -364,6 +391,6 @@ export function useEditorFileSystem(
     handleConfirmCreate,
     deleteItem,
     confirmDeleteItem,
-    toggleFolder
+    toggleFolder,
   };
 }

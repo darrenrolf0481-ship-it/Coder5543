@@ -142,7 +142,7 @@ export function customDangerousSink(v: string | undefined) { return v; }
     expect(report.reason).toMatch(/callSites/);
   });
 
-  it('caps depth at MAX_DEPTH (long-chain doesn\'t blow up)', async () => {
+  it("caps depth at MAX_DEPTH (long-chain doesn't blow up)", async () => {
     // 12-level call chain. MAX_DEPTH is 8, so the deepest sink at level 12
     // should NOT be reported.
     let src = `import { exec } from 'child_process';\n\n`;

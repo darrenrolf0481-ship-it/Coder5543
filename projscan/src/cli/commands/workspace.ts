@@ -78,7 +78,9 @@ async function runAdd(repoPath: string, name?: string): Promise<void> {
     const entry = addRepo(w, repoPath, name);
     await saveWorkspace(rootPath, w);
     console.log(chalk.green(`✓ Registered "${entry.name}" at ${entry.path}`));
-    console.log(chalk.dim(`  ${w.repos.length} repo${w.repos.length === 1 ? '' : 's'} in workspace.`));
+    console.log(
+      chalk.dim(`  ${w.repos.length} repo${w.repos.length === 1 ? '' : 's'} in workspace.`),
+    );
   } catch (error) {
     console.error(chalk.red(error instanceof Error ? error.message : String(error)));
     process.exit(1);
@@ -116,7 +118,9 @@ function printList(w: Workspace | null): void {
   if (!w || w.repos.length === 0) {
     console.log(chalk.dim('  No sibling repos registered yet.'));
     console.log('');
-    console.log(chalk.dim('  Tip: run `projscan workspace add <path>` to register a sibling repo.'));
+    console.log(
+      chalk.dim('  Tip: run `projscan workspace add <path>` to register a sibling repo.'),
+    );
     return;
   }
   for (const r of w.repos) {

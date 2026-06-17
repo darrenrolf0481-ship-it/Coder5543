@@ -11,13 +11,13 @@
 import { useEffect, useRef, useCallback, useMemo } from 'react';
 import type { EndocrineState } from '../services/brain/types';
 
-export const PHI      = 1.618;
-export const PHI_INV  = 0.618;
+export const PHI = 1.618;
+export const PHI_INV = 0.618;
 
 // Thresholds derived from φ — warn at 1/φ, critical at 1 - 1/φ²
-const CORTISOL_WARN     = PHI_INV;           // 0.618
+const CORTISOL_WARN = PHI_INV; // 0.618
 const CORTISOL_CRITICAL = 1 - 1 / (PHI * PHI); // ~0.618... actually ≈ 0.618, use 0.8
-const DOPAMINE_HIGH     = PHI_INV;           // 0.618
+const DOPAMINE_HIGH = PHI_INV; // 0.618
 
 // ── CSS / DOM write helpers (mirrors sdk_bridge.js, but typed for React) ──────
 
@@ -29,18 +29,15 @@ function setPulse(state: 'healthy' | 'warning' | 'error' | 'sync') {
 function setTxProgress(value: number) {
   document.documentElement.style.setProperty(
     '--tx-progress',
-    String(Math.max(0, Math.min(1, value)))
+    String(Math.max(0, Math.min(1, value))),
   );
 }
 
 function setPulseDuration(cortisol: number) {
   // Cortisol 0.0 -> 2.0s duration (slow)
   // Cortisol 1.0 -> 0.4s duration (fast/panic)
-  const duration = 2.0 - (cortisol * 1.6);
-  document.documentElement.style.setProperty(
-    '--pulse-duration',
-    `${Math.max(0.3, duration)}s`
-  );
+  const duration = 2.0 - cortisol * 1.6;
+  document.documentElement.style.setProperty('--pulse-duration', `${Math.max(0.3, duration)}s`);
 }
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
@@ -87,11 +84,11 @@ export function usePhi(endocrine: EndocrineState | null): PhiController {
   // ── Transaction lifecycle ────────────────────────────────────────────────
   const beginTx = useCallback(() => {
     if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
-    setTxProgress(PHI_INV);   // fill to 61.8% immediately — "in flight"
+    setTxProgress(PHI_INV); // fill to 61.8% immediately — "in flight"
   }, []);
 
   const commitTx = useCallback(() => {
-    setTxProgress(1);          // fill to 100%
+    setTxProgress(1); // fill to 100%
     commitTimerRef.current = setTimeout(() => setTxProgress(0), 200);
   }, []);
 
@@ -101,18 +98,24 @@ export function usePhi(endocrine: EndocrineState | null): PhiController {
   }, []);
 
   // Cleanup on unmount
-  useEffect(() => () => {
-    if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (commitTimerRef.current) clearTimeout(commitTimerRef.current);
+    },
+    [],
+  );
 
-  return useMemo(() => ({ 
-    beginTx, 
-    commitTx, 
-    rollbackTx, 
-    setPulse, 
-    phi: PHI, 
-    phiInv: PHI_INV 
-  }), [beginTx, commitTx, rollbackTx]);
+  return useMemo(
+    () => ({
+      beginTx,
+      commitTx,
+      rollbackTx,
+      setPulse,
+      phi: PHI,
+      phiInv: PHI_INV,
+    }),
+    [beginTx, commitTx, rollbackTx],
+  );
 }
 
 // ── Storage pressure monitor (can be called independently) ──────────────────
@@ -122,7 +125,7 @@ export async function checkPhiStoragePressure(): Promise<'ok' | 'warn' | 'critic
   if (!navigator.storage?.estimate) return 'ok';
   const { usage = 0, quota = 1 } = await navigator.storage.estimate();
   const ratio = usage / quota;
-  if (ratio >= 0.8)      return 'critical';
-  if (ratio >= PHI_INV)  return 'warn';
+  if (ratio >= 0.8) return 'critical';
+  if (ratio >= PHI_INV) return 'warn';
   return 'ok';
 }

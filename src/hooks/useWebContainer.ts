@@ -17,19 +17,25 @@ export function useWebContainer() {
     }
   }, []);
 
-  const exec = useCallback(async (cmd: string, args: string[] = [], onStdout?: (data: string) => void) => {
-    if (status !== 'online') {
-      await boot();
-    }
-    return localCore.exec(cmd, args, onStdout);
-  }, [status, boot]);
+  const exec = useCallback(
+    async (cmd: string, args: string[] = [], onStdout?: (data: string) => void) => {
+      if (status !== 'online') {
+        await boot();
+      }
+      return localCore.exec(cmd, args, onStdout);
+    },
+    [status, boot],
+  );
 
-  const setup = useCallback(async (onOutput?: (data: string) => void) => {
-    if (status !== 'online') {
-      await boot();
-    }
-    return localCore.setupDependencies(onOutput);
-  }, [status, boot]);
+  const setup = useCallback(
+    async (onOutput?: (data: string) => void) => {
+      if (status !== 'online') {
+        await boot();
+      }
+      return localCore.setupDependencies(onOutput);
+    },
+    [status, boot],
+  );
 
   const retryBoot = useCallback(() => {
     setStatus('idle');

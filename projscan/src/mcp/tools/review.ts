@@ -12,7 +12,8 @@ export const reviewTool: McpTool = {
     properties: {
       base: {
         type: 'string',
-        description: 'Base ref (branch, tag, sha). Default: origin/main, falling back to main/master/HEAD~1.',
+        description:
+          'Base ref (branch, tag, sha). Default: origin/main, falling back to main/master/HEAD~1.',
       },
       head: { type: 'string', description: 'Head ref. Default: HEAD.' },
       max_tokens: {
@@ -26,7 +27,8 @@ export const reviewTool: McpTool = {
       },
       package: {
         type: 'string',
-        description: 'Optional. Workspace package name to scope all sections of the review to a single package.',
+        description:
+          'Optional. Workspace package name to scope all sections of the review to a single package.',
       },
     },
   },
@@ -50,7 +52,9 @@ export const reviewTool: McpTool = {
 
       report.prDiff.filesAdded = report.prDiff.filesAdded.filter((f) => allowed.has(f));
       report.prDiff.filesRemoved = report.prDiff.filesRemoved.filter((f) => allowed.has(f));
-      report.prDiff.filesModified = report.prDiff.filesModified.filter((f) => allowed.has(f.relativePath));
+      report.prDiff.filesModified = report.prDiff.filesModified.filter((f) =>
+        allowed.has(f.relativePath),
+      );
       report.prDiff.totalFilesChanged =
         report.prDiff.filesAdded.length +
         report.prDiff.filesRemoved.length +
@@ -58,9 +62,7 @@ export const reviewTool: McpTool = {
       report.changedFiles = report.changedFiles.filter((f) => allowed.has(f.relativePath));
       report.newCycles = report.newCycles.filter((c) => c.files.some((f) => allowed.has(f)));
       report.riskyFunctions = report.riskyFunctions.filter((f) => allowed.has(f.file));
-      report.dependencyChanges = report.dependencyChanges.filter(
-        (d) => d.workspace === target,
-      );
+      report.dependencyChanges = report.dependencyChanges.filter((d) => d.workspace === target);
     }
 
     emitProgress(4, 4, 'done');

@@ -73,6 +73,6 @@ if (container) {
   createRoot(container).render(
     <ErrorBoundary>
       <App />
-    </ErrorBoundary>
+    </ErrorBoundary>,
   );
 }

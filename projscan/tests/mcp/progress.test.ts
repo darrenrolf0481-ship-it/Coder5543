@@ -14,11 +14,14 @@ async function rpc(
 describe('MCP progress notifications', () => {
   it('emits progress events during tools/call when client supplies a token', async () => {
     const notifications: string[] = [];
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'), {
-      notify: (payload) => {
-        notifications.push(payload);
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+      {
+        notify: (payload) => {
+          notifications.push(payload);
+        },
       },
-    });
+    );
 
     await rpc(server, { jsonrpc: '2.0', id: 1, method: 'initialize', params: {} });
 
@@ -48,11 +51,14 @@ describe('MCP progress notifications', () => {
 
   it('does NOT emit progress when client omits progressToken', async () => {
     const notifications: string[] = [];
-    const server = createMcpServer(path.join(process.cwd(), 'projscan/tests/fixtures/python-small'), {
-      notify: (payload) => {
-        notifications.push(payload);
+    const server = createMcpServer(
+      path.join(process.cwd(), 'projscan/tests/fixtures/python-small'),
+      {
+        notify: (payload) => {
+          notifications.push(payload);
+        },
       },
-    });
+    );
 
     await rpc(server, { jsonrpc: '2.0', id: 1, method: 'initialize', params: {} });
     await rpc(server, {

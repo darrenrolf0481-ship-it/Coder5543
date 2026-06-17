@@ -17,7 +17,7 @@ export interface StorageFile {
 
 export function useSystemStates() {
   const [termuxStatus, setTermuxStatus] = useState<'disconnected' | 'connecting' | 'connected'>(
-    'disconnected'
+    'disconnected',
   );
   const [termuxFiles, setTermuxFiles] = useState<TermuxFile[]>([
     { name: 'v1-5-pruned-emaonly.safetensors', size: '3.97GB', type: 'model', category: 'model' },
@@ -33,7 +33,7 @@ export function useSystemStates() {
 
   // AI Studio / SD State
   const [negativePrompt, setNegativePrompt] = useState(
-    'blurry, low resolution, artifacts, mutated limbs, bad anatomy'
+    'blurry, low resolution, artifacts, mutated limbs, bad anatomy',
   );
   const [sdParams, setSdParams] = useState({
     checkpoint: 'SDXL-V1.0-Base',
@@ -44,11 +44,17 @@ export function useSystemStates() {
   });
 
   return {
-    termuxStatus, setTermuxStatus,
-    termuxFiles, setTermuxFiles,
-    storageFiles, setStorageFiles,
-    isVaultUnlocked, setIsVaultUnlocked,
-    negativePrompt, setNegativePrompt,
-    sdParams, setSdParams
+    termuxStatus,
+    setTermuxStatus,
+    termuxFiles,
+    setTermuxFiles,
+    storageFiles,
+    setStorageFiles,
+    isVaultUnlocked,
+    setIsVaultUnlocked,
+    negativePrompt,
+    setNegativePrompt,
+    sdParams,
+    setSdParams,
   };
 }

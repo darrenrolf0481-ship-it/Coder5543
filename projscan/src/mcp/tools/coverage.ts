@@ -15,7 +15,8 @@ export const coverageTool: McpTool = {
     properties: {
       url: {
         type: 'string',
-        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+        description:
+          'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
       },
       limit: {
         type: 'number',
@@ -23,7 +24,8 @@ export const coverageTool: McpTool = {
       },
       max_tokens: {
         type: 'number',
-        description: 'Cap the response size to roughly this many tokens (~4 chars/token). Truncates the entries array to fit.',
+        description:
+          'Cap the response size to roughly this many tokens (~4 chars/token). Truncates the entries array to fit.',
       },
       package: PACKAGE_ARG_SCHEMA,
     },

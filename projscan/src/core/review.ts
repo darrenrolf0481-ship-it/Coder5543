@@ -60,7 +60,13 @@ export async function computeReview(
   const headSha = await resolveSha(rootPath, headRef);
   const baseSha = await resolveSha(rootPath, baseRef);
   if (!baseSha) {
-    return unavailable(`Could not resolve base ref "${baseRef}".`, options, baseRef, headRef, headSha);
+    return unavailable(
+      `Could not resolve base ref "${baseRef}".`,
+      options,
+      baseRef,
+      headRef,
+      headSha,
+    );
   }
 
   // Head-side data: scan + graph + issues + hotspots.
@@ -320,10 +326,7 @@ function findRiskyFunctions(
         continue;
       }
       // Existed: flag if it newly crossed the threshold.
-      if (
-        baseCc < HIGH_CC_THRESHOLD &&
-        fn.cyclomaticComplexity >= HIGH_CC_THRESHOLD
-      ) {
+      if (baseCc < HIGH_CC_THRESHOLD && fn.cyclomaticComplexity >= HIGH_CC_THRESHOLD) {
         out.push({
           file: f.relativePath,
           name: fn.name,
@@ -445,14 +448,16 @@ function diffOneManifest(
 
   for (const [name, version] of Object.entries(headDeps)) {
     if (!(name in baseDeps)) added.push({ name, version, kind: 'dep' });
-    else if (baseDeps[name] !== version) bumped.push({ name, from: baseDeps[name], to: version, kind: 'dep' });
+    else if (baseDeps[name] !== version)
+      bumped.push({ name, from: baseDeps[name], to: version, kind: 'dep' });
   }
   for (const [name, version] of Object.entries(baseDeps)) {
     if (!(name in headDeps)) removed.push({ name, version, kind: 'dep' });
   }
   for (const [name, version] of Object.entries(headDev)) {
     if (!(name in baseDev)) added.push({ name, version, kind: 'dev' });
-    else if (baseDev[name] !== version) bumped.push({ name, from: baseDev[name], to: version, kind: 'dev' });
+    else if (baseDev[name] !== version)
+      bumped.push({ name, from: baseDev[name], to: version, kind: 'dev' });
   }
   for (const [name, version] of Object.entries(baseDev)) {
     if (!(name in headDev)) removed.push({ name, version, kind: 'dev' });
@@ -480,10 +485,14 @@ function decideVerdict(
   const maxRisk = Math.max(0, ...changedFiles.map((f) => f.riskScore ?? 0));
   if (maxRisk >= RISK_VERDICT_BLOCK_SCORE) {
     verdict = 'block';
-    summary.push(`Maximum changed-file risk score is ${maxRisk.toFixed(1)} (>= ${RISK_VERDICT_BLOCK_SCORE}).`);
+    summary.push(
+      `Maximum changed-file risk score is ${maxRisk.toFixed(1)} (>= ${RISK_VERDICT_BLOCK_SCORE}).`,
+    );
   } else if (maxRisk >= RISK_VERDICT_REVIEW_SCORE) {
     verdict = bumpTo(verdict, 'review');
-    summary.push(`Maximum changed-file risk score is ${maxRisk.toFixed(1)} (>= ${RISK_VERDICT_REVIEW_SCORE}).`);
+    summary.push(
+      `Maximum changed-file risk score is ${maxRisk.toFixed(1)} (>= ${RISK_VERDICT_REVIEW_SCORE}).`,
+    );
   }
 
   if (newCycles.length > 0) {
@@ -524,9 +533,7 @@ function decideVerdict(
       { added: 0, removed: 0, bumped: 0 },
     );
     if (totals.added + totals.removed + totals.bumped > 0) {
-      summary.push(
-        `Dependency changes: +${totals.added} -${totals.removed} ~${totals.bumped}.`,
-      );
+      summary.push(`Dependency changes: +${totals.added} -${totals.removed} ~${totals.bumped}.`);
     }
   }
 
@@ -539,7 +546,10 @@ function decideVerdict(
   return { verdict, summary };
 }
 
-function bumpTo(current: ReviewReport['verdict'], target: ReviewReport['verdict']): ReviewReport['verdict'] {
+function bumpTo(
+  current: ReviewReport['verdict'],
+  target: ReviewReport['verdict'],
+): ReviewReport['verdict'] {
   const order: Record<ReviewReport['verdict'], number> = { ok: 0, review: 1, block: 2 };
   return order[target] > order[current] ? target : current;
 }
@@ -588,9 +598,11 @@ async function isGitRepository(rootPath: string): Promise<boolean> {
 }
 
 async function resolveSha(rootPath: string, ref: string): Promise<string | null> {
-  const { code, stdout } = await runGit(rootPath, ['rev-parse', '--verify', `${ref}^{commit}`]).catch(
-    () => ({ code: 1, stdout: '', stderr: '' }),
-  );
+  const { code, stdout } = await runGit(rootPath, [
+    'rev-parse',
+    '--verify',
+    `${ref}^{commit}`,
+  ]).catch(() => ({ code: 1, stdout: '', stderr: '' }));
   if (code !== 0) return null;
   const sha = stdout.trim();
   return sha || null;

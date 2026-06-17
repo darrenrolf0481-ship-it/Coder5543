@@ -12,20 +12,23 @@ export const auditTool: McpTool = {
     properties: {
       url: {
         type: 'string',
-        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+        description:
+          'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
       },
       cursor: { type: 'string', description: 'Opaque cursor from a previous response.' },
       page_size: { type: 'number', description: 'Items per page (default 50).' },
       max_tokens: { type: 'number', description: 'Cap response size.' },
       package: {
         type: 'string',
-        description: 'Optional. Workspace package name to scope audit findings to one workspace only.',
+        description:
+          'Optional. Workspace package name to scope audit findings to one workspace only.',
       },
     },
   },
   handler: async (args, rootPath) => {
     emitProgress(0, 2, 'running npm audit');
-    const filter = typeof args.package === 'string' && args.package.length > 0 ? args.package : undefined;
+    const filter =
+      typeof args.package === 'string' && args.package.length > 0 ? args.package : undefined;
     const report = await runAudit(rootPath, filter ? { packageFilter: filter } : {});
     if (!report.available) return report;
     emitProgress(1, 2, 'normalizing findings');

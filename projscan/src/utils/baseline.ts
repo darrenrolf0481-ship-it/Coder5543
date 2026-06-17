@@ -61,13 +61,9 @@ export function computeDiff(
   const beforeTitles = new Set(before.issues.map((i) => i.title));
   const afterTitles = new Set(after.issues.map((i) => i.title));
 
-  const newIssues = after.issues
-    .filter((i) => !beforeTitles.has(i.title))
-    .map((i) => i.title);
+  const newIssues = after.issues.filter((i) => !beforeTitles.has(i.title)).map((i) => i.title);
 
-  const resolvedIssues = before.issues
-    .filter((i) => !afterTitles.has(i.title))
-    .map((i) => i.title);
+  const resolvedIssues = before.issues.filter((i) => !afterTitles.has(i.title)).map((i) => i.title);
 
   const hotspotDiff =
     before.hotspots && after.hotspots ? diffHotspots(before.hotspots, after.hotspots) : undefined;

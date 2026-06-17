@@ -1,5 +1,13 @@
 import React from 'react';
-import { X, Network, Terminal as TerminalIcon, Smartphone, Brain, Database, Layers } from 'lucide-react';
+import {
+  X,
+  Network,
+  Terminal as TerminalIcon,
+  Smartphone,
+  Brain,
+  Database,
+  Layers,
+} from 'lucide-react';
 import { PROJECT_TEMPLATES } from '../../services/templates';
 
 interface TemplateModalProps {
@@ -69,7 +77,7 @@ export const TemplateModal: React.FC<TemplateModalProps> = ({
                     ))}
                   </div>
                 </button>
-              )
+              ),
             )}
           </div>
         </div>

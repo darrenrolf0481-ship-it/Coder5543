@@ -17,27 +17,29 @@ export class KnowledgeService {
   async ingestFile(
     file: File,
     personalityId: number,
-    onProgress?: (progress: IngestionProgress) => void
+    onProgress?: (progress: IngestionProgress) => void,
   ): Promise<void> {
     const fileName = file.name;
-    logger.info(`[KnowledgeService] Starting ingestion of ${fileName} for personality ${personalityId}`);
-    
+    logger.info(
+      `[KnowledgeService] Starting ingestion of ${fileName} for personality ${personalityId}`,
+    );
+
     try {
       onProgress?.({ total: 1, current: 0, status: 'reading', fileName });
       const text = await file.text();
-      
+
       onProgress?.({ total: 1, current: 0, status: 'chunking', fileName });
       const chunks = this.chunkText(text, 800); // ~800 chars per chunk
-      
+
       const totalChunks = chunks.length;
       logger.info(`[KnowledgeService] Split ${fileName} into ${totalChunks} chunks`);
 
       for (let i = 0; i < totalChunks; i++) {
         onProgress?.({ total: totalChunks, current: i + 1, status: 'embedding', fileName });
-        
+
         const content = chunks[i];
         const embedding = await vectorService.getEmbedding(content);
-        
+
         const experience: Experience = {
           id: `kb_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 5)}`,
           intent: content.substring(0, 100), // Use first 100 chars as 'intent' for indexing
@@ -47,7 +49,7 @@ export class KnowledgeService {
           tags: ['knowledge', `personality_${personalityId}`, `file_${fileName}`],
           timestamp: Date.now(),
           accessCount: 0,
-          embedding
+          embedding,
         };
 
         await ltmStore.save(experience);
@@ -71,7 +73,7 @@ export class KnowledgeService {
 
     while (current < text.length) {
       let end = Math.min(current + size, text.length);
-      
+
       // Try to find a better breaking point
       if (end < text.length) {
         const lastNewline = text.lastIndexOf('\n', end);

@@ -8,12 +8,12 @@ export function transformToWebContainerTree(files: ProjectFile[]): Record<string
 
   // Map to store reference to directories by their ID
   const dirMap: Record<string, any> = {
-    'root': tree
+    root: tree,
   };
 
   // 1. First, identify all folders and their depths
-  const folders = files.filter(f => f.type === 'folder');
-  
+  const folders = files.filter((f) => f.type === 'folder');
+
   // Helper to calculate depth iteratively and safely
   const getDepth = (id: string | null): number => {
     let depth = 0;
@@ -26,13 +26,13 @@ export function transformToWebContainerTree(files: ProjectFile[]): Record<string
         break;
       }
       seen.add(currentId);
-      
-      const item = files.find(f => f.id === currentId);
+
+      const item = files.find((f) => f.id === currentId);
       if (!item || !item.parentId) break;
-      
+
       currentId = item.parentId;
       depth++;
-      
+
       if (depth > 20) break; // Safety limit
     }
     return depth;
@@ -42,23 +42,23 @@ export function transformToWebContainerTree(files: ProjectFile[]): Record<string
   const sortedFolders = folders.sort((a, b) => getDepth(a.id) - getDepth(b.id));
 
   // 2. Process folders
-  sortedFolders.forEach(file => {
+  sortedFolders.forEach((file) => {
     if (file.id === 'root') return;
     const parent = dirMap[file.parentId || 'root'] || tree;
     parent[file.name] = {
-      directory: {}
+      directory: {},
     };
     dirMap[file.id] = parent[file.name].directory;
   });
 
   // 3. Process files
-  files.forEach(file => {
+  files.forEach((file) => {
     if (file.type === 'file') {
       const parent = dirMap[file.parentId || 'root'] || tree;
       parent[file.name] = {
         file: {
-          contents: file.content || ''
-        }
+          contents: file.content || '',
+        },
       };
     }
   });

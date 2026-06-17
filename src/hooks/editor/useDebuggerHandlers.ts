@@ -20,11 +20,11 @@ export function useDebuggerHandlers(
   cursorLine: number,
   activePersonality: any,
   generateAIResponse: any,
-  prepareContext: any
+  prepareContext: any,
 ) {
   const handleToggleCurrentLineBreakpoint = useCallback(() => {
     setBreakpoints((prev: number[]) =>
-      prev.includes(cursorLine) ? prev.filter((l) => l !== cursorLine) : [...prev, cursorLine]
+      prev.includes(cursorLine) ? prev.filter((l) => l !== cursorLine) : [...prev, cursorLine],
     );
   }, [setBreakpoints, cursorLine]);
 
@@ -73,7 +73,7 @@ export function useDebuggerHandlers(
             },
             required: ['currentLine', 'variables', 'callStack', 'hotspots'],
           },
-        }
+        },
       );
 
       const result = extractJson(response || '{}', {});
@@ -117,7 +117,7 @@ export function useDebuggerHandlers(
         ${editorContent}
         
         Return the new state (currentLine, variables, callStack) after one step.`;
-      
+
       const brainContext = await prepareContext(prompt, activePersonality.id);
 
       const response = await generateAIResponse(
@@ -136,7 +136,7 @@ export function useDebuggerHandlers(
             },
             required: ['currentLine', 'variables', 'callStack'],
           },
-        }
+        },
       );
 
       const result = extractJson(response || '{}', {});
@@ -186,14 +186,16 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`;
             },
             required: ['refactoredCode', 'explanation'],
           },
-        }
+        },
       );
 
       const result = extractJson(response || '{}', {});
       setDebugRefactorResult(result);
     } catch (error) {
       console.warn('Debug refactor failed:', error);
-      setEditorOutput((prev: string) => prev + '\n[ERROR] Debug refactor failed — check console for details.');
+      setEditorOutput(
+        (prev: string) => prev + '\n[ERROR] Debug refactor failed — check console for details.',
+      );
     } finally {
       setIsAiProcessing(false);
     }
@@ -212,6 +214,6 @@ Return a JSON object with 'refactoredCode' and 'explanation' fields.`;
     handleStopDebug,
     handleStep,
     handleDebugRefactor,
-    handleApplyDebugRefactor
+    handleApplyDebugRefactor,
   };
 }

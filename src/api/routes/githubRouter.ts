@@ -8,11 +8,47 @@ const execAsync = promisify(exec);
 const router = Router();
 
 // Ignored folders and files
-const IGNORED_NAMES = new Set(['.git', 'node_modules', 'dist', 'build', 'venv', '__pycache__', '.next', '.idea', '.vscode']);
+const IGNORED_NAMES = new Set([
+  '.git',
+  'node_modules',
+  'dist',
+  'build',
+  'venv',
+  '__pycache__',
+  '.next',
+  '.idea',
+  '.vscode',
+]);
 const BINARY_EXTENSIONS = new Set([
-  'png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'pdf', 'zip', 'gz', 'tar', 'tgz',
-  'exe', 'dll', 'so', 'dylib', 'woff', 'woff2', 'eot', 'ttf', 'pyc', 'db',
-  'sqlite', 'mp4', 'mp3', 'wav', 'safetensors', 'ckpt', 'bin', 'out'
+  'png',
+  'jpg',
+  'jpeg',
+  'gif',
+  'webp',
+  'ico',
+  'pdf',
+  'zip',
+  'gz',
+  'tar',
+  'tgz',
+  'exe',
+  'dll',
+  'so',
+  'dylib',
+  'woff',
+  'woff2',
+  'eot',
+  'ttf',
+  'pyc',
+  'db',
+  'sqlite',
+  'mp4',
+  'mp3',
+  'wav',
+  'safetensors',
+  'ckpt',
+  'bin',
+  'out',
 ]);
 
 const LANGUAGE_MAP: Record<string, string> = {
@@ -38,7 +74,12 @@ const LANGUAGE_MAP: Record<string, string> = {
   java: 'java',
 };
 
-async function walkDir(dir: string, baseDir: string, parentId: string = 'root', fileCount = { count: 0 }): Promise<any[]> {
+async function walkDir(
+  dir: string,
+  baseDir: string,
+  parentId: string = 'root',
+  fileCount = { count: 0 },
+): Promise<any[]> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const result: any[] = [];
 
@@ -59,7 +100,7 @@ async function walkDir(dir: string, baseDir: string, parentId: string = 'root', 
         name: entry.name,
         type: 'folder',
         parentId: parentId,
-        isOpen: false
+        isOpen: false,
       });
       const subResults = await walkDir(fullPath, baseDir, folderId, fileCount);
       result.push(...subResults);
@@ -80,7 +121,7 @@ async function walkDir(dir: string, baseDir: string, parentId: string = 'root', 
           type: 'file',
           parentId: parentId,
           language: LANGUAGE_MAP[ext.toLowerCase()] || 'text',
-          content: content
+          content: content,
         });
       } catch (err) {
         console.warn(`Failed to read file ${fullPath}:`, err);
@@ -92,7 +133,10 @@ async function walkDir(dir: string, baseDir: string, parentId: string = 'root', 
 
 router.post('/push', async (_req, res) => {
   const token = process.env.GITHUB_TOKEN;
-  if (!token) { res.status(500).json({ error: 'GITHUB_TOKEN not configured' }); return; }
+  if (!token) {
+    res.status(500).json({ error: 'GITHUB_TOKEN not configured' });
+    return;
+  }
   try {
     const ghRes = await fetch('https://api.github.com/user/repos', {
       method: 'POST',
@@ -107,7 +151,10 @@ router.post('/push', async (_req, res) => {
 
 router.get('/pull', async (_req, res) => {
   const token = process.env.GITHUB_TOKEN;
-  if (!token) { res.status(500).json({ error: 'GITHUB_TOKEN not configured' }); return; }
+  if (!token) {
+    res.status(500).json({ error: 'GITHUB_TOKEN not configured' });
+    return;
+  }
   try {
     const ghRes = await fetch('https://api.github.com/user/repos', {
       headers: { Authorization: `token ${token}` },
@@ -128,11 +175,18 @@ router.post('/clone', async (req, res) => {
 
   // Shell injection prevention sanitization
   const isShorthand = /^[a-zA-Z0-9_\-\.]+\/[a-zA-Z0-9_\-\.]+$/.test(repoUrl);
-  const isHttps = /^https:\/\/github\.com\/[a-zA-Z0-9_\-\.]+\/[a-zA-Z0-9_\-\.]+(\.git)?$/.test(repoUrl);
+  const isHttps = /^https:\/\/github\.com\/[a-zA-Z0-9_\-\.]+\/[a-zA-Z0-9_\-\.]+(\.git)?$/.test(
+    repoUrl,
+  );
   const isSsh = /^git@github\.com:[a-zA-Z0-9_\-\.]+\/[a-zA-Z0-9_\-\.]+(\.git)?$/.test(repoUrl);
-  
+
   if (!isShorthand && !isHttps && !isSsh) {
-    res.status(400).json({ error: 'Invalid repository format. Supported: "owner/repo", "https://github.com/owner/repo" or "git@github.com:owner/repo.git"' });
+    res
+      .status(400)
+      .json({
+        error:
+          'Invalid repository format. Supported: "owner/repo", "https://github.com/owner/repo" or "git@github.com:owner/repo.git"',
+      });
     return;
   }
 
@@ -147,15 +201,19 @@ router.post('/clone', async (req, res) => {
     if (isShorthand) {
       cloneUrl = `https://github.com/${repoUrl}.git`;
     }
-    
-    const repoName = repoUrl.split('/').pop()?.replace(/\.git$/, '') || 'cloned_repo';
+
+    const repoName =
+      repoUrl
+        .split('/')
+        .pop()
+        ?.replace(/\.git$/, '') || 'cloned_repo';
     const projectsDir = path.join(process.cwd(), 'projects');
-    
+
     // Ensure projects folder exists
     await fs.mkdir(projectsDir, { recursive: true });
-    
+
     const targetDir = path.join(projectsDir, repoName);
-    
+
     let exists = false;
     try {
       await fs.access(targetDir);
@@ -178,14 +236,14 @@ router.post('/clone', async (req, res) => {
       name: repoName,
       type: 'folder',
       parentId: null,
-      isOpen: true
+      isOpen: true,
     };
 
     res.json({
       success: true,
       repoName,
       files: [rootNode, ...files],
-      truncated: fileCount.count > 150
+      truncated: fileCount.count > 150,
     });
   } catch (err: any) {
     console.error('Error during git clone:', err);
@@ -194,4 +252,3 @@ router.post('/clone', async (req, res) => {
 });
 
 export default router;
-

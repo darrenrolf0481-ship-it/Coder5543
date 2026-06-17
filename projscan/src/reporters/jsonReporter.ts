@@ -126,7 +126,12 @@ export function reportReviewJson(report: ReviewReport): void {
   console.log(JSON.stringify({ review: report }, null, 2));
 }
 
-export function reportFixSuggestJson(result: { matched: boolean; fix?: FixSuggestion; reason?: string; synthetic?: boolean }): void {
+export function reportFixSuggestJson(result: {
+  matched: boolean;
+  fix?: FixSuggestion;
+  reason?: string;
+  synthetic?: boolean;
+}): void {
   console.log(JSON.stringify({ fixSuggest: result }, null, 2));
 }
 

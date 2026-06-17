@@ -10,7 +10,7 @@ export function registerMcp(): void {
     .description('Run projscan as an MCP server (stdio) for AI coding agents')
     .option(
       '--watch',
-      "emit notifications/file_changed when source files change (1.3+; off by default — agents that subscribe stop polling)",
+      'emit notifications/file_changed when source files change (1.3+; off by default — agents that subscribe stop polling)',
     )
     .action(async (opts: { watch?: boolean }) => {
       setLogLevel('quiet');

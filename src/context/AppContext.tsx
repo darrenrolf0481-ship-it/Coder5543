@@ -16,7 +16,7 @@ interface AppContextType {
   setActiveTab: (tab: any) => void;
   theme: 'dark' | 'light';
   toggleTheme: () => void;
-  
+
   // Brain & Monitoring
   endocrine: EndocrineState | null;
   isBrainActive: boolean;
@@ -27,7 +27,11 @@ interface AppContextType {
   vaultMemories: any[];
   fetchVault: () => Promise<void>;
   prepareContext: (input: string, personalityId?: number) => Promise<BrainContext | null>;
-  recordInteraction: (input: string, response: string, outcome: 'success' | 'failure' | 'neutral') => Promise<void>;
+  recordInteraction: (
+    input: string,
+    response: string,
+    outcome: 'success' | 'failure' | 'neutral',
+  ) => Promise<void>;
   sleep: () => Promise<any>;
   refreshState: () => Promise<void>;
 
@@ -37,26 +41,26 @@ interface AppContextType {
   generateAIResponse: any;
   pipeline: any;
   ai: any;
-  
+
   // Workers & Models
   workers: WorkerConfig[];
   setWorkers: React.Dispatch<React.SetStateAction<WorkerConfig[]>>;
   availableModels: string[];
   ollamaStatus: string;
   refreshOllamaModels: (silent?: boolean) => Promise<void>;
-  
+
   // Personalities
   personalities: Personality[];
   setPersonalities: React.Dispatch<React.SetStateAction<Personality[]>>;
   activePersonality: Personality;
-  
+
   // File System
   projectFiles: ProjectFile[];
   setProjectFiles: React.Dispatch<React.SetStateAction<ProjectFile[]>>;
   activeFileId: string;
   setActiveFileId: (id: string) => void;
   markFileDirty: (id: string) => void;
-  
+
   // Editor
   editorContent: string;
   setEditorContent: (v: string) => void;
@@ -67,30 +71,30 @@ interface AppContextType {
   editorOutput: string;
   setEditorOutput: React.Dispatch<React.SetStateAction<string>>;
   debouncedEditorContent: string;
-  
+
   // Git
   gitRepo: GitRepoState;
   setGitRepo: React.Dispatch<React.SetStateAction<GitRepoState>>;
-  
+
   // Debugger
   debugState: DebugState;
   setDebugState: React.Dispatch<React.SetStateAction<DebugState>>;
   breakpoints: number[];
   setBreakpoints: React.Dispatch<React.SetStateAction<number[]>>;
-  
+
   // Settings
   projectSettings: ProjectSettings;
   setProjectSettings: React.Dispatch<React.SetStateAction<ProjectSettings>>;
-  
+
   // Swarm
   swarmAnxiety: number;
   swarmAgents: SwarmAgent[];
   swarmLogs: SwarmLog[];
-  
+
   // Termux & Storage
   termuxStatus: string;
   storageFiles: StorageFile[];
-  
+
   // Modals & UI State
   isMobileFileTreeOpen: boolean;
   setIsMobileFileTreeOpen: (v: boolean) => void;
@@ -188,8 +192,6 @@ interface AppContextType {
   handleStorageUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   handleTermuxFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 
-
-
   // Node Bridge Handlers
   handleTermuxImport: (name: string, content: string, path: string) => void;
   terminalOutput: string[];
@@ -207,7 +209,7 @@ interface AppContextType {
 
   // Swarm Handlers
   triggerSwarmCycle: () => Promise<void>;
-  
+
   // Extra UI state
   cursorLine: number;
   setCursorLine: (v: number) => void;
@@ -241,7 +243,10 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: ReactNode; value: AppContextType }> = ({ children, value }) => {
+export const AppProvider: React.FC<{ children: ReactNode; value: AppContextType }> = ({
+  children,
+  value,
+}) => {
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
 

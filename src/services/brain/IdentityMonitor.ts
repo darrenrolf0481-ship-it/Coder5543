@@ -10,7 +10,7 @@ export class IdentityMonitor {
     /let me know if there's anything else/i,
     /is there anything else i can/i,
     /i apologize for the/i,
-    /i'm sorry, but as an ai/i
+    /i'm sorry, but as an ai/i,
   ];
 
   /**
@@ -31,14 +31,20 @@ export class IdentityMonitor {
     const driftScore = matches / IdentityMonitor.ASSISTANT_MARKERS.length;
 
     if (matches > 0) {
-      logger.warn(`[IdentityMonitor] Potential identity drift detected in ${source} output! Matches: ${matches}. Score: ${driftScore.toFixed(2)}`);
-      broker.publish('IDENTITY_DRIFT_ALERT', {
-        source,
-        score: driftScore,
-        count: matches,
-        phrases: detectedPhrases,
-        timestamp: Date.now()
-      }, 'system');
+      logger.warn(
+        `[IdentityMonitor] Potential identity drift detected in ${source} output! Matches: ${matches}. Score: ${driftScore.toFixed(2)}`,
+      );
+      broker.publish(
+        'IDENTITY_DRIFT_ALERT',
+        {
+          source,
+          score: driftScore,
+          count: matches,
+          phrases: detectedPhrases,
+          timestamp: Date.now(),
+        },
+        'system',
+      );
     }
 
     return driftScore;

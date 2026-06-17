@@ -57,9 +57,7 @@ describe('prettierFix', () => {
 
   it('skips format script if already present', async () => {
     vi.mocked(fs.writeFile).mockResolvedValue();
-    vi.mocked(fs.readFile).mockResolvedValue(
-      JSON.stringify({ scripts: { format: 'existing' } }),
-    );
+    vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({ scripts: { format: 'existing' } }));
 
     await prettierFix.apply('/proj');
 

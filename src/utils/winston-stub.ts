@@ -18,7 +18,8 @@ export function createLogger(opts?: any) {
     error: (message: string, ...meta: any[]) => console.error(message, ...meta),
     warn: (message: string, ...meta: any[]) => console.warn(message, ...meta),
     debug: (message: string, ...meta: any[]) => console.debug(message, ...meta),
-    log: (level: string, message: string, ...meta: any[]) => console.log(`[${level}]`, message, ...meta),
+    log: (level: string, message: string, ...meta: any[]) =>
+      console.log(`[${level}]`, message, ...meta),
   };
 }
 

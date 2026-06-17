@@ -24,12 +24,14 @@ export function useForgeHandlers(
   monacoEditorRef: any,
   setGitRepo: any,
   setIsTemplateModalOpen: any,
-  generateAIResponse: any
+  generateAIResponse: any,
 ) {
   const [generatePrompt, setGeneratePrompt] = useState('');
   const [generateMode, setGenerateMode] = useState<'snippet' | 'file'>('snippet');
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
-  const [templateConfirmKey, setTemplateConfirmKey] = useState<keyof typeof PROJECT_TEMPLATES | null>(null);
+  const [templateConfirmKey, setTemplateConfirmKey] = useState<
+    keyof typeof PROJECT_TEMPLATES | null
+  >(null);
 
   const handleFormatCode = async (isMobile: boolean = false) => {
     setIsAiProcessing(true);
@@ -42,13 +44,14 @@ export function useForgeHandlers(
           extra: 'Return ONLY the formatted code, without any markdown fences or explanations.',
         }),
         'You are an expert code formatter. Return ONLY the formatted code. Do not wrap in markdown blocks.',
-        { modelType: 'fast' }
+        { modelType: 'fast' },
       );
 
       if (response) {
         setEditorContent(response);
         setEditorOutput(
-          (prev: string) => prev + `[SYSTEM] Code formatted successfully${isMobile ? ' (mobile)' : ''}.\n`
+          (prev: string) =>
+            prev + `[SYSTEM] Code formatted successfully${isMobile ? ' (mobile)' : ''}.\n`,
         );
       }
     } catch (err) {
@@ -65,7 +68,8 @@ export function useForgeHandlers(
         makePrompt({
           lang: editorLanguage,
           code: editorContent,
-          instruction: 'Refactor this code for better performance, readability, and structural integrity.',
+          instruction:
+            'Refactor this code for better performance, readability, and structural integrity.',
           extra: "Return a JSON object with 'refactoredCode' and 'explanation' fields.",
           json: true,
         }),
@@ -81,7 +85,7 @@ export function useForgeHandlers(
             },
             required: ['refactoredCode', 'explanation'],
           },
-        }
+        },
       );
 
       const result = extractJson(response, {});
@@ -122,7 +126,8 @@ export function useForgeHandlers(
             makePrompt({
               lang: file.language || 'code',
               code: file.content,
-              instruction: 'Refactor this code for better performance, readability, and structural integrity.',
+              instruction:
+                'Refactor this code for better performance, readability, and structural integrity.',
               extra: "Return a JSON object with 'refactoredCode' and 'explanation' fields.",
               json: true,
             }),
@@ -138,15 +143,17 @@ export function useForgeHandlers(
                 },
                 required: ['refactoredCode', 'explanation'],
               },
-            }
+            },
           );
 
           const result = extractJson(response, {});
           if (result.refactoredCode) {
             updatedFiles = updatedFiles.map((f) =>
-              f.id === file.id ? { ...f, content: result.refactoredCode } : f
+              f.id === file.id ? { ...f, content: result.refactoredCode } : f,
             );
-            setEditorOutput((prev: string) => prev + `[SUCCESS] ${file.name} refactored successfully.\n`);
+            setEditorOutput(
+              (prev: string) => prev + `[SUCCESS] ${file.name} refactored successfully.\n`,
+            );
 
             if (activeFileId === file.id) {
               setEditorContent(result.refactoredCode);
@@ -183,7 +190,7 @@ export function useForgeHandlers(
         const response = await generateAIResponse(
           `Language: ${editorLanguage}\nContext:\n${editorContent}\n\nGenerate code for: ${generatePrompt}`,
           "You are a master software engineer. Generate high-quality, efficient code based on the user's prompt. Provide ONLY the code snippet without markdown blocks if possible, or wrap it in a clear CODE_FORGE block. Include a brief explanation of how to use it.",
-          { modelType: 'smart' }
+          { modelType: 'smart' },
         );
 
         const generatedText = response || 'Forge failed to materialize code.';
@@ -220,7 +227,7 @@ export function useForgeHandlers(
         const response = await generateAIResponse(
           `Generate a complete, functional file for: ${generatePrompt}. Determine the best language and filename.`,
           "You are an expert developer. Output ONLY a JSON object with 'filename', 'language' (e.g., 'python', 'javascript', 'typescript', 'html', 'css'), and 'content' (the complete code). Do not include any markdown formatting or explanations outside the JSON.",
-          { modelType: 'smart' }
+          { modelType: 'smart' },
         );
 
         if (response) {
@@ -238,7 +245,7 @@ export function useForgeHandlers(
 
             setProjectFiles((prev: any[]) => {
               const updatedPrev = prev.map((f) =>
-                f.id === activeFileId ? { ...f, content: editorContent } : f
+                f.id === activeFileId ? { ...f, content: editorContent } : f,
               );
               return [...updatedPrev, newFile];
             });
@@ -282,10 +289,14 @@ export function useForgeHandlers(
       const selection = editor.getSelection();
       editor.executeEdits('source', [{ range: selection, text: code }]);
       editor.focus();
-      setEditorOutput((prev: string) => prev + '[SYSTEM] Neural Forge snippet integrated at cursor.\n');
+      setEditorOutput(
+        (prev: string) => prev + '[SYSTEM] Neural Forge snippet integrated at cursor.\n',
+      );
     } else {
       setEditorContent(code);
-      setEditorOutput((prev: string) => prev + '[SYSTEM] Neural Forge code replaced file content.\n');
+      setEditorOutput(
+        (prev: string) => prev + '[SYSTEM] Neural Forge code replaced file content.\n',
+      );
     }
   };
 
@@ -355,16 +366,18 @@ export function useForgeHandlers(
     setActiveFileId(newFile.id);
     setEditorContent(analysisText);
     setEditorLanguage('markdown');
-    setEditorOutput(
-      (prev: string) => prev + `[SYSTEM] Analysis saved as "${fileName}".\n`
-    );
+    setEditorOutput((prev: string) => prev + `[SYSTEM] Analysis saved as "${fileName}".\n`);
   };
 
   return {
-    generatePrompt, setGeneratePrompt,
-    generateMode, setGenerateMode,
-    isGenerateModalOpen, setIsGenerateModalOpen,
-    templateConfirmKey, setTemplateConfirmKey,
+    generatePrompt,
+    setGeneratePrompt,
+    generateMode,
+    setGenerateMode,
+    isGenerateModalOpen,
+    setIsGenerateModalOpen,
+    templateConfirmKey,
+    setTemplateConfirmKey,
     handleFormatCode,
     handleRefactorCode,
     handleRefactorAllFiles,
@@ -374,6 +387,6 @@ export function useForgeHandlers(
     handleGenerateCode,
     handleLoadTemplate,
     confirmLoadTemplate,
-    handleSaveAnalysis
+    handleSaveAnalysis,
   };
 }

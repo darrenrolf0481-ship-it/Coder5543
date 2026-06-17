@@ -1,10 +1,6 @@
 import { scanRepository } from '../../core/repositoryScanner.js';
 import { collectIssues } from '../../core/issueEngine.js';
-import {
-  findIssue,
-  suggestFixForIssue,
-  syntheticIssue,
-} from '../../core/fixSuggest.js';
+import { findIssue, suggestFixForIssue, syntheticIssue } from '../../core/fixSuggest.js';
 import type { McpTool } from './_shared.js';
 
 export const fixSuggestTool: McpTool = {
@@ -31,7 +27,8 @@ export const fixSuggestTool: McpTool = {
       severity: {
         type: 'string',
         enum: ['info', 'warning', 'error'],
-        description: 'Optional. When synthesizing via file+rule, sets the severity for the suggestion. Default: warning.',
+        description:
+          'Optional. When synthesizing via file+rule, sets the severity for the suggestion. Default: warning.',
       },
     },
   },
@@ -49,7 +46,10 @@ export const fixSuggestTool: McpTool = {
       const issues = await collectIssues(rootPath, scan.files);
       const found = findIssue(issues, issueId);
       if (!found) {
-        return { matched: false, reason: `No open issue with id "${issueId}" in current doctor run.` };
+        return {
+          matched: false,
+          reason: `No open issue with id "${issueId}" in current doctor run.`,
+        };
       }
       const fix = await suggestFixForIssue(found, rootPath);
       return { matched: true, fix };

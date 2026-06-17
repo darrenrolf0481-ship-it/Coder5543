@@ -96,7 +96,7 @@ describe('inspectFile', () => {
 
   it('returns parsed metadata for a real file (without running full scan)', async () => {
     const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'projscan-fi-'));
-    await fs.writeFile(path.join(tmpRoot, 'sample.ts'), "export const foo = 1;\n");
+    await fs.writeFile(path.join(tmpRoot, 'sample.ts'), 'export const foo = 1;\n');
 
     const insp = await inspectFile(tmpRoot, 'sample.ts', {
       scan: { files: [] },

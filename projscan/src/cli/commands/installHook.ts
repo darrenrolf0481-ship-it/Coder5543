@@ -16,8 +16,10 @@ export function registerInstallHook(): void {
   program
     .command('install-hook')
     .description('Install a pre-commit git hook running projscan ci --changed-only (1.6+)')
-    .option('--threshold <n>', 'min-score threshold for the hook (default 70)', (v) => parseInt(v, 10))
-    .option('--force', "overwrite an existing pre-commit hook (default: refuse)")
+    .option('--threshold <n>', 'min-score threshold for the hook (default 70)', (v) =>
+      parseInt(v, 10),
+    )
+    .option('--force', 'overwrite an existing pre-commit hook (default: refuse)')
     .action(async (opts: { threshold?: number; force?: boolean }) => {
       setupLogLevel();
       maybeCompactBanner();
@@ -68,7 +70,11 @@ async function runInstallHook(rootPath: string, threshold: number, force: boolea
   await fs.chmod(hookPath, 0o755);
   console.log('');
   console.log(chalk.green('✓ Installed .git/hooks/pre-commit'));
-  console.log(chalk.dim(`  Threshold: ${threshold}/100. Runs \`projscan ci --changed-only\` on every commit.`));
+  console.log(
+    chalk.dim(
+      `  Threshold: ${threshold}/100. Runs \`projscan ci --changed-only\` on every commit.`,
+    ),
+  );
   console.log(
     chalk.dim('  Skip the hook for one commit with `git commit --no-verify` (use sparingly).'),
   );

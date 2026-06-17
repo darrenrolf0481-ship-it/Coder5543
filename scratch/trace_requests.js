@@ -2,19 +2,21 @@ import puppeteer from 'puppeteer';
 
 (async () => {
   const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
   const page = await browser.newPage();
 
-  page.on('console', msg => console.log(`[CONSOLE] ${msg.type()}: ${msg.text()}`));
-  page.on('pageerror', err => console.log(`[PAGE ERROR] ${err.message}`));
-  
-  page.on('request', request => {
+  page.on('console', (msg) => console.log(`[CONSOLE] ${msg.type()}: ${msg.text()}`));
+  page.on('pageerror', (err) => console.log(`[PAGE ERROR] ${err.message}`));
+
+  page.on('request', (request) => {
     console.log(`[REQ] ${request.method()} ${request.url()}`);
   });
 
-  page.on('response', response => {
-    console.log(`[RES] ${response.status()} ${response.url()} (${response.headers()['content-type'] || 'unknown'})`);
+  page.on('response', (response) => {
+    console.log(
+      `[RES] ${response.status()} ${response.url()} (${response.headers()['content-type'] || 'unknown'})`,
+    );
   });
 
   try {

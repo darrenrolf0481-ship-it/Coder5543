@@ -21,25 +21,134 @@ import type { CodeGraph } from './codeGraph.js';
 const MAX_FILE_SIZE = 512 * 1024;
 
 const STOPWORDS = new Set([
-  'the','a','an','and','or','not','of','to','in','is','it','for','on','with',
-  'this','that','by','as','at','be','are','was','were','has','have','had',
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'not',
+  'of',
+  'to',
+  'in',
+  'is',
+  'it',
+  'for',
+  'on',
+  'with',
+  'this',
+  'that',
+  'by',
+  'as',
+  'at',
+  'be',
+  'are',
+  'was',
+  'were',
+  'has',
+  'have',
+  'had',
 ]);
 
 const TS_KEYWORDS = new Set([
-  'const','let','var','function','return','if','else','while','for','do','break',
-  'continue','switch','case','default','new','class','extends','implements',
-  'interface','type','enum','public','private','protected','static','readonly',
-  'async','await','try','catch','finally','throw','import','export','from','as',
-  'typeof','instanceof','void','null','undefined','true','false','this','super',
-  'yield','delete','in','of','any','never','unknown','string','number','boolean',
-  'object','symbol','bigint',
+  'const',
+  'let',
+  'var',
+  'function',
+  'return',
+  'if',
+  'else',
+  'while',
+  'for',
+  'do',
+  'break',
+  'continue',
+  'switch',
+  'case',
+  'default',
+  'new',
+  'class',
+  'extends',
+  'implements',
+  'interface',
+  'type',
+  'enum',
+  'public',
+  'private',
+  'protected',
+  'static',
+  'readonly',
+  'async',
+  'await',
+  'try',
+  'catch',
+  'finally',
+  'throw',
+  'import',
+  'export',
+  'from',
+  'as',
+  'typeof',
+  'instanceof',
+  'void',
+  'null',
+  'undefined',
+  'true',
+  'false',
+  'this',
+  'super',
+  'yield',
+  'delete',
+  'in',
+  'of',
+  'any',
+  'never',
+  'unknown',
+  'string',
+  'number',
+  'boolean',
+  'object',
+  'symbol',
+  'bigint',
 ]);
 
 const PY_KEYWORDS = new Set([
-  'def','class','self','cls','lambda','yield','pass','elif','none','true','false',
-  'and','or','not','is','in','import','from','as','with','try','except','finally',
-  'raise','assert','global','nonlocal','del','async','await','return','if','else',
-  'for','while','break','continue',
+  'def',
+  'class',
+  'self',
+  'cls',
+  'lambda',
+  'yield',
+  'pass',
+  'elif',
+  'none',
+  'true',
+  'false',
+  'and',
+  'or',
+  'not',
+  'is',
+  'in',
+  'import',
+  'from',
+  'as',
+  'with',
+  'try',
+  'except',
+  'finally',
+  'raise',
+  'assert',
+  'global',
+  'nonlocal',
+  'del',
+  'async',
+  'await',
+  'return',
+  'if',
+  'else',
+  'for',
+  'while',
+  'break',
+  'continue',
 ]);
 
 export interface IndexedFile {
@@ -89,7 +198,9 @@ export async function buildSearchIndex(
   const indexed = new Map<string, IndexedFile>();
   const postings = new Map<string, Map<string, number>>();
 
-  const parseable = files.filter((f) => f.sizeBytes <= MAX_FILE_SIZE && isIndexable(f.relativePath));
+  const parseable = files.filter(
+    (f) => f.sizeBytes <= MAX_FILE_SIZE && isIndexable(f.relativePath),
+  );
 
   await Promise.all(
     parseable.map(async (file) => {
@@ -169,7 +280,7 @@ export function search(
       const doc = index.files.get(file);
       if (!doc) continue;
       const dl = doc.length;
-      const norm = tf * (k1 + 1) / (tf + k1 * (1 - b + b * (dl / index.avgDocLength)));
+      const norm = (tf * (k1 + 1)) / (tf + k1 * (1 - b + b * (dl / index.avgDocLength)));
       const bm25 = idf * norm;
 
       const existing = scores.get(file);
@@ -201,9 +312,7 @@ export function search(
   if (scores.size === 0) return [];
 
   // Sort by score, take top limit
-  const ranked = [...scores.entries()]
-    .sort((a, b) => b[1].score - a[1].score)
-    .slice(0, limit);
+  const ranked = [...scores.entries()].sort((a, b) => b[1].score - a[1].score).slice(0, limit);
 
   return ranked.map(([file, info]) => {
     const entry = index.files.get(file)!;

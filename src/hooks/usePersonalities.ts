@@ -5,7 +5,7 @@ import type { Personality } from '../data/personalities';
 
 export function usePersonalities() {
   const [personalities, setPersonalities] = useState<Personality[]>(INITIAL_PERSONALITIES);
-  
+
   // Memoize the initial preferences from localStorage to avoid redundant parsing
   const initialPrefs = useMemo(() => {
     try {
@@ -41,12 +41,12 @@ export function usePersonalities() {
 
   const googleAiClient = useMemo(
     () => (geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null),
-    [geminiApiKey]
+    [geminiApiKey],
   );
 
   const activePersonality = useMemo(
     () => personalities.find((p) => p.active) || personalities[0],
-    [personalities]
+    [personalities],
   );
 
   const lastSavedKeys = useRef({ geminiApiKey, grokApiKey, openrouterApiKey });
@@ -113,6 +113,6 @@ export function usePersonalities() {
     openrouterApiKey,
     setOpenrouterApiKey,
     googleAiClient,
-    activePersonality
+    activePersonality,
   };
 }

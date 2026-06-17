@@ -31,7 +31,17 @@ function grammarDirs(): string[] {
   const nodeModulesRust = path.join(repoRoot, 'node_modules', 'tree-sitter-rust');
   const nodeModulesPhp = path.join(repoRoot, 'node_modules', 'tree-sitter-php');
   const nodeModulesCSharp = path.join(repoRoot, 'node_modules', 'tree-sitter-c-sharp');
-  return [distDir, nodeModulesWebTs, nodeModulesPy, nodeModulesGo, nodeModulesJava, nodeModulesRuby, nodeModulesRust, nodeModulesPhp, nodeModulesCSharp];
+  return [
+    distDir,
+    nodeModulesWebTs,
+    nodeModulesPy,
+    nodeModulesGo,
+    nodeModulesJava,
+    nodeModulesRuby,
+    nodeModulesRust,
+    nodeModulesPhp,
+    nodeModulesCSharp,
+  ];
 }
 
 function findWasm(filename: string): string {

@@ -12,16 +12,11 @@ export class LocalCoreService {
   async boot(): Promise<WebContainer> {
     if (this.webcontainerInstance) return this.webcontainerInstance;
     if (this.isBooting) {
-       // Wait for existing boot process with a 30s timeout
-       const deadline = Date.now() + 30_000;
-       while (this.isBooting) {
-         if (Date.now() > deadline) {
-           this.isBooting = false;
-           throw new Error('WebContainer boot timed out after 30 seconds');
-         }
-         await new Promise(resolve => setTimeout(resolve, 100));
-       }
-       if (this.webcontainerInstance) return this.webcontainerInstance;
+      // Wait for existing boot process
+      while (this.isBooting) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      if (this.webcontainerInstance) return this.webcontainerInstance;
     }
 
     this.isBooting = true;
@@ -55,17 +50,24 @@ export class LocalCoreService {
    */
   async setupDependencies(onOutput?: (data: string) => void) {
     const instance = await this.boot();
-    
+
     // Check if package.json exists, if not create a basic one
     try {
       await instance.fs.readFile('package.json');
     } catch {
       logger.info('[LocalCore] No package.json found, creating default...');
-      await instance.fs.writeFile('package.json', JSON.stringify({
-        name: 'crimson-local-core',
-        version: '1.0.0',
-        dependencies: {}
-      }, null, 2));
+      await instance.fs.writeFile(
+        'package.json',
+        JSON.stringify(
+          {
+            name: 'crimson-local-core',
+            version: '1.0.0',
+            dependencies: {},
+          },
+          null,
+          2,
+        ),
+      );
     }
 
     logger.info('[LocalCore] Starting dependency setup...');
@@ -82,12 +84,14 @@ export class LocalCoreService {
   async exec(cmd: string, args: string[] = [], onStdout?: (data: string) => void) {
     const instance = await this.boot();
     const process = await instance.spawn(cmd, args);
-    
-    process.output.pipeTo(new WritableStream({
-      write(data) {
-        onStdout?.(data);
-      }
-    }));
+
+    process.output.pipeTo(
+      new WritableStream({
+        write(data) {
+          onStdout?.(data);
+        },
+      }),
+    );
 
     return process.exit;
   }

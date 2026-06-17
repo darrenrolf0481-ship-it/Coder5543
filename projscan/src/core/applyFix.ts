@@ -112,8 +112,7 @@ export async function executePlan(
       };
     }
     const beforeHash = before === null ? null : sha256(before);
-    const afterHash =
-      item.op === 'delete' ? null : sha256(item.content ?? '');
+    const afterHash = item.op === 'delete' ? null : sha256(item.content ?? '');
     changes.push({
       path: item.path,
       op: item.op,

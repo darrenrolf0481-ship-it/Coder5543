@@ -23,7 +23,8 @@ export const graphTool: McpTool = {
       },
       symbol: {
         type: 'string',
-        description: 'Symbol name to query (e.g. a function or class). Use instead of `file` to find where a symbol is defined.',
+        description:
+          'Symbol name to query (e.g. a function or class). Use instead of `file` to find where a symbol is defined.',
       },
       direction: {
         type: 'string',
@@ -35,7 +36,8 @@ export const graphTool: McpTool = {
       max_tokens: { type: 'number', description: 'Cap the response to roughly this many tokens.' },
       url: {
         type: 'string',
-        description: 'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
+        description:
+          'Optional. Git repository URL to clone and analyze (e.g. https://github.com/user/repo).',
       },
     },
     required: ['direction'],
@@ -62,17 +64,13 @@ export const graphTool: McpTool = {
       }
       case 'exports': {
         if (!file) {
-          throw new Error(
-            'direction=exports requires a `file` argument (repo-relative path).',
-          );
+          throw new Error('direction=exports requires a `file` argument (repo-relative path).');
         }
         return { file, exports: exportsOf(graph, file).slice(0, limit) };
       }
       case 'importers': {
         if (!file) {
-          throw new Error(
-            'direction=importers requires a `file` argument (repo-relative path).',
-          );
+          throw new Error('direction=importers requires a `file` argument (repo-relative path).');
         }
         return { file, importers: filesImportingFile(graph, file).slice(0, limit) };
       }

@@ -36,10 +36,7 @@ export interface AuditOptions {
  * Yarn/pnpm projects: we don't try to translate; we report "not available"
  * with a hint.
  */
-export async function runAudit(
-  rootPath: string,
-  options: AuditOptions = {},
-): Promise<AuditReport> {
+export async function runAudit(rootPath: string, options: AuditOptions = {}): Promise<AuditReport> {
   const hasPackageJson = await fileExists(path.join(rootPath, 'package.json'));
   if (!hasPackageJson) {
     return unavailable('No package.json found in this directory');

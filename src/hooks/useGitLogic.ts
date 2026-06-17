@@ -16,7 +16,12 @@ export interface GitRepoState {
   stash: any[];
 }
 
-export function useGitLogic(projectFiles: any[], setProjectFiles: any, setEditorOutput: any, activeFileId: string) {
+export function useGitLogic(
+  projectFiles: any[],
+  setProjectFiles: any,
+  setEditorOutput: any,
+  activeFileId: string,
+) {
   const [gitRepo, setGitRepo] = useState<{
     initialized: boolean;
     branch: string;
@@ -70,22 +75,27 @@ export function useGitLogic(projectFiles: any[], setProjectFiles: any, setEditor
     }));
   }, []);
 
-  const handleGitPush = useCallback(async (setIsAiProcessing: (v: boolean) => void) => {
-    setIsAiProcessing(true);
-    setEditorOutput((prev: string) => prev + '[GIT] Pushing to GitHub...\n');
-    try {
-      const response = await fetch('./api/github/push', { method: 'POST' });
-      const data = await response.json();
-      if (data.ok) {
-        setEditorOutput((prev: string) => prev + '[GIT] Successfully pushed to GitHub.\n');
-      } else {
-        setEditorOutput((prev: string) => prev + '[GIT] ERROR: Push failed. Check server GITHUB_TOKEN.\n');
+  const handleGitPush = useCallback(
+    async (setIsAiProcessing: (v: boolean) => void) => {
+      setIsAiProcessing(true);
+      setEditorOutput((prev: string) => prev + '[GIT] Pushing to GitHub...\n');
+      try {
+        const response = await fetch('./api/github/push', { method: 'POST' });
+        const data = await response.json();
+        if (data.ok) {
+          setEditorOutput((prev: string) => prev + '[GIT] Successfully pushed to GitHub.\n');
+        } else {
+          setEditorOutput(
+            (prev: string) => prev + '[GIT] ERROR: Push failed. Check server GITHUB_TOKEN.\n',
+          );
+        }
+      } catch {
+        setEditorOutput((prev: string) => prev + '[GIT] ERROR: Could not reach server.\n');
       }
-    } catch {
-      setEditorOutput((prev: string) => prev + '[GIT] ERROR: Could not reach server.\n');
-    }
-    setIsAiProcessing(false);
-  }, [setEditorOutput]);
+      setIsAiProcessing(false);
+    },
+    [setEditorOutput],
+  );
 
   return {
     gitRepo,

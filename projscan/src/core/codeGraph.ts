@@ -332,7 +332,10 @@ export async function incrementallyUpdateGraph(
 ): Promise<CodeGraph> {
   if (changedPaths.length === 0) return graph;
 
-  const contextByAdapter = await prepareAdapterContexts(rootPath, fakeFilesFromGraph(graph, rootPath));
+  const contextByAdapter = await prepareAdapterContexts(
+    rootPath,
+    fakeFilesFromGraph(graph, rootPath),
+  );
   await Promise.all(changedPaths.map((rel) => processChangedPath(graph, rootPath, rel)));
   rebuildIndexesIntoGraph(graph, contextByAdapter);
   computeFanIn(graph.files);
@@ -413,7 +416,6 @@ function rebuildIndexesIntoGraph(
   graph.symbolDefs.clear();
   for (const [k, v] of symbolDefs) graph.symbolDefs.set(k, v);
 }
-
 
 // ── Query API ──────────────────────────────────────────────
 

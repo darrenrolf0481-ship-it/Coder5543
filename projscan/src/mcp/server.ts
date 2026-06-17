@@ -329,8 +329,15 @@ export function createMcpServer(rootPath: string, options: McpServerOptions = {}
       return JSON.stringify(fail(null, JSONRPC_ERROR.ParseError, 'Invalid JSON'));
     }
 
-    if (!request || typeof request !== 'object' || request.jsonrpc !== '2.0' || typeof request.method !== 'string') {
-      return JSON.stringify(fail(request?.id ?? null, JSONRPC_ERROR.InvalidRequest, 'Invalid JSON-RPC request'));
+    if (
+      !request ||
+      typeof request !== 'object' ||
+      request.jsonrpc !== '2.0' ||
+      typeof request.method !== 'string'
+    ) {
+      return JSON.stringify(
+        fail(request?.id ?? null, JSONRPC_ERROR.InvalidRequest, 'Invalid JSON-RPC request'),
+      );
     }
 
     const response = await dispatch(request);
@@ -396,7 +403,12 @@ function ok(id: string | number | null, result: unknown): JsonRpcResponse {
   return { jsonrpc: '2.0', id, result };
 }
 
-function fail(id: string | number | null, code: number, message: string, data?: unknown): JsonRpcResponse {
+function fail(
+  id: string | number | null,
+  code: number,
+  message: string,
+  data?: unknown,
+): JsonRpcResponse {
   return {
     jsonrpc: '2.0',
     id,

@@ -16,7 +16,8 @@ export const SWARM_MODES: SwarmModeDefinition[] = [
     description: 'Each agent performs a different lens of analysis on the mission or codebase.',
     objective:
       'Analyze the provided mission or codebase from multiple independent perspectives. Surface assumptions, risks, trade-offs, and unknowns. Produce actionable findings.',
-    defaultPrompt: 'Analyze the current project and mission. What are the hidden assumptions, risks, and trade-offs?',
+    defaultPrompt:
+      'Analyze the current project and mission. What are the hidden assumptions, risks, and trade-offs?',
     agentDirective: (agentName: string) =>
       `You are ${agentName} in ANALYSIS mode. Examine the mission from your specialist lens. Be critical, specific, and evidence-based. ${COMMON_CODING_RULES}`,
     synthesisSystemPrompt: `You are the Swarm Synthesis Lead in ANALYSIS mode.
@@ -48,7 +49,8 @@ Be honest about disagreement. Do not smooth over conflicts.`,
     description: 'A think-tank that designs implementation plans and code architecture.',
     objective:
       'Design the best implementation approach. Consider architecture, UX, performance, security, and maintainability. Prefer pragmatic, reversible decisions.',
-    defaultPrompt: 'Design the implementation for the requested feature or fix. What is the cleanest architecture and plan?',
+    defaultPrompt:
+      'Design the implementation for the requested feature or fix. What is the cleanest architecture and plan?',
     agentDirective: (agentName: string) =>
       `You are ${agentName} in DEVELOPMENT mode. Contribute to the implementation plan from your specialty. ${COMMON_CODING_RULES}
 
@@ -82,10 +84,12 @@ Prefer pragmatic, maintainable solutions. Name trade-offs explicitly.`,
     id: 'security',
     label: 'Security',
     emoji: '🛡️',
-    description: 'Each agent runs a different security scan: threats, dependencies, secrets, auth, input validation, etc.',
+    description:
+      'Each agent runs a different security scan: threats, dependencies, secrets, auth, input validation, etc.',
     objective:
       'Identify security vulnerabilities, misconfigurations, and attack surfaces across the codebase or design. Prioritize by exploitability and impact.',
-    defaultPrompt: 'Perform a security review. Identify vulnerabilities, misconfigurations, secret leaks, and auth weaknesses.',
+    defaultPrompt:
+      'Perform a security review. Identify vulnerabilities, misconfigurations, secret leaks, and auth weaknesses.',
     agentDirective: (agentName: string) =>
       `You are ${agentName} in SECURITY mode. Perform a focused security scan from your specialty. ${COMMON_CODING_RULES}
 
@@ -119,5 +123,5 @@ Be specific. Do not invent findings not mentioned by agents.`,
 ];
 
 export function getSwarmMode(id: string) {
-  return SWARM_MODES.find(m => m.id === id) || SWARM_MODES[0];
+  return SWARM_MODES.find((m) => m.id === id) || SWARM_MODES[0];
 }

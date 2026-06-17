@@ -13,10 +13,7 @@ const PKG_KEY = 'projscan';
 
 const VALID_SEVERITIES: IssueSeverity[] = ['info', 'warning', 'error'];
 
-export async function loadConfig(
-  rootPath: string,
-  explicitPath?: string,
-): Promise<LoadedConfig> {
+export async function loadConfig(rootPath: string, explicitPath?: string): Promise<LoadedConfig> {
   if (explicitPath) {
     const resolved = path.isAbsolute(explicitPath)
       ? explicitPath
@@ -175,10 +172,7 @@ function parseImportPolicyRules(raw: unknown[]): ImportPolicyRule[] {
  * - drop issues whose id matches any disableRules entry (exact match or prefix with trailing "*")
  * - remap severities via severityOverrides (exact id match wins)
  */
-export function applyConfigToIssues(
-  issues: Issue[],
-  config: ProjscanConfig,
-): Issue[] {
+export function applyConfigToIssues(issues: Issue[], config: ProjscanConfig): Issue[] {
   const disabled = config.disableRules ?? [];
   const overrides = config.severityOverrides ?? {};
 

@@ -122,10 +122,7 @@ export function diffGraphs(
     const rawExportsAdded = [...exportsHead].filter((x) => !exportsBase.has(x));
     const rawExportsRemoved = [...exportsBase].filter((x) => !exportsHead.has(x));
     // Pull out renames first; whatever's left stays as +/-.
-    const { renames, addedAfter, removedAfter } = detectRenames(
-      rawExportsRemoved,
-      rawExportsAdded,
-    );
+    const { renames, addedAfter, removedAfter } = detectRenames(rawExportsRemoved, rawExportsAdded);
     const exportsAdded = addedAfter;
     const exportsRemoved = removedAfter;
     const exportsRenamed = renames;
@@ -302,9 +299,11 @@ async function isGitRepository(rootPath: string): Promise<boolean> {
 }
 
 async function resolveSha(rootPath: string, ref: string): Promise<string | null> {
-  const { code, stdout } = await runGit(rootPath, ['rev-parse', '--verify', `${ref}^{commit}`]).catch(
-    () => ({ code: 1, stdout: '', stderr: '' }),
-  );
+  const { code, stdout } = await runGit(rootPath, [
+    'rev-parse',
+    '--verify',
+    `${ref}^{commit}`,
+  ]).catch(() => ({ code: 1, stdout: '', stderr: '' }));
   if (code !== 0) return null;
   const sha = stdout.trim();
   return sha || null;

@@ -9,7 +9,16 @@ import { phpAdapter } from './phpAdapter.js';
 import { csharpAdapter } from './csharpAdapter.js';
 import type { LanguageAdapter } from './LanguageAdapter.js';
 
-const adapters: LanguageAdapter[] = [javascriptAdapter, pythonAdapter, goAdapter, javaAdapter, rubyAdapter, rustAdapter, phpAdapter, csharpAdapter];
+const adapters: LanguageAdapter[] = [
+  javascriptAdapter,
+  pythonAdapter,
+  goAdapter,
+  javaAdapter,
+  rubyAdapter,
+  rustAdapter,
+  phpAdapter,
+  csharpAdapter,
+];
 const byExtension = new Map<string, LanguageAdapter>();
 
 function rebuildIndex(): void {

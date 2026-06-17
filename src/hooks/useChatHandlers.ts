@@ -30,7 +30,7 @@ export function useChatHandlers(
   markFileDirty: any,
   setEditorOutput: any,
   generateAIResponse: any,
-  prepareContext: any
+  prepareContext: any,
 ) {
   const [lastEditorAssistantPrompt, setLastEditorAssistantPrompt] = useState('');
 
@@ -45,7 +45,10 @@ export function useChatHandlers(
     }
 
     const activeFileName = projectFiles.find((f: any) => f.id === activeFileId)?.name || 'unknown';
-    const recentMessages = editorAssistantMessages.slice(-6).map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n');
+    const recentMessages = editorAssistantMessages
+      .slice(-6)
+      .map((m) => `${m.role.toUpperCase()}: ${m.text}`)
+      .join('\n');
 
     setEditorAssistantMessages((prev: any[]) => [...prev, { role: 'user', text: prompt }]);
     setIsAiProcessing(true);
@@ -68,7 +71,7 @@ ${editorContent}
 [OPERATOR_DIRECTIVE]
 ${prompt}`,
         'You are the Crimson Neural Assistant, a world-class coding intelligence. Help the operator with their code. Be extremely technical, concise, and pro-active. Always wrap code snippets in triple backticks with the correct language. If you identify security flaws, performance bottlenecks, or logical errors, highlight them immediately using [ALERT] blocks.',
-        { modelType: 'smart' }
+        { modelType: 'smart' },
       );
 
       const text = response || 'Neural synchronization complete. No response payload.';
@@ -113,15 +116,16 @@ ${prompt}`,
     try {
       const brainContext = await prepareContext(prompt, activePersonality.id);
       const activeProfile =
-        projectSettings.projectProfiles.find((p: any) => p.id === projectSettings.activeProfileId) ||
-        projectSettings.projectProfiles[0];
+        projectSettings.projectProfiles.find(
+          (p: any) => p.id === projectSettings.activeProfileId,
+        ) || projectSettings.projectProfiles[0];
       const kbDocs = (activePersonality.knowledgeBase ?? [])
         .map((e: any) => `[KB: ${e.name}]\n${e.content}`)
         .join('\n\n---\n\n');
       const systemInstruction = `${activePersonality.instruction}${kbDocs ? `\n\nKNOWLEDGE BASE:\n${kbDocs}` : ''}\n\nPROJECT_PROFILE: ${activeProfile.instruction}${chatSummary ? `\n\nCONVERSATION_SUMMARY: ${chatSummary}` : ''}`;
 
       const fileCreationMatch = prompt.match(
-        /(?:create|generate) a (?:new )?file named ([a-zA-Z0-9_\-\.]+)/i
+        /(?:create|generate) a (?:new )?file named ([a-zA-Z0-9_\-\.]+)/i,
       );
       if (fileCreationMatch) {
         const fileName = fileCreationMatch[1];
@@ -146,7 +150,7 @@ ${prompt}`,
         const response: string = await generateAIResponse(
           `Write the content for a file named ${fileName}. The file should contain ${prompt.replace(fileCreationMatch[0], '')}. Provide ONLY the raw code content.`,
           systemInstruction,
-          { modelType: 'smart' }
+          { modelType: 'smart' },
         );
 
         const id = `file_${Date.now()}`;
@@ -168,10 +172,16 @@ ${prompt}`,
 
         setChatMessages((prev: any[]) => [
           ...prev,
-          { role: 'ai', text: `Successfully generated and opened \`${fileName}\`.`, timestamp: Date.now() },
+          {
+            role: 'ai',
+            text: `Successfully generated and opened \`${fileName}\`.`,
+            timestamp: Date.now(),
+          },
         ]);
       } else {
-        const response = await generateAIResponse(prompt, systemInstruction, { modelType: 'smart' });
+        const response = await generateAIResponse(prompt, systemInstruction, {
+          modelType: 'smart',
+        });
         setChatMessages((prev: any[]) => [
           ...prev,
           { role: 'ai', text: response || 'No response.', timestamp: Date.now() },
@@ -193,7 +203,7 @@ ${prompt}`,
       const response = await generateAIResponse(
         `Review the following ${editorLanguage} code based on the provided guidelines:\n\n${AGENTS_MD_GUIDELINES}\n\nCode:\n${editorContent}`,
         'You are a senior software engineer and code reviewer. Provide a concise, actionable code review based on the provided guidelines. Structure your feedback by severity (CRITICAL, HIGH, MEDIUM, LOW) and provide specific examples of issues and fixes.',
-        { modelType: 'smart' }
+        { modelType: 'smart' },
       );
 
       setEditorAssistantMessages((prev: any[]) => [
@@ -229,7 +239,7 @@ ${prompt}`,
       const response = await generateAIResponse(
         `Review the following code for security, performance, and maintainability best practices. Provide a structured review report.\n\nCode:\n${editorContent}`,
         'You are an expert code reviewer. Provide a structured review report covering security, performance, and maintainability. Use markdown for the report.',
-        { modelType: 'smart' }
+        { modelType: 'smart' },
       );
 
       setEditorAssistantMessages((prev: any[]) => [
@@ -256,7 +266,7 @@ ${prompt}`,
           instruction: 'Analyze and explain this code. Suggest optimizations where possible.',
         }),
         'You are a senior software engineer. Provide a deep technical analysis of the code. Be concise but thorough.',
-        { modelType: 'smart' }
+        { modelType: 'smart' },
       );
 
       setEditorAssistantMessages((prev: any[]) => [
@@ -283,10 +293,11 @@ ${prompt}`,
         makePrompt({
           lang: editorLanguage,
           code: editorContent,
-          instruction: 'Analyze this code for performance bottlenecks and suggest data visualization improvements.',
+          instruction:
+            'Analyze this code for performance bottlenecks and suggest data visualization improvements.',
         }),
         dataAnalystInstruction,
-        { modelType: 'smart' }
+        { modelType: 'smart' },
       );
 
       setEditorAssistantMessages((prev: any[]) => [
@@ -318,7 +329,8 @@ ${prompt}`,
         makePrompt({
           lang: editorLanguage,
           code: editorContent,
-          instruction: 'Generate comprehensive documentation (docstrings, JSDoc, or comments) for this code. Focus on explaining the logic, parameters, and return values.',
+          instruction:
+            'Generate comprehensive documentation (docstrings, JSDoc, or comments) for this code. Focus on explaining the logic, parameters, and return values.',
           extra: "Return a JSON object with 'documentedCode' and 'summary' fields.",
           json: true,
         }),
@@ -334,7 +346,7 @@ ${prompt}`,
             },
             required: ['documentedCode', 'summary'],
           },
-        }
+        },
       );
 
       const result = JSON.parse(response || '{}');
@@ -362,7 +374,7 @@ ${prompt}`,
   const handleApplyDocumentation = (
     documentedCode: string,
     isSelection: boolean,
-    selection: any
+    selection: any,
   ) => {
     setEditorContent(documentedCode);
     if (activeFileId) markFileDirty(activeFileId);
@@ -378,6 +390,6 @@ ${prompt}`,
     handleAnalyzeData,
     handleGenerateDocs,
     handleApplyDocumentation,
-    lastEditorAssistantPrompt
+    lastEditorAssistantPrompt,
   };
 }

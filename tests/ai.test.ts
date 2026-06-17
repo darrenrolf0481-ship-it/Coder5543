@@ -5,11 +5,11 @@ describe('AI Interaction', () => {
     const mockAi = {
       models: {
         generateContent: vi.fn().mockResolvedValue({
-          candidates: [{ content: { parts: [{ text: 'Mock response' }] } }]
-        })
-      }
+          candidates: [{ content: { parts: [{ text: 'Mock response' }] } }],
+        }),
+      },
     };
-    
+
     // In a real scenario, we'd import the function and pass the mock client
     expect(mockAi.models.generateContent).toBeDefined();
   });

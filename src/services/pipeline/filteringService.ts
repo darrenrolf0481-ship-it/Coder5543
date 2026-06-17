@@ -16,7 +16,7 @@ const rateBuckets = new Map<SignalSource, number[]>();
 
 function checkRateLimit(source: SignalSource): boolean {
   const now = Date.now();
-  const bucket = (rateBuckets.get(source) ?? []).filter(t => now - t < RATE_WINDOW_MS);
+  const bucket = (rateBuckets.get(source) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
   if (bucket.length >= RATE_MAX) return false;
   bucket.push(now);
   rateBuckets.set(source, bucket);
@@ -44,7 +44,9 @@ function isDuplicate(source: SignalSource, data: unknown): boolean {
   // Prune old entries to avoid unbounded growth
   if (recentHashes.size > 500) {
     const cutoff = Date.now() - DEDUP_WINDOW_MS;
-    recentHashes.forEach((ts, k) => { if (ts < cutoff) recentHashes.delete(k); });
+    recentHashes.forEach((ts, k) => {
+      if (ts < cutoff) recentHashes.delete(k);
+    });
   }
   return false;
 }
@@ -97,16 +99,11 @@ async function onIngested(signal: Signal): Promise<void> {
     return;
   }
 
-  await broker.publish(
-    'SIGNAL_FILTERED',
-    cleaned,
-    source,
-    {
-      ...signal.meta,
-      correlationId: signal.id,
-      filteredAt: Date.now(),
-    },
-  );
+  await broker.publish('SIGNAL_FILTERED', cleaned, source, {
+    ...signal.meta,
+    correlationId: signal.id,
+    filteredAt: Date.now(),
+  });
 }
 
 // ── Bootstrap (call once at app start) ───────────────────────────────────────
@@ -115,5 +112,8 @@ export function startFilteringService(): () => void {
   if (_started) return () => {};
   _started = true;
   const unsub = broker.subscribe('SIGNAL_INGESTED', onIngested);
-  return () => { unsub(); _started = false; };
+  return () => {
+    unsub();
+    _started = false;
+  };
 }

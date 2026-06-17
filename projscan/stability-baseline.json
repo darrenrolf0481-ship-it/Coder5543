@@ -2,111 +2,55 @@
   "schemaVersion": 1,
   "mcpTools": {
     "projscan_analyze": {
-      "args": [
-        "package"
-      ],
+      "args": ["package"],
       "required": []
     },
     "projscan_doctor": {
-      "args": [
-        "package"
-      ],
+      "args": ["package"],
       "required": []
     },
     "projscan_hotspots": {
-      "args": [
-        "cursor",
-        "limit",
-        "max_tokens",
-        "package",
-        "page_size",
-        "since",
-        "view"
-      ],
+      "args": ["cursor", "limit", "max_tokens", "package", "page_size", "since", "view"],
       "required": []
     },
     "projscan_explain": {
-      "args": [
-        "file"
-      ],
-      "required": [
-        "file"
-      ]
+      "args": ["file"],
+      "required": ["file"]
     },
     "projscan_file": {
-      "args": [
-        "file"
-      ],
-      "required": [
-        "file"
-      ]
+      "args": ["file"],
+      "required": ["file"]
     },
     "projscan_structure": {
-      "args": [
-        "package"
-      ],
+      "args": ["package"],
       "required": []
     },
     "projscan_dependencies": {
-      "args": [
-        "package"
-      ],
+      "args": ["package"],
       "required": []
     },
     "projscan_outdated": {
-      "args": [
-        "cursor",
-        "max_tokens",
-        "package",
-        "page_size"
-      ],
+      "args": ["cursor", "max_tokens", "package", "page_size"],
       "required": []
     },
     "projscan_audit": {
-      "args": [
-        "cursor",
-        "max_tokens",
-        "package",
-        "page_size"
-      ],
+      "args": ["cursor", "max_tokens", "package", "page_size"],
       "required": []
     },
     "projscan_upgrade": {
-      "args": [
-        "package"
-      ],
-      "required": [
-        "package"
-      ]
+      "args": ["package"],
+      "required": ["package"]
     },
     "projscan_coverage": {
-      "args": [
-        "limit",
-        "max_tokens",
-        "package"
-      ],
+      "args": ["limit", "max_tokens", "package"],
       "required": []
     },
     "projscan_graph": {
-      "args": [
-        "direction",
-        "file",
-        "limit",
-        "max_tokens",
-        "symbol"
-      ],
-      "required": [
-        "direction"
-      ]
+      "args": ["direction", "file", "limit", "max_tokens", "symbol"],
+      "required": ["direction"]
     },
     "projscan_coupling": {
-      "args": [
-        "direction",
-        "file",
-        "limit",
-        "max_tokens",
-        "package"
-      ],
+      "args": ["direction", "file", "limit", "max_tokens", "package"],
       "required": []
     },
     "projscan_workspaces": {
@@ -114,64 +58,28 @@
       "required": []
     },
     "projscan_pr_diff": {
-      "args": [
-        "base",
-        "head",
-        "max_tokens",
-        "package"
-      ],
+      "args": ["base", "head", "max_tokens", "package"],
       "required": []
     },
     "projscan_review": {
-      "args": [
-        "base",
-        "head",
-        "max_tokens",
-        "package"
-      ],
+      "args": ["base", "head", "max_tokens", "package"],
       "required": []
     },
     "projscan_fix_suggest": {
-      "args": [
-        "file",
-        "issue_id",
-        "rule",
-        "severity"
-      ],
+      "args": ["file", "issue_id", "rule", "severity"],
       "required": []
     },
     "projscan_explain_issue": {
-      "args": [
-        "issue_id"
-      ],
-      "required": [
-        "issue_id"
-      ]
+      "args": ["issue_id"],
+      "required": ["issue_id"]
     },
     "projscan_impact": {
-      "args": [
-        "cursor",
-        "file",
-        "max_distance",
-        "max_tokens",
-        "page_size",
-        "symbol"
-      ],
+      "args": ["cursor", "file", "max_distance", "max_tokens", "page_size", "symbol"],
       "required": []
     },
     "projscan_search": {
-      "args": [
-        "limit",
-        "max_tokens",
-        "mode",
-        "package",
-        "query",
-        "scope",
-        "sub_file"
-      ],
-      "required": [
-        "query"
-      ]
+      "args": ["limit", "max_tokens", "mode", "package", "query", "scope", "sub_file"],
+      "required": ["query"]
     }
   },
   "cliCommands": [

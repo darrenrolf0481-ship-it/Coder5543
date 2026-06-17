@@ -40,9 +40,10 @@ export function computeImpact(
 ): ImpactReport {
   const maxDistance = Math.max(1, options.maxDistance ?? DEFAULT_MAX_DISTANCE);
 
-  const base = target.kind === 'file'
-    ? impactForFile(graph, target.value, maxDistance)
-    : impactForSymbol(graph, target.value, maxDistance);
+  const base =
+    target.kind === 'file'
+      ? impactForFile(graph, target.value, maxDistance)
+      : impactForSymbol(graph, target.value, maxDistance);
 
   // 1.6+ — fold in cross-repo reachability. Symbol mode is the
   // meaningful case (cross-repo file imports require real path
@@ -163,7 +164,13 @@ function impactForSymbol(graph: CodeGraph, name: string, maxDistance: number): I
 
   // Now BFS from each direct caller through localImporters, starting at
   // distance 2.
-  const { reachable: extra, truncated } = bfsImporters(graph, directCallers, maxDistance, visited, 2);
+  const { reachable: extra, truncated } = bfsImporters(
+    graph,
+    directCallers,
+    maxDistance,
+    visited,
+    2,
+  );
   reachable.push(...extra);
 
   return {

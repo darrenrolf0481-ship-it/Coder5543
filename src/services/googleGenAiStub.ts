@@ -10,4 +10,3 @@ export const Type = {
   INTEGER: 'INTEGER',
   BOOLEAN: 'BOOLEAN',
 } as const;
-

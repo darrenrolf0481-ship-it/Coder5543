@@ -37,12 +37,20 @@ export const StoragePanel: React.FC<StoragePanelProps> = ({
               <HardDrive className="w-6 h-6 md:w-8 md:h-8 text-accent-600" />
               Neural Data Core
             </h3>
-            <p className="text-[10px] md:text-sm text-accent-900 font-bold tracking-widest uppercase">Hardware-backed document storage & database cluster</p>
+            <p className="text-[10px] md:text-sm text-accent-900 font-bold tracking-widest uppercase">
+              Hardware-backed document storage & database cluster
+            </p>
           </div>
           <label className="px-6 md:px-8 py-3 md:py-4 bg-accent-700 text-white rounded-xl md:rounded-2xl cursor-pointer hover:bg-accent-600 transition-all flex items-center gap-3 md:gap-4 text-[10px] md:text-[12px] font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_var(--color-accent-800)/30] active:scale-95 w-full md:w-auto justify-center">
             <Upload className="w-4 h-4 md:w-5 md:h-5" />
             <span>Inject Document</span>
-            <input type="file" className="hidden" multiple onChange={handleStorageUpload} accept=".pdf,.doc,.docx,.txt,.mht,.json,.csv" />
+            <input
+              type="file"
+              className="hidden"
+              multiple
+              onChange={handleStorageUpload}
+              accept=".pdf,.doc,.docx,.txt,.mht,.json,.csv"
+            />
           </label>
         </div>
 
@@ -61,20 +69,41 @@ export const StoragePanel: React.FC<StoragePanelProps> = ({
               >
                 <div className="flex items-center justify-between mb-8 relative z-10">
                   <div className="p-4 bg-accent-900/20 rounded-2xl shadow-xl text-accent-500 group-hover:scale-110 transition-transform">
-                    {f.type === 'pdf' ? <FileText className="w-6 h-6" /> : <FileCode className="w-6 h-6" />}
+                    {f.type === 'pdf' ? (
+                      <FileText className="w-6 h-6" />
+                    ) : (
+                      <FileCode className="w-6 h-6" />
+                    )}
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] uppercase tracking-[0.3em] text-accent-800 font-black">{f.size}</p>
-                    <p className="text-[9px] uppercase tracking-[0.2em] text-accent-950 font-black mt-1">{f.date}</p>
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-accent-800 font-black">
+                      {f.size}
+                    </p>
+                    <p className="text-[9px] uppercase tracking-[0.2em] text-accent-950 font-black mt-1">
+                      {f.date}
+                    </p>
                   </div>
                 </div>
                 <div className="flex-1 min-w-0 mb-8 relative z-10">
-                  <p className="text-[17px] font-black text-accent-100 truncate uppercase tracking-tight leading-tight">{f.name}</p>
-                  <p className="text-[10px] uppercase tracking-[0.4em] text-accent-900 font-black mt-3">Type: {f.type}</p>
+                  <p className="text-[17px] font-black text-accent-100 truncate uppercase tracking-tight leading-tight">
+                    {f.name}
+                  </p>
+                  <p className="text-[10px] uppercase tracking-[0.4em] text-accent-900 font-black mt-3">
+                    Type: {f.type}
+                  </p>
                 </div>
                 <div className="flex items-center gap-3 relative z-10">
-                  <button className="flex-1 py-4 bg-accent-900/20 hover:bg-accent-700 text-[11px] font-black uppercase text-accent-700 hover:text-white rounded-2xl transition-all tracking-[0.2em]">Access</button>
-                  <button onClick={() => setStorageFiles(prev => prev.filter(file => file.id !== f.id))} className="p-4 text-accent-900 hover:text-accent-500 transition-all bg-accent-950/20 rounded-2xl"><Trash2 className="w-5 h-5" /></button>
+                  <button className="flex-1 py-4 bg-accent-900/20 hover:bg-accent-700 text-[11px] font-black uppercase text-accent-700 hover:text-white rounded-2xl transition-all tracking-[0.2em]">
+                    Access
+                  </button>
+                  <button
+                    onClick={() =>
+                      setStorageFiles((prev) => prev.filter((file) => file.id !== f.id))
+                    }
+                    className="p-4 text-accent-900 hover:text-accent-500 transition-all bg-accent-950/20 rounded-2xl"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
                 </div>
                 <div className="absolute bottom-0 right-0 w-32 h-32 bg-accent-600/[0.02] blur-[40px] rounded-full pointer-events-none" />
               </div>

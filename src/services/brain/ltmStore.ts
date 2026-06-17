@@ -47,7 +47,7 @@ export class LTMStore {
 
     return dbQueue.enqueue(() => {
       const all = readAll();
-      const idx = all.findIndex(e => e.id === experience.id);
+      const idx = all.findIndex((e) => e.id === experience.id);
       if (idx >= 0) {
         all[idx] = experience;
       } else {
@@ -69,15 +69,15 @@ export class LTMStore {
 
     return dbQueue.enqueue(() => {
       let all = readAll();
-      
+
       // Filter by tags if provided
       if (tags && tags.length > 0) {
-        all = all.filter(exp => tags.some(t => exp.tags.includes(t)));
+        all = all.filter((exp) => tags.some((t) => exp.tags.includes(t)));
       }
 
       if (queryTokens.size === 0 && queryEmbedding.length === 0) return [];
 
-      const scored = all.map(exp => {
+      const scored = all.map((exp) => {
         let similarity = 0;
 
         // 1. Semantic Similarity (Primary)
@@ -86,28 +86,28 @@ export class LTMStore {
         } else {
           // 2. Jaccard Similarity (Fallback)
           const expTokens = new Set(tokenize(exp.intent));
-          const intersection = [...queryTokens].filter(t => expTokens.has(t)).length;
+          const intersection = [...queryTokens].filter((t) => expTokens.has(t)).length;
           const union = new Set([...queryTokens, ...expTokens]).size;
           similarity = union > 0 ? intersection / union : 0;
         }
 
         const ageHours = (Date.now() - exp.timestamp) / 3_600_000;
         const recencyScore = Math.exp(-ageHours / 168);
-        
+
         // Hybrid Score: 70% similarity, 15% recency, 15% emotional weight
         const score = similarity * 0.7 + recencyScore * 0.15 + Math.abs(exp.emotionalWeight) * 0.15;
         return { exp, score };
       });
 
       const results = scored
-        .filter(s => s.score > 0.1)
+        .filter((s) => s.score > 0.1)
         .sort((a, b) => b.score - a.score)
         .slice(0, k)
-        .map(s => s.exp);
+        .map((s) => s.exp);
 
       // Log access for these memories
-      results.forEach(r => {
-        const exp = all.find(e => e.id === r.id);
+      results.forEach((r) => {
+        const exp = all.find((e) => e.id === r.id);
         if (exp) exp.accessCount++;
       });
       if (results.length > 0) writeAll(all);
@@ -120,7 +120,7 @@ export class LTMStore {
     return dbQueue.enqueue(() => {
       const cutoff = Date.now() - PRUNE_DAYS * 86_400_000;
       const all = readAll();
-      const kept = all.filter(e => e.timestamp >= cutoff || e.accessCount >= 3);
+      const kept = all.filter((e) => e.timestamp >= cutoff || e.accessCount >= 3);
       writeAll(kept);
       return all.length - kept.length;
     });
@@ -129,7 +129,7 @@ export class LTMStore {
   async incrementAccess(id: string): Promise<void> {
     return dbQueue.enqueue(() => {
       const all = readAll();
-      const exp = all.find(e => e.id === id);
+      const exp = all.find((e) => e.id === id);
       if (exp) {
         exp.accessCount++;
         writeAll(all);
@@ -145,5 +145,5 @@ function tokenize(text: string): string[] {
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
-    .filter(t => t.length > 2);
+    .filter((t) => t.length > 2);
 }

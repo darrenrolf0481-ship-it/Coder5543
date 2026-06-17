@@ -1,7 +1,14 @@
 import ora from 'ora';
 import chalk from 'chalk';
 
-import { program, pkg, getFormat, resolveRootPath, setupLogLevel, maybeCompactBanner } from '../_shared.js';
+import {
+  program,
+  pkg,
+  getFormat,
+  resolveRootPath,
+  setupLogLevel,
+  maybeCompactBanner,
+} from '../_shared.js';
 import { detectOutdated } from '../../core/outdatedDetector.js';
 import { detectWorkspaces } from '../../core/monorepo.js';
 import { reportOutdated } from '../../reporters/consoleReporter.js';
@@ -12,7 +19,9 @@ import { issuesToSarif } from '../../reporters/sarifReporter.js';
 export function registerOutdated(): void {
   program
     .command('outdated')
-    .description('Detect outdated dependencies (offline - compares declared vs installed). Workspace-aware in monorepos.')
+    .description(
+      'Detect outdated dependencies (offline - compares declared vs installed). Workspace-aware in monorepos.',
+    )
     .argument('[pathOrUrl]', 'local path or Git URL to scan')
     .option('--package <name>', 'monorepo: scope to a single workspace package')
     .action(async (pathOrUrl: string | undefined, cmdOpts) => {

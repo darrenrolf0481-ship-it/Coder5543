@@ -19,7 +19,7 @@ export class VectorService {
 
     try {
       const isBackend = typeof window === 'undefined';
-      const baseUrl = isBackend ? (process.env.OLLAMA_HOST || 'http://127.0.0.1:11434') : '';
+      const baseUrl = isBackend ? process.env.OLLAMA_HOST || 'http://127.0.0.1:11434' : '';
       const endpoint = isBackend ? '/api/embeddings' : './api/ollama/embeddings';
 
       const response = await fetch(`${baseUrl}${endpoint}`, {
@@ -44,7 +44,7 @@ export class VectorService {
       if (unreachable) {
         VectorService.unavailableUntil = Date.now() + VectorService.COOLDOWN_MS;
         logger.warn(
-          `[VectorService] Embedding endpoint unreachable; skipping embeddings for ${VectorService.COOLDOWN_MS / 1000}s. Cause: ${(err as Error).message}`
+          `[VectorService] Embedding endpoint unreachable; skipping embeddings for ${VectorService.COOLDOWN_MS / 1000}s. Cause: ${(err as Error).message}`,
         );
       } else {
         logger.error('[VectorService] Error generating embedding:', err);
@@ -58,17 +58,17 @@ export class VectorService {
    */
   cosineSimilarity(a: number[], b: number[]): number {
     if (a.length !== b.length || a.length === 0) return 0;
-    
+
     let dotProduct = 0;
     let normA = 0;
     let normB = 0;
-    
+
     for (let i = 0; i < a.length; i++) {
       dotProduct += a[i] * b[i];
       normA += a[i] * a[i];
       normB += b[i] * b[i];
     }
-    
+
     const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
     return magnitude === 0 ? 0 : dotProduct / magnitude;
   }

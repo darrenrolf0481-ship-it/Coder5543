@@ -43,7 +43,9 @@ export function registerWatch(): void {
       try {
         await handle.ready;
       } catch (err) {
-        console.error(chalk.red(`Initial scan failed: ${err instanceof Error ? err.message : String(err)}`));
+        console.error(
+          chalk.red(`Initial scan failed: ${err instanceof Error ? err.message : String(err)}`),
+        );
         handle.close();
         process.exit(1);
       }

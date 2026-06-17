@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import { Personality } from '../data/personalities';
 import { runSwarmCycle, AIResponseFn } from '../services/swarm/swarmEngine';
 import { AgentRunResult, SwarmEngineContext } from '../services/swarm/types';
-import { eventBus } from '../services/eventBus';
 import { UseSwarmStateReturn } from './useSwarmState';
 
 export interface UseSwarmProps {
@@ -13,7 +12,11 @@ export interface UseSwarmProps {
   activeFileId?: string;
   editorContent?: string;
   editorLanguage?: string;
-  onAgentChatUpdate?: (agentName: string, text: string, phase: 'start' | 'claim' | 'complete') => void;
+  onAgentChatUpdate?: (
+    agentName: string,
+    text: string,
+    phase: 'start' | 'claim' | 'complete',
+  ) => void;
 }
 
 export function useSwarm({
@@ -44,62 +47,48 @@ export function useSwarm({
 
   const addLog = useCallback(
     (type: 'consensus' | 'pain' | 'info', message: string) => {
-      setSwarmLogs(prev => [
+      setSwarmLogs((prev) => [
         { id: Date.now(), type, message, time: new Date().toLocaleTimeString() },
         ...prev,
       ]);
     },
-    [setSwarmLogs]
+    [setSwarmLogs],
   );
 
   const updateAgentStatus = useCallback(
     (agentId: string, status: any, meta?: string) => {
-      setRuntimeAgents(prev =>
-        prev.map(a => {
+      setRuntimeAgents((prev) =>
+        prev.map((a) => {
           if (a.id !== agentId) return a;
           return { ...a, status, error: status === 'error' ? meta || a.error : undefined };
-        })
+        }),
       );
       if (status === 'thinking') {
-        const agent = swarmAgents.find(a => a.id === agentId);
+        const agent = swarmAgents.find((a) => a.id === agentId);
         if (agent) onAgentChatUpdate?.(agent.name, `🧠 ${agent.name} is analyzing...`, 'start');
       }
     },
-    [setRuntimeAgents, swarmAgents, onAgentChatUpdate]
+    [setRuntimeAgents, swarmAgents, onAgentChatUpdate],
   );
 
   const handleAgentComplete = useCallback(
     (result: AgentRunResult) => {
-      const agent = swarmAgents.find(a => a.id === result.agentId);
+      const agent = swarmAgents.find((a) => a.id === result.agentId);
       if (!agent) return;
-
-      setRuntimeAgents(prev =>
-        prev.map(a =>
-          a.id === result.agentId
-            ? {
-                ...a,
-                status: result.status === 'fulfilled' ? 'done' : 'error',
-                response: result.status === 'fulfilled' ? result.response : undefined,
-                keyClaims: result.status === 'fulfilled' ? result.keyClaims : undefined,
-                confidence: result.status === 'fulfilled' ? result.confidence : undefined,
-                error: result.status === 'rejected' ? result.error : undefined,
-              }
-            : a
-        )
-      );
-
       if (result.status === 'fulfilled' && result.response) {
-        const claims = result.keyClaims?.length ? result.keyClaims.join('\n- ') : 'No key claims extracted.';
+        const claims = result.keyClaims?.length
+          ? result.keyClaims.join('\n- ')
+          : 'No key claims extracted.';
         onAgentChatUpdate?.(
           agent.name,
           `**${agent.name}** (${agent.expertise}) — Confidence: ${result.confidence !== undefined ? `${(result.confidence * 100).toFixed(0)}%` : 'unknown'}\n\nKey claims:\n- ${claims}`,
-          'claim'
+          'claim',
         );
       } else if (result.status === 'rejected') {
         onAgentChatUpdate?.(agent.name, `**${agent.name}** failed: ${result.error}`, 'claim');
       }
     },
-    [swarmAgents, onAgentChatUpdate, setRuntimeAgents]
+    [swarmAgents, onAgentChatUpdate],
   );
 
   const triggerSwarmCycle = useCallback(
@@ -110,19 +99,14 @@ export function useSwarm({
         return;
       }
 
-      const activeAgents = swarmAgents.filter(a => a.active);
+      const activeAgents = swarmAgents.filter((a) => a.active);
       if (activeAgents.length === 0) {
         addLog('pain', 'No active agents. Activate at least one agent.');
         return;
       }
 
-      if (isRunning) {
-        addLog('pain', 'Swarm cycle already in progress. Wait for completion before starting another.');
-        return;
-      }
-
       setIsRunning(true);
-      setRuntimeAgents(activeAgents.map(a => ({ ...a, status: 'idle' })));
+      setRuntimeAgents(activeAgents.map((a) => ({ ...a, status: 'idle' })));
       addLog('info', `Starting ${swarmMode} swarm with ${activeAgents.length} agents...`);
 
       try {
@@ -140,7 +124,12 @@ export function useSwarm({
           editorLanguage,
         };
 
-        const report = await runSwarmCycle(ctx, generateAIResponse, updateAgentStatus, handleAgentComplete);
+        const report = await runSwarmCycle(
+          ctx,
+          generateAIResponse,
+          updateAgentStatus,
+          handleAgentComplete,
+        );
         setLastReport(report);
 
         // Simple anxiety derived from conflict ratio
@@ -150,17 +139,16 @@ export function useSwarm({
 
         addLog(
           'consensus',
-          `Swarm synthesis complete. ${report.recommendations.length} recommendations, ${report.conflicts.length} conflicts.`
+          `Swarm synthesis complete. ${report.recommendations.length} recommendations, ${report.conflicts.length} conflicts.`,
         );
         onAgentChatUpdate?.(
           'Swarm Synthesis',
           `## Swarm Report — ${swarmMode}\n\n**Best Course of Action:** ${report.bestCourseOfAction}\n\n**Summary:** ${report.summary}`,
-          'complete'
+          'complete',
         );
       } catch (err: any) {
         const msg = err instanceof Error ? err.message : String(err);
         addLog('pain', `Swarm cycle failed: ${msg}`);
-        eventBus.emit('swarm:error', { error: msg, mission }, 'useSwarm');
       } finally {
         setIsRunning(false);
       }
@@ -183,7 +171,7 @@ export function useSwarm({
       setLastReport,
       setSwarmAnxiety,
       setRuntimeAgents,
-    ]
+    ],
   );
 
   return {
@@ -196,4 +184,10 @@ export function useSwarm({
   };
 }
 
-export type { AgentRunResult, SwarmAgent, SwarmMode, SwarmReport, AssignedRepo } from '../services/swarm/types';
+export type {
+  AgentRunResult,
+  SwarmAgent,
+  SwarmMode,
+  SwarmReport,
+  AssignedRepo,
+} from '../services/swarm/types';

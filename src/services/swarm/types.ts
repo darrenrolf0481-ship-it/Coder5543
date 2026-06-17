@@ -112,7 +112,13 @@ export interface SwarmEngineContext {
   activePersonality: Personality;
   /** Repositories available to the swarm */
   repos: AssignedRepo[];
-  projectFiles: { id: string; name: string; type?: 'file' | 'folder'; content?: string; language?: string }[];
+  projectFiles: {
+    id: string;
+    name: string;
+    type?: 'file' | 'folder';
+    content?: string;
+    language?: string;
+  }[];
   activeFileId?: string;
   editorContent?: string;
   editorLanguage?: string;

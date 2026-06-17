@@ -7,8 +7,7 @@ import {
   Brain,
   Smartphone,
   HardDrive,
-  Layers,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
 } from 'lucide-react';
 
 interface MobileBottomNavProps {
@@ -19,17 +18,18 @@ interface MobileBottomNavProps {
 export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeTab, setActiveTab }) => {
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#080101]/95 backdrop-blur-xl border-t border-accent-900/30 flex items-center justify-around px-1 z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
-      {([
-        ['toolneuron', <Zap size={18} />],
-        ['terminal',   <TerminalIcon size={18} />],
-        ['editor',     <Code2 size={18} />],
-        ['analysis',   <LayoutTemplate size={18} />],
-        ['brain',      <Brain size={18} />],
-        ['termux',     <Smartphone size={18} />],
-        ['storage',    <HardDrive size={18} />],
-        ['results',    <Layers size={18} />],
-        ['settings',   <SettingsIcon size={18} />],
-      ] as [string, React.ReactNode][]).map(([tab, icon]) => (
+      {(
+        [
+          ['toolneuron', <Zap size={18} />],
+          ['terminal', <TerminalIcon size={18} />],
+          ['editor', <Code2 size={18} />],
+          ['analysis', <LayoutTemplate size={18} />],
+          ['brain', <Brain size={18} />],
+          ['termux', <Smartphone size={18} />],
+          ['storage', <HardDrive size={18} />],
+          ['settings', <SettingsIcon size={18} />],
+        ] as [string, React.ReactNode][]
+      ).map(([tab, icon]) => (
         <button
           key={tab}
           onClick={() => setActiveTab(tab as any)}

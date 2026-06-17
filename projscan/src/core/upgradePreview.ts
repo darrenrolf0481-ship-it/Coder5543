@@ -1,7 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { FileEntry, UpgradePreview } from '../types.js';
-import { drift as semverDrift, parse as parseSemver, compare as compareSemver } from '../utils/semver.js';
+import {
+  drift as semverDrift,
+  parse as parseSemver,
+  compare as compareSemver,
+} from '../utils/semver.js';
 import { buildImportGraph, filesImporting } from './importGraph.js';
 
 const CHANGELOG_NAMES = ['CHANGELOG.md', 'CHANGELOG', 'History.md', 'HISTORY.md'];

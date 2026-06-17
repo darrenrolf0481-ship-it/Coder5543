@@ -7,20 +7,25 @@
 ## Table of Contents
 
 ### Security — **CRITICAL**
+
 1. [SQL Injection Prevention](#sql-injection-prevention)
 2. [XSS Prevention](#xss-prevention)
 
 ### Performance — **HIGH**
+
 3. [Avoid N+1 Query Problem](#avoid-n-1-query-problem)
 
 ### Correctness — **HIGH**
+
 4. [Proper Error Handling](#proper-error-handling)
 
 ### Maintainability — **MEDIUM**
+
 5. [Use Meaningful Variable Names](#use-meaningful-variable-names)
 6. [Add Type Hints](#add-type-hints)
 
 ### Integrations & Troubleshooting — **HIGH**
+
 7. [Agentverse MCP 429 Errors](#agentverse-mcp-429-errors)
 
 ---
@@ -36,6 +41,7 @@ Never construct SQL queries with string concatenation or f-strings. Always use p
 #### Why This Matters
 
 SQL injection is one of the most common and dangerous web vulnerabilities. Attackers can:
+
 - Access unauthorized data
 - Modify or delete database records
 - Execute admin operations on the database
@@ -218,29 +224,34 @@ def get_user(id: int) -> Optional[Dict[str, Any]]:
 ### Review Checklist
 
 **Security (CRITICAL - review first)**
+
 - [ ] No SQL injection vulnerabilities
 - [ ] No XSS vulnerabilities
 - [ ] Secrets not hardcoded
 - [ ] Authentication/authorization checks present
 
 **Performance (HIGH)**
+
 - [ ] No N+1 queries
 - [ ] Appropriate caching
 - [ ] No unnecessary database calls
 - [ ] Efficient algorithms
 
 **Correctness (HIGH)** - [ ] Proper error handling
+
 - [ ] Edge cases handled
 - [ ] Input validation
 - [ ] No race conditions
 
 **Maintainability (MEDIUM)**
+
 - [ ] Clear variable/function names
 - [ ] Type hints present
 - [ ] Code is DRY (Don't Repeat Yourself)
 - [ ] Functions are single-purpose
 
 **Testing**
+
 - [ ] Tests cover new code
 - [ ] Edge cases tested
 - [ ] Error paths tested
@@ -249,12 +260,12 @@ def get_user(id: int) -> Optional[Dict[str, Any]]:
 
 ## Severity Levels
 
-| Level | Description | Examples | Action |
-|-------|-------------|----------|--------|
+| Level        | Description                               | Examples                        | Action                       |
+| ------------ | ----------------------------------------- | ------------------------------- | ---------------------------- |
 | **CRITICAL** | Security vulnerabilities, data loss risks | SQL injection, XSS, auth bypass | Block merge, fix immediately |
-| **HIGH** | Performance issues, correctness bugs | N+1 queries, race conditions | Fix before merge |
-| **MEDIUM** | Maintainability, code quality | Naming, type hints, comments | Fix or accept with TODO |
-| **LOW** | Style preferences, minor improvements | Formatting, minor refactoring | Optional |
+| **HIGH**     | Performance issues, correctness bugs      | N+1 queries, race conditions    | Fix before merge             |
+| **MEDIUM**   | Maintainability, code quality             | Naming, type hints, comments    | Fix or accept with TODO      |
+| **LOW**      | Style preferences, minor improvements     | Formatting, minor refactoring   | Optional                     |
 
 ---
 
@@ -266,6 +277,7 @@ When performing reviews, structure as:
 ## Security Issues (X found)
 
 ### CRITICAL: SQL Injection in `get_user()`
+
 **File:** `api/users.py:45`
 **Issue:** User input interpolated directly into SQL query
 **Fix:** Use parameterized query
@@ -273,11 +285,13 @@ When performing reviews, structure as:
 ## Performance Issues (X found)
 
 ### HIGH: N+1 Query in `list_posts()`
+
 **File:** `views/posts.py:23`
 **Issue:** Fetching author in loop
 **Fix:** Add `.select_related('author')`
 
 ## Summary
+
 - 🔴 CRITICAL: 1
 - 🟠 HIGH: 1
 - 🟡 MEDIUM: 3
@@ -293,22 +307,25 @@ When performing reviews, structure as:
 - Individual rule files in `rules/` directory
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [Clean Code by Robert Martin](https://www.oreilly.com/library/view/clean-code-a/9780136083238/)
-rized query
+  rized query
 
 ## Performance Issues (X found)
 
 ### HIGH: N+1 Query in `list_posts()`
+
 **File:** `views/posts.py:23`
 **Issue:** Fetching author in loop
 **Fix:** Add `.select_related('author')`
 
 ## Summary
+
 - 🔴 CRITICAL: 1
 - 🟠 HIGH: 1
 - 🟡 MEDIUM: 3
 - ⚪ LOW: 2
 
 **Recommendation:** Address CRITICAL and HIGH issues before merging.
+
 ```
 
 ---
@@ -318,3 +335,4 @@ rized query
 - Individual rule files in `rules/` directory
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [Clean Code by Robert Martin](https://www.oreilly.com/library/view/clean-code-a/9780136083238/)
+```

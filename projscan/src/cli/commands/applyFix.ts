@@ -15,7 +15,9 @@ import { executePlan, rollback, type ApplyResult } from '../../core/applyFix.js'
 export function registerApplyFix(): void {
   program
     .command('apply-fix [issueId]')
-    .description('Apply a mechanical fix for an open issue (dry-run by default; --confirm to write)')
+    .description(
+      'Apply a mechanical fix for an open issue (dry-run by default; --confirm to write)',
+    )
     .option('--confirm', 'actually write to disk (default is dry-run)')
     .option('--rollback <id>', 'reverse a previous apply by rollback id')
     .action(async (issueId: string | undefined, opts: { confirm?: boolean; rollback?: string }) => {
@@ -97,7 +99,9 @@ function renderApplyResult(result: ApplyResult, summary: string, dryRun: boolean
     console.log(chalk.dim('  Dry-run only. Re-run with --confirm to write.'));
   } else {
     console.log(chalk.green(`  ✓ Applied. Rollback id: ${result.rollbackId}`));
-    console.log(chalk.dim('  Reverse with `projscan apply-fix --rollback ' + result.rollbackId + '`.'));
+    console.log(
+      chalk.dim('  Reverse with `projscan apply-fix --rollback ' + result.rollbackId + '`.'),
+    );
   }
 }
 

@@ -19,9 +19,7 @@ export const explainTool: McpTool = {
   handler: async (args, rootPath) => {
     const rel = typeof args.file === 'string' ? args.file : '';
     if (!rel) {
-      throw new Error(
-        'file argument is required: pass a repo-relative path (e.g. "src/auth.ts").',
-      );
+      throw new Error('file argument is required: pass a repo-relative path (e.g. "src/auth.ts").');
     }
     const absolutePath = path.resolve(rootPath, rel);
     const resolvedRoot = path.resolve(rootPath);
