@@ -179,7 +179,15 @@ export function useEditorFileSystem(
           reader.readAsText(file);
         });
 
-        const extension = file.name.split('.').pop() || 'text';
+        const rawExt = file.name.split('.').pop() || 'text';
+        const extLangMap: Record<string, string> = {
+          py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript',
+          jsx: 'javascript', html: 'html', css: 'css', rs: 'rust', go: 'go',
+          java: 'java', cpp: 'cpp', cs: 'csharp', php: 'php', rb: 'ruby',
+          json: 'json', md: 'markdown', yaml: 'yaml', yml: 'yaml', sh: 'shell',
+          txt: 'text',
+        };
+        const extension = extLangMap[rawExt] || rawExt;
         const relativePath = (file as any).webkitRelativePath || file.name;
         const pathParts = relativePath.split('/');
 
@@ -207,6 +215,34 @@ export function useEditorFileSystem(
     if (newFiles.length > 0) {
       setProjectFiles((prev) => [...prev, ...newFiles]);
       setEditorOutput((prev: string) => prev + `[SYSTEM] Uploaded ${newFiles.length} files.\n`);
+
+      const LANG_MAP: Record<string, string> = {
+        py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript',
+        jsx: 'javascript', html: 'html', css: 'css', rs: 'rust', go: 'go',
+        java: 'java', cpp: 'cpp', cs: 'csharp', php: 'php', rb: 'ruby',
+        json: 'json', md: 'markdown', yaml: 'yaml', yml: 'yaml', sh: 'shell',
+        txt: 'text',
+      };
+      const MAIN_ENTRY_PRIORITY = [
+        'main.py', 'app.py', 'index.js', 'app.js', 'main.js',
+        'index.ts', 'app.ts', 'main.ts', 'App.tsx', 'index.tsx',
+        'main.tsx', 'index.html', 'main.rs', 'main.go', 'main.java',
+        'Program.cs', 'main.cpp', 'index.php',
+      ];
+      const uploadedFiles = newFiles.filter((f) => f.type === 'file');
+      const mainFile =
+        MAIN_ENTRY_PRIORITY.map((name) => uploadedFiles.find((f) => f.name === name)).find(
+          Boolean,
+        ) || uploadedFiles[0];
+
+      if (mainFile) {
+        const ext = mainFile.name.split('.').pop() || '';
+        const lang = LANG_MAP[ext] || ext || 'text';
+        setActiveFileId(mainFile.id);
+        setEditorContent(mainFile.content || '');
+        setEditorLanguage(lang);
+        setEditorMode(lang === 'html' ? 'preview' : 'code');
+      }
     }
   };
 

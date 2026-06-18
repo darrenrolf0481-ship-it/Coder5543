@@ -53,9 +53,9 @@ function parseRepoInput(
     return { owner: shorthand[1], repo: shorthand[2], branch: shorthand[3], url: trimmed };
   }
 
-  // https://github.com/owner/repo
+  // https://github.com/owner/repo (also handles trailing slash, query params, and extra paths)
   const https =
-    /^https:\/\/github\.com\/([a-zA-Z0-9_\-.]+)\/([a-zA-Z0-9_\-.]+?)(?:\.git)?(?:\/tree\/([a-zA-Z0-9_\-.\/]+))?$/.exec(
+    /^https?:\/\/github\.com\/([a-zA-Z0-9_\-.]+)\/([a-zA-Z0-9_\-.]+?)(?:\.git)?(?:\/tree\/([a-zA-Z0-9_\-.\/]+?))?(?:[/?#].*)?$/i.exec(
       trimmed,
     );
   if (https) {

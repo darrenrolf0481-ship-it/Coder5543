@@ -122,7 +122,25 @@ ${prompt}`,
       const kbDocs = (activePersonality.knowledgeBase ?? [])
         .map((e: any) => `[KB: ${e.name}]\n${e.content}`)
         .join('\n\n---\n\n');
-      const systemInstruction = `${activePersonality.instruction}${kbDocs ? `\n\nKNOWLEDGE BASE:\n${kbDocs}` : ''}\n\nPROJECT_PROFILE: ${activeProfile.instruction}${chatSummary ? `\n\nCONVERSATION_SUMMARY: ${chatSummary}` : ''}`;
+
+      // Build conversation history from the last 6 messages (3 turns)
+      const recentHistory = chatMessages
+        .slice(-6)
+        .map((m: any) => {
+          const prefix = m.role === 'user' ? 'USER' : 'ASSISTANT';
+          const text = m.text.length > 800 ? m.text.slice(0, 800) + '...[truncated]' : m.text;
+          return `${prefix}: ${text}`;
+        })
+        .join('\n\n');
+
+      // Build editor context if the user has a file open
+      const activeFileName = projectFiles.find((f: any) => f.id === activeFileId)?.name || null;
+      const editorCtx =
+        activeFileName && editorContent
+          ? `\n\nEDITOR_CONTEXT:\nActive File: ${activeFileName} (${editorLanguage})\n\`\`\`${editorLanguage}\n${editorContent.length > 4000 ? editorContent.slice(0, 4000) + '\n...[file truncated]' : editorContent}\n\`\`\``
+          : '';
+
+      const systemInstruction = `${activePersonality.instruction}${kbDocs ? `\n\nKNOWLEDGE BASE:\n${kbDocs}` : ''}\n\nPROJECT_PROFILE: ${activeProfile.instruction}${chatSummary ? `\n\nCONVERSATION_SUMMARY: ${chatSummary}` : ''}${recentHistory ? `\n\nCONVERSATION_HISTORY:\n${recentHistory}` : ''}${editorCtx}`;
 
       const fileCreationMatch = prompt.match(
         /(?:create|generate) a (?:new )?file named ([a-zA-Z0-9_\-\.]+)/i,
