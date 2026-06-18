@@ -19,6 +19,7 @@ export function useEditorFileSystem(
   setTerminalOutput: any,
   setTermuxFiles: any,
   setStorageFiles: any,
+  onProjectLoad?: (name: string) => void,
 ) {
   const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([
     { id: 'root', name: 'Project', type: 'folder', parentId: null, isOpen: true },
@@ -134,6 +135,30 @@ export function useEditorFileSystem(
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const FILE_LANG_MAP: Record<string, string> = {
+      py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript',
+      jsx: 'javascript', html: 'html', css: 'css', rs: 'rust', go: 'go',
+      java: 'java', cpp: 'cpp', cs: 'csharp', php: 'php', rb: 'ruby',
+      json: 'json', md: 'markdown', yaml: 'yaml', yml: 'yaml', sh: 'shell',
+      txt: 'text',
+    };
+    const MAIN_ENTRY_PRIORITY = [
+      'main.py', 'app.py', 'index.js', 'app.js', 'main.js',
+      'index.ts', 'app.ts', 'main.ts', 'App.tsx', 'index.tsx',
+      'main.tsx', 'index.html', 'main.rs', 'main.go', 'main.java',
+      'Program.cs', 'main.cpp', 'index.php',
+    ];
+
+    // Detect folder upload (browser sets webkitRelativePath for folder selections)
+    const isFolderUpload = Array.from(files).some(
+      (f) => !!(f as any).webkitRelativePath?.includes('/'),
+    );
+    const projectRootName = isFolderUpload
+      ? (Array.from(files)
+          .map((f) => (f as any).webkitRelativePath?.split('/')[0])
+          .find(Boolean) ?? 'Uploaded Project')
+      : null;
+
     const newFiles: any[] = [];
     const folderCache: Record<string, string> = {};
 
@@ -141,12 +166,15 @@ export function useEditorFileSystem(
       const fullPath = parentId ? `${parentId}/${path}` : path;
       if (folderCache[fullPath]) return folderCache[fullPath];
 
-      const existingFolder = projectFiles.find(
-        (f) => f.name === path && f.parentId === parentId && f.type === 'folder',
-      );
-      if (existingFolder) {
-        folderCache[fullPath] = existingFolder.id;
-        return existingFolder.id;
+      // For folder uploads, skip the lookup in existing projectFiles so we get a clean slate
+      if (!isFolderUpload) {
+        const existingFolder = projectFiles.find(
+          (f) => f.name === path && f.parentId === parentId && f.type === 'folder',
+        );
+        if (existingFolder) {
+          folderCache[fullPath] = existingFolder.id;
+          return existingFolder.id;
+        }
       }
 
       const batchFolder = newFiles.find(
@@ -158,14 +186,7 @@ export function useEditorFileSystem(
       }
 
       const newFolderId = `folder_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const newFolder = {
-        id: newFolderId,
-        name: path,
-        type: 'folder',
-        parentId: parentId,
-        isOpen: true,
-      };
-      newFiles.push(newFolder);
+      newFiles.push({ id: newFolderId, name: path, type: 'folder', parentId, isOpen: true });
       folderCache[fullPath] = newFolderId;
       return newFolderId;
     };
@@ -180,64 +201,65 @@ export function useEditorFileSystem(
         });
 
         const rawExt = file.name.split('.').pop() || 'text';
-        const extLangMap: Record<string, string> = {
-          py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript',
-          jsx: 'javascript', html: 'html', css: 'css', rs: 'rust', go: 'go',
-          java: 'java', cpp: 'cpp', cs: 'csharp', php: 'php', rb: 'ruby',
-          json: 'json', md: 'markdown', yaml: 'yaml', yml: 'yaml', sh: 'shell',
-          txt: 'text',
-        };
-        const extension = extLangMap[rawExt] || rawExt;
+        const extension = FILE_LANG_MAP[rawExt] || rawExt;
         const relativePath = (file as any).webkitRelativePath || file.name;
         const pathParts = relativePath.split('/');
 
         let currentParentId: string | null = null;
         if (pathParts.length > 1) {
           for (let i = 0; i < pathParts.length - 1; i++) {
-            currentParentId = getOrCreateFolder(pathParts[i], currentParentId);
+            // For folder uploads, map the project root folder directly to 'root'
+            if (i === 0 && projectRootName && pathParts[i] === projectRootName) {
+              currentParentId = 'root';
+            } else {
+              currentParentId = getOrCreateFolder(pathParts[i], currentParentId);
+            }
           }
         }
 
-        const newFile = {
+        newFiles.push({
           id: `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           name: file.name,
           type: 'file' as const,
           parentId: currentParentId,
           language: extension,
-          content: content,
-        };
-        newFiles.push(newFile);
+          content,
+        });
       } catch (err) {
         console.warn('File upload error:', err);
       }
     }
 
     if (newFiles.length > 0) {
-      setProjectFiles((prev) => [...prev, ...newFiles]);
-      setEditorOutput((prev: string) => prev + `[SYSTEM] Uploaded ${newFiles.length} files.\n`);
+      if (isFolderUpload && projectRootName) {
+        // Replace existing files — this becomes the new project
+        setProjectFiles([
+          { id: 'root', name: projectRootName, type: 'folder', parentId: null, isOpen: true },
+          ...newFiles,
+        ]);
+        const fileCount = newFiles.filter((f) => f.type === 'file').length;
+        setEditorOutput(
+          (prev: string) =>
+            prev + `[PROJECT] Loaded "${projectRootName}" — ${fileCount} files.\n`,
+        );
+        onProjectLoad?.(projectRootName);
+      } else {
+        setProjectFiles((prev) => [...prev, ...newFiles]);
+        setEditorOutput(
+          (prev: string) => prev + `[SYSTEM] Uploaded ${newFiles.filter((f) => f.type === 'file').length} files.\n`,
+        );
+      }
 
-      const LANG_MAP: Record<string, string> = {
-        py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript',
-        jsx: 'javascript', html: 'html', css: 'css', rs: 'rust', go: 'go',
-        java: 'java', cpp: 'cpp', cs: 'csharp', php: 'php', rb: 'ruby',
-        json: 'json', md: 'markdown', yaml: 'yaml', yml: 'yaml', sh: 'shell',
-        txt: 'text',
-      };
-      const MAIN_ENTRY_PRIORITY = [
-        'main.py', 'app.py', 'index.js', 'app.js', 'main.js',
-        'index.ts', 'app.ts', 'main.ts', 'App.tsx', 'index.tsx',
-        'main.tsx', 'index.html', 'main.rs', 'main.go', 'main.java',
-        'Program.cs', 'main.cpp', 'index.php',
-      ];
+      // Auto-open the main/entry-point file
       const uploadedFiles = newFiles.filter((f) => f.type === 'file');
       const mainFile =
         MAIN_ENTRY_PRIORITY.map((name) => uploadedFiles.find((f) => f.name === name)).find(
           Boolean,
-        ) || uploadedFiles[0];
+        ) ?? uploadedFiles[0];
 
       if (mainFile) {
         const ext = mainFile.name.split('.').pop() || '';
-        const lang = LANG_MAP[ext] || ext || 'text';
+        const lang = FILE_LANG_MAP[ext] || ext || 'text';
         setActiveFileId(mainFile.id);
         setEditorContent(mainFile.content || '');
         setEditorLanguage(lang);

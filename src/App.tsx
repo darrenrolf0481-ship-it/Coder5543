@@ -28,6 +28,7 @@ import { useDebuggerHandlers } from './hooks/editor/useDebuggerHandlers';
 import { useChatHandlers } from './hooks/useChatHandlers';
 import { useSwarm } from './hooks/useSwarm';
 import { useSwarmState } from './hooks/useSwarmState';
+import { useProjectManager } from './hooks/useProjectManager';
 import { useTerminal } from './hooks/terminal/useTerminal';
 import { useTerminalLogic } from './hooks/terminal/useTerminalLogic';
 
@@ -318,6 +319,9 @@ function AppInner() {
     setGitRepoRef.current(val);
   }, []);
 
+  // Project Manager
+  const projectManager = useProjectManager();
+
   // File System State
   const fsState = useEditorFileSystem(
     phi,
@@ -334,6 +338,7 @@ function AppInner() {
     },
     setTermuxFiles,
     setStorageFiles,
+    (name: string) => projectManager.createProject(name),
   );
 
   // Local Core (WebContainer)
@@ -1075,6 +1080,31 @@ function AppInner() {
                 }}
                 onSaveReport={(text) => {
                   forgeState.handleSaveAnalysis(text);
+                  setActiveTab('editor');
+                }}
+                onLoadRepoToEditor={(files, repoName) => {
+                  const MAIN_PRIORITY = [
+                    'main.py', 'app.py', 'index.js', 'app.js', 'main.js',
+                    'index.ts', 'app.ts', 'main.ts', 'App.tsx', 'index.tsx',
+                    'main.tsx', 'index.html', 'main.rs', 'main.go',
+                  ];
+                  const LANG_MAP: Record<string, string> = {
+                    py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript',
+                    jsx: 'javascript', html: 'html', css: 'css', rs: 'rust', go: 'go',
+                    java: 'java', cpp: 'cpp', json: 'json', md: 'markdown',
+                  };
+                  fsState.setProjectFiles(files);
+                  const allFiles = files.filter((f: any) => f.type === 'file');
+                  const mainFile =
+                    MAIN_PRIORITY.map((n) => allFiles.find((f: any) => f.name === n)).find(Boolean) ??
+                    allFiles[0];
+                  if (mainFile) {
+                    const ext = mainFile.name.split('.').pop() || '';
+                    const lang = LANG_MAP[ext] || mainFile.language || 'text';
+                    fsState.setActiveFileId(mainFile.id);
+                    fsState.setEditorLanguage(lang);
+                  }
+                  projectManager.createProject(repoName);
                   setActiveTab('editor');
                 }}
               />
