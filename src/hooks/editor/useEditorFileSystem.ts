@@ -159,6 +159,18 @@ export function useEditorFileSystem(
           .find(Boolean) ?? 'Uploaded Project')
       : null;
 
+    // Guard: confirm before wiping a non-default workspace
+    if (isFolderUpload && projectRootName) {
+      const DEFAULT_IDS = new Set(['root', 'src', 'brain.py', 'ui.html', 'logic.rs']);
+      const hasCustomWork = projectFiles.some((f) => !DEFAULT_IDS.has(f.id));
+      if (hasCustomWork) {
+        const ok = window.confirm(
+          `Loading "${projectRootName}" will replace your current project. Any unsaved changes will be lost. Continue?`,
+        );
+        if (!ok) return;
+      }
+    }
+
     const newFiles: any[] = [];
     const folderCache: Record<string, string> = {};
 

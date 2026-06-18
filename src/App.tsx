@@ -1083,6 +1083,14 @@ function AppInner() {
                   setActiveTab('editor');
                 }}
                 onLoadRepoToEditor={(files, repoName) => {
+                  const DEFAULT_IDS = new Set(['root', 'src', 'brain.py', 'ui.html', 'logic.rs']);
+                  const hasCustomWork = fsState.projectFiles.some((f) => !DEFAULT_IDS.has(f.id));
+                  if (hasCustomWork) {
+                    const ok = window.confirm(
+                      `Loading "${repoName}" will replace your current project. Any unsaved changes will be lost. Continue?`,
+                    );
+                    if (!ok) return;
+                  }
                   const MAIN_PRIORITY = [
                     'main.py', 'app.py', 'index.js', 'app.js', 'main.js',
                     'index.ts', 'app.ts', 'main.ts', 'App.tsx', 'index.tsx',

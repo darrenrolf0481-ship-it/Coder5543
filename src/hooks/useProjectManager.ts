@@ -42,6 +42,17 @@ export function useProjectManager() {
   }, [currentProject]);
 
   const createProject = useCallback((name: string, files: ProjectFile[] = []): Project => {
+    // Upsert: update lastAccessed if a project with this name already exists
+    const existing = savedProjects.find((p) => p.name === name);
+    if (existing) {
+      const updated: Project = { ...existing, lastAccessed: Date.now() };
+      const newSavedProjects = savedProjects.map((p) => (p.id === existing.id ? updated : p));
+      setSavedProjects(newSavedProjects);
+      localStorage.setItem(PROJECTS_KEY, JSON.stringify(newSavedProjects));
+      setCurrentProject(updated);
+      return updated;
+    }
+
     const project: Project = {
       id: `project_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name,
