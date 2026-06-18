@@ -37,6 +37,7 @@ interface SwarmCoreProps {
   };
   onSaveReport: (text: string) => void;
   onApplyCode: (code: string, mode: 'refactor' | 'replace') => void;
+  onLoadRepoToEditor?: (files: any[], repoName: string) => void;
 }
 
 function parseRepoInput(
@@ -53,9 +54,9 @@ function parseRepoInput(
     return { owner: shorthand[1], repo: shorthand[2], branch: shorthand[3], url: trimmed };
   }
 
-  // https://github.com/owner/repo
+  // https://github.com/owner/repo (also handles trailing slash, query params, and extra paths)
   const https =
-    /^https:\/\/github\.com\/([a-zA-Z0-9_\-.]+)\/([a-zA-Z0-9_\-.]+?)(?:\.git)?(?:\/tree\/([a-zA-Z0-9_\-.\/]+))?$/.exec(
+    /^https?:\/\/github\.com\/([a-zA-Z0-9_\-.]+)\/([a-zA-Z0-9_\-.]+?)(?:\.git)?(?:\/tree\/([a-zA-Z0-9_\-.\/]+?))?(?:[/?#].*)?$/i.exec(
       trimmed,
     );
   if (https) {
@@ -94,6 +95,7 @@ export const SwarmCore: React.FC<SwarmCoreProps> = ({
   swarm,
   onSaveReport,
   onApplyCode,
+  onLoadRepoToEditor,
 }) => {
   const {
     swarmMode,
@@ -383,12 +385,23 @@ ${lastReport.riskNotes.map((r) => `- ${r}`).join('\n') || '_None_'}
                             {repo.files?.length || 0} files {repo.truncated ? '(truncated)' : ''}
                           </p>
                         </div>
-                        <button
-                          onClick={() => handleRemoveRepo(repo.id)}
-                          className="p-2 text-accent-900 hover:text-accent-500 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          {onLoadRepoToEditor && repo.files && repo.files.length > 0 && (
+                            <button
+                              onClick={() => onLoadRepoToEditor(repo.files!, `${repo.owner}/${repo.repo}`)}
+                              title="Load into Editor"
+                              className="p-2 text-accent-900 hover:text-accent-300 transition-colors"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleRemoveRepo(repo.id)}
+                            className="p-2 text-accent-900 hover:text-accent-500 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

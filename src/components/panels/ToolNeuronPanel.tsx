@@ -71,6 +71,7 @@ interface ToolNeuronPanelProps {
   ) => void;
   onApplyCode: (code: string, mode: 'refactor' | 'replace') => void;
   onSaveReport: (text: string) => void;
+  onLoadRepoToEditor?: (files: any[], repoName: string) => void;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -94,6 +95,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
   setActiveTab,
   onApplyCode,
   onSaveReport,
+  onLoadRepoToEditor,
 }) => {
   const { vaultMemories, fetchVault } = useAppContext();
   // ── Local state ────────────────────────────────────────────────────────
@@ -704,6 +706,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
               swarm={swarm}
               onSaveReport={onSaveReport}
               onApplyCode={onApplyCode}
+              onLoadRepoToEditor={onLoadRepoToEditor}
             />
           )}
 
