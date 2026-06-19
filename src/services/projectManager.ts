@@ -9,6 +9,8 @@
  * - Load projects from disk (server-side projects/)
  */
 
+import { resolveApiUrl } from '../utils/apiUrl';
+
 export interface Project {
   id: string;
   name: string;
@@ -138,7 +140,7 @@ export function initializeDefaultProject(): Project {
  */
 export async function fetchServerProjects(): Promise<Project[]> {
   try {
-    const res = await fetch('./api/github/projects');
+    const res = await fetch(resolveApiUrl('github/projects'));
     if (!res.ok) throw new Error('Failed to fetch projects');
     const data = await res.json();
     return data.projects || [];
@@ -153,7 +155,7 @@ export async function fetchServerProjects(): Promise<Project[]> {
  */
 export async function loadProjectFiles(projectName: string): Promise<any[]> {
   try {
-    const res = await fetch(`./api/github/load?project=${encodeURIComponent(projectName)}`);
+    const res = await fetch(resolveApiUrl(`github/load?project=${encodeURIComponent(projectName)}`));
     if (!res.ok) throw new Error('Failed to load project');
     const data = await res.json();
     return data.files || [];

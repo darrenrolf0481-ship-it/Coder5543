@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { resolveApiUrl } from '../../utils/apiUrl';
 
 export function useTerminalLogic(
   terminal: any, // from useTerminal
@@ -206,7 +207,7 @@ Current System State:
       // Handle 'cd' locally for state tracking (still needs backend pwd check)
       if (/^cd(\s|$)/.test(shellCmd.trim())) {
         try {
-          const res = await fetch('./api/terminal/exec', {
+          const res = await fetch(resolveApiUrl('terminal/exec'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cmd: shellCmd, cwd: realCwd }),
@@ -286,7 +287,7 @@ Current System State:
       if (action === 'list') {
         setIsAiProcessing(true);
         try {
-          const res = await fetch('./api/mcp/list');
+          const res = await fetch(resolveApiUrl('mcp/list'));
           const data = await res.json();
           if (data.success && Array.isArray(data.tools)) {
             const lines = [
@@ -321,7 +322,7 @@ Current System State:
         }
         setIsAiProcessing(true);
         try {
-          const res = await fetch('./api/mcp/list');
+          const res = await fetch(resolveApiUrl('mcp/list'));
           const data = await res.json();
           if (data.success && Array.isArray(data.tools)) {
             const tool = data.tools.find((t: any) => t.name === toolName);
@@ -365,7 +366,7 @@ Current System State:
         }
         setIsAiProcessing(true);
         try {
-          const res = await fetch('./api/mcp/toggle', {
+          const res = await fetch(resolveApiUrl('mcp/toggle'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -418,7 +419,7 @@ Current System State:
 
         setIsAiProcessing(true);
         try {
-          const res = await fetch('./api/mcp/call', {
+          const res = await fetch(resolveApiUrl('mcp/call'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

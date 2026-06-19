@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { resolveApiUrl } from '../utils/apiUrl';
 
 export interface Commit {
   id: string;
@@ -80,7 +81,7 @@ export function useGitLogic(
       setIsAiProcessing(true);
       setEditorOutput((prev: string) => prev + '[GIT] Pushing to GitHub...\n');
       try {
-        const response = await fetch('./api/github/push', { method: 'POST' });
+        const response = await fetch(resolveApiUrl('github/push'), { method: 'POST' });
         const data = await response.json();
         if (data.ok) {
           setEditorOutput((prev: string) => prev + '[GIT] Successfully pushed to GitHub.\n');

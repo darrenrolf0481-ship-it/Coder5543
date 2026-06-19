@@ -4,6 +4,7 @@ import {
   FolderPlus, Download, Upload, HardDrive,
 } from 'lucide-react';
 import type { FileNode } from './FileTree';
+import { resolveApiUrl } from '../utils/apiUrl';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -23,7 +24,9 @@ export const TermuxBrowser: React.FC<{
   const browse = useCallback(async (p?: string) => {
     setLoading(true); setErr('');
     try {
-      const url = p ? `./api/fs/browse?path=${encodeURIComponent(p)}` : './api/fs/browse';
+      const url = p 
+        ? resolveApiUrl(`fs/browse?path=${encodeURIComponent(p)}`) 
+        : resolveApiUrl('fs/browse');
       const r = await fetch(url);
       if (!r.ok) { const e = await r.json(); throw new Error(e.error ?? r.statusText); }
       setData(await r.json());
@@ -39,7 +42,7 @@ export const TermuxBrowser: React.FC<{
   const importFile = useCallback(async (entry: FsEntry) => {
     if (entry.type === 'dir') { browse(entry.path); return; }
     try {
-      const r = await fetch(`./api/fs/read?path=${encodeURIComponent(entry.path)}`);
+      const r = await fetch(resolveApiUrl(`fs/read?path=${encodeURIComponent(entry.path)}`));
       if (!r.ok) { const e = await r.json(); throw new Error(e.error ?? r.statusText); }
       const { content } = await r.json();
       const ext = entry.name.split('.').pop() ?? 'text';
@@ -81,7 +84,7 @@ export const TermuxBrowser: React.FC<{
           reader.readAsDataURL(file);
         });
 
-        const res = await fetch('./api/fs/write', {
+        const res = await fetch(resolveApiUrl('fs/write'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ path: destPath, content, encoding: 'base64' }),
@@ -105,7 +108,7 @@ export const TermuxBrowser: React.FC<{
     if (!name || !name.trim()) return;
     setLoading(true); setErr('');
     try {
-      const res = await fetch('./api/fs/create-directory', {
+      const res = await fetch(resolveApiUrl('fs/create-directory'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: `${data.path}/${name.trim()}` }),
@@ -128,7 +131,7 @@ export const TermuxBrowser: React.FC<{
     if (!confirm(`Are you sure you want to delete ${name}?`)) return;
     setLoading(true); setErr('');
     try {
-      const res = await fetch('./api/fs/delete', {
+      const res = await fetch(resolveApiUrl('fs/delete'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: entryPath }),

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { BrainContext, EndocrineState } from '../services/brain/types';
+import { resolveApiUrl } from '../utils/apiUrl';
 
-const API_BASE = './api/brain';
 
 export interface TrafficEvent {
   provider: string;
@@ -29,7 +29,7 @@ export function useBrain(lastSignal?: any) {
 
   const fetchVault = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/memory/vault`);
+      const res = await fetch(resolveApiUrl('brain/memory/vault'));
       if (res.ok) {
         const data = await res.json();
         setVaultMemories(data.sort((a: any, b: any) => b.timestamp - a.timestamp));
@@ -42,7 +42,7 @@ export function useBrain(lastSignal?: any) {
   const refreshState = useCallback(async (retries = 3) => {
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
-        const res = await fetch(`${API_BASE}/endocrine`);
+        const res = await fetch(resolveApiUrl('brain/endocrine'));
         if (!res.ok) throw new Error('Failed to fetch endocrine state');
         const data = await res.json();
         setEndocrine(data);
@@ -84,7 +84,7 @@ export function useBrain(lastSignal?: any) {
     async (input: string, personalityId?: number): Promise<BrainContext | null> => {
       if (!isBrainActive) return null;
       try {
-        const res = await fetch(`${API_BASE}/context`, {
+        const res = await fetch(resolveApiUrl('brain/context'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ input, personalityId }),
@@ -103,7 +103,7 @@ export function useBrain(lastSignal?: any) {
   const recordInteraction = useCallback(
     async (input: string, response: string, outcome: 'success' | 'failure' | 'neutral') => {
       try {
-        const res = await fetch(`${API_BASE}/record`, {
+        const res = await fetch(resolveApiUrl('brain/record'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ input, response, outcome }),
@@ -120,7 +120,7 @@ export function useBrain(lastSignal?: any) {
 
   const sleep = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/sleep`, { method: 'POST' });
+      const res = await fetch(resolveApiUrl('brain/sleep'), { method: 'POST' });
       if (!res.ok) throw new Error('Failed to start sleep cycle');
       const stats = await res.json();
       await refreshState();

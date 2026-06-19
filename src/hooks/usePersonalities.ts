@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { resolveApiUrl } from '../utils/apiUrl';
 import { GoogleGenAI } from '../services/googleGenAiStub';
 import { INITIAL_PERSONALITIES } from '../data/personalities';
 import type { Personality } from '../data/personalities';
@@ -89,7 +90,7 @@ export function usePersonalities() {
 
     // Debounce save to backend
     const handler = setTimeout(() => {
-      fetch('./api/mcp/save-keys', {
+      fetch(resolveApiUrl('mcp/save-keys'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ geminiApiKey, grokApiKey, openrouterApiKey }),

@@ -31,6 +31,7 @@ import {
   Upload,
   Github,
 } from 'lucide-react';
+import { resolveApiUrl } from '../utils/apiUrl';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -434,7 +435,9 @@ const TermuxBrowser: React.FC<{
     setLoading(true);
     setErr('');
     try {
-      const url = p ? `./api/fs/browse?path=${encodeURIComponent(p)}` : './api/fs/browse';
+      const url = p 
+        ? resolveApiUrl(`fs/browse?path=${encodeURIComponent(p)}`) 
+        : resolveApiUrl('fs/browse');
       const r = await fetch(url);
       if (!r.ok) {
         const e = await r.json();
@@ -459,7 +462,7 @@ const TermuxBrowser: React.FC<{
         return;
       }
       try {
-        const r = await fetch(`./api/fs/read?path=${encodeURIComponent(entry.path)}`);
+        const r = await fetch(resolveApiUrl(`fs/read?path=${encodeURIComponent(entry.path)}`));
         if (!r.ok) {
           const e = await r.json();
           throw new Error(e.error ?? r.statusText);
@@ -522,7 +525,7 @@ const TermuxBrowser: React.FC<{
             reader.readAsDataURL(file);
           });
 
-          const res = await fetch('./api/fs/write', {
+          const res = await fetch(resolveApiUrl('fs/write'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ path: destPath, content, encoding: 'base64' }),
@@ -549,7 +552,7 @@ const TermuxBrowser: React.FC<{
     setLoading(true);
     setErr('');
     try {
-      const res = await fetch('./api/fs/create-directory', {
+      const res = await fetch(resolveApiUrl('fs/create-directory'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: `${data.path}/${name.trim()}` }),
@@ -574,7 +577,7 @@ const TermuxBrowser: React.FC<{
       setLoading(true);
       setErr('');
       try {
-        const res = await fetch('./api/fs/delete', {
+        const res = await fetch(resolveApiUrl('fs/delete'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ path: entryPath }),
@@ -912,7 +915,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
     setCloning(true);
     setCloneErr('');
     try {
-      const res = await fetch('./api/github/clone', {
+      const res = await fetch(resolveApiUrl('github/clone'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ repoUrl: repoUrl.trim(), branch: branchName.trim() || undefined }),

@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import type { BrainContext } from './brain/types';
 import { broker } from './messageBroker.js';
+import { resolveApiUrl } from '../utils/apiUrl';
 
 // Hard ceiling for any single AI provider call. Without this, a hung provider
 // (slow Ollama model load, dead endpoint, stalled connection, Google SDK with no
@@ -18,7 +19,7 @@ export const fillTemplate = (template: string, data: Record<string, string>): st
 export const fetchOllamaModels = async (_ollamaUrl: string): Promise<string[]> => {
   try {
     // Use the server-side proxy to avoid CORS issues
-    const response = await fetch('./api/ollama/tags');
+    const response = await fetch(resolveApiUrl('ollama/tags'));
     if (!response.ok) {
       if (response.status === 502) throw new Error('Ollama service is currently offline (502)');
       throw new Error(`Failed to fetch Ollama models: ${response.statusText}`);
@@ -189,7 +190,7 @@ const generateOllamaResponse = async (
   }
 
   // Use server-side proxy to avoid CORS
-  const res = await fetch('./api/ollama/chat', {
+  const res = await fetch(resolveApiUrl('ollama/chat'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

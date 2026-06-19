@@ -31,6 +31,7 @@ import { useSwarmState } from './hooks/useSwarmState';
 import { useProjectManager } from './hooks/useProjectManager';
 import { useTerminal } from './hooks/terminal/useTerminal';
 import { useTerminalLogic } from './hooks/terminal/useTerminalLogic';
+import { resolveApiUrl } from './utils/apiUrl';
 
 // Layout & Panels
 import { Sidebar } from './components/layout/Sidebar';
@@ -742,7 +743,7 @@ function AppInner() {
     setIsAiProcessing(true);
     setEditorOutput((prev) => prev + '[GIT] Pulling from GitHub...\n');
     try {
-      const response = await fetch('./api/github/pull');
+      const response = await fetch(resolveApiUrl('github/pull'));
       const data = await response.json();
       if (data.ok) {
         setEditorOutput((prev) => prev + '[GIT] Successfully pulled from GitHub.\n');
@@ -1414,7 +1415,7 @@ function AppInner() {
                 }}
                 onLoadServerProject={async (projectName) => {
                   try {
-                    const res = await fetch(`./api/github/load?project=${encodeURIComponent(projectName)}`);
+                    const res = await fetch(resolveApiUrl(`github/load?project=${encodeURIComponent(projectName)}`));
                     if (res.ok) {
                       const data = await res.json();
                       fsState.setProjectFiles(data.files || []);

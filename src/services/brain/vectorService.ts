@@ -1,4 +1,5 @@
 import logger from '../../utils/logger.js';
+import { resolveApiUrl } from '../../utils/apiUrl';
 
 export class VectorService {
   /** How long to stop calling the embedding endpoint after a connection failure. */
@@ -19,10 +20,11 @@ export class VectorService {
 
     try {
       const isBackend = typeof window === 'undefined';
-      const baseUrl = isBackend ? process.env.OLLAMA_HOST || 'http://127.0.0.1:11434' : '';
-      const endpoint = isBackend ? '/api/embeddings' : './api/ollama/embeddings';
+      const url = isBackend 
+        ? `${process.env.OLLAMA_HOST || 'http://127.0.0.1:11434'}/api/embeddings`
+        : resolveApiUrl('ollama/embeddings');
 
-      const response = await fetch(`${baseUrl}${endpoint}`, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model, prompt: text }),

@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   AlertCircle,
 } from 'lucide-react';
+import { resolveApiUrl } from '../../utils/apiUrl';
 
 interface TermuxFile {
   name: string;
@@ -79,7 +80,7 @@ function useFsBrowser() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`./api/fs/browse?path=${encodeURIComponent(path)}`);
+      const res = await fetch(resolveApiUrl(`fs/browse?path=${encodeURIComponent(path)}`));
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Browse failed');
       setCwd(data.path);
@@ -95,7 +96,7 @@ function useFsBrowser() {
   const readFile = useCallback(async (path: string): Promise<string | null> => {
     setImporting(path);
     try {
-      const res = await fetch(`./api/fs/read?path=${encodeURIComponent(path)}`);
+      const res = await fetch(resolveApiUrl(`fs/read?path=${encodeURIComponent(path)}`));
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       return data.content as string;

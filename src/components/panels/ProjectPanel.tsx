@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FolderOpen, Plus, RefreshCw, Trash2, Check } from 'lucide-react';
+import { resolveApiUrl } from '../../utils/apiUrl';
 
 interface Project {
   id: string;
@@ -37,7 +38,7 @@ export function ProjectPanel({
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const res = await fetch('./api/github/projects');
+        const res = await fetch(resolveApiUrl('github/projects'));
         if (res.ok) {
           const data = await res.json();
           setServerProjects(data.projects || []);
@@ -211,7 +212,7 @@ export function ProjectPanel({
             <button
               onClick={async () => {
                 try {
-                  const res = await fetch('./api/github/projects');
+                  const res = await fetch(resolveApiUrl('github/projects'));
                   if (res.ok) {
                     const data = await res.json();
                     setServerProjects(data.projects || []);

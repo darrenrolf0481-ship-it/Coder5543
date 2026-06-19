@@ -125,9 +125,19 @@ async function startServer() {
   // ── Static SPA in production (Vite middleware is attached after listen, below) ─
   if (isProduction()) {
     const distPath = path.join(process.cwd(), 'dist');
+    const indexHtml = path.join(distPath, 'index.html');
+    // Behind the VS Code proxy the prefix is NOT stripped, so the browser requests
+    // assets at `/proxy/<port>/assets/...`. Mirror static serving + SPA fallback at
+    // that prefix (the API routers are already mirrored the same way above).
+    if (proxyPrefix) {
+      app.use(proxyPrefix, express.static(distPath));
+    }
     app.use(express.static(distPath));
     // Express 5 / path-to-regexp v8: bare '*' is illegal — use a named wildcard splat.
-    app.get('/*splat', (_req, res) => res.sendFile(path.join(distPath, 'index.html')));
+    if (proxyPrefix) {
+      app.get(`${proxyPrefix}/*splat`, (_req, res) => res.sendFile(indexHtml));
+    }
+    app.get('/*splat', (_req, res) => res.sendFile(indexHtml));
   }
 
   const httpServer = app.listen(PORT, '0.0.0.0', () => {
