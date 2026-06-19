@@ -6,7 +6,7 @@ import puppeteer from 'puppeteer';
   page.on('console', (msg) => console.log('PAGE LOG:', msg.text()));
   page.on('pageerror', (error) => console.log('PAGE ERROR:', error.message));
 
-  await page.goto('http://localhost:3000', { waitUntil: 'networkidle0' });
+  await page.goto('http://localhost:3002', { waitUntil: 'networkidle0' });
   await new Promise((r) => setTimeout(r, 2000));
   await browser.close();
 })();

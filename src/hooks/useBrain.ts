@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { BrainContext, EndocrineState } from '../services/brain/types';
 
-const API_BASE = '/api/brain';
+const API_BASE = './api/brain';
 
 export interface TrafficEvent {
   provider: string;

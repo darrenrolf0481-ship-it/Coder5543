@@ -54,12 +54,18 @@ export function useAnalysisHandlers(
         { type: 'info', message: 'Could not parse analysis results.', line: undefined },
       ]);
       setDebugAnalysis((prev) => ({ ...prev, static: { status: 'done', issues } }));
-    } catch {
+    } catch (err: any) {
       setDebugAnalysis((prev) => ({
         ...prev,
         static: {
           status: 'done',
-          issues: [{ type: 'error', message: 'Static analysis engine offline.', line: undefined }],
+          issues: [
+            {
+              type: 'error',
+              message: `Static analysis engine offline: ${err?.message || 'unknown error'}`,
+              line: undefined,
+            },
+          ],
         },
       }));
     }
@@ -87,10 +93,13 @@ export function useAnalysisHandlers(
           setDebugAnalysis((prev) => ({ ...prev, tracing: { ...prev.tracing, status: 'done' } }));
         }
       }, 400);
-    } catch {
+    } catch (err: any) {
       setDebugAnalysis((prev) => ({
         ...prev,
-        tracing: { status: 'done', logs: ['[ERROR] Trace engine offline.'] },
+        tracing: {
+          status: 'done',
+          logs: [`[ERROR] Trace engine offline: ${err?.message || 'unknown error'}`],
+        },
       }));
     }
   };
@@ -136,11 +145,11 @@ export function useAnalysisHandlers(
         setEditorOutput(response);
         await recordInteraction(prompt, response, 'success');
       } else {
-        setEditorOutput('[ERROR] Analysis engine failed.\n');
+        setEditorOutput('[ERROR] Analysis engine failed: empty response.\n');
         await recordInteraction(prompt, '', 'failure');
       }
-    } catch {
-      setEditorOutput('[ERROR] Analysis engine failed.\n');
+    } catch (err: any) {
+      setEditorOutput(`[ERROR] Analysis engine failed: ${err?.message || 'unknown error'}\n`);
     } finally {
       setIsAiProcessing(false);
     }
@@ -160,8 +169,11 @@ export function useAnalysisHandlers(
         { role: 'ai', text: `FULL_PROJECT_ANALYSIS:\n${response}` },
       ]);
       setIsEditorAssistantOpen(true);
-    } catch {
-      setEditorOutput((prev: string) => prev + '[ERROR] Neural project analysis failed.\n');
+    } catch (err: any) {
+      setEditorOutput(
+        (prev: string) =>
+          prev + `[ERROR] Neural project analysis failed: ${err?.message || 'unknown error'}\n`,
+      );
     } finally {
       setIsAiProcessing(false);
     }
@@ -190,8 +202,11 @@ export function useAnalysisHandlers(
         (prev: string) =>
           prev + '[SYSTEM] Deep project audit complete. Check Neural Assistant for details.\n',
       );
-    } catch {
-      setEditorOutput((prev: string) => prev + '[ERROR] Deep project audit failed.\n');
+    } catch (err: any) {
+      setEditorOutput(
+        (prev: string) =>
+          prev + `[ERROR] Deep project audit failed: ${err?.message || 'unknown error'}\n`,
+      );
     } finally {
       setIsAiProcessing(false);
     }

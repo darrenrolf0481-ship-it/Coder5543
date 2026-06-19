@@ -78,7 +78,7 @@ export async function detectWorkspaces(rootPath: string): Promise<WorkspaceInfo>
   // monorepo config is found. This enables "editor file tree" recognition for
   // arbitrary nested projects.
   const discoveredPackages = await autoDiscoverPackages(rootPath, rootPkg);
-  if (discoveredPackages.length > (rootPkg ? 1 : 0)) {
+  if (discoveredPackages.length > 1) {
     return { kind: 'auto-discovered', packages: discoveredPackages, source: 'auto-discovery scan' };
   }
 

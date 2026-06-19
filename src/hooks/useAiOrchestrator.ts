@@ -1,9 +1,33 @@
 import { useCallback, useRef, useMemo } from 'react';
 import { GoogleGenAI } from '../services/googleGenAiStub';
-import { generateAIResponse as generateAIResponseService } from '../services/aiService';
+import { generateAIResponse as generateAIResponseService, AI_REQUEST_TIMEOUT_MS } from '../services/aiService';
 import { getAgent } from '../data/agentRegistry';
 import { WorkerConfig } from './useAiWorkers';
 import { Personality } from '../data/personalities';
+
+// AbortSignal.any / AbortSignal.timeout aren't in the ES2022 lib types this
+// project targets, so merge/timeout signals are built manually to stay
+// type-safe across TS versions.
+const timeoutSignal = (ms: number): AbortSignal => {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(new Error(`AI request timed out after ${ms}ms`)), ms);
+  return controller.signal;
+};
+
+const mergeAbortSignals = (signals: (AbortSignal | undefined | null)[]): AbortSignal => {
+  const out = new AbortController();
+  for (const sig of signals) {
+    if (!sig) continue;
+    if (sig.aborted) {
+      out.abort((sig as any).reason ?? new Error('aborted'));
+      break;
+    }
+    sig.addEventListener('abort', () => out.abort((sig as any).reason ?? new Error('aborted')), {
+      once: true,
+    });
+  }
+  return out.signal;
+};
 
 export function useAiOrchestrator(
   workers: WorkerConfig[],
@@ -23,14 +47,18 @@ export function useAiOrchestrator(
   // Only abort a previous in-flight request when the caller explicitly passes
   // a stable domain (e.g. 'chat'). Callers that omit a domain are asking for a
   // standalone request, so parallel work (editor analysis, swarm agents, etc.)
-  // does not cancel each other.
+  // does not cancel each other. Every signal also carries the hard
+  // AI_REQUEST_TIMEOUT_MS budget so fetch-based providers abort the in-flight
+  // network instead of hanging forever (the "editor runs and runs" symptom).
   const getSignal = useCallback((domain?: string): AbortSignal => {
-    const controller = new AbortController();
+    const timeout = timeoutSignal(AI_REQUEST_TIMEOUT_MS);
     if (domain) {
       abortRefs.current[domain]?.abort();
+      const controller = new AbortController();
       abortRefs.current[domain] = controller;
+      return mergeAbortSignals([controller.signal, timeout]);
     }
-    return controller.signal;
+    return timeout;
   }, []);
 
   const generateAIResponse = useCallback(

@@ -2,6 +2,15 @@ import { GoogleGenAI } from '@google/genai';
 import type { BrainContext } from './brain/types';
 import { broker } from './messageBroker.js';
 
+// Hard ceiling for any single AI provider call. Without this, a hung provider
+// (slow Ollama model load, dead endpoint, stalled connection, Google SDK with no
+// signal) leaves the editor spinner spinning indefinitely until the browser/SDK
+// eventually gives up — the "editor runs and runs then says the engine didn't go"
+// symptom. The orchestrator also folds this same budget into the AbortSignal it
+// passes to fetch-based providers so the network is truly aborted, not just the
+// promise rejected.
+export const AI_REQUEST_TIMEOUT_MS = 120_000;
+
 export const fillTemplate = (template: string, data: Record<string, string>): string => {
   return template.replace(/\{\{(\w+)\}\}/g, (_: string, key: string) => data[key] || `{{${key}}}`);
 };
@@ -226,7 +235,7 @@ const generateOpenRouterResponse = async (
     enrichedSystemInstruction += formatNeuralContext(brainContext);
   }
 
-  const model = aiModel || 'google/gemma-2-9b-it:free';
+  const model = aiModel || 'openrouter/fusion';
   let messages: any[] = [{ role: 'system', content: enrichedSystemInstruction }];
 
   if (Array.isArray(finalPrompt)) {
@@ -325,42 +334,50 @@ export const generateAIResponse = async (
 
   try {
     let response = '';
-    switch (aiProvider) {
-      case 'google':
-        response = await generateGoogleResponse(
-          finalPrompt,
-          systemInstruction,
-          options,
-          dependencies,
-        );
-        break;
-      case 'grok':
-        response = await generateGrokResponse(
-          finalPrompt,
-          systemInstruction,
-          options,
-          dependencies,
-        );
-        break;
-      case 'ollama':
-        response = await generateOllamaResponse(
-          finalPrompt,
-          systemInstruction,
-          options,
-          dependencies,
-        );
-        break;
-      case 'openrouter':
-        response = await generateOpenRouterResponse(
-          finalPrompt,
-          systemInstruction,
-          options,
-          dependencies,
-        );
-        break;
-      default:
-        response = '';
-    }
+    // Race the provider call against a hard timeout. fetch-based providers
+    // (grok/openrouter/ollama) also receive an AbortSignal that aborts at this
+    // same budget, so the in-flight network is cancelled; Google's SDK call has
+    // no signal hook, so this race is what actually bounds it. Either way the
+    // promise rejects at ~AI_REQUEST_TIMEOUT_MS instead of hanging forever.
+    const providerCall = (async () => {
+      switch (aiProvider) {
+        case 'google':
+          return generateGoogleResponse(
+            finalPrompt,
+            systemInstruction,
+            options,
+            dependencies,
+          );
+        case 'grok':
+          return generateGrokResponse(finalPrompt, systemInstruction, options, dependencies);
+        case 'ollama':
+          return generateOllamaResponse(finalPrompt, systemInstruction, options, dependencies);
+        case 'openrouter':
+          return generateOpenRouterResponse(
+            finalPrompt,
+            systemInstruction,
+            options,
+            dependencies,
+          );
+        default:
+          return '';
+      }
+    })();
+
+    response = await Promise.race([
+      providerCall,
+      new Promise<never>((_, reject) =>
+        setTimeout(
+          () =>
+            reject(
+              new Error(
+                `AI request timed out after ${AI_REQUEST_TIMEOUT_MS}ms (${aiProvider}/${aiModel || 'default'}).`,
+              ),
+            ),
+          AI_REQUEST_TIMEOUT_MS,
+        ),
+      ),
+    ]);
 
     const duration = Date.now() - startTime;
     broker.publish(

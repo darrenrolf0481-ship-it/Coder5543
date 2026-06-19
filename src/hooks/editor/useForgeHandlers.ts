@@ -54,8 +54,11 @@ export function useForgeHandlers(
             prev + `[SYSTEM] Code formatted successfully${isMobile ? ' (mobile)' : ''}.\n`,
         );
       }
-    } catch (err) {
-      setEditorOutput((prev: string) => prev + '[ERROR] Formatting engine failed.\n');
+    } catch (err: any) {
+      setEditorOutput(
+        (prev: string) =>
+          prev + `[ERROR] Formatting engine failed: ${err?.message || 'unknown error'}\n`,
+      );
     } finally {
       setIsAiProcessing(false);
     }
@@ -104,8 +107,11 @@ export function useForgeHandlers(
         },
       ]);
       setIsEditorAssistantOpen(true);
-    } catch (err) {
-      setEditorOutput((prev: string) => prev + '[ERROR] Refactoring engine failed.\n');
+    } catch (err: any) {
+      setEditorOutput(
+        (prev: string) =>
+          prev + `[ERROR] Refactoring engine failed: ${err?.message || 'unknown error'}\n`,
+      );
     } finally {
       setIsAiProcessing(false);
     }
@@ -159,15 +165,21 @@ export function useForgeHandlers(
               setEditorContent(result.refactoredCode);
             }
           }
-        } catch (err) {
-          setEditorOutput((prev: string) => prev + `[ERROR] Failed to refactor ${file.name}.\n`);
+        } catch (err: any) {
+          setEditorOutput(
+            (prev: string) =>
+              prev + `[ERROR] Failed to refactor ${file.name}: ${err?.message || 'unknown error'}\n`,
+          );
         }
       }
 
       setProjectFiles(updatedFiles);
       setEditorOutput((prev: string) => prev + '[SYSTEM] Global project refactor complete.\n');
-    } catch (err) {
-      setEditorOutput((prev: string) => prev + '[ERROR] Global refactoring engine failed.\n');
+    } catch (err: any) {
+      setEditorOutput(
+        (prev: string) =>
+          prev + `[ERROR] Global refactoring engine failed: ${err?.message || 'unknown error'}\n`,
+      );
     } finally {
       setIsAiProcessing(false);
     }
@@ -207,10 +219,10 @@ export function useForgeHandlers(
             metadata: { generatedCode: extractedCode, isSnippet: true },
           },
         ]);
-      } catch (err) {
+      } catch (err: any) {
         setEditorAssistantMessages((prev: any) => [
           ...prev,
-          { role: 'ai', text: 'FORGE_ERROR: Neural materialization failed.' },
+          { role: 'ai', text: `FORGE_ERROR: Neural materialization failed — ${err?.message || 'unknown error'}.` },
         ]);
       } finally {
         setIsAiProcessing(false);
@@ -271,10 +283,10 @@ export function useForgeHandlers(
             ]);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         setEditorAssistantMessages((prev: any) => [
           ...prev,
-          { role: 'ai', text: `[FORGE_ERROR] Neural materialization failed.` },
+          { role: 'ai', text: `[FORGE_ERROR] Neural materialization failed — ${err?.message || 'unknown error'}.` },
         ]);
       } finally {
         setIsAiProcessing(false);

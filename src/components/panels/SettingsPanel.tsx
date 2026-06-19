@@ -676,7 +676,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                                             : e.target.value === 'grok'
                                               ? 'grok-beta'
                                               : e.target.value === 'openrouter'
-                                                ? 'google/gemma-2-9b-it:free'
+                                                ? 'openrouter/fusion'
                                                 : x.model || 'llama3.2:latest',
                                       }
                                     : x,
@@ -742,6 +742,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                               ))
                             ) : (
                               [
+                                'openrouter/fusion',
                                 'google/gemma-2-9b-it:free',
                                 'meta-llama/llama-3.2-3b-instruct:free',
                                 'qwen/qwen-2.5-7b-instruct:free',

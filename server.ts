@@ -126,7 +126,8 @@ async function startServer() {
   if (isProduction()) {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (_req, res) => res.sendFile(path.join(distPath, 'index.html')));
+    // Express 5 / path-to-regexp v8: bare '*' is illegal — use a named wildcard splat.
+    app.get('/*splat', (_req, res) => res.sendFile(path.join(distPath, 'index.html')));
   }
 
   const httpServer = app.listen(PORT, '0.0.0.0', () => {
@@ -171,6 +172,20 @@ async function startServer() {
 await brainStorage.init();
 (globalThis as any).brainStorage = brainStorage.getSyncInterface();
 
+// Assert the defensive identity substrate before any AI requests can be served.
+await brainService.boot();
+
 startServer().catch((err) => {
   logger.error('Failed to start server:', err);
 });
+
+// ── Graceful Shutdown ─────────────────────────────────────────────────────────
+function gracefulShutdown(signal: string) {
+  logger.info(`[Server] Received ${signal}. Shutting down gracefully...`);
+  conversationIngestor.stopDaemon();
+  mcpManager.shutdown();
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

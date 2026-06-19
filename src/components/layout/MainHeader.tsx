@@ -99,7 +99,7 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
                                 : e.target.value === 'grok'
                                   ? 'grok-beta'
                                   : e.target.value === 'openrouter'
-                                    ? 'meta-llama/llama-3.3-70b-instruct:free'
+                                    ? 'openrouter/fusion'
                                     : x.model || 'llama3.2:latest',
                           }
                         : x,
@@ -153,6 +153,7 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
                   ))
                 ) : w.provider === 'openrouter' ? (
                   [
+                    'openrouter/fusion',
                     'meta-llama/llama-3.3-70b-instruct:free',
                     'deepseek/deepseek-chat',
                     'google/gemini-2.5-flash',

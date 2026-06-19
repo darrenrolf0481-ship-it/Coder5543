@@ -232,13 +232,13 @@ ${prompt}`,
         },
       ]);
       setIsEditorAssistantOpen(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setEditorAssistantMessages((prev: any[]) => [
         ...prev,
         {
           role: 'ai',
-          text: '[ERROR] Code review failed.',
+          text: `[ERROR] Code review failed: ${err?.message || 'unknown error'}.`,
         },
       ]);
     } finally {
@@ -264,10 +264,14 @@ ${prompt}`,
         ...prev,
         { role: 'ai', text: response || 'Code review complete.' },
       ]);
-    } catch (err) {
+    } catch (err: any) {
+      console.error(err);
       setEditorAssistantMessages((prev: any[]) => [
         ...prev,
-        { role: 'ai', text: 'CRITICAL ERROR: Code review failed.' },
+        {
+          role: 'ai',
+          text: `CRITICAL ERROR: Code review failed — ${err?.message || 'unknown error'}.`,
+        },
       ]);
     } finally {
       setIsAiProcessing(false);
@@ -295,8 +299,12 @@ ${prompt}`,
         },
       ]);
       setIsEditorAssistantOpen(true);
-    } catch (err) {
-      setEditorOutput((prev: string) => prev + '[ERROR] Analysis node offline.\n');
+    } catch (err: any) {
+      console.error(err);
+      setEditorOutput(
+        (prev: string) =>
+          prev + `[ERROR] Analysis node offline: ${err?.message || 'unknown error'}\n`,
+      );
     } finally {
       setIsAiProcessing(false);
     }
@@ -326,13 +334,13 @@ ${prompt}`,
         },
       ]);
       setIsEditorAssistantOpen(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setEditorAssistantMessages((prev: any[]) => [
         ...prev,
         {
           role: 'ai',
-          text: '[ERROR] Data analysis failed.',
+          text: `[ERROR] Data analysis failed: ${err?.message || 'unknown error'}.`,
         },
       ]);
     } finally {
@@ -382,8 +390,12 @@ ${prompt}`,
         },
       ]);
       setIsEditorAssistantOpen(true);
-    } catch (err) {
-      setEditorOutput((prev: string) => prev + '[ERROR] Documentation generation failed.\n');
+    } catch (err: any) {
+      console.error(err);
+      setEditorOutput(
+        (prev: string) =>
+          prev + `[ERROR] Documentation generation failed: ${err?.message || 'unknown error'}\n`,
+      );
     } finally {
       setIsAiProcessing(false);
     }

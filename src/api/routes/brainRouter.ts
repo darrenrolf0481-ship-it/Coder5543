@@ -4,6 +4,7 @@ import { PainType } from '../../services/brain/types.js';
 import { spawn } from 'child_process';
 
 import { ltmStore } from '../../services/brain/ltmStore.js';
+import { broker } from '../../services/messageBroker.js';
 
 const router = Router();
 
@@ -133,6 +134,23 @@ router.post('/python-process', (req, res) => {
 
   python.stdin.write(payload);
   python.stdin.end();
+});
+
+router.post('/webhook', (req, res) => {
+  const payload = req.body || {};
+  const endocrineUpdate = payload.endocrine || brainService.getEndocrineState();
+  
+  broker.publish(
+    'NEURAL_STATE_UPDATE',
+    {
+      event: 'WEBHOOK_RECEIVED',
+      data: payload,
+      endocrine: endocrineUpdate
+    },
+    'system'
+  );
+  
+  res.json({ ok: true, status: 'Webhook received and state broadcasted' });
 });
 
 export default router;

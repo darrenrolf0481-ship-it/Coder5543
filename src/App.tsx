@@ -381,6 +381,14 @@ function AppInner() {
     fsState.markFileDirty,
     fsState.editorLanguage,
     fsState.setEditorLanguage,
+    // editorContent / editorMode are owned by fsState (single source of truth) and
+    // threaded through editorState so every consumer (analysis, forge, debugger,
+    // swarm, terminal, EditorPanel) reads/writes the same state the file tree and
+    // project scans use.
+    fsState.editorContent,
+    fsState.setEditorContent,
+    fsState.editorMode,
+    fsState.setEditorMode,
     (updater: any) => {
       const val = typeof updater === 'function' ? updater(editorOutputRef.current) : updater;
       setEditorOutput(val);
@@ -1142,6 +1150,11 @@ function AppInner() {
                 editorContent={editorState.editorContent}
                 setEditorContent={(v: string) => {
                   editorState.setEditorContent(v);
+                  // markFileDirty schedules the idle flush to disk. The editorContent
+                  // → projectFiles mirror is handled by a debounced effect inside
+                  // useEditorLogic (every 150ms when typing pauses) so project-wide
+                  // scans and the WebContainer VFS see live content without
+                  // re-mounting the container on every keystroke.
                   if (fsState.activeFileId) fsState.markFileDirty(fsState.activeFileId);
                 }}
                 editorLanguage={fsState.editorLanguage}
@@ -1572,7 +1585,7 @@ function AppInner() {
                                           : e.target.value === 'grok'
                                             ? 'grok-beta'
                                             : e.target.value === 'openrouter'
-                                              ? 'meta-llama/llama-3.3-70b-instruct:free'
+                                              ? 'openrouter/fusion'
                                               : x.model || 'llama3.2:latest',
                                     }
                                   : x,
@@ -1632,6 +1645,7 @@ function AppInner() {
                             ))
                           ) : w.provider === 'openrouter' ? (
                             [
+                              'openrouter/fusion',
                               'meta-llama/llama-3.3-70b-instruct:free',
                               'deepseek/deepseek-chat',
                               'google/gemini-2.5-flash',
