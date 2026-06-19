@@ -324,6 +324,8 @@ function AppInner() {
   // Project Manager
   const projectManager = useProjectManager();
 
+  const loadedProjectIdRef = useRef<string | null>(null);
+
   // File System State
   const fsState = useEditorFileSystem(
     phi,
@@ -340,8 +342,62 @@ function AppInner() {
     },
     setTermuxFiles,
     setStorageFiles,
-    (name: string) => projectManager.createProject(name),
+    (name: string, files: any[]) => {
+      const proj = projectManager.createProject(name, files);
+      loadedProjectIdRef.current = proj.id;
+    },
   );
+
+  // Sync Down: projectManager.currentProject -> fsState.projectFiles
+  useEffect(() => {
+    if (projectManager.currentProject) {
+      if (loadedProjectIdRef.current !== projectManager.currentProject.id) {
+        if (projectManager.currentProject.files && projectManager.currentProject.files.length > 0) {
+          fsState.setProjectFiles(projectManager.currentProject.files);
+          const allFiles = projectManager.currentProject.files.filter((f) => f.type === 'file');
+          const MAIN_PRIORITY = [
+            'main.py', 'app.py', 'index.js', 'app.js', 'main.js',
+            'index.ts', 'app.ts', 'main.ts', 'App.tsx', 'index.tsx',
+            'main.tsx', 'index.html', 'main.rs', 'main.go',
+          ];
+          const LANG_MAP: Record<string, string> = {
+            py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript',
+            jsx: 'javascript', html: 'html', css: 'css', rs: 'rust', go: 'go',
+            java: 'java', cpp: 'cpp', json: 'json', md: 'markdown',
+          };
+          const mainFile =
+            MAIN_PRIORITY.map((n) => allFiles.find((f) => f.name === n)).find(Boolean) ??
+            allFiles[0];
+          if (mainFile) {
+            const ext = mainFile.name.split('.').pop() || '';
+            const lang = LANG_MAP[ext] || mainFile.language || 'text';
+            fsState.setActiveFileId(mainFile.id);
+            fsState.setEditorContent(mainFile.content || '');
+            fsState.setEditorLanguage(lang);
+          } else {
+            fsState.setActiveFileId('');
+            fsState.setEditorContent('');
+          }
+        } else {
+          fsState.setProjectFiles([]);
+          fsState.setActiveFileId('');
+          fsState.setEditorContent('');
+        }
+        loadedProjectIdRef.current = projectManager.currentProject.id;
+      }
+    }
+  }, [projectManager.currentProject?.id]);
+
+  // Sync Up: fsState.projectFiles -> projectManager.updateProjectFiles
+  useEffect(() => {
+    if (projectManager.currentProject && loadedProjectIdRef.current === projectManager.currentProject.id) {
+      const filesJson = JSON.stringify(fsState.projectFiles);
+      const currentJson = JSON.stringify(projectManager.currentProject.files);
+      if (filesJson !== currentJson) {
+        projectManager.updateProjectFiles(fsState.projectFiles);
+      }
+    }
+  }, [fsState.projectFiles, projectManager.currentProject?.id]);
 
   // Local Core (WebContainer)
   const {
@@ -1114,7 +1170,8 @@ function AppInner() {
                     fsState.setActiveFileId(mainFile.id);
                     fsState.setEditorLanguage(lang);
                   }
-                  projectManager.createProject(repoName);
+                  const proj = projectManager.createProject(repoName, files);
+                  loadedProjectIdRef.current = proj.id;
                   setActiveTab('editor');
                 }}
               />
@@ -1338,16 +1395,19 @@ function AppInner() {
             {activeTab === 'projects' && (
               <ProjectPanel
                 currentProject={projectManager.currentProject}
+                savedProjects={projectManager.savedProjects}
                 onProjectSwitch={(project) => {
                   projectManager.switchProject(project.id);
                   const fullProject = projectManager.savedProjects.find((p) => p.id === project.id);
                   if (fullProject && fullProject.files && fullProject.files.length > 0) {
                     fsState.setProjectFiles(fullProject.files);
                   }
+                  loadedProjectIdRef.current = project.id;
                   setActiveTab('editor');
                 }}
                 onProjectCreate={(name) => {
-                  projectManager.createProject(name);
+                  const proj = projectManager.createProject(name);
+                  loadedProjectIdRef.current = proj.id;
                 }}
                 onProjectDelete={(id) => {
                   projectManager.deleteProject(id);
@@ -1381,7 +1441,8 @@ function AppInner() {
                         fsState.setEditorLanguage(lang);
                       }
                       
-                      projectManager.createProject(projectName, data.files || []);
+                      const proj = projectManager.createProject(projectName, data.files || []);
+                      loadedProjectIdRef.current = proj.id;
                       setActiveTab('editor');
                     }
                   } catch (err) {

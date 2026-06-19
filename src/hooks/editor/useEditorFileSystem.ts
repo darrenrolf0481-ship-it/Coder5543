@@ -19,7 +19,7 @@ export function useEditorFileSystem(
   setTerminalOutput: any,
   setTermuxFiles: any,
   setStorageFiles: any,
-  onProjectLoad?: (name: string) => void,
+  onProjectLoad?: (name: string, files: ProjectFile[]) => void,
 ) {
   const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([
     { id: 'root', name: 'Project', type: 'folder', parentId: null, isOpen: true },
@@ -232,23 +232,24 @@ export function useEditorFileSystem(
 
     if (newFiles.length > 0) {
       if (isFolderUpload && projectRootName) {
-        // Replace existing files — this becomes the new project
-        setProjectFiles([
+        const folderTree: ProjectFile[] = [
           { id: 'root', name: projectRootName, type: 'folder', parentId: null, isOpen: true },
           ...newFiles,
-        ]);
+        ];
+        setProjectFiles(folderTree);
         const fileCount = newFiles.filter((f) => f.type === 'file').length;
         setEditorOutput(
           (prev: string) =>
             prev + `[PROJECT] Loaded "${projectRootName}" — ${fileCount} files.\n`,
         );
-        onProjectLoad?.(projectRootName);
+        onProjectLoad?.(projectRootName, folderTree);
       } else {
         setProjectFiles((prev) => [...prev, ...newFiles]);
         setEditorOutput(
           (prev: string) => prev + `[SYSTEM] Uploaded ${newFiles.filter((f) => f.type === 'file').length} files.\n`,
         );
       }
+
 
       // Auto-open the main/entry-point file
       const uploadedFiles = newFiles.filter((f) => f.type === 'file');

@@ -13,6 +13,7 @@ interface Project {
 
 interface ProjectPanelProps {
   currentProject: Project | null;
+  savedProjects: Project[];
   onProjectSwitch: (project: Project) => void;
   onProjectCreate: (name: string) => void;
   onProjectDelete: (projectId: string) => void;
@@ -21,12 +22,12 @@ interface ProjectPanelProps {
 
 export function ProjectPanel({
   currentProject,
+  savedProjects,
   onProjectSwitch,
   onProjectCreate,
   onProjectDelete,
   onLoadServerProject,
 }: ProjectPanelProps) {
-  const [projects, setProjects] = useState<Project[]>([]);
   const [serverProjects, setServerProjects] = useState<Project[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
@@ -46,16 +47,6 @@ export function ProjectPanel({
       }
     };
 
-    // Load saved projects from localStorage
-    const saved = localStorage.getItem('crimson_projects');
-    if (saved) {
-      try {
-        setProjects(JSON.parse(saved));
-      } catch (err) {
-        console.error('Failed to parse saved projects:', err);
-      }
-    }
-
     fetchProjects();
   }, []);
 
@@ -64,12 +55,6 @@ export function ProjectPanel({
     onProjectCreate(newProjectName.trim());
     setNewProjectName('');
     setIsCreating(false);
-
-    // Refresh projects list
-    const saved = localStorage.getItem('crimson_projects');
-    if (saved) {
-      setProjects(JSON.parse(saved));
-    }
   };
 
   const handleLoadServerProject = async (projectName: string) => {
@@ -128,7 +113,7 @@ export function ProjectPanel({
       {activeTab === 'saved' && (
         <div className="flex-1 overflow-auto">
           <div className="space-y-2 mb-4">
-            {projects.map((project) => (
+            {savedProjects.map((project) => (
               <div
                 key={project.id}
                 className={`p-3 rounded-lg border ${
