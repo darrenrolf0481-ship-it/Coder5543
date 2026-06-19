@@ -1260,6 +1260,40 @@ function AppInner() {
                 setIsTemplateModalOpen={setIsTemplateModalOpen}
                 swarmAnxiety={swarmState.swarmAnxiety}
                 setTerminalOutput={terminal.setTerminalOutput}
+                onProjectLoad={(name, files) => {
+                  const DEFAULT_IDS = new Set(['root', 'src', 'brain.py', 'ui.html', 'logic.rs']);
+                  const hasCustomWork = fsState.projectFiles.some((f: any) => !DEFAULT_IDS.has(f.id));
+                  if (hasCustomWork) {
+                    const ok = window.confirm(
+                      `Loading "${name}" will replace your current project. Any unsaved changes will be lost. Continue?`,
+                    );
+                    if (!ok) return;
+                  }
+                  const MAIN_PRIORITY = [
+                    'main.py', 'app.py', 'index.js', 'app.js', 'main.js',
+                    'index.ts', 'app.ts', 'main.ts', 'App.tsx', 'index.tsx',
+                    'main.tsx', 'index.html', 'main.rs', 'main.go', 'main.java',
+                    'Program.cs', 'main.cpp', 'index.php',
+                  ];
+                  const LANG_MAP: Record<string, string> = {
+                    py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript',
+                    jsx: 'javascript', html: 'html', css: 'css', rs: 'rust', go: 'go',
+                    java: 'java', cpp: 'cpp', json: 'json', md: 'markdown',
+                  };
+                  fsState.setProjectFiles(files);
+                  const allFiles = files.filter((f: any) => f.type === 'file');
+                  const mainFile =
+                    MAIN_PRIORITY.map((n: string) => allFiles.find((f: any) => f.name === n)).find(Boolean) ??
+                    allFiles[0];
+                  if (mainFile) {
+                    const ext = (mainFile as any).name.split('.').pop() || '';
+                    const lang = LANG_MAP[ext] || (mainFile as any).language || 'text';
+                    fsState.setActiveFileId((mainFile as any).id);
+                    fsState.setEditorLanguage(lang);
+                  }
+                  projectManager.createProject(name, files);
+                  terminal.setTerminalOutput((prev) => [...prev, `[PROJECT] Loaded: ${name}`]);
+                }}
               />
             )}
 

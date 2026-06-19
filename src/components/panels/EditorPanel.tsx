@@ -211,6 +211,9 @@ interface EditorPanelProps {
 
   // Terminal output
   setTerminalOutput: React.Dispatch<React.SetStateAction<string[]>>;
+
+  // Project load callback (GitHub clone → full project)
+  onProjectLoad?: (name: string, files: any[]) => void;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -311,6 +314,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
   setIsTemplateModalOpen,
   swarmAnxiety,
   setTerminalOutput,
+  onProjectLoad,
 }) => {
   const [isAiMenuOpen, setIsAiMenuOpen] = React.useState(false);
   const [isUtilMenuOpen, setIsUtilMenuOpen] = React.useState(false);
@@ -447,6 +451,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
               onProjectCreate={(name) =>
                 setTerminalOutput((prev) => [...prev, `[PROJECT] Created: ${name}`])
               }
+              onProjectLoad={onProjectLoad}
             />
           </div>
         </div>

@@ -58,6 +58,7 @@ interface FileTreeProps {
   onFilesChange: (files: FileNode[]) => void;
   onFileSelect: (fileId: string, file: FileNode) => void;
   onProjectCreate?: (name: string) => void;
+  onProjectLoad?: (name: string, files: FileNode[]) => void;
 }
 
 // A single visible row produced by the flatten pass.
@@ -709,6 +710,7 @@ export const FileTree: React.FC<FileTreeProps> = ({
   onFilesChange,
   onFileSelect,
   onProjectCreate,
+  onProjectLoad,
 }) => {
   const [search, setSearch] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -922,26 +924,28 @@ export const FileTree: React.FC<FileTreeProps> = ({
         throw new Error(data.error || 'Cloning failed');
       }
 
-      onFilesChange(data.files);
-
-      const firstFile = data.files.find((f: any) => f.type === 'file');
-      if (firstFile) {
-        onFileSelect(firstFile.id, firstFile);
+      if (onProjectLoad) {
+        onProjectLoad(data.repoName, data.files);
+      } else {
+        onFilesChange(data.files);
+        const firstFile = data.files.find((f: any) => f.type === 'file');
+        if (firstFile) {
+          onFileSelect(firstFile.id, firstFile);
+        }
+        if (onProjectCreate) {
+          onProjectCreate(data.repoName);
+        }
       }
 
       setShowCloner(false);
       setRepoUrl('');
       setBranchName('');
-
-      if (onProjectCreate) {
-        onProjectCreate(data.repoName);
-      }
     } catch (err: any) {
       setCloneErr(err.message || 'Clone failed');
     } finally {
       setCloning(false);
     }
-  }, [repoUrl, branchName, onFilesChange, onFileSelect, onProjectCreate]);
+  }, [repoUrl, branchName, onFilesChange, onFileSelect, onProjectCreate, onProjectLoad]);
 
   const handleNewProject = useCallback(() => {
     if (!projectName.trim()) return;
