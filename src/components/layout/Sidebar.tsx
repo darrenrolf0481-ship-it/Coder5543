@@ -3,6 +3,7 @@ import {
   Zap,
   Terminal as TerminalIcon,
   Code2,
+  FolderGit,
   LayoutTemplate,
   Brain,
   Smartphone,
@@ -64,6 +65,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           active={activeTab === 'editor'}
           onClick={() => setActiveTab('editor')}
           label="Neural Editor"
+        />
+        <SidebarIcon
+          icon={<FolderGit />}
+          active={activeTab === 'projects'}
+          onClick={() => setActiveTab('projects')}
+          label="Projects Panel"
         />
         <SidebarIcon
           icon={<LayoutTemplate />}

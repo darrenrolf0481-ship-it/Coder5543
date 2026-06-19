@@ -77,7 +77,7 @@ async function fetchRepoFiles(
   repo: string,
   branch?: string,
 ): Promise<{ files: any[]; truncated: boolean; repoName: string }> {
-  const res = await fetch('/api/github/clone', {
+  const res = await fetch('./api/github/clone', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ repoUrl: `${owner}/${repo}`, branch }),

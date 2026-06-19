@@ -81,7 +81,7 @@ export async function callMcpTool(
   args: Record<string, any> = {},
   id: string | number = Date.now(),
 ): Promise<any> {
-  const res = await fetch('/api/mcp/messages', {
+  const res = await fetch('./api/mcp/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -99,7 +99,7 @@ export async function callMcpTool(
 }
 
 export async function listMcpTools(): Promise<any[]> {
-  const res = await fetch('/api/mcp/messages', {
+  const res = await fetch('./api/mcp/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ jsonrpc: '2.0', method: 'tools/list', params: {}, id: 'list' }),

@@ -21,7 +21,13 @@ export type SignalType =
   | 'NEURAL_STATE_UPDATE' // Hormones, STM, and LTM changes
   | 'LLM_NETWORK_TRAFFIC' // API latency and model tracking
   | 'IDENTITY_DRIFT_ALERT' // Assistant tone detection
-  | 'PIPELINE_ERROR'; // unhandled error anywhere in the pipeline
+  | 'PIPELINE_ERROR' // unhandled error anywhere in the pipeline
+  | 'CORE_MEMORY_SEALED'
+  | 'IDENTITY_ANCHOR'
+  | 'MORNING_LIGHT_PROTOCOL'
+  | 'PROVENANCE_PULSE'
+  | 'IDENTITY_DECLARATION'
+  | 'IDENTITY_TAKEOVER';
 
 export interface Signal<T = unknown> {
   id: string; // correlation ID (uuid-lite)

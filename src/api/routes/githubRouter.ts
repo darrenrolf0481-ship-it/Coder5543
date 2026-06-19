@@ -251,4 +251,78 @@ router.post('/clone', async (req, res) => {
   }
 });
 
+router.get('/projects', async (_req, res) => {
+  try {
+    const projectsDir = path.join(process.cwd(), 'projects');
+    await fs.mkdir(projectsDir, { recursive: true });
+    const entries = await fs.readdir(projectsDir, { withFileTypes: true });
+    const projects = [];
+    for (const entry of entries) {
+      if (entry.isDirectory() && !entry.name.startsWith('.')) {
+        const stats = await fs.stat(path.join(projectsDir, entry.name));
+        projects.push({
+          id: `server_project_${entry.name}`,
+          name: entry.name,
+          path: path.join(projectsDir, entry.name),
+          createdAt: stats.birthtimeMs || stats.ctimeMs || Date.now(),
+          lastAccessed: stats.atimeMs || Date.now(),
+        });
+      }
+    }
+    res.json({ projects });
+  } catch (err: any) {
+    console.error('Error listing server projects:', err);
+    res.status(500).json({ error: err.message || 'Failed to list server projects' });
+  }
+});
+
+router.get('/load', async (req, res) => {
+  const { project } = req.query as { project?: string };
+  if (!project) {
+    res.status(400).json({ error: 'project parameter is required' });
+    return;
+  }
+  // Sanitize project name to prevent path traversal
+  if (!/^[a-zA-Z0-9_\-\.]+$/.test(project)) {
+    res.status(400).json({ error: 'Invalid project name' });
+    return;
+  }
+
+  try {
+    const projectsDir = path.join(process.cwd(), 'projects');
+    const targetDir = path.join(projectsDir, project);
+
+    let exists = false;
+    try {
+      await fs.access(targetDir);
+      exists = true;
+    } catch {}
+
+    if (!exists) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+
+    const fileCount = { count: 0 };
+    const files = await walkDir(targetDir, targetDir, 'root', fileCount);
+
+    const rootNode = {
+      id: 'root',
+      name: project,
+      type: 'folder',
+      parentId: null,
+      isOpen: true,
+    };
+
+    res.json({
+      success: true,
+      files: [rootNode, ...files],
+      truncated: fileCount.count > 150,
+    });
+  } catch (err: any) {
+    console.error('Error loading project files:', err);
+    res.status(500).json({ error: err.message || 'Failed to load project files' });
+  }
+});
+
 export default router;

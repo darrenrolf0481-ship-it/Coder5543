@@ -44,6 +44,8 @@ import { NodeBridgePanel } from './components/panels/NodeBridgePanel';
 import { StoragePanel } from './components/panels/StoragePanel';
 import { BrainPanel } from './components/panels/BrainPanel';
 import { SettingsPanel } from './components/panels/SettingsPanel';
+import { ProjectPanel } from './components/panels/ProjectPanel';
+import { UnifiedResultsPanel } from './components/panels/UnifiedResultsPanel';
 
 // Modals & Registry
 import { CommitModal } from './components/modals/CommitModal';
@@ -77,7 +79,7 @@ export default function App() {
 function AppInner() {
   // Navigation & Theme
   const [activeTab, setActiveTab] = useState<
-    'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain'
+    'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain' | 'projects' | 'results'
   >('toolneuron');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -1330,6 +1332,69 @@ function AppInner() {
                 ollamaStatus={ollamaStatus}
                 refreshOllamaModels={refreshOllamaModels}
                 ollamaError={''}
+              />
+            )}
+
+            {activeTab === 'projects' && (
+              <ProjectPanel
+                currentProject={projectManager.currentProject}
+                onProjectSwitch={(project) => {
+                  projectManager.switchProject(project.id);
+                  const fullProject = projectManager.savedProjects.find((p) => p.id === project.id);
+                  if (fullProject && fullProject.files && fullProject.files.length > 0) {
+                    fsState.setProjectFiles(fullProject.files);
+                  }
+                  setActiveTab('editor');
+                }}
+                onProjectCreate={(name) => {
+                  projectManager.createProject(name);
+                }}
+                onProjectDelete={(id) => {
+                  projectManager.deleteProject(id);
+                }}
+                onLoadServerProject={async (projectName) => {
+                  try {
+                    const res = await fetch(`./api/github/load?project=${encodeURIComponent(projectName)}`);
+                    if (res.ok) {
+                      const data = await res.json();
+                      fsState.setProjectFiles(data.files || []);
+                      
+                      const MAIN_PRIORITY = [
+                        'main.py', 'app.py', 'index.js', 'app.js', 'main.js',
+                        'index.ts', 'app.ts', 'main.ts', 'App.tsx', 'index.tsx',
+                        'main.tsx', 'index.html', 'main.rs', 'main.go',
+                      ];
+                      const LANG_MAP: Record<string, string> = {
+                        py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript',
+                        jsx: 'javascript', html: 'html', css: 'css', rs: 'rust', go: 'go',
+                        java: 'java', cpp: 'cpp', json: 'json', md: 'markdown',
+                      };
+                      
+                      const allFiles = (data.files || []).filter((f: any) => f.type === 'file');
+                      const mainFile =
+                        MAIN_PRIORITY.map((n) => allFiles.find((f: any) => f.name === n)).find(Boolean) ??
+                        allFiles[0];
+                      if (mainFile) {
+                        const ext = mainFile.name.split('.').pop() || '';
+                        const lang = LANG_MAP[ext] || mainFile.language || 'text';
+                        fsState.setActiveFileId(mainFile.id);
+                        fsState.setEditorLanguage(lang);
+                      }
+                      
+                      projectManager.createProject(projectName, data.files || []);
+                      setActiveTab('editor');
+                    }
+                  } catch (err) {
+                    console.error('Failed to load server project:', err);
+                  }
+                }}
+              />
+            )}
+
+            {activeTab === 'results' && (
+              <UnifiedResultsPanel
+                maxHeight="100%"
+                showTabs={true}
               />
             )}
           </div>
