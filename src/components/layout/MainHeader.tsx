@@ -99,7 +99,7 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
                                 : e.target.value === 'grok'
                                   ? 'grok-beta'
                                   : e.target.value === 'openrouter'
-                                    ? 'meta-llama/llama-3.3-70b-instruct:free'
+                                    ? ''
                                     : x.model || 'llama3.2:latest',
                           }
                         : x,
@@ -123,6 +123,20 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
                   OpenRouter
                 </option>
               </select>
+              {w.provider === 'openrouter' ? (
+                <input
+                  type="text"
+                  value={w.model}
+                  onChange={(e) =>
+                    setWorkers((prev) =>
+                      prev.map((x) => (x.id === w.id ? { ...x, model: e.target.value } : x)),
+                    )
+                  }
+                  placeholder="model/id"
+                  className={`bg-transparent text-[10px] font-black outline-none w-24 truncate transition-colors placeholder-accent-800 ${w.enabled ? 'text-accent-300' : 'text-accent-900 pointer-events-none'}`}
+                  aria-label={`Model for W${w.id}`}
+                />
+              ) : (
               <select
                 value={w.model}
                 onChange={(e) =>
@@ -151,23 +165,13 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
                       {m}
                     </option>
                   ))
-                ) : w.provider === 'openrouter' ? (
-                  [
-                    'meta-llama/llama-3.3-70b-instruct:free',
-                    'deepseek/deepseek-chat',
-                    'google/gemini-2.5-flash',
-                    'meta-llama/llama-3-8b-instruct:free',
-                  ].map((m) => (
-                    <option key={m} value={m} className="bg-[#0a0202] text-accent-200">
-                      {m}
-                    </option>
-                  ))
                 ) : (
                   <option value={w.model} className="bg-[#0a0202]">
                     {w.model || 'llama3'}
                   </option>
                 )}
               </select>
+              )}
               <select
                 value={w.agentId || ''}
                 onChange={(e) =>
