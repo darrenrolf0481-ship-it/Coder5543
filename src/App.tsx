@@ -1197,6 +1197,7 @@ function AppInner() {
                 handleExplainCode={chatState.handleExplainCode}
                 handleFullProjectAnalysis={analysisState.handleFullProjectAnalysis}
                 handleDeepProjectAudit={analysisState.handleDeepProjectAudit}
+                handleJetBrainsInspect={analysisState.handleJetBrainsInspect}
                 handleGenerateDocs={
                   debuggerState.handleToggleCurrentLineBreakpoint /* Dummy JSDoc wrapper placeholder stub */
                 }

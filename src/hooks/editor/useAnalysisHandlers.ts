@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { makePrompt } from '../../utils/crimson-core';
 import { extractJson } from '../../utils/helpers';
+import { runMcpBoost, formatBoostResultsForAgent } from '../../services/swarm/swarmMcpBoost';
 
 export function useAnalysisHandlers(
   editorContent: string,
@@ -197,6 +198,33 @@ export function useAnalysisHandlers(
     }
   };
 
+  const handleJetBrainsInspect = async () => {
+    setIsAiProcessing(true);
+    setEditorOutput(
+      (prev: string) => prev + '[JETBRAINS] Running IDE inspections and Qodana scan...\n',
+    );
+    try {
+      const results = await runMcpBoost('jetbrains');
+      const formatted = formatBoostResultsForAgent(results, 'jetbrains');
+      setEditorAssistantMessages((prev: any) => [
+        ...prev,
+        { role: 'ai', text: formatted },
+      ]);
+      setIsEditorAssistantOpen(true);
+      setEditorOutput(
+        (prev: string) => prev + '[JETBRAINS] Inspection complete. Results in Neural Assistant.\n',
+      );
+    } catch (err: any) {
+      setEditorOutput(
+        (prev: string) =>
+          prev +
+          `[JETBRAINS ERROR] ${err?.message || 'Inspection failed. Is a JetBrains MCP server configured?'}\n`,
+      );
+    } finally {
+      setIsAiProcessing(false);
+    }
+  };
+
   const handleRunCode = async () => {
     setIsRunningCode(true);
     setEditorOutput('');
@@ -270,6 +298,7 @@ export function useAnalysisHandlers(
     handleAnalyzeCode,
     handleFullProjectAnalysis,
     handleDeepProjectAudit,
+    handleJetBrainsInspect,
     buildProjectContext,
     handleRunCode,
     getRefactoringSuggestions,

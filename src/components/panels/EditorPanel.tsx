@@ -135,6 +135,7 @@ interface EditorPanelProps {
   handleExplainCode: () => void;
   handleFullProjectAnalysis: () => void;
   handleDeepProjectAudit: () => void;
+  handleJetBrainsInspect: () => void;
   handleGenerateDocs: () => void;
   handleFormatCode: (isMobile: boolean) => void;
   handleRefactorCode: () => void;
@@ -271,6 +272,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
   handleExplainCode,
   handleFullProjectAnalysis,
   handleDeepProjectAudit,
+  handleJetBrainsInspect,
   handleGenerateDocs,
   handleFormatCode,
   handleRefactorCode,
@@ -709,6 +711,18 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                   >
                     <ShieldAlert className="w-3.5 h-3.5 text-accent-500" />
                     <span>Deep Project Audit</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleJetBrainsInspect();
+                      setIsAiMenuOpen(false);
+                    }}
+                    disabled={isAiProcessing}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider text-accent-300 hover:bg-accent-900/20 hover:text-accent-100 transition-colors disabled:opacity-30"
+                  >
+                    <Cpu className="w-3.5 h-3.5 text-accent-500" />
+                    <span>JetBrains Inspect</span>
                   </button>
 
                   <div className="h-px bg-accent-900/10 my-1" />
