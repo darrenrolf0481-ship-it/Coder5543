@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
+import { parseGitHubUrl } from '../../utils/githubUrl.js';
 
 const execAsync = promisify(exec);
 const router = Router();
@@ -173,40 +174,35 @@ router.post('/clone', async (req, res) => {
     return;
   }
 
-  // Shell injection prevention sanitization
-  const isShorthand = /^[a-zA-Z0-9_\-\.]+\/[a-zA-Z0-9_\-\.]+$/.test(repoUrl);
-  const isHttps = /^https:\/\/github\.com\/[a-zA-Z0-9_\-\.]+\/[a-zA-Z0-9_\-\.]+(\.git)?$/.test(
-    repoUrl,
-  );
-  const isSsh = /^git@github\.com:[a-zA-Z0-9_\-\.]+\/[a-zA-Z0-9_\-\.]+(\.git)?$/.test(repoUrl);
-
-  if (!isShorthand && !isHttps && !isSsh) {
-    res
-      .status(400)
-      .json({
-        error:
-          'Invalid repository format. Supported: "owner/repo", "https://github.com/owner/repo" or "git@github.com:owner/repo.git"',
-      });
+  const parsed = parseGitHubUrl(repoUrl);
+  if (!parsed) {
+    res.status(400).json({
+      error:
+        'Invalid repository format. Supported: "owner/repo", "https://github.com/owner/repo" or "git@github.com:owner/repo.git"',
+    });
     return;
   }
 
-  // Sanitize branch name if provided
-  if (branch && !/^[a-zA-Z0-9_\-\.\/]+$/.test(branch)) {
+  // Validate fields for safety
+  const safeName = /^[a-zA-Z0-9_\-\.]+$/;
+  if (!safeName.test(parsed.owner) || !safeName.test(parsed.repo)) {
+    res.status(400).json({ error: 'Invalid owner or repository name' });
+    return;
+  }
+
+  const effectiveBranch = branch || parsed.branch;
+  if (effectiveBranch && !/^[a-zA-Z0-9_\-\.\/]+$/.test(effectiveBranch)) {
     res.status(400).json({ error: 'Invalid branch name format' });
     return;
   }
 
   try {
-    let cloneUrl = repoUrl;
-    if (isShorthand) {
-      cloneUrl = `https://github.com/${repoUrl}.git`;
+    let cloneUrl = parsed.cloneUrl;
+    const token = process.env.GITHUB_TOKEN;
+    if (token && cloneUrl.startsWith('https://github.com/')) {
+      cloneUrl = cloneUrl.replace('https://github.com/', `https://${token}@github.com/`);
     }
-
-    const repoName =
-      repoUrl
-        .split('/')
-        .pop()
-        ?.replace(/\.git$/, '') || 'cloned_repo';
+    const repoName = parsed.repoName;
     const projectsDir = path.join(process.cwd(), 'projects');
 
     // Ensure projects folder exists
@@ -221,7 +217,7 @@ router.post('/clone', async (req, res) => {
     } catch {}
 
     if (!exists) {
-      const branchArg = branch ? `-b "${branch}"` : '';
+      const branchArg = effectiveBranch ? `-b "${effectiveBranch}"` : '';
       await execAsync(`git clone --depth 1 ${branchArg} "${cloneUrl}" "${targetDir}"`);
     } else {
       // Pull latest changes if it exists

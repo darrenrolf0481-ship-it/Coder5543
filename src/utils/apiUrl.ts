@@ -9,6 +9,6 @@ export function resolveApiUrl(apiPath: string): string {
   if (typeof window === 'undefined') {
     return `/api/${cleanPath}`;
   }
-  const base = window.location.pathname.replace(/\/$/, '');
+  const base = ((import.meta as any).env?.BASE_URL || '/').replace(/\/$/, '');
   return `${base}/api/${cleanPath}`;
 }
