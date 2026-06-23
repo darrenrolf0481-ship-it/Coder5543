@@ -425,6 +425,7 @@ function AppInner() {
       setEditorOutput(val);
     },
     fsState.activeFileId,
+    setChatMessages,
   );
 
   // Sync references
@@ -1313,6 +1314,9 @@ function AppInner() {
                 handleGitStage={gitState.handleGitStage}
                 handleGitStageAll={gitState.handleGitStageAll}
                 handleGitUnstage={gitState.handleGitUnstage}
+                gitScanResult={gitState.gitScanResult}
+                isScanningGit={gitState.isScanningGit}
+                handleGitScan={gitState.handleGitScan}
                 projectSettings={projectSettings}
                 setProjectSettings={setProjectSettings}
                 validateProjectSettings={validateProjectSettings}

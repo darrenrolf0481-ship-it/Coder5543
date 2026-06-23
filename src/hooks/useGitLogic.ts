@@ -17,11 +17,24 @@ export interface GitRepoState {
   stash: any[];
 }
 
+export interface GitScanResult {
+  branch: string;
+  remote: string;
+  modified: string[];
+  staged: string[];
+  ahead: number;
+  behind: number;
+  hasConflicts: boolean;
+  lastCommit: string | null;
+  timestamp: number;
+}
+
 export function useGitLogic(
   projectFiles: any[],
   setProjectFiles: any,
   setEditorOutput: any,
   activeFileId: string,
+  setChatMessages?: React.Dispatch<React.SetStateAction<any[]>>,
 ) {
   const [gitRepo, setGitRepo] = useState<{
     initialized: boolean;
@@ -98,6 +111,57 @@ export function useGitLogic(
     [setEditorOutput],
   );
 
+  const [gitScanResult, setGitScanResult] = useState<GitScanResult | null>(null);
+  const [isScanningGit, setIsScanningGit] = useState(false);
+
+  const handleGitScan = useCallback(async () => {
+    setIsScanningGit(true);
+    setEditorOutput((prev: string) => prev + '[GIT] Scanning repository...\n');
+
+    try {
+      const response = await fetch(resolveApiUrl('github/scan'));
+      const data = await response.json();
+
+      if (data.ok) {
+        const scan: GitScanResult = {
+          branch: data.branch || 'main',
+          remote: data.remote || 'origin',
+          modified: data.modified || [],
+          staged: data.staged || [],
+          ahead: data.ahead || 0,
+          behind: data.behind || 0,
+          hasConflicts: data.hasConflicts || false,
+          lastCommit: data.lastCommit || null,
+          timestamp: Date.now(),
+        };
+
+        setGitScanResult(scan);
+
+        const scanSummary =
+          `**Git Repository Scan**\n\n` +
+          `• **Branch:** \`${scan.branch}\`\n` +
+          `• **Behind:** ${scan.behind} commit(s)\n` +
+          `• **Ahead:** ${scan.ahead} commit(s)\n` +
+          `• **Modified:** ${scan.modified.length} file(s)\n` +
+          `• **Staged:** ${scan.staged.length} file(s)\n` +
+          `• **Conflict Risk:** ${scan.hasConflicts ? '⚠️ Yes' : '✅ No'}`;
+
+        setChatMessages?.((prev: any[]) => [
+          ...prev,
+          { role: 'ai', text: scanSummary, timestamp: Date.now() },
+        ]);
+
+        setEditorOutput((prev: string) => prev + '[GIT] Scan complete and posted to chat.\n');
+      } else {
+        setEditorOutput((prev: string) => prev + `[GIT] Scan failed: ${data.error}\n`);
+      }
+    } catch {
+      setEditorOutput((prev: string) => prev + '[GIT] ERROR: Could not reach server.\n');
+    }
+
+    setIsScanningGit(false);
+  }, [setEditorOutput, setChatMessages]);
+
   return {
     gitRepo,
     setGitRepo,
@@ -106,5 +170,8 @@ export function useGitLogic(
     handleGitStageAll,
     handleGitUnstage,
     handleGitPush,
+    gitScanResult,
+    isScanningGit,
+    handleGitScan,
   };
 }
