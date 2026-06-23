@@ -182,6 +182,19 @@ interface EditorPanelProps {
   handleGitStage: (fileId: string) => void;
   handleGitStageAll: () => void;
   handleGitUnstage: (fileId: string) => void;
+  gitScanResult: {
+    branch: string;
+    remote: string;
+    modified: string[];
+    staged: string[];
+    ahead: number;
+    behind: number;
+    hasConflicts: boolean;
+    lastCommit: string | null;
+    timestamp: number;
+  } | null;
+  isScanningGit: boolean;
+  handleGitScan: () => void;
 
   // Project settings
   projectSettings: {
@@ -299,6 +312,9 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
   handleGitStage,
   handleGitStageAll,
   handleGitUnstage,
+  gitScanResult,
+  isScanningGit,
+  handleGitScan,
   projectSettings,
   setProjectSettings,
   validateProjectSettings,
@@ -1821,6 +1837,86 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                             </p>
                           )}
                         </div>
+                      </div>
+
+                      {/* Git Repository Scan */}
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="text-xs font-black text-accent-400 uppercase tracking-[2px]">
+                            Git Repository
+                          </div>
+                          <button
+                            onClick={handleGitScan}
+                            disabled={isScanningGit}
+                            className="flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-accent-800/40 bg-accent-950/30 hover:bg-accent-900/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                          >
+                            {isScanningGit ? <>Scanning...</> : <>Scan Repo</>}
+                          </button>
+                        </div>
+
+                        {gitScanResult && (
+                          <div className="bg-[#0d0404] border border-accent-900/30 rounded-2xl p-4 text-sm">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="font-black text-accent-200">Latest Scan</div>
+                              <div className="text-[10px] text-accent-600">
+                                {new Date(gitScanResult.timestamp).toLocaleTimeString()}
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                              <div>
+                                <span className="text-accent-600">Branch</span>
+                                <br />
+                                <span className="font-mono text-accent-300">
+                                  {gitScanResult.branch}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-accent-600">Behind</span>
+                                <br />
+                                <span
+                                  className={`font-black ${gitScanResult.behind > 0 ? 'text-orange-400' : 'text-green-400'}`}
+                                >
+                                  {gitScanResult.behind} commit
+                                  {gitScanResult.behind !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-accent-600">Ahead</span>
+                                <br />
+                                <span className="font-black text-accent-300">
+                                  {gitScanResult.ahead} commit
+                                  {gitScanResult.ahead !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-accent-600">Modified</span>
+                                <br />
+                                <span className="font-black text-accent-300">
+                                  {gitScanResult.modified.length} file
+                                  {gitScanResult.modified.length !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-accent-600">Staged</span>
+                                <br />
+                                <span className="font-black text-accent-300">
+                                  {gitScanResult.staged.length} file
+                                  {gitScanResult.staged.length !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-accent-600">Conflicts</span>
+                                <br />
+                                <span
+                                  className={`font-black ${gitScanResult.hasConflicts ? 'text-orange-400' : 'text-green-400'}`}
+                                >
+                                  {gitScanResult.hasConflicts ? 'Yes' : 'No'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Commit History */}

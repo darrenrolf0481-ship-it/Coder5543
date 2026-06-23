@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { makePrompt } from '../../utils/crimson-core';
 import { extractJson } from '../../utils/helpers';
 
@@ -21,6 +21,7 @@ export function useAnalysisHandlers(
   prepareContext: any,
   setIsRunningCode: any,
   setEditorMode: any,
+  setChatMessages?: React.Dispatch<React.SetStateAction<any[]>>,
 ) {
   const [debugAnalysis, setDebugAnalysis] = useState<{
     static: {
@@ -143,6 +144,15 @@ export function useAnalysisHandlers(
       );
       if (response) {
         setEditorOutput(response);
+        // Post result directly to chat so the user doesn't need to leave the editor
+        setChatMessages?.((prev: any[]) => [
+          ...prev,
+          {
+            role: 'ai',
+            text: `**Code Analysis** — *${editorAssistantInput}*\n\n${response}`,
+            timestamp: Date.now(),
+          },
+        ]);
         await recordInteraction(prompt, response, 'success');
       } else {
         setEditorOutput('[ERROR] Analysis engine failed: empty response.\n');

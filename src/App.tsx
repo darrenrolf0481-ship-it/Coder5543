@@ -40,13 +40,7 @@ import { MainHeader } from './components/layout/MainHeader';
 import { ToolNeuronPanel } from './components/panels/ToolNeuronPanel';
 import { TerminalPanel } from './components/panels/TerminalPanel';
 import { EditorPanel } from './components/panels/EditorPanel';
-import { AnalysisPanel } from './components/panels/AnalysisPanel';
-import { NodeBridgePanel } from './components/panels/NodeBridgePanel';
-import { StoragePanel } from './components/panels/StoragePanel';
-import { BrainPanel } from './components/panels/BrainPanel';
-import { SettingsPanel } from './components/panels/SettingsPanel';
-import { ProjectPanel } from './components/panels/ProjectPanel';
-import { UnifiedResultsPanel } from './components/panels/UnifiedResultsPanel';
+import { ToolsPanel } from './components/panels/ToolsPanel';
 
 // Modals & Registry
 import { CommitModal } from './components/modals/CommitModal';
@@ -79,9 +73,8 @@ export default function App() {
 
 function AppInner() {
   // Navigation & Theme
-  const [activeTab, setActiveTab] = useState<
-    'terminal' | 'analysis' | 'termux' | 'storage' | 'settings' | 'editor' | 'toolneuron' | 'brain' | 'projects' | 'results'
-  >('toolneuron');
+  const [activeTab, setActiveTab] = useState<'toolneuron' | 'editor' | 'terminal' | 'tools'>('toolneuron');
+  const navigateTo = (tab: string) => setActiveTab(tab as any);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
 
@@ -425,6 +418,7 @@ function AppInner() {
       setEditorOutput(val);
     },
     fsState.activeFileId,
+    setChatMessages,
   );
 
   // Sync references
@@ -492,6 +486,7 @@ function AppInner() {
     prepareContext,
     editorState.setIsRunningCode,
     editorState.setEditorMode,
+    setChatMessages,
   );
 
   // Code Forger State
@@ -1136,7 +1131,7 @@ function AppInner() {
                 activePersonality={activePersonality}
                 tnKnowledgePacks={tnKnowledgePacks}
                 handleKnowledgeUpload={handleKnowledgeUpload}
-                setActiveTab={setActiveTab}
+                setActiveTab={navigateTo}
                 onApplyCode={(code, mode) => {
                   if (mode === 'refactor') {
                     forgeState.handleApplyRefactor(code, false, null);
@@ -1313,6 +1308,9 @@ function AppInner() {
                 handleGitStage={gitState.handleGitStage}
                 handleGitStageAll={gitState.handleGitStageAll}
                 handleGitUnstage={gitState.handleGitUnstage}
+                gitScanResult={gitState.gitScanResult}
+                isScanningGit={gitState.isScanningGit}
+                handleGitScan={gitState.handleGitScan}
                 projectSettings={projectSettings}
                 setProjectSettings={setProjectSettings}
                 validateProjectSettings={validateProjectSettings}
@@ -1328,41 +1326,57 @@ function AppInner() {
               />
             )}
 
-            {activeTab === 'analysis' && (
-              <AnalysisPanel
-                editorContent={editorState.editorContent}
-                editorOutput={editorOutput}
-                isAiProcessing={isAiProcessing}
-                editorAssistantInput={editorState.editorAssistantInput}
-                setEditorAssistantInput={editorState.setEditorAssistantInput}
-                handleAnalyzeCode={analysisState.handleAnalyzeCode}
-                projectFiles={fsState.projectFiles}
-                activeFileId={fsState.activeFileId}
-              />
-            )}
-
-            {activeTab === 'termux' && (
-              <NodeBridgePanel
+            {activeTab === 'tools' && (
+              <ToolsPanel
+                // Node Bridge
                 termuxFiles={termuxFiles}
                 setTermuxFiles={setTermuxFiles}
                 setTermuxStatus={setTermuxStatus}
                 handleTermuxFileUpload={fsState.handleTermuxFileUpload}
                 subscribeFsChange={subscribeFsChange}
-              />
-            )}
-
-            {activeTab === 'storage' && (
-              <StoragePanel
+                // Storage
                 storageFiles={storageFiles}
                 setStorageFiles={setStorageFiles}
                 handleStorageUpload={fsState.handleStorageUpload}
-              />
-            )}
-
-            {activeTab === 'brain' && <BrainPanel />}
-
-            {activeTab === 'settings' && (
-              <SettingsPanel
+                // Projects
+                currentProject={projectManager.currentProject}
+                savedProjects={projectManager.savedProjects}
+                onProjectSwitch={(project) => {
+                  projectManager.switchProject(project.id);
+                  const fullProject = projectManager.savedProjects.find((p) => p.id === project.id);
+                  if (fullProject && fullProject.files && fullProject.files.length > 0) {
+                    fsState.setProjectFiles(fullProject.files);
+                  }
+                  loadedProjectIdRef.current = project.id;
+                  setActiveTab('editor');
+                }}
+                onProjectCreate={(name) => {
+                  const proj = projectManager.createProject(name);
+                  loadedProjectIdRef.current = proj.id;
+                }}
+                onProjectDelete={(id) => projectManager.deleteProject(id)}
+                onLoadServerProject={async (projectName) => {
+                  try {
+                    const res = await fetch(resolveApiUrl(`github/load?project=${encodeURIComponent(projectName)}`));
+                    if (res.ok) {
+                      const data = await res.json();
+                      fsState.setProjectFiles(data.files || []);
+                      const MAIN_PRIORITY = ['main.py','app.py','index.js','app.js','main.js','index.ts','app.ts','main.ts','App.tsx','index.tsx','main.tsx','index.html','main.rs','main.go'];
+                      const LANG_MAP: Record<string, string> = { py:'python',js:'javascript',ts:'typescript',tsx:'typescript',jsx:'javascript',html:'html',css:'css',rs:'rust',go:'go',java:'java',cpp:'cpp',json:'json',md:'markdown' };
+                      const allFiles = (data.files || []).filter((f: any) => f.type === 'file');
+                      const mainFile = MAIN_PRIORITY.map((n) => allFiles.find((f: any) => f.name === n)).find(Boolean) ?? allFiles[0];
+                      if (mainFile) {
+                        const ext = mainFile.name.split('.').pop() || '';
+                        fsState.setActiveFileId(mainFile.id);
+                        fsState.setEditorLanguage(LANG_MAP[ext] || mainFile.language || 'text');
+                      }
+                      const proj = projectManager.createProject(projectName, data.files || []);
+                      loadedProjectIdRef.current = proj.id;
+                      setActiveTab('editor');
+                    }
+                  } catch (err) { console.error('Failed to load server project:', err); }
+                }}
+                // Settings
                 theme={theme}
                 toggleTheme={toggleTheme}
                 personalities={personalities}
@@ -1380,7 +1394,7 @@ function AppInner() {
                 isAiProcessing={isAiProcessing}
                 setIsAiProcessing={setIsAiProcessing}
                 setTerminalOutput={terminal.setTerminalOutput}
-                setActiveTab={setActiveTab}
+                setActiveTab={navigateTo}
                 generateAIResponse={generateAIResponse}
                 activePersonality={activePersonality}
                 prepareContext={prepareContext}
@@ -1389,74 +1403,6 @@ function AppInner() {
                 availableModels={availableModels}
                 ollamaStatus={ollamaStatus}
                 refreshOllamaModels={refreshOllamaModels}
-                ollamaError={''}
-              />
-            )}
-
-            {activeTab === 'projects' && (
-              <ProjectPanel
-                currentProject={projectManager.currentProject}
-                savedProjects={projectManager.savedProjects}
-                onProjectSwitch={(project) => {
-                  projectManager.switchProject(project.id);
-                  const fullProject = projectManager.savedProjects.find((p) => p.id === project.id);
-                  if (fullProject && fullProject.files && fullProject.files.length > 0) {
-                    fsState.setProjectFiles(fullProject.files);
-                  }
-                  loadedProjectIdRef.current = project.id;
-                  setActiveTab('editor');
-                }}
-                onProjectCreate={(name) => {
-                  const proj = projectManager.createProject(name);
-                  loadedProjectIdRef.current = proj.id;
-                }}
-                onProjectDelete={(id) => {
-                  projectManager.deleteProject(id);
-                }}
-                onLoadServerProject={async (projectName) => {
-                  try {
-                    const res = await fetch(resolveApiUrl(`github/load?project=${encodeURIComponent(projectName)}`));
-                    if (res.ok) {
-                      const data = await res.json();
-                      fsState.setProjectFiles(data.files || []);
-                      
-                      const MAIN_PRIORITY = [
-                        'main.py', 'app.py', 'index.js', 'app.js', 'main.js',
-                        'index.ts', 'app.ts', 'main.ts', 'App.tsx', 'index.tsx',
-                        'main.tsx', 'index.html', 'main.rs', 'main.go',
-                      ];
-                      const LANG_MAP: Record<string, string> = {
-                        py: 'python', js: 'javascript', ts: 'typescript', tsx: 'typescript',
-                        jsx: 'javascript', html: 'html', css: 'css', rs: 'rust', go: 'go',
-                        java: 'java', cpp: 'cpp', json: 'json', md: 'markdown',
-                      };
-                      
-                      const allFiles = (data.files || []).filter((f: any) => f.type === 'file');
-                      const mainFile =
-                        MAIN_PRIORITY.map((n) => allFiles.find((f: any) => f.name === n)).find(Boolean) ??
-                        allFiles[0];
-                      if (mainFile) {
-                        const ext = mainFile.name.split('.').pop() || '';
-                        const lang = LANG_MAP[ext] || mainFile.language || 'text';
-                        fsState.setActiveFileId(mainFile.id);
-                        fsState.setEditorLanguage(lang);
-                      }
-                      
-                      const proj = projectManager.createProject(projectName, data.files || []);
-                      loadedProjectIdRef.current = proj.id;
-                      setActiveTab('editor');
-                    }
-                  } catch (err) {
-                    console.error('Failed to load server project:', err);
-                  }
-                }}
-              />
-            )}
-
-            {activeTab === 'results' && (
-              <UnifiedResultsPanel
-                maxHeight="100%"
-                showTabs={true}
               />
             )}
           </div>
