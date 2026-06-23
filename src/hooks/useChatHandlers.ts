@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Type } from '../services/googleGenAiStub';
 import { makePrompt, markEphemeral } from '../utils/crimson-core';
 import { AGENTS_MD_GUIDELINES } from '../data/reviewGuidelines';
+import { useAgentStore } from '../store/useAgentStore';
 
 export function useChatHandlers(
   editorContent: string,
@@ -97,10 +98,43 @@ ${prompt}`,
     }
   };
 
+  const { attachAgent, detachAgent, attachedAgent } = useAgentStore.getState();
+
   const handleStudioSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const prompt = studioInput.trim();
     if (!prompt && !studioRefImage) return;
+
+    // --- Agent attach/detach commands ---
+    const lower = prompt.toLowerCase();
+    if (lower.startsWith('attach ')) {
+      const agentName = prompt.slice(7).trim();
+      if (agentName) {
+        attachAgent(agentName);
+        setStudioInput('');
+        setChatMessages((prev: any[]) => [
+          ...prev,
+          { role: 'user', text: prompt, timestamp: Date.now() },
+          {
+            role: 'ai',
+            text: `**${agentName.charAt(0).toUpperCase() + agentName.slice(1)} attached.** I'm now watching the editor — I'll include your current file in every response. Type \`detach\` to release me.`,
+            timestamp: Date.now() + 1,
+          },
+        ]);
+        return;
+      }
+    }
+    if (lower === 'detach' || lower === 'detach agent') {
+      const name = useAgentStore.getState().attachedAgent?.name ?? 'Agent';
+      detachAgent();
+      setStudioInput('');
+      setChatMessages((prev: any[]) => [
+        ...prev,
+        { role: 'user', text: prompt, timestamp: Date.now() },
+        { role: 'ai', text: `**${name} detached.** Back to standard mode.`, timestamp: Date.now() + 1 },
+      ]);
+      return;
+    }
 
     setChatMessages((prev: any[]) => [
       ...prev,
@@ -133,12 +167,13 @@ ${prompt}`,
         })
         .join('\n\n');
 
-      // Build editor context if the user has a file open
+      // Build editor context — always include when an agent is attached
+      const currentAttachedAgent = useAgentStore.getState().attachedAgent;
       const activeFileName = projectFiles.find((f: any) => f.id === activeFileId)?.name || null;
-      const editorCtx =
-        activeFileName && editorContent
-          ? `\n\nEDITOR_CONTEXT:\nActive File: ${activeFileName} (${editorLanguage})\n\`\`\`${editorLanguage}\n${editorContent.length > 4000 ? editorContent.slice(0, 4000) + '\n...[file truncated]' : editorContent}\n\`\`\``
-          : '';
+      const shouldIncludeEditor = !!(activeFileName && editorContent) || !!currentAttachedAgent;
+      const editorCtx = shouldIncludeEditor && editorContent
+        ? `\n\nEDITOR_CONTEXT:${currentAttachedAgent ? ` [${currentAttachedAgent.name} is watching this file]` : ''}\nActive File: ${activeFileName || 'untitled'} (${editorLanguage})\n\`\`\`${editorLanguage}\n${editorContent.length > 4000 ? editorContent.slice(0, 4000) + '\n...[file truncated]' : editorContent}\n\`\`\``
+        : '';
 
       const systemInstruction = `${activePersonality.instruction}${kbDocs ? `\n\nKNOWLEDGE BASE:\n${kbDocs}` : ''}\n\nPROJECT_PROFILE: ${activeProfile.instruction}${chatSummary ? `\n\nCONVERSATION_SUMMARY: ${chatSummary}` : ''}${recentHistory ? `\n\nCONVERSATION_HISTORY:\n${recentHistory}` : ''}${editorCtx}`;
 

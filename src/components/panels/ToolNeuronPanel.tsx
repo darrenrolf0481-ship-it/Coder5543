@@ -24,9 +24,11 @@ import {
   Sparkles,
   Trash2,
   Unlock,
+  X,
   Zap,
 } from 'lucide-react';
 import { useAppContext } from '../../context/AppContext';
+import { useAgentStore } from '../../store/useAgentStore';
 import { Personality } from './SettingsPanel';
 import { SafeMarkdown } from '../SafeMarkdown';
 import { ActionButton } from '../ActionButton';
@@ -98,6 +100,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
   onLoadRepoToEditor,
 }) => {
   const { vaultMemories, fetchVault } = useAppContext();
+  const { attachedAgent, detachAgent } = useAgentStore();
   // ── Local state ────────────────────────────────────────────────────────
   const [tnModule, setTnModule] = useState<
     'chat' | 'vision' | 'knowledge' | 'vault' | 'swarm' | 'help' | 'debug'
@@ -266,11 +269,27 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
           {/* CHAT */}
           {tnModule === 'chat' && (
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="h-16 border-b border-accent-900/20 flex items-center px-8 bg-black/40 justify-between">
-                <h4 className="text-[11px] font-black text-accent-500 uppercase tracking-[0.4em] flex items-center gap-3">
+              <div className="border-b border-accent-900/20 flex items-center px-8 bg-black/40 justify-between min-h-[64px] py-3 gap-4">
+                <h4 className="text-[11px] font-black text-accent-500 uppercase tracking-[0.4em] flex items-center gap-3 shrink-0">
                   <MessageSquare className="w-4 h-4" /> Neural Chat Interface
                 </h4>
-                <span className="text-[10px] font-mono text-accent-900">LATENCY: 12ms</span>
+                {attachedAgent ? (
+                  <div className="flex items-center gap-2 bg-green-950/40 border border-green-800/50 text-green-400 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                    {attachedAgent.name} watching editor
+                    <button
+                      onClick={detachAgent}
+                      className="ml-1 text-green-700 hover:text-green-400 transition-colors"
+                      title="Detach agent"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-[10px] font-mono text-accent-900">
+                    Type <span className="text-accent-700">attach &lt;name&gt;</span> to focus an agent
+                  </span>
+                )}
               </div>
               <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8 custom-scrollbar">
                 {chatMessages.length === 0 && (
