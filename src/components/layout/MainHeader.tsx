@@ -1,5 +1,5 @@
 import React from 'react';
-import { FolderOpen, Gauge, UserCircle } from 'lucide-react';
+import { FolderOpen, Gauge, UserCircle, Volume2, VolumeX } from 'lucide-react';
 import { AgentDefinition, AGENT_DOMAINS, getAgentsByDomain } from '../../data/agentRegistry';
 import { WorkerConfig } from '../../hooks/useAiWorkers';
 import { Personality } from '../../data/personalities';
@@ -18,6 +18,8 @@ interface MainHeaderProps {
   activePersonality: Personality;
   termuxStatus: string;
   localCoreStatus: 'idle' | 'booting' | 'online' | 'error';
+  muted: boolean;
+  toggleMute: () => void;
 }
 
 export const MainHeader: React.FC<MainHeaderProps> = ({
@@ -34,6 +36,8 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
   activePersonality,
   termuxStatus,
   localCoreStatus,
+  muted,
+  toggleMute,
 }) => {
   return (
     <header className="h-14 md:h-16 border-b border-accent-900/30 flex items-center justify-between px-4 md:px-8 bg-[#0a0202] z-20 shadow-[0_4px_30px_rgba(0,0,0,0.5)] overflow-x-auto no-scrollbar">
@@ -235,6 +239,14 @@ export const MainHeader: React.FC<MainHeaderProps> = ({
         </div>
       </div>
       <div className="flex items-center space-x-4 md:space-x-8 shrink-0">
+        <button
+          onClick={toggleMute}
+          className={`p-2 rounded-xl transition-all ${muted ? 'text-accent-700 hover:text-accent-500 bg-accent-950/20' : 'text-accent-400 hover:text-accent-200 hover:bg-accent-900/20'}`}
+          title={muted ? 'Unmute TTS' : 'Mute TTS'}
+          aria-label={muted ? 'Unmute TTS' : 'Mute TTS'}
+        >
+          {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+        </button>
         <div className="hidden sm:flex items-center gap-3 text-[10px] font-mono text-accent-400/60 bg-accent-950/20 px-4 py-2 rounded-xl border border-accent-900/20">
           <Gauge className="w-4 h-4 text-accent-600" />
           <span className="font-black tracking-widest">88%</span>

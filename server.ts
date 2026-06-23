@@ -22,6 +22,7 @@ import brainRouter from './src/api/routes/brainRouter.js';
 import terminalRouter from './src/api/routes/terminalRouter.js';
 import githubRouter from './src/api/routes/githubRouter.js';
 import ollamaRouter from './src/api/routes/ollamaRouter.js';
+import ttsRouter from './src/api/routes/ttsRouter.js';
 import { WebSocketBridge } from './src/services/bridge/WebSocketBridge.js';
 import { conversationIngestor } from './src/services/brain/ConversationIngestor.js';
 
@@ -61,6 +62,7 @@ const API_ROUTERS: ReadonlyArray<readonly [string, Router]> = [
   ['terminal', terminalRouter],
   ['github', githubRouter],
   ['ollama', ollamaRouter],
+  ['tts', ttsRouter],
 ];
 
 function registerRouters(app: Express, prefix = ''): void {
