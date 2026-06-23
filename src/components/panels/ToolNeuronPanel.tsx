@@ -60,17 +60,7 @@ interface ToolNeuronPanelProps {
   activePersonality: Personality;
   tnKnowledgePacks: KnowledgePack[];
   handleKnowledgeUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  setActiveTab: (
-    tab:
-      | 'terminal'
-      | 'analysis'
-      | 'termux'
-      | 'storage'
-      | 'settings'
-      | 'editor'
-      | 'toolneuron'
-      | 'brain',
-  ) => void;
+  setActiveTab: (tab: string) => void;
   onApplyCode: (code: string, mode: 'refactor' | 'replace') => void;
   onSaveReport: (text: string) => void;
   onLoadRepoToEditor?: (files: any[], repoName: string) => void;
@@ -710,7 +700,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
                 </p>
               </div>
               <button
-                onClick={() => setActiveTab('analysis')}
+                onClick={() => setActiveTab('editor')}
                 className="px-12 py-5 bg-accent-700 text-white rounded-[32px] font-black text-xs uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all"
               >
                 Initialize Engine

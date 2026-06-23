@@ -1,17 +1,5 @@
 import React from 'react';
-import {
-  Zap,
-  Terminal as TerminalIcon,
-  Code2,
-  FolderGit,
-  LayoutTemplate,
-  Brain,
-  Smartphone,
-  HardDrive,
-  Layers,
-  Settings as SettingsIcon,
-  Cpu,
-} from 'lucide-react';
+import { Zap, Terminal as TerminalIcon, Code2, Wrench, Cpu } from 'lucide-react';
 
 interface SidebarProps {
   activeTab: string;
@@ -52,7 +40,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           icon={<Zap />}
           active={activeTab === 'toolneuron'}
           onClick={() => setActiveTab('toolneuron')}
-          label="ToolNeuron Hub"
+          label="Chat"
+        />
+        <SidebarIcon
+          icon={<Code2 />}
+          active={activeTab === 'editor'}
+          onClick={() => setActiveTab('editor')}
+          label="Editor"
         />
         <SidebarIcon
           icon={<TerminalIcon />}
@@ -61,54 +55,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
           label="Terminal"
         />
         <SidebarIcon
-          icon={<Code2 />}
-          active={activeTab === 'editor'}
-          onClick={() => setActiveTab('editor')}
-          label="Neural Editor"
-        />
-        <SidebarIcon
-          icon={<FolderGit />}
-          active={activeTab === 'projects'}
-          onClick={() => setActiveTab('projects')}
-          label="Projects Panel"
-        />
-        <SidebarIcon
-          icon={<LayoutTemplate />}
-          active={activeTab === 'analysis'}
-          onClick={() => setActiveTab('analysis')}
-          label="Code Analysis"
-        />
-        <SidebarIcon
-          icon={<Brain />}
-          active={activeTab === 'brain'}
-          onClick={() => setActiveTab('brain')}
-          label="Neural Core"
-        />
-        <SidebarIcon
-          icon={<Smartphone />}
-          active={activeTab === 'termux'}
-          onClick={() => setActiveTab('termux')}
-          label="Node Bridge"
-        />
-        <SidebarIcon
-          icon={<HardDrive />}
-          active={activeTab === 'storage'}
-          onClick={() => setActiveTab('storage')}
-          label="Data Core"
-        />
-        <SidebarIcon
-          icon={<Layers />}
-          active={activeTab === 'results'}
-          onClick={() => setActiveTab('results')}
-          label="Results Hub"
+          icon={<Wrench />}
+          active={activeTab === 'tools'}
+          onClick={() => setActiveTab('tools')}
+          label="Tools"
         />
       </div>
-      <SidebarIcon
-        icon={<SettingsIcon />}
-        active={activeTab === 'settings'}
-        onClick={() => setActiveTab('settings')}
-        label="System Config"
-      />
     </nav>
   );
 };
