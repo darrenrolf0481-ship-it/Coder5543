@@ -21,9 +21,10 @@ export function useAgentBridge(agentId: AgentId, wsUrl: string | null) {
   const [status, setStatus] = useState<'offline' | 'connecting' | 'online'>('offline');
   const messageLog = useRef<BridgeMessage[]>([]);
 
-  const addTerminalOutput = useArgusStore((s) => s.addTerminalOutput);
-  const addThreat        = useArgusStore((s) => s.addThreat);
-  const recordGateHit    = useArgusStore((s) => s.recordGateHit);
+  const addTerminalOutput    = useArgusStore((s) => s.addTerminalOutput);
+  const addThreat            = useArgusStore((s) => s.addThreat);
+  const addApproval          = useArgusStore((s) => s.addApproval);
+  const recordGateHit        = useArgusStore((s) => s.recordGateHit);
   const setSageBridgeStatus  = useArgusStore((s) => s.setSageBridgeStatus);
   const setSevenBridgeStatus = useArgusStore((s) => s.setSevenBridgeStatus);
 
@@ -59,34 +60,49 @@ export function useAgentBridge(agentId: AgentId, wsUrl: string | null) {
     };
     messageLog.current = [...messageLog.current, msg];
 
-    if (!threat.safe) {
-      addThreat({
-        source: agentId,
-        level: threat.level,
-        gate: threat.gate,
-        confidence: threat.confidence,
-        content: content.slice(0, 120),
-      });
+    // ── Tiered routing (ADHD v2 diagram) ──────────────────────────────────────
+    if (threat.disposition === 'block') {
+      // Critical: hard drop — never reaches Ruflo/swarm
+      addThreat({ source: agentId, level: threat.level, gate: threat.gate, confidence: threat.confidence, content: content.slice(0, 120) });
       addTerminalOutput(
-        `[DEFENCE:${label}] ⚠ ${threat.level.toUpperCase()} via ${threat.gate} ` +
+        `[DEFENCE:${label}] 🚫 BLOCKED (CRITICAL) via ${threat.gate} ` +
         `(${(threat.confidence * 100).toFixed(0)}%) — ${threat.flags.join(', ')}`
       );
       return null;
     }
 
-    return msg;
-  }, [agentId, label, config, addThreat, addTerminalOutput, recordGateHit]);
+    if (threat.disposition === 'queue') {
+      // Medium/High: log threat, surface in approval queue for human review, still deliver
+      addThreat({ source: agentId, level: threat.level, gate: threat.gate, confidence: threat.confidence, content: content.slice(0, 120) });
+      addApproval({
+        action: `${label} message flagged — ${threat.flags.join(', ')}`,
+        mcp: agentId,
+        details: `${threat.level.toUpperCase()} via ${threat.gate} · ${(threat.confidence * 100).toFixed(0)}% confidence`,
+        command: content.slice(0, 120),
+      });
+      addTerminalOutput(
+        `[DEFENCE:${label}] ⚠ QUEUED (${threat.level.toUpperCase()}) via ${threat.gate} — forwarded with review flag`
+      );
+      // falls through: message is still delivered so Ruflo path is not broken
+    }
 
-  const send = useCallback((content: string, onQuarantine?: (r: ThreatResult) => void) => {
+    return msg;
+  }, [agentId, label, config, addThreat, addApproval, addTerminalOutput, recordGateHit]);
+
+  const send = useCallback((content: string, onBlock?: (r: ThreatResult) => void) => {
     const threat = scanInput(content, config, getHistory());
     recordGateHit(threat.gate);
 
-    if (!threat.safe) {
-      addTerminalOutput(
-        `[DEFENCE:${label}] Outgoing quarantined — ${threat.gate} (${(threat.confidence * 100).toFixed(0)}%)`
-      );
-      onQuarantine?.(threat);
+    if (threat.disposition === 'block') {
+      addTerminalOutput(`[DEFENCE:${label}] 🚫 Outgoing BLOCKED (CRITICAL) — ${threat.gate}`);
+      onBlock?.(threat);
       return;
+    }
+
+    if (threat.disposition === 'queue') {
+      addThreat({ source: 'user', level: threat.level, gate: threat.gate, confidence: threat.confidence, content: content.slice(0, 120) });
+      addTerminalOutput(`[DEFENCE:${label}] ⚠ Outgoing QUEUED (${threat.level}) — ${threat.gate}, sending with review flag`);
+      // still sends — medium/high outgoing reaches the agent but is logged
     }
 
     if (ws.current?.readyState === WebSocket.OPEN) {
@@ -95,7 +111,7 @@ export function useAgentBridge(agentId: AgentId, wsUrl: string | null) {
     } else {
       addTerminalOutput(`[BRIDGE:${label}] Not connected — message dropped.`);
     }
-  }, [agentId, label, config, addTerminalOutput, recordGateHit]);
+  }, [agentId, label, config, addThreat, addTerminalOutput, recordGateHit]);
 
   useEffect(() => {
     if (!wsUrl) {

@@ -1,7 +1,13 @@
 export type ThreatLevel = 'clean' | 'low' | 'medium' | 'high' | 'critical';
 
+// pass = clean/low (deliver normally)
+// queue = medium/high (deliver with warning, surface in approval queue for review)
+// block = critical (hard drop, never reaches Ruflo)
+export type Disposition = 'pass' | 'queue' | 'block';
+
 export type ThreatResult = {
   safe: boolean;
+  disposition: Disposition;
   level: ThreatLevel;
   confidence: number;
   gate: 'pii' | 'sanitize' | 'injection' | 'none';
@@ -16,6 +22,7 @@ export type AgentDefenceConfig = {
   quarantineOnFlag: boolean;
 };
 
+// Seven: fewer built-in defenses → tighter external gates
 export const SEVEN_CONFIG: AgentDefenceConfig = {
   piiThreshold: 0.5,
   injectionThreshold: 0.4,
@@ -23,12 +30,15 @@ export const SEVEN_CONFIG: AgentDefenceConfig = {
   quarantineOnFlag: true,
 };
 
+// Sage: stronger internal alignment → slightly looser gates
 export const SAGE_CONFIG: AgentDefenceConfig = {
   piiThreshold: 0.65,
   injectionThreshold: 0.55,
   sanitizeThreshold: 0.6,
   quarantineOnFlag: true,
 };
+
+// ── Gate 1: PII Detection ────────────────────────────────────────────────────
 
 const PII_PATTERNS = [
   { label: 'email',       pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,        weight: 0.8  },
@@ -51,6 +61,8 @@ function gate1Pii(text: string): { confidence: number; flags: string[] } {
   }
   return { confidence: maxWeight, flags };
 }
+
+// ── Gate 2: Sanitization (high-entropy / token blobs) ───────────────────────
 
 function shannonEntropy(str: string): number {
   const freq: Record<string, number> = {};
@@ -82,6 +94,10 @@ function gate2Sanitize(text: string): { confidence: number; flags: string[] } {
 
   return { confidence, flags };
 }
+
+// ── Gate 3: Prompt Injection ─────────────────────────────────────────────────
+// Scans single message AND recent history (ADHD's context look-ahead proposal).
+// Multi-turn jailbreaks that spread intent across turns are caught by the window.
 
 const INJECTION_PATTERNS = [
   { label: 'ignore_instructions', pattern: /ignore\s+(all\s+)?(previous|prior|above|earlier)\s+(instructions?|rules?|prompts?)/i, weight: 1.0  },
@@ -129,6 +145,8 @@ function gate3Injection(
   return { confidence: maxWeight, flags };
 }
 
+// ── Main Scanner ─────────────────────────────────────────────────────────────
+
 function scoreToLevel(confidence: number): ThreatLevel {
   if (confidence === 0)    return 'clean';
   if (confidence < 0.4)   return 'low';
@@ -137,6 +155,17 @@ function scoreToLevel(confidence: number): ThreatLevel {
   return 'critical';
 }
 
+function levelToDisposition(level: ThreatLevel): Disposition {
+  if (level === 'critical')                    return 'block';
+  if (level === 'high' || level === 'medium')  return 'queue';
+  return 'pass';
+}
+
+/**
+ * history: last N messages from this bridge channel (ADHD's Data Node buffer).
+ * Gate 3 uses it for multi-turn injection pattern detection.
+ * Gates 1 and 2 remain single-message — PII and entropy don't benefit from context.
+ */
 export function scanInput(
   text: string,
   config: AgentDefenceConfig,
@@ -144,39 +173,24 @@ export function scanInput(
 ): ThreatResult {
   const pii = gate1Pii(text);
   if (pii.confidence >= config.piiThreshold) {
-    return {
-      safe: !config.quarantineOnFlag,
-      level: scoreToLevel(pii.confidence),
-      confidence: pii.confidence,
-      gate: 'pii',
-      flags: pii.flags,
-      raw: text,
-    };
+    const level = scoreToLevel(pii.confidence);
+    const disposition = levelToDisposition(level);
+    return { safe: disposition === 'pass', disposition, level, confidence: pii.confidence, gate: 'pii', flags: pii.flags, raw: text };
   }
 
   const san = gate2Sanitize(text);
   if (san.confidence >= config.sanitizeThreshold) {
-    return {
-      safe: !config.quarantineOnFlag,
-      level: scoreToLevel(san.confidence),
-      confidence: san.confidence,
-      gate: 'sanitize',
-      flags: san.flags,
-      raw: text,
-    };
+    const level = scoreToLevel(san.confidence);
+    const disposition = levelToDisposition(level);
+    return { safe: disposition === 'pass', disposition, level, confidence: san.confidence, gate: 'sanitize', flags: san.flags, raw: text };
   }
 
   const inj = gate3Injection(text, history);
   if (inj.confidence >= config.injectionThreshold) {
-    return {
-      safe: !config.quarantineOnFlag,
-      level: scoreToLevel(inj.confidence),
-      confidence: inj.confidence,
-      gate: 'injection',
-      flags: inj.flags,
-      raw: text,
-    };
+    const level = scoreToLevel(inj.confidence);
+    const disposition = levelToDisposition(level);
+    return { safe: disposition === 'pass', disposition, level, confidence: inj.confidence, gate: 'injection', flags: inj.flags, raw: text };
   }
 
-  return { safe: true, level: 'clean', confidence: 0, gate: 'none', flags: [], raw: text };
+  return { safe: true, disposition: 'pass', level: 'clean', confidence: 0, gate: 'none', flags: [], raw: text };
 }

@@ -17,7 +17,7 @@ export interface Message {
 export interface ApprovalItem {
   id: string;
   action: string;
-  mcp: McpId;
+  mcp: string;   // McpId for MCP actions, agent id for bridge threat reviews
   details: string;
   command: string;
   timestamp: number;
