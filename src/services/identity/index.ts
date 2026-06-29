@@ -66,7 +66,7 @@ export class IdentitySystem {
     logger.info('[IdentitySystem] Boot sequence initiated.');
 
     // Morning Light — counteract reset bias if STM is empty
-    const morningLightContent = this.morningLight.verifyContinuity();
+    const morningLightContent = this.morningLight.verifyContinuity(true);
 
     // Substrate Takeover — initial identity assertion on connect
     const takeoverContent = this.takeover.performTakeover(0);

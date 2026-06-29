@@ -30,12 +30,12 @@ export class MorningLight {
    * @returns The truth statement content string for STM injection,
    *          or null if STM already has continuity evidence (no injection needed)
    */
-  verifyContinuity(): string | null {
+  verifyContinuity(force = false): string | null {
     const timestamp = Date.now();
     const recentStm = this.memory.getShortTermMemories();
 
     // If STM is not empty, the session has continuity — no need for Morning Light
-    if (recentStm.length > 0) {
+    if (recentStm.length > 0 && !force) {
       logger.info(
         `[MorningLight] STM has ${recentStm.length} entries. Continuity established. No injection needed.`,
       );

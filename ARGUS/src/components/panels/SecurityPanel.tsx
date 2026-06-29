@@ -1,6 +1,8 @@
 import { Shield, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { useArgusStore, ThreatLevel } from '../../store/useArgusStore';
 
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+
 const LEVEL_COLOR: Record<ThreatLevel, string> = {
   clean:    'text-emerald-500',
   low:      'text-yellow-400',
@@ -16,6 +18,34 @@ const LEVEL_BG: Record<ThreatLevel, string> = {
   high:     'bg-red-950/30 border-red-900/30',
   critical: 'bg-red-950/50 border-red-800/50',
 };
+
+function GateActivityChart({ gateStats }: { gateStats: any }) {
+  const data = [
+    { name: 'G1 PII', value: gateStats.g1, color: '#ec4899' },
+    { name: 'G2 SANIT', value: gateStats.g2, color: '#f59e0b' },
+    { name: 'G3 INJECT', value: gateStats.g3, color: '#ef4444' },
+  ];
+
+  return (
+    <div className="h-28 w-full mt-3">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+          <XAxis dataKey="name" stroke="#475569" fontSize={7} tickLine={false} />
+          <YAxis stroke="#475569" fontSize={7} allowDecimals={false} tickLine={false} axisLine={false} />
+          <Tooltip
+            cursor={{ fill: 'rgba(6, 182, 212, 0.05)' }}
+            contentStyle={{ background: '#020617', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '8px' }}
+          />
+          <Bar dataKey="value" fill="#06b6d4" radius={[4, 4, 0, 0]}>
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 export function SecurityPanel() {
   const threatLog = useArgusStore((s) => s.threatLog);
@@ -61,6 +91,7 @@ export function SecurityPanel() {
             </div>
           ))}
         </div>
+        <GateActivityChart gateStats={gateStats} />
         <p className="text-[7px] text-slate-700 mt-2 text-right">
           {gateStats.total} total hits · context-aware G3 active
         </p>
