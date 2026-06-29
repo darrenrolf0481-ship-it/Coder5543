@@ -2,7 +2,7 @@
 import { useArgusStore } from './store/useArgusStore';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
-import { SparkCore } from './components/core/SparkCore';
+import { DashboardPanel } from './components/panels/DashboardPanel';
 import { ChatPanel } from './components/panels/ChatPanel';
 import { EditorPanel } from './components/panels/EditorPanel';
 import { FilesPanel } from './components/panels/FilesPanel';
@@ -41,7 +41,7 @@ export default function App() {
               </span>
             </div>
 
-            {activePanel === 'core'     && <SparkCore />}
+            {activePanel === 'dashboard' && <DashboardPanel />}
             {activePanel === 'chat'     && <ChatPanel />}
             {activePanel === 'editor'   && <EditorPanel />}
             {activePanel === 'files'    && <FilesPanel />}

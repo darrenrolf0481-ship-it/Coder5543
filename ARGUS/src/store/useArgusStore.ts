@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { McpId } from '../data/mcpRegistry';
 
-export type Panel = 'core' | 'chat' | 'editor' | 'files' | 'logs' | 'security';
+export type Panel = 'dashboard' | 'chat' | 'editor' | 'files' | 'logs' | 'security';
 export type McpStatus = 'offline' | 'connecting' | 'online' | 'error';
 export type BridgeStatus = 'offline' | 'connecting' | 'online';
 export type ThreatLevel = 'clean' | 'low' | 'medium' | 'high' | 'critical';
@@ -98,7 +98,7 @@ const defaultMcpStatus = (): Record<McpId, McpStatus> => ({
 });
 
 export const useArgusStore = create<ArgusState>((set) => ({
-  activePanel: 'core',
+  activePanel: 'dashboard',
   chatMessages: [
     {
       id: crypto.randomUUID(),

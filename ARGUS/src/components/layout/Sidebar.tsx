@@ -10,7 +10,7 @@ import {
 import { Panel, useArgusStore } from '../../store/useArgusStore';
 
 const TABS: { id: Panel; icon: React.ReactNode; label: string }[] = [
-  { id: 'core',     icon: <Hexagon       className="w-5 h-5" />, label: 'SparkCore' },
+  { id: 'dashboard', icon: <Hexagon       className="w-5 h-5" />, label: 'Dashboard' },
   { id: 'chat',     icon: <MessageSquare className="w-5 h-5" />, label: 'Chat'     },
   { id: 'editor',   icon: <Code2          className="w-5 h-5" />, label: 'Editor'   },
   { id: 'files',    icon: <FolderTree     className="w-5 h-5" />, label: 'Files'    },
