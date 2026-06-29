@@ -1,6 +1,6 @@
 
 import {
-  LayoutDashboard,
+  Hexagon,
   MessageSquare,
   Code2,
   FolderTree,
@@ -10,12 +10,12 @@ import {
 import { Panel, useArgusStore } from '../../store/useArgusStore';
 
 const TABS: { id: Panel; icon: React.ReactNode; label: string }[] = [
-  { id: 'dashboard', icon: <LayoutDashboard className="w-5 h-5" />, label: 'Dashboard' },
-  { id: 'chat',      icon: <MessageSquare   className="w-5 h-5" />, label: 'Chat'      },
-  { id: 'editor',    icon: <Code2           className="w-5 h-5" />, label: 'Editor'    },
-  { id: 'files',     icon: <FolderTree      className="w-5 h-5" />, label: 'Files'     },
-  { id: 'logs',      icon: <Terminal        className="w-5 h-5" />, label: 'Logs'      },
-  { id: 'security',  icon: <ShieldAlert     className="w-5 h-5" />, label: 'Security'  },
+  { id: 'core',     icon: <Hexagon       className="w-5 h-5" />, label: 'SparkCore' },
+  { id: 'chat',     icon: <MessageSquare className="w-5 h-5" />, label: 'Chat'     },
+  { id: 'editor',   icon: <Code2          className="w-5 h-5" />, label: 'Editor'   },
+  { id: 'files',    icon: <FolderTree     className="w-5 h-5" />, label: 'Files'    },
+  { id: 'logs',     icon: <Terminal       className="w-5 h-5" />, label: 'Logs'     },
+  { id: 'security', icon: <ShieldAlert    className="w-5 h-5" />, label: 'Security' },
 ];
 
 export function Sidebar() {
