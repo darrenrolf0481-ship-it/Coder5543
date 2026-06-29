@@ -1,0 +1,189 @@
+import { create } from 'zustand';
+import { McpId } from '../data/mcpRegistry';
+
+export type Panel = 'chat' | 'editor' | 'files' | 'logs' | 'security';
+export type McpStatus = 'offline' | 'connecting' | 'online' | 'error';
+export type BridgeStatus = 'offline' | 'connecting' | 'online';
+export type ThreatLevel = 'clean' | 'low' | 'medium' | 'high' | 'critical';
+
+export interface Message {
+  id: string;
+  role: 'user' | 'system' | 'argus' | 'agent';
+  content: string;
+  timestamp: number;
+  agentId?: string;
+}
+
+export interface ApprovalItem {
+  id: string;
+  action: string;
+  mcp: McpId;
+  details: string;
+  command: string;
+  timestamp: number;
+  status: 'pending' | 'approved' | 'denied';
+}
+
+export interface ThreatEntry {
+  id: string;
+  source: 'sage' | 'seven' | 'user' | 'system';
+  level: ThreatLevel;
+  gate: string;
+  confidence: number;
+  content: string;
+  timestamp: number;
+}
+
+export interface FileNode {
+  id: string;
+  name: string;
+  type: 'file' | 'dir';
+  path: string;
+  children?: FileNode[];
+  language?: string;
+}
+
+export interface GateStats {
+  g1: number;
+  g2: number;
+  g3: number;
+  total: number;
+}
+
+interface ArgusState {
+  activePanel: Panel;
+  chatMessages: Message[];
+  editorContent: string;
+  editorFile: string | null;
+  editorLanguage: string;
+  terminalOutput: string[];
+  approvalQueue: ApprovalItem[];
+  mcpStatus: Record<McpId, McpStatus>;
+  sageBridgeStatus: BridgeStatus;
+  sevenBridgeStatus: BridgeStatus;
+  sageEndpoint: string | null;
+  sevenEndpoint: string | null;
+  threatLog: ThreatEntry[];
+  attachedAgent: string | null;
+  fileTree: FileNode[];
+  gateStats: GateStats;
+
+  setActivePanel: (panel: Panel) => void;
+  addMessage: (msg: Omit<Message, 'id' | 'timestamp'>) => void;
+  setEditorContent: (content: string) => void;
+  setEditorFile: (file: string | null, language?: string) => void;
+  addTerminalOutput: (line: string) => void;
+  clearTerminal: () => void;
+  addApproval: (item: Omit<ApprovalItem, 'id' | 'timestamp' | 'status'>) => void;
+  resolveApproval: (id: string, approved: boolean) => void;
+  setMcpStatus: (mcp: McpId, status: McpStatus) => void;
+  setSageBridgeStatus: (status: BridgeStatus) => void;
+  setSevenBridgeStatus: (status: BridgeStatus) => void;
+  setSageEndpoint: (endpoint: string | null) => void;
+  setSevenEndpoint: (endpoint: string | null) => void;
+  addThreat: (entry: Omit<ThreatEntry, 'id' | 'timestamp'>) => void;
+  setAttachedAgent: (agentId: string | null) => void;
+  setFileTree: (tree: FileNode[]) => void;
+  recordGateHit: (gate: 'pii' | 'sanitize' | 'injection' | 'none') => void;
+}
+
+const defaultMcpStatus = (): Record<McpId, McpStatus> => ({
+  filesystem: 'offline',
+  terminal:   'offline',
+  git:        'offline',
+  database:   'offline',
+  browser:    'offline',
+  docs:       'offline',
+  testrunner: 'offline',
+});
+
+export const useArgusStore = create<ArgusState>((set) => ({
+  activePanel: 'chat',
+  chatMessages: [
+    {
+      id: crypto.randomUUID(),
+      role: 'argus',
+      content:
+        'ARGUS ONLINE.\n\nAll eyes open. Connect your MCP servers to begin. Type "attach sage" or "attach seven" to bring agents online. Type "help" for command reference.',
+      timestamp: Date.now(),
+    },
+  ],
+  editorContent: '',
+  editorFile: null,
+  editorLanguage: 'typescript',
+  terminalOutput: ['[ARGUS] Neural Oversight Lab initialized.', '[ARGUS] Awaiting MCP connections...'],
+  approvalQueue: [],
+  mcpStatus: defaultMcpStatus(),
+  sageBridgeStatus: 'offline',
+  sevenBridgeStatus: 'offline',
+  sageEndpoint: null,
+  sevenEndpoint: null,
+  threatLog: [],
+  attachedAgent: null,
+  fileTree: [],
+  gateStats: { g1: 0, g2: 0, g3: 0, total: 0 },
+
+  setActivePanel: (panel) => set({ activePanel: panel }),
+
+  addMessage: (msg) =>
+    set((s) => ({
+      chatMessages: [
+        ...s.chatMessages,
+        { ...msg, id: crypto.randomUUID(), timestamp: Date.now() },
+      ],
+    })),
+
+  setEditorContent: (content) => set({ editorContent: content }),
+
+  setEditorFile: (file, language = 'typescript') =>
+    set({ editorFile: file, editorLanguage: language }),
+
+  addTerminalOutput: (line) =>
+    set((s) => ({ terminalOutput: [...s.terminalOutput, line] })),
+
+  clearTerminal: () => set({ terminalOutput: [] }),
+
+  addApproval: (item) =>
+    set((s) => ({
+      approvalQueue: [
+        ...s.approvalQueue,
+        { ...item, id: crypto.randomUUID(), timestamp: Date.now(), status: 'pending' },
+      ],
+    })),
+
+  resolveApproval: (id, approved) =>
+    set((s) => ({
+      approvalQueue: s.approvalQueue.map((a) =>
+        a.id === id ? { ...a, status: approved ? 'approved' : 'denied' } : a
+      ),
+    })),
+
+  setMcpStatus: (mcp, status) =>
+    set((s) => ({ mcpStatus: { ...s.mcpStatus, [mcp]: status } })),
+
+  setSageBridgeStatus: (status) => set({ sageBridgeStatus: status }),
+  setSevenBridgeStatus: (status) => set({ sevenBridgeStatus: status }),
+  setSageEndpoint: (endpoint) => set({ sageEndpoint: endpoint }),
+  setSevenEndpoint: (endpoint) => set({ sevenEndpoint: endpoint }),
+
+  addThreat: (entry) =>
+    set((s) => ({
+      threatLog: [
+        ...s.threatLog,
+        { ...entry, id: crypto.randomUUID(), timestamp: Date.now() },
+      ],
+    })),
+
+  setAttachedAgent: (agentId) => set({ attachedAgent: agentId }),
+  setFileTree: (tree) => set({ fileTree: tree }),
+
+  recordGateHit: (gate) =>
+    set((s) => ({
+      gateStats: {
+        g1: s.gateStats.g1 + (gate === 'pii'       ? 1 : 0),
+        g2: s.gateStats.g2 + (gate === 'sanitize'   ? 1 : 0),
+        g3: s.gateStats.g3 + (gate === 'injection'  ? 1 : 0),
+        total: s.gateStats.total + (gate !== 'none' ? 1 : 0),
+      },
+    })),
+}));

@@ -51,6 +51,7 @@ import { PROJECT_TEMPLATES } from './services/templates';
 import { AGENT_DOMAINS, getAgentsByDomain } from './data/agentRegistry';
 import { PatternResult } from './services/pipeline/patternInjectionService';
 import { useWebSockets } from './hooks/useWebSockets';
+import { useTts } from './hooks/useTts';
 import { useWebContainer } from './hooks/useWebContainer';
 import { localCore } from './services/localCoreService';
 import { transformToWebContainerTree } from './utils/vfsUtils';
@@ -231,6 +232,16 @@ function AppInner() {
   ]);
   const [chatSummary, setChatSummary] = useState('');
   const [studioInput, setStudioInput] = useState('');
+
+  // TTS — speak new AI messages in the active personality's voice
+  const { speak, muted, toggleMute } = useTts(activePersonality?.id ?? 1);
+  const lastSpokenRef = useRef<number>(0);
+  useEffect(() => {
+    const last = chatMessages[chatMessages.length - 1];
+    if (!last || last.role !== 'ai' || last.timestamp === lastSpokenRef.current) return;
+    lastSpokenRef.current = last.timestamp;
+    speak(last.text);
+  }, [chatMessages, speak]);
   const [studioRefImage] = useState<any>(null); // Read-only stub for simple bridge
   const [isAiProcessing, setIsAiProcessing] = useState(false);
 
@@ -1107,6 +1118,8 @@ function AppInner() {
             activePersonality={activePersonality}
             termuxStatus={termuxStatus}
             localCoreStatus={localCoreStatus}
+            muted={muted}
+            toggleMute={toggleMute}
           />
 
           <div className="flex-1 min-h-0 flex flex-col relative">

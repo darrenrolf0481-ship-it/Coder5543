@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #03070f;
+  --bg-secondary: #060d1a;
+  --bg-panel: #080f1f;
+  --border-node: rgba(14, 165, 233, 0.15);
+  --glow-node: rgba(14, 165, 233, 0.4);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background-color: var(--bg-primary);
+  color: #e2e8f0;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  overflow: hidden;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.scrollbar-node::-webkit-scrollbar { width: 4px; }
+.scrollbar-node::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-node::-webkit-scrollbar-thumb {
+  background: rgba(14, 165, 233, 0.3);
+  border-radius: 2px;
+}
+
+.glow-node {
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+}
+
+.glow-threat {
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(14,165,233,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14,165,233,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.panel-border {
+  border: 1px solid var(--border-node);
+  background: var(--bg-panel);
+}
+
+.hud-corner-tl::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 16px; height: 16px;
+  border-top: 1px solid rgba(14,165,233,0.4);
+  border-left: 1px solid rgba(14,165,233,0.4);
+}
+
+.hud-corner-br::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 16px; height: 16px;
+  border-bottom: 1px solid rgba(14,165,233,0.4);
+  border-right: 1px solid rgba(14,165,233,0.4);
+}
