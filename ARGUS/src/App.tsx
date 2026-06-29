@@ -2,13 +2,12 @@
 import { useArgusStore } from './store/useArgusStore';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
+import { DashboardPanel } from './components/panels/DashboardPanel';
 import { ChatPanel } from './components/panels/ChatPanel';
 import { EditorPanel } from './components/panels/EditorPanel';
 import { FilesPanel } from './components/panels/FilesPanel';
 import { LogsPanel } from './components/panels/LogsPanel';
 import { SecurityPanel } from './components/panels/SecurityPanel';
-import { DashboardPanel } from './components/panels/DashboardPanel';
-import { MatrixRain } from './components/fx/MatrixRain';
 
 export default function App() {
   const activePanel = useArgusStore((s) => s.activePanel);
@@ -17,7 +16,6 @@ export default function App() {
     <div className="flex h-screen w-screen overflow-hidden bg-[#03070f] text-slate-200 relative">
       {/* Atmospheric background */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <MatrixRain />
         <div className="absolute top-[-20%] left-[10%] w-[50%] h-[50%] rounded-full bg-node-900/8 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-violet-900/6 blur-[100px]" />
         <div className="bg-grid absolute inset-0 opacity-100" />
