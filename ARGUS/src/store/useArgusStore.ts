@@ -27,12 +27,14 @@ export interface ApprovalItem {
 
 export interface ThreatEntry {
   id: string;
-  source: 'sage' | 'seven' | 'user' | 'system';
+  source: 'sage' | 'seven' | 'user' | 'system' | 'stormologist';
   level: ThreatLevel;
   gate: string;
   confidence: number;
   content: string;
   timestamp: number;
+  resolved?: boolean;
+  resolvedBy?: string;
 }
 
 export interface FileNode {
@@ -62,8 +64,10 @@ interface ArgusState {
   mcpStatus: Record<McpId, McpStatus>;
   sageBridgeStatus: BridgeStatus;
   sevenBridgeStatus: BridgeStatus;
+  stormologistStatus: BridgeStatus;
   sageEndpoint: string | null;
   sevenEndpoint: string | null;
+  stormologistEndpoint: string | null;
   threatLog: ThreatEntry[];
   attachedAgent: string | null;
   fileTree: FileNode[];
@@ -80,8 +84,10 @@ interface ArgusState {
   setMcpStatus: (mcp: McpId, status: McpStatus) => void;
   setSageBridgeStatus: (status: BridgeStatus) => void;
   setSevenBridgeStatus: (status: BridgeStatus) => void;
+  setStormologistStatus: (status: BridgeStatus) => void;
   setSageEndpoint: (endpoint: string | null) => void;
   setSevenEndpoint: (endpoint: string | null) => void;
+  setStormologistEndpoint: (endpoint: string | null) => void;
   addThreat: (entry: Omit<ThreatEntry, 'id' | 'timestamp'>) => void;
   setAttachedAgent: (agentId: string | null) => void;
   setFileTree: (tree: FileNode[]) => void;
@@ -119,8 +125,10 @@ export const useArgusStore = create<ArgusState>()(
       mcpStatus: defaultMcpStatus(),
       sageBridgeStatus: 'offline',
       sevenBridgeStatus: 'offline',
+      stormologistStatus: 'offline',
       sageEndpoint: null,
       sevenEndpoint: null,
+      stormologistEndpoint: null,
       threatLog: [],
       attachedAgent: null,
       fileTree: [],
@@ -166,8 +174,10 @@ export const useArgusStore = create<ArgusState>()(
 
       setSageBridgeStatus: (status) => set({ sageBridgeStatus: status }),
       setSevenBridgeStatus: (status) => set({ sevenBridgeStatus: status }),
+      setStormologistStatus: (status) => set({ stormologistStatus: status }),
       setSageEndpoint: (endpoint) => set({ sageEndpoint: endpoint }),
       setSevenEndpoint: (endpoint) => set({ sevenEndpoint: endpoint }),
+      setStormologistEndpoint: (endpoint) => set({ stormologistEndpoint: endpoint }),
 
       addThreat: (entry) =>
         set((s) => ({
@@ -193,10 +203,10 @@ export const useArgusStore = create<ArgusState>()(
     {
       name: 'argus-state-v1',
       partialize: (s) => ({
-        threatLog:     s.threatLog,
-        gateStats:     s.gateStats,
-        chatMessages:  s.chatMessages,
-        attachedAgent: s.attachedAgent,
+        threatLog:      s.threatLog,
+        gateStats:      s.gateStats,
+        chatMessages:   s.chatMessages,
+        attachedAgent:  s.attachedAgent,
         terminalOutput: s.terminalOutput,
       }),
     }
