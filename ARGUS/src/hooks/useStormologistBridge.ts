@@ -34,12 +34,12 @@ export function useStormologistBridge() {
   const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
 
-  const addThreat         = useArgusStore((s) => s.addThreat);
-  const addApproval       = useArgusStore((s) => s.addApproval);
-  const addMessage        = useArgusStore((s) => s.addMessage);
-  const addTerminalOutput = useArgusStore((s) => s.addTerminalOutput);
-  const setStormStatus    = useArgusStore((s) => s.setStormologistStatus);
-  const endpoint          = useArgusStore((s) => s.stormologistEndpoint) ?? DEFAULT_ENDPOINT;
+  const addThreat          = useArgusStore((s) => s.addThreat);
+  const addApproval        = useArgusStore((s) => s.addApproval);
+  const addMessage         = useArgusStore((s) => s.addMessage);
+  const addTerminalOutput  = useArgusStore((s) => s.addTerminalOutput);
+  const setStormStatus     = useArgusStore((s) => s.setStormologistStatus);
+  const endpoint           = useArgusStore((s) => s.stormologistEndpoint) ?? DEFAULT_ENDPOINT;
 
   useEffect(() => {
     mountedRef.current = true;
@@ -85,11 +85,28 @@ export function useStormologistBridge() {
       }
     };
 
+    const scheduleReconnect = () => {
+      if (!mountedRef.current) return;
+      const delay = BACKOFF_MS[Math.min(attemptRef.current, BACKOFF_MS.length - 1)];
+      attemptRef.current++;
+      timerRef.current = setTimeout(connect, delay);
+    };
+
     const connect = () => {
       if (!mountedRef.current) return;
       setStormStatus('connecting');
 
-      const ws = new WebSocket(endpoint);
+      // Constructing a ws:// socket from an https:// page throws a
+      // SecurityError (mixed content) on many browsers. Guard so the
+      // app can never crash on mount — just retry quietly.
+      let ws: WebSocket;
+      try {
+        ws = new WebSocket(endpoint);
+      } catch {
+        setStormStatus('offline');
+        scheduleReconnect();
+        return;
+      }
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -110,9 +127,7 @@ export function useStormologistBridge() {
         if (!mountedRef.current) return;
         setStormStatus('offline');
         wsRef.current = null;
-        const delay = BACKOFF_MS[Math.min(attemptRef.current, BACKOFF_MS.length - 1)];
-        attemptRef.current++;
-        timerRef.current = setTimeout(connect, delay);
+        scheduleReconnect();
       };
 
       ws.onerror = () => ws.close();
