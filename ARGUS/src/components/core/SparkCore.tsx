@@ -153,6 +153,7 @@ export function SparkCore() {
                     strokeOpacity={live ? 0.5 : 0.25} />
               {live && (
                 <motion.circle r={2.5} fill={c.glow}
+                  initial={{ cx: center.x, cy: center.y, opacity: 0 }}
                   animate={{ cx: [center.x, x], cy: [center.y, y], opacity: [0, 1, 0] }}
                   transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut',
                                 delay: (placed.indexOf(placed.find((p) => p.node.id === node.id)!) % 5) * 0.3 }}
@@ -196,8 +197,9 @@ export function SparkCore() {
 
         {/* Pulsing core orb */}
         <motion.circle
-          cx={center.x} cy={center.y}
+          cx={center.x} cy={center.y} r={30}
           fill={coreColor}
+          initial={{ r: 30, opacity: 0.9 }}
           animate={{ r: [30, 36, 30], opacity: [0.9, 1, 0.9] }}
           transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
           style={{ filter: `drop-shadow(0 0 24px ${coreGlow})` }}
