@@ -4,8 +4,8 @@ import './index.css';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
-// Heartbeat: proves the module actually executed. If the screen stays on
-// "INITIALIZING ARGUS" the module never ran; if it reaches "MOUNTING" we got here.
+// Heartbeat: proves the module actually executed.
+(window as unknown as { __argusModuleRan?: boolean }).__argusModuleRan = true;
 const boot = document.getElementById('argus-boot');
 if (boot) boot.textContent = 'MOUNTING ARGUS…';
 
