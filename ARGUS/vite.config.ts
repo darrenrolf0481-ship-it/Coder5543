@@ -8,4 +8,11 @@ export default defineConfig({
     host: true,
     allowedHosts: true,
   },
+  // `npm run preview` serves the production build (plain bundled .js) —
+  // proxy-friendly where the dev server's live .tsx modules get blocked.
+  preview: {
+    port: 5174,
+    host: true,
+    allowedHosts: true,
+  },
 });
