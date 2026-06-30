@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { safeStorage } from './safeStorage';
 
 export interface MemoryEntry {
   id: string;
@@ -70,6 +71,7 @@ export const useMemoryStore = create<MemoryState>()(
     }),
     {
       name: 'argus-memory-v1',
+      storage: safeStorage,
       partialize: (s) => ({ longTerm: s.longTerm }),
     }
   )

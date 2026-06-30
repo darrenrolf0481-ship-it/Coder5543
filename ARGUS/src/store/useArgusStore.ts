@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { safeStorage } from './safeStorage';
 import { McpId } from '../data/mcpRegistry';
 
 export type Panel = 'dashboard' | 'chat' | 'editor' | 'files' | 'logs' | 'security';
@@ -202,6 +203,7 @@ export const useArgusStore = create<ArgusState>()(
     }),
     {
       name: 'argus-state-v1',
+      storage: safeStorage,
       partialize: (s) => ({
         threatLog:      s.threatLog,
         gateStats:      s.gateStats,
