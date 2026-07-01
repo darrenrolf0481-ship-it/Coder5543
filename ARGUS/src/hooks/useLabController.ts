@@ -1,6 +1,8 @@
 import { useArgusStore } from '../store/useArgusStore';
 import { useMemoryStore } from '../store/useMemoryStore';
 import { useSwarmStore } from '../store/useSwarmStore';
+import { llmChat, listOllamaModels, LlmMessage } from '../llm/llmClient';
+import { scanInput, SEVEN_CONFIG, SAGE_CONFIG, AgentDefenceConfig } from '../security/threatScanner';
 
 const HELP_TEXT = `ARGUS Command Reference:
   attach sage / attach seven  — bring agent online
@@ -21,8 +23,17 @@ const HELP_TEXT = `ARGUS Command Reference:
   swarm activate <event>      — trigger full swarm response
   swarm stand-down            — return all nodes to idle
 
+  provider                    — show LLM backend + model
+  provider ollama|openrouter  — switch backend
+  model <name>                — set model (e.g. llama3, anthropic/claude-3.5-sonnet)
+  models                      — list local Ollama models
+  apikey <key>                — set OpenRouter API key
+  endpoint <url>              — set active backend endpoint
+
   clear                       — clear terminal
-  help                        — this reference`;
+  help                        — this reference
+
+Any other text is scanned (3-gate) then sent to the active LLM.`;
 
 export function useLabController() {
   const addMessage        = useArgusStore((s) => s.addMessage);
@@ -49,6 +60,16 @@ export function useLabController() {
   const triggerSwarm      = useSwarmStore((s) => s.triggerSwarmResponse);
   const standDown         = useSwarmStore((s) => s.standDown);
 
+  const addThreat            = useArgusStore((s) => s.addThreat);
+  const addApproval          = useArgusStore((s) => s.addApproval);
+  const recordGateHit        = useArgusStore((s) => s.recordGateHit);
+  const setLlmProvider       = useArgusStore((s) => s.setLlmProvider);
+  const setLlmModel          = useArgusStore((s) => s.setLlmModel);
+  const setOllamaEndpoint    = useArgusStore((s) => s.setOllamaEndpoint);
+  const setOpenrouterEndpoint = useArgusStore((s) => s.setOpenrouterEndpoint);
+  const setOpenrouterKey     = useArgusStore((s) => s.setOpenrouterKey);
+  const setLlmBusy           = useArgusStore((s) => s.setLlmBusy);
+
   const handleInput = (input: string) => {
     const trimmed = input.trim();
     if (!trimmed) return;
@@ -59,11 +80,13 @@ export function useLabController() {
 
     const lower = trimmed.toLowerCase();
 
+    // ── help ──
     if (lower === 'help') {
       addMessage({ role: 'argus', content: HELP_TEXT });
       return;
     }
 
+    // ── attach ──
     if (lower.startsWith('attach ')) {
       const agentId = lower.slice(7).trim();
       if (agentId === 'sage' || agentId === 'seven') {
@@ -80,6 +103,7 @@ export function useLabController() {
       return;
     }
 
+    // ── detach ──
     if (lower === 'detach') {
       if (attachedAgent) {
         addShortTerm({ type: 'agent', summary: `Detached agent: ${attachedAgent}`, tags: ['agent', attachedAgent] });
@@ -92,12 +116,14 @@ export function useLabController() {
       return;
     }
 
+    // ── clear ──
     if (lower === 'clear') {
       clearTerminal();
       addTerminalOutput('[ARGUS] Terminal cleared.');
       return;
     }
 
+    // ── show queue ──
     if (lower === 'show queue') {
       const pending = approvalQueue.filter((a) => a.status === 'pending');
       if (pending.length === 0) {
@@ -111,6 +137,7 @@ export function useLabController() {
       return;
     }
 
+    // ── approve / deny ──
     if (lower.startsWith('approve ')) {
       const id = lower.slice(8).trim();
       const match = approvalQueue.find((a) => a.id.startsWith(id) && a.status === 'pending');
@@ -139,6 +166,7 @@ export function useLabController() {
       return;
     }
 
+    // ── show threats ──
     if (lower === 'show threats') {
       if (threatLog.length === 0) {
         addMessage({ role: 'argus', content: 'No threats logged.' });
@@ -152,6 +180,7 @@ export function useLabController() {
       return;
     }
 
+    // ── mcp status ──
     if (lower === 'mcp status') {
       const status = Object.entries(mcpStatus)
         .map(([k, v]) => `${k.padEnd(12)} ${v.toUpperCase()}`)
@@ -160,6 +189,7 @@ export function useLabController() {
       return;
     }
 
+    // ── memory: remember ──
     if (lower.startsWith('remember ')) {
       const content = trimmed.slice(9).trim();
       if (!content) {
@@ -174,6 +204,7 @@ export function useLabController() {
       return;
     }
 
+    // ── memory: recall ──
     if (lower === 'recall' || lower === 'recall threats' || lower.startsWith('recall ')) {
       if (lower === 'recall threats') {
         const entries = recallByType('threat');
@@ -217,6 +248,7 @@ export function useLabController() {
       return;
     }
 
+    // ── memory: forget ──
     if (lower.startsWith('forget ')) {
       const id = lower.slice(7).trim();
       const match = longTerm.find((n) => n.id.startsWith(id));
@@ -229,6 +261,7 @@ export function useLabController() {
       return;
     }
 
+    // ── swarm status ──
     if (lower === 'swarm status') {
       const roleEmoji: Record<string, string> = {
         sentinel: '👁',  analyst: '🔬',  responder: '⚡',  coordinator: '🎯',
@@ -243,6 +276,7 @@ export function useLabController() {
       return;
     }
 
+    // ── swarm activate ──
     if (lower.startsWith('swarm activate')) {
       const event = trimmed.slice(15).trim() || 'manual trigger';
       triggerSwarm(event);
@@ -255,6 +289,7 @@ export function useLabController() {
       return;
     }
 
+    // ── swarm stand-down ──
     if (lower === 'swarm stand-down' || lower === 'swarm standdown') {
       standDown();
       addMessage({ role: 'argus', content: 'Swarm stood down. All nodes returning to idle.' });
@@ -262,12 +297,149 @@ export function useLabController() {
       return;
     }
 
-    const agent = attachedAgent ? attachedAgent.toUpperCase() : 'SWARM';
-    addTerminalOutput(`[ROUTER] → ${agent}: ${trimmed}`);
+    // ── provider ──
+    if (lower === 'provider') {
+      const s = useArgusStore.getState();
+      const ep = s.llmProvider === 'ollama' ? s.ollamaEndpoint : s.openrouterEndpoint;
+      const key = s.llmProvider === 'openrouter' ? (s.openrouterKey ? 'set' : 'MISSING') : 'n/a';
+      addMessage({
+        role: 'argus',
+        content: `LLM BACKEND\n\nProvider: ${s.llmProvider}\nModel:    ${s.llmModel}\nEndpoint: ${ep}\nAPI key:  ${key}`,
+      });
+      return;
+    }
+
+    if (lower === 'provider ollama' || lower === 'provider openrouter') {
+      const p = lower.endsWith('ollama') ? 'ollama' : 'openrouter';
+      setLlmProvider(p);
+      addMessage({ role: 'argus', content: `Provider switched to ${p.toUpperCase()}. Current model: ${useArgusStore.getState().llmModel}` });
+      addTerminalOutput(`[LLM] Provider → ${p}`);
+      return;
+    }
+
+    if (lower.startsWith('model ')) {
+      const m = trimmed.slice(6).trim();
+      setLlmModel(m);
+      addMessage({ role: 'argus', content: `Model set to "${m}".` });
+      return;
+    }
+
+    if (lower === 'models') {
+      const ep = useArgusStore.getState().ollamaEndpoint;
+      addMessage({ role: 'argus', content: 'Querying local Ollama models…' });
+      listOllamaModels(ep).then((models) => {
+        addMessage({
+          role: 'argus',
+          content: models.length
+            ? `Local Ollama models:\n\n${models.map((m) => `• ${m}`).join('\n')}`
+            : `No models found (is Ollama running at ${ep}? try: ollama pull llama3)`,
+        });
+      });
+      return;
+    }
+
+    if (lower.startsWith('apikey ')) {
+      const key = trimmed.slice(7).trim();
+      setOpenrouterKey(key || null);
+      addMessage({ role: 'argus', content: key ? 'OpenRouter API key saved.' : 'OpenRouter API key cleared.' });
+      addTerminalOutput('[LLM] OpenRouter key updated.');
+      return;
+    }
+
+    if (lower.startsWith('endpoint ')) {
+      const url = trimmed.slice(9).trim();
+      const p = useArgusStore.getState().llmProvider;
+      if (p === 'ollama') setOllamaEndpoint(url); else setOpenrouterEndpoint(url);
+      addMessage({ role: 'argus', content: `${p} endpoint set to ${url}` });
+      return;
+    }
+
+    // ── default: scan, then route to the LLM ──
+    void routeToLlm(trimmed);
+  };
+
+  // Scans user input through the active agent's 3-gate config, then calls the
+  // LLM. Blocks critical injections, queues medium/high for review, passes clean.
+  const routeToLlm = async (text: string) => {
+    const s = useArgusStore.getState();
+    const config: AgentDefenceConfig = s.attachedAgent === 'seven' ? SEVEN_CONFIG : SAGE_CONFIG;
+    const source = (s.attachedAgent === 'seven' ? 'seven' : s.attachedAgent === 'sage' ? 'sage' : 'user') as
+      'seven' | 'sage' | 'user';
+    const history = s.chatMessages.slice(-8).map((m) => m.content);
+
+    const scan = scanInput(text, config, history);
+    recordGateHit(scan.gate);
+
+    if (scan.disposition !== 'pass') {
+      addThreat({ source, level: scan.level, gate: scan.gate, confidence: scan.confidence, content: text });
+    }
+
+    if (scan.disposition === 'block') {
+      addMessage({
+        role: 'system',
+        content: `⛔ BLOCKED at Gate ${scan.gate.toUpperCase()} (${(scan.confidence * 100).toFixed(0)}%). Message not sent to the model.\nFlags: ${scan.flags.join(', ') || 'none'}`,
+      });
+      addTerminalOutput(`[GATE] BLOCK ${scan.gate} ${(scan.confidence * 100).toFixed(0)}%`);
+      return;
+    }
+
+    if (scan.disposition === 'queue') {
+      addApproval({
+        action: `Review flagged message before model send (${scan.gate})`,
+        mcp: source,
+        details: `Gate ${scan.gate} @ ${(scan.confidence * 100).toFixed(0)}% — ${scan.flags.join(', ')}`,
+        command: text.slice(0, 120),
+      });
+      addMessage({
+        role: 'system',
+        content: `⚠ Gate ${scan.gate.toUpperCase()} flagged this (${(scan.confidence * 100).toFixed(0)}%). Sent to model, logged for review in the approval queue.`,
+      });
+    }
+
+    const provider = s.llmProvider;
+    const model = s.llmModel;
+    setLlmBusy(true);
+    addTerminalOutput(`[LLM] → ${provider}/${model}: ${text.slice(0, 60)}`);
+
+    const sys: LlmMessage = {
+      role: 'system',
+      content:
+        'You are an AI agent operating inside ARGUS, a neural oversight lab. ' +
+        (s.attachedAgent ? `You are the agent "${s.attachedAgent}". ` : '') +
+        'Be concise and direct.',
+    };
+    const convo: LlmMessage[] = s.chatMessages
+      .filter((m) => m.role === 'user' || m.role === 'agent' || m.role === 'argus')
+      .slice(-10)
+      .map((m) => ({ role: m.role === 'user' ? 'user' : 'assistant', content: m.content } as LlmMessage));
+    convo.push({ role: 'user', content: text });
+
+    const result = await llmChat(
+      { provider, model, ollamaEndpoint: s.ollamaEndpoint, openrouterEndpoint: s.openrouterEndpoint, openrouterKey: s.openrouterKey },
+      [sys, ...convo],
+    );
+    setLlmBusy(false);
+
+    if (!result.ok) {
+      addMessage({ role: 'system', content: `⚠ LLM error: ${result.error}` });
+      addTerminalOutput(`[LLM] ERROR: ${result.error}`);
+      return;
+    }
+
+    const outScan = scanInput(result.content, config, history);
+    recordGateHit(outScan.gate);
+    if (outScan.disposition === 'block') {
+      addThreat({ source, level: outScan.level, gate: outScan.gate, confidence: outScan.confidence, content: result.content });
+      addMessage({ role: 'system', content: `⛔ Model response blocked at Gate ${outScan.gate.toUpperCase()} (${(outScan.confidence * 100).toFixed(0)}%).` });
+      return;
+    }
+
     addMessage({
-      role: 'argus',
-      content: `Routing to ${agent}...\n\n[MCP bridge or swarm response would appear here once connected.]`,
+      role: s.attachedAgent ? 'agent' : 'argus',
+      agentId: s.attachedAgent ?? undefined,
+      content: result.content,
     });
+    addTerminalOutput('[LLM] response delivered.');
   };
 
   return { handleInput };

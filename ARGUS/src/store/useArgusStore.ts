@@ -74,6 +74,14 @@ interface ArgusState {
   fileTree: FileNode[];
   gateStats: GateStats;
 
+  // LLM backend
+  llmProvider: 'ollama' | 'openrouter';
+  llmModel: string;
+  ollamaEndpoint: string;
+  openrouterEndpoint: string;
+  openrouterKey: string | null;
+  llmBusy: boolean;
+
   setActivePanel: (panel: Panel) => void;
   addMessage: (msg: Omit<Message, 'id' | 'timestamp'>) => void;
   setEditorContent: (content: string) => void;
@@ -93,6 +101,13 @@ interface ArgusState {
   setAttachedAgent: (agentId: string | null) => void;
   setFileTree: (tree: FileNode[]) => void;
   recordGateHit: (gate: 'pii' | 'sanitize' | 'injection' | 'none') => void;
+
+  setLlmProvider: (p: 'ollama' | 'openrouter') => void;
+  setLlmModel: (m: string) => void;
+  setOllamaEndpoint: (e: string) => void;
+  setOpenrouterEndpoint: (e: string) => void;
+  setOpenrouterKey: (k: string | null) => void;
+  setLlmBusy: (b: boolean) => void;
 }
 
 const defaultMcpStatus = (): Record<McpId, McpStatus> => ({
@@ -134,6 +149,13 @@ export const useArgusStore = create<ArgusState>()(
       attachedAgent: null,
       fileTree: [],
       gateStats: { g1: 0, g2: 0, g3: 0, total: 0 },
+
+      llmProvider: 'ollama',
+      llmModel: 'llama3',
+      ollamaEndpoint: 'http://localhost:11434',
+      openrouterEndpoint: 'https://openrouter.ai/api/v1',
+      openrouterKey: null,
+      llmBusy: false,
 
       setActivePanel: (panel) => set({ activePanel: panel }),
 
@@ -191,6 +213,13 @@ export const useArgusStore = create<ArgusState>()(
       setAttachedAgent: (agentId) => set({ attachedAgent: agentId }),
       setFileTree: (tree) => set({ fileTree: tree }),
 
+      setLlmProvider: (p) => set({ llmProvider: p }),
+      setLlmModel: (m) => set({ llmModel: m }),
+      setOllamaEndpoint: (e) => set({ ollamaEndpoint: e }),
+      setOpenrouterEndpoint: (e) => set({ openrouterEndpoint: e }),
+      setOpenrouterKey: (k) => set({ openrouterKey: k }),
+      setLlmBusy: (b) => set({ llmBusy: b }),
+
       recordGateHit: (gate) =>
         set((s) => ({
           gateStats: {
@@ -205,11 +234,16 @@ export const useArgusStore = create<ArgusState>()(
       name: 'argus-state-v1',
       storage: safeStorage,
       partialize: (s) => ({
-        threatLog:      s.threatLog,
-        gateStats:      s.gateStats,
-        chatMessages:   s.chatMessages,
-        attachedAgent:  s.attachedAgent,
+        threatLog:    s.threatLog,
+        gateStats:    s.gateStats,
+        chatMessages: s.chatMessages,
+        attachedAgent: s.attachedAgent,
         terminalOutput: s.terminalOutput,
+        llmProvider:  s.llmProvider,
+        llmModel:     s.llmModel,
+        ollamaEndpoint: s.ollamaEndpoint,
+        openrouterEndpoint: s.openrouterEndpoint,
+        openrouterKey: s.openrouterKey,
       }),
     }
   )
