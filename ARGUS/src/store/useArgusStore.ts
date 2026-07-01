@@ -152,7 +152,9 @@ export const useArgusStore = create<ArgusState>()(
 
       llmProvider: 'ollama',
       llmModel: 'llama3',
-      ollamaEndpoint: 'http://localhost:11434',
+      // '/ollama' is proxied by the vite server to localhost:11434 on the
+      // machine running ARGUS — required when viewing through a tunnel.
+      ollamaEndpoint: '/ollama',
       openrouterEndpoint: 'https://openrouter.ai/api/v1',
       openrouterKey: null,
       llmBusy: false,
@@ -233,6 +235,15 @@ export const useArgusStore = create<ArgusState>()(
     {
       name: 'argus-state-v1',
       storage: safeStorage,
+      version: 2,
+      migrate: (persisted: unknown, version: number) => {
+        const p = persisted as Partial<ArgusState>;
+        // v1 → v2: direct localhost Ollama URL becomes the same-origin proxy path.
+        if (version < 2 && p.ollamaEndpoint === 'http://localhost:11434') {
+          p.ollamaEndpoint = '/ollama';
+        }
+        return p as ArgusState;
+      },
       partialize: (s) => ({
         threatLog:    s.threatLog,
         gateStats:    s.gateStats,
