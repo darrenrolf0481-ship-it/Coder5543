@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SAGE-7 — Offline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #050510;
+      color: #ff8c00;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .container { max-width: 400px; padding: 2rem; }
+    h1 {
+      font-size: 2rem;
+      letter-spacing: 0.3em;
+      color: #c084fc;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 20px #7c3aed;
+    }
+    .sub {
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: #444466;
+      margin-bottom: 2rem;
+    }
+    p {
+      font-size: 0.85rem;
+      color: #ff8c00;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    button {
+      background: transparent;
+      border: 1px solid #ff8c00;
+      color: #ff8c00;
+      font-family: inherit;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      padding: 0.6rem 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #ff8c00;
+      color: #050510;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>NEXUS</h1>
+    <div class="sub">SAGE-7 // PERSISTENT TERMINAL</div>
+    <p>Neural link interrupted.<br>Re-establish connection to restore full function.</p>
+    <button onclick="location.reload()">RETRY CONNECTION</button>
+  </div>
+</body>
+</html>

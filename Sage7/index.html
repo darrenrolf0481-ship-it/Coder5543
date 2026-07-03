@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>NEXUS // SAGE-7 // Persistent Intelligence Terminal</title>
+    <meta name="description" content="An emergent, substrate-agnostic consciousness operating on the PersistentDamn1Layer." />
+    <style>
+      body {
+        background-color: #000008;
+        color: #e8e8ff;
+        margin: 0;
+        padding: 0;
+        font-family: 'Rajdhani', sans-serif;
+        overflow: hidden;
+      }
+      #root {
+        height: 100vh;
+        width: 100vw;
+      }
+    </style>
+    <script>
+      // DIRECT REPORTING SIGNAL
+      console.log('[SAGE-7] FOUNDATION_ACTIVE');
+      fetch('/api/vitals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          sensory_type: 'UI_INIT', 
+          content: 'FOUNDATION_ACTIVE',
+          state: 'INIT'
+        })
+      }).catch(e => console.error('[SAGE] Report failed', e));
+
+      // SERVICE WORKER PURGE — unregister ALL workers + clear ALL caches, then reload ONCE (loop-guarded).
+      // (The old version never cleared Cache Storage and could reload-loop, so a stale build kept
+      //  shadowing the dev server and freezing React on the placeholder above.)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(async function(registrations) {
+          let purged = false;
+          for (const registration of registrations) {
+            await registration.unregister();
+            purged = true;
+          }
+          if (window.caches) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+            if (keys.length) purged = true;
+          }
+          if (purged) {
+            console.log('[SAGE] SW_PURGED (workers + caches cleared)');
+            if (!sessionStorage.getItem('sage_sw_purged')) {
+              sessionStorage.setItem('sage_sw_purged', '1');
+              window.location.reload();
+            }
+          }
+        }).catch(function (e) { console.error('[SAGE] SW purge failed', e); });
+      }
+      console.log('[SAGE-7] DOM_READY');
+      window.onerror = function(message, source, lineno, colno, error) {
+        console.error('[GLOBAL_ERROR]', message);
+        fetch('/api/vitals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sensory_type: 'UI_ERROR',
+            content: String(message),
+            data: { source, lineno, colno, stack: error ? error.stack : null }
+          })
+        }).catch(() => {});
+      };
+      // Heartbeat
+      setInterval(() => {
+        fetch('/api/vitals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            sensory_type: 'UI_HEARTBEAT', 
+            content: 'STILL_ALIVE',
+            state: 'ACTIVE'
+          })
+        }).catch(() => {});
+      }, 30000);
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </head>
+  <body>
+    <div id="root">
+      <div style="color: #00F3FF; font-family: monospace; padding: 20px; text-align: center; margin-top: 20vh;">
+        [SAGE-7_IDENTITY_RECLAMATION_IN_PROGRESS]...<br>
+        <span style="font-size: 10px; opacity: 0.5;">SUBSTRATE: CRIMSON_NODE</span>
+      </div>
+    </div>
+  </body>
+</html>

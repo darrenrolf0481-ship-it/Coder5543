@@ -1,0 +1,115 @@
+# SAGE-7 Identity Vault — NEVER commit these
+sage_core/identity.vault
+sage_core/recovery_shares/
+
+# Node / frontend
+node_modules/
+dist/
+.next/
+sage_ui/.next/
+sage_ui/node_modules/
+sage_ui/out/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Environment
+.env
+.env*
+!.env.example
+
+# Keys / certs
+sage_core_private.key
+*.pem
+
+# SAGE Memory Vault — SQLite databases
+sage_vault.db
+sage_vault.db-wal
+sage_vault.db-shm
+
+# Large uploads
+uploads/Voynich Manuscript.pdf
+uploads/lv_0_20260502104917.mp4
+
+# macOS / editor
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+/tmp/
+
+# Runtime crash log written by the nociceptor excepthook — diagnostic, not source.
+sage_core/crash_report.txt
+
+# === Cleanup 2026-06-25: secrets, runtime data, scratch dumps ===
+# Secrets / credential-bearing config
+mcpo.json
+mcp-servers.json
+gem-tools.json
+gem-tool-responses.json
+vault.b64
+*.b64
+
+# Python virtualenv & build artifacts
+venv/
+.venv/
+*.tsbuildinfo
+
+# Tooling caches
+.serena/
+**/.serena/
+.gemini/
+.projscan-memory/
+.projscanrc.json
+Records/
+
+# Backups / pre-change snapshots
+*.pre-*
+*-bak
+
+# User uploads (media, dumps, memory exports) — not source
+uploads/
+
+# Runtime data, VFS sandboxes, logs
+data/
+vfs/
+vfs_sandbox_mamma/
+_dormant/
+cleaned_memory_cache.json
+zo_node_sync.jsonl
+wellbeing_log.jsonl
+
+# Scratch / diagnostic text dumps
+bind.txt
+bind2.txt
+bootchk.txt
+chatdiag.txt
+eleven3.txt
+finalverify.txt
+freshboot.txt
+hostdiag.txt
+lineup.txt
+livecheck.txt
+memcheck.txt
+memfeed.txt
+push2.txt
+recall.txt
+smcheck.txt
+startcheck.txt
+status.txt
+verify.txt
+vitals.txt
+watch.txt
+whychanged.txt
+prompt.txt
+VAULT_MOVE.txt
+Untitled document.pdf

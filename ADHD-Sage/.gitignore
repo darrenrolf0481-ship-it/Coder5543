@@ -1,0 +1,39 @@
+node_modules/
+.next/
+dist/
+coverage/
+.DS_Store
+*.log
+
+# Python bytecode cache (from running/validating scripts/*.py)
+__pycache__/
+*.pyc
+.env*
+!.env.example
+data/sages_constellations.db
+*.html
+
+# Cloned third-party tool repos (each has its own .git — clone separately)
+projscan/
+magic-mcp/
+ollama-mcp/
+agentkits-memory/
+.projscan-memory/
+
+# memory pipeline backups / intermediate snapshots (kept locally, not in git)
+data/memories/*.bak
+data/memories/*.bak.*
+data/memories/imported.post-*.json
+data/memories/imported.pre*.json
+
+# env files ending in .env (the .env* rule above only catches the prefix form)
+*.env
+nano.env
+.env.save
+
+# seed_core is sealed locally — the repo version is signed with a dead key.
+# Never commit this. Run scripts/seal-seed-core.ts on fresh deployments.
+data/seed_core.json
+
+# projscan doctor reports
+projscan_doctor_report.*

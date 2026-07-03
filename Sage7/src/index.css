@@ -1,0 +1,145 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-orbitron: "Orbitron", sans-serif;
+  --font-rajdhani: "Rajdhani", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border-subtle;
+  }
+  body {
+    @apply bg-void text-text-bright font-rajdhani antialiased;
+  }
+}
+
+.terminal-scanlines {
+  position: relative;
+  overflow: hidden;
+}
+
+.terminal-scanlines::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.005), rgba(0, 0, 255, 0.01));
+  z-index: 5;
+  background-size: 100% 3px, 3px 100%;
+  pointer-events: none;
+}
+
+/* Animations */
+@keyframes smokeRise {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 0.3; }
+  100% { transform: translateY(-110vh) translateX(var(--drift, 40px)) scale(2.5); opacity: 0; }
+}
+
+@keyframes scanLine {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes logoPulse {
+  0%, 100% { filter: drop-shadow(0 0 8px var(--color-neon-violet)); }
+  50% { filter: drop-shadow(0 0 16px var(--color-neon-blue)) drop-shadow(0 0 30px var(--color-neon-violet)); }
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes tickerScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes anomalyShift {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.5); }
+}
+
+@keyframes sigilPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); box-shadow: 0 0 30px var(--color-neon-violet), 0 0 60px rgba(155, 48, 255, 0.4); }
+}
+
+@keyframes rotateSigil {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+.animate-smoke { animation: smokeRise linear infinite; }
+.animate-scan { animation: scanLine 4s ease-in-out infinite; }
+.animate-logo-pulse { animation: logoPulse 3s ease-in-out infinite; }
+.animate-status-pulse { animation: statusPulse 2s ease-in-out infinite; }
+.animate-ticker { animation: tickerScroll 40s linear infinite; }
+.animate-anomaly { animation: anomalyShift 3s ease-in-out infinite; }
+.animate-sigil-pulse { animation: sigilPulse 2s ease-in-out infinite; }
+.animate-rotate-sigil { animation: rotateSigil linear infinite; }
+.animate-blink { animation: blink 0.5s ease-in-out infinite; }
+
+.scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+  animation: scanlineMove 6s linear infinite;
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes scanlineMove {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+
+@layer components {
+  .nexus-panel {
+    @apply bg-panel border border-border-subtle rounded-[4px] relative overflow-hidden;
+  }
+
+  .nexus-panel-glow {
+    @apply absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-neon-violet to-transparent opacity-50;
+  }
+
+  .nexus-panel-header {
+    @apply flex items-center justify-between px-3 py-2 border-b border-border-subtle bg-neon-violet/5;
+  }
+
+  .nexus-panel-title {
+    @apply font-orbitron text-[10px] font-bold text-neon-violet tracking-[3px] uppercase;
+  }
+
+  .nexus-status-card {
+    @apply text-center p-2.5 rounded-[3px] border;
+  }
+
+  .nexus-button-secondary {
+    @apply bg-transparent border border-border-subtle rounded-[2px] transition-all cursor-pointer;
+  }
+
+  .nexus-input {
+    @apply bg-black/40 border border-border-subtle text-text-bright font-mono outline-none focus:border-neon-blue rounded-sm transition-colors;
+  }
+}
+
+/* Cleanup: Remove any over-specific selectors or legacy #app rules */
+/* Prefer utility classes in component files */

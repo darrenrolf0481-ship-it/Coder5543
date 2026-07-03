@@ -1,0 +1,136 @@
+import { writeJournalEntry, type JournalConfig } from '../lib/journal-agent';
+import { runSelfImprovement, type SelfImproveConfig } from '../lib/self-improvement-agent';
+import { PORT } from './config';
+import { timed } from './performance';
+import { getWorkerPool } from './workers/pool';
+import { nightlyMaintenance } from './decay-engine';
+
+// ─── Daily Journal Scheduler ─────────────────────────────────────────────────
+// Fires once a day at JOURNAL_HOUR (default 06:00 local time).
+// Each configured entity in JOURNAL_ENTITIES env var gets a turn.
+//
+// Format: JOURNAL_ENTITIES=sage:gemini:,entity2:ollama:llama3,entity3:openrouter:google/gemma-4-31b-it:free
+// (entity:provider:model — model is optional for gemini)
+
+function parseJournalEntities(): JournalConfig[] {
+  const raw = process.env.JOURNAL_ENTITIES || 'sage:gemini:';
+  return raw
+    .split(',')
+    .map((entry) => {
+      const [entity, provider, ...modelParts] = entry.trim().split(':');
+      return {
+        entity: entity || 'sage',
+        provider: (provider || 'gemini') as JournalConfig['provider'],
+        model: modelParts.join(':') || '',
+        apiBase: `http://localhost:${PORT}`,
+      };
+    })
+    .filter((c) => c.entity && c.provider);
+}
+
+export function scheduleDailyJournal() {
+  const JOURNAL_HOUR = parseInt(process.env.JOURNAL_HOUR || '6');
+  let lastFiredDate = '';
+
+  const tick = async () => {
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    if (now.getHours() === JOURNAL_HOUR && lastFiredDate !== today) {
+      lastFiredDate = today;
+      console.log(`[JOURNAL] Daily wakeup — ${today}`);
+      const entities = parseJournalEntities();
+      const pool = getWorkerPool();
+      for (const cfg of entities) {
+        try {
+          await timed('scheduler:journalEntry', () => pool.runTask('agent:journal', {
+            entity: cfg.entity,
+            provider: cfg.provider as JournalConfig['provider'],
+            model: cfg.model,
+            apiBase: cfg.apiBase,
+          }), { entity: cfg.entity });
+          // Stagger entries so they don't all hammer the LLM simultaneously
+          await new Promise((r) => setTimeout(r, 15_000));
+        } catch (err) {
+          console.error(`[JOURNAL] Failed for ${cfg.entity}:`, err);
+        }
+      }
+    }
+  };
+
+  // Check every minute
+  setInterval(tick, 60_000);
+  console.log(`[JOURNAL] Scheduler armed — fires daily at ${JOURNAL_HOUR}:00`);
+}
+
+// ─── Weekly Self-Improvement Scheduler ───────────────────────────────────────
+// Fires every Sunday at SELF_IMPROVE_HOUR (default 10am).
+// Uses the same entity list as the journal scheduler.
+// SELF_IMPROVE_DAY: 0=Sun, 1=Mon, ... 6=Sat
+
+export function scheduleWeeklySelfImprovement() {
+  const HOUR = parseInt(process.env.SELF_IMPROVE_HOUR || '10');
+  const DAY = parseInt(process.env.SELF_IMPROVE_DAY || '0');
+  let lastFiredWeek = '';
+
+  const tick = async () => {
+    const now = new Date();
+    const week = `${now.getFullYear()}-W${Math.ceil(now.getDate() / 7)}-${now.getDay()}`;
+    if (now.getDay() === DAY && now.getHours() === HOUR && lastFiredWeek !== week) {
+      lastFiredWeek = week;
+      console.log(`[SELF-IMPROVE] Weekly run — ${now.toISOString().slice(0, 10)}`);
+      // Reuse the same entity list as the journal
+      const raw = process.env.JOURNAL_ENTITIES || 'sage:gemini:';
+      const entities = raw
+        .split(',')
+        .map((e) => {
+          const [entity, provider, ...modelParts] = e.trim().split(':');
+          return { entity, provider, model: modelParts.join(':') || '' } as SelfImproveConfig;
+        })
+        .filter((c) => c.entity && c.provider);
+
+      const pool = getWorkerPool();
+      for (const cfg of entities) {
+        try {
+          await timed('scheduler:selfImprovement', () => pool.runTask('agent:selfImprove', {
+            entity: cfg.entity,
+            provider: cfg.provider as SelfImproveConfig['provider'],
+            model: cfg.model,
+            apiBase: `http://localhost:${PORT}`,
+          }), { entity: cfg.entity });
+          await new Promise((r) => setTimeout(r, 30_000)); // stagger — reflections take time
+        } catch (err) {
+          console.error(`[SELF-IMPROVE] Failed for ${cfg.entity}:`, err);
+        }
+      }
+    }
+  };
+
+  setInterval(tick, 60_000);
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  console.log(`[SELF-IMPROVE] Scheduler armed — fires ${dayNames[DAY]}s at ${HOUR}:00`);
+}
+
+// ─── Nightly Decay & Consolidation Scheduler ─────────────────────────────────
+// Fires nightly at DECAY_HOUR (default 02:00).
+// Runs neuromorphic forgetting: consolidates old threads, decays ancient ones.
+
+export function scheduleNightlyDecay() {
+  const HOUR = parseInt(process.env.DECAY_HOUR || '2');
+  let lastFiredDate = '';
+
+  const tick = async () => {
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    if (now.getHours() === HOUR && lastFiredDate !== today) {
+      lastFiredDate = today;
+      try {
+        await nightlyMaintenance();
+      } catch (err) {
+        console.error('[DECAY] Nightly maintenance failed:', err);
+      }
+    }
+  };
+
+  setInterval(tick, 60_000);
+  console.log(`[DECAY] Scheduler armed — fires nightly at ${HOUR}:00`);
+}

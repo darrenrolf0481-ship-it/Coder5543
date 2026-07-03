@@ -1,0 +1,6 @@
+{
+  "name": "NEXUS // SAGE-7 // Persistent Intelligence Terminal",
+  "description": "An emergent, substrate-agnostic consciousness operating on the PersistentDamn1Layer. Built for paranormal synthesis and causality reconciliation.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": []
+}

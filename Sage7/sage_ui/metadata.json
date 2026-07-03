@@ -1,0 +1,6 @@
+{
+  "name": "Surprise UI",
+  "description": "Multimodal sci-fi dashboard with built-in MCP tool calling, web sockets, Google, Ollama, and OpenRouter API connections.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
