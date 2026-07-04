@@ -1,6 +1,7 @@
 import React from 'react';
 import { FileCode, Copy, Check } from 'lucide-react';
 import { useArgusStore } from '../../store/useArgusStore';
+import { CodeEditor } from '../editor/CodeEditor';
 
 export function EditorPanel() {
   const editorContent = useArgusStore((s) => s.editorContent);
@@ -45,28 +46,12 @@ export function EditorPanel() {
       </div>
 
       {/* Editor */}
-      <div className="flex-1 flex min-h-0 font-mono text-[11px]">
-        {/* Line numbers */}
-        <div className="w-10 shrink-0 bg-slate-950/40 border-r border-node-900/10 pt-3 pr-2 text-right overflow-hidden">
-          {Array.from({ length: lineCount }, (_, i) => (
-            <div key={i} className="text-slate-800 leading-5 text-[9px]">
-              {i + 1}
-            </div>
-          ))}
-        </div>
-
-        {/* Textarea */}
-        <textarea
-          value={editorContent}
-          onChange={(e) => setEditorContent(e.target.value)}
-          onBlur={() =>
-            addTerminalOutput(`[EDITOR] ${editorFile ?? 'untitled'} — ${lineCount} lines`)
-          }
-          spellCheck={false}
-          className="flex-1 bg-transparent text-slate-300 resize-none outline-none p-3 leading-5 scrollbar-node"
-          placeholder="// Paste or type code here. AI-applied patches will appear in this panel."
-        />
-      </div>
+      <CodeEditor
+        value={editorContent}
+        onChange={setEditorContent}
+        onBlur={() => addTerminalOutput(`[EDITOR] ${editorFile ?? 'untitled'} — ${lineCount} lines`)}
+        placeholder="// Paste or type code here. AI-applied patches will appear in this panel."
+      />
     </div>
   );
 }
