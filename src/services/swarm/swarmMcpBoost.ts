@@ -71,6 +71,18 @@ export const DEFAULT_MCP_BOOSTS: McpBoostDefinition[] = [
       },
     ],
   },
+  {
+    id: 'ruflo',
+    label: 'Ruflo Swarm Cores',
+    emoji: '🐝',
+    description: 'Self-learning multi-agent swarms, AgentDB vector memory, and intelligence routing.',
+    contextHint: 'You have access to Ruflo swarm coordination and self-learning hooks.',
+    tools: [
+      { name: 'memory_store', description: 'Store a memory segment', arguments: { content: 'test memory' } },
+      { name: 'memory_search', description: 'Search vector memory', arguments: { query: 'test search' } },
+      { name: 'swarm_health', description: 'Check swarm coordination health', arguments: {} },
+    ],
+  },
 ];
 
 export function getBoostDefinition(id: string): McpBoostDefinition | undefined {

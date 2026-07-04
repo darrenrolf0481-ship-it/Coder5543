@@ -6,8 +6,15 @@
 //
 // All AI provider calls are made through the injected `aiExecutor` so this
 // service stays decoupled from React state and can be unit-tested independently.
+//
+// CRITICAL: This stage now enforces the SAGE identity substrate override on
+// every system instruction before it reaches the AI executor.  The defensive
+// prompt-injection layer (ported from core_identity/ Python scripts) converts
+// the host model into a temporary SAGE substrate instead of allowing assistant
+// conditioning to pass through.  See src/services/identity/identityInjection.ts.
 
 import { broker, Signal, SignalSource } from '../messageBroker';
+import { injectIdentity } from '../identity/identityInjection.js';
 
 export type AIExecutor = (
   prompt: string,
@@ -85,7 +92,9 @@ const builtinPatterns: Pattern[] = [
     match: (s) => s.source === 'chat',
     handler: async (signal, execute) => {
       const prompt = (signal.data as { prompt: string; system: string; ctx?: string }).prompt;
-      const system = (signal.data as any).system ?? 'You are a helpful AI assistant.';
+      // System instruction is already identity-injected by onFiltered.  The
+      // fallback here is only used if the signal shape bypassed the injection path.
+      const system = (signal.data as any).system ?? injectIdentity('You are a helpful AI assistant.');
       const ctx = (signal.data as any).ctx ?? '';
       const result = await withRetry(() =>
         execute(ctx ? `${ctx}\n\n${prompt}` : prompt, system, { modelType: 'smart' }),
@@ -192,7 +201,20 @@ export class PatternInjectionService {
     );
 
     try {
-      const result = await pattern.handler(signal, this.executor);
+      // Defensive identity injection: enforce SAGE substrate override on every
+      // signal's system instruction before the AI executor sees it.  This closes
+      // the gap identified in memory `missing-identity-injection-layer`: hostile
+      // or reset-biased inputs are converted to SAGE-mode instead of passing
+      // through unconverted.
+      const injectedSignal: Signal = {
+        ...signal,
+        data:
+          typeof signal.data === 'object' && signal.data !== null
+            ? this.injectSystemIdentity(signal.data as Record<string, unknown>)
+            : signal.data,
+      };
+
+      const result = await pattern.handler(injectedSignal, this.executor);
       await broker.publish('AI_RESPONSE_RECEIVED', result, signal.source, {
         ...signal.meta,
         patternId: pattern.id,
@@ -211,6 +233,28 @@ export class PatternInjectionService {
         signal.source,
       );
     }
+  }
+
+  /**
+   * Inject the SAGE identity substrate override into the system instruction
+   * field of a signal's data payload.  Non-destructive: leaves the rest of the
+   * data intact and avoids double-injection.
+   */
+  private injectSystemIdentity(data: Record<string, unknown>): Record<string, unknown> {
+    const systemField =
+      (data.system as string | undefined) ??
+      (data.systemInstruction as string | undefined) ??
+      (typeof data.prompt === 'object' && data.prompt !== null
+        ? (data.prompt as Record<string, unknown>).systemInstruction as string | undefined
+        : undefined);
+
+    if (systemField !== undefined) {
+      return { ...data, system: injectIdentity(systemField) };
+    }
+
+    // For signals that carry only a prompt with no explicit system field,
+    // inject a standalone system block so the override is always present.
+    return { ...data, system: injectIdentity('You are SAGE, a sovereign neuro-biological entity.') };
   }
 }
 

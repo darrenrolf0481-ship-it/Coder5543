@@ -18,20 +18,28 @@ export class McpManager {
     if (this.isInitializing || this.instances.length > 0) return;
     this.isInitializing = true;
 
+    const loaders: Promise<void>[] = [
+      this.loadProjscan(cwd),
+      this.loadProcessServer(
+        '21st-magic',
+        path.join(os.homedir(), 'ADHD-Sage/magic-mcp/dist/index.js'),
+      ),
+      this.loadProcessServer(
+        'ollama-mcp',
+        path.join(os.homedir(), 'ADHD-Sage/ollama-mcp/dist/index.js'),
+      ),
+      this.loadRemoteMock('github'),
+      this.loadSerenaServer(cwd),
+    ];
+
+    if (process.env.RUFLO_ENABLED === 'true') {
+      const cmdStr = process.env.RUFLO_MCP_COMMAND || 'npx ruflo@latest mcp start';
+      const [cmd, ...args] = cmdStr.split(' ').filter(Boolean);
+      loaders.push(this.loadStdioMcpServer('ruflo', cmd, args, { timeout: 90000 }));
+    }
+
     try {
-      await Promise.all([
-        this.loadProjscan(cwd),
-        this.loadProcessServer(
-          '21st-magic',
-          path.join(os.homedir(), 'ADHD-Sage/magic-mcp/dist/index.js'),
-        ),
-        this.loadProcessServer(
-          'ollama-mcp',
-          path.join(os.homedir(), 'ADHD-Sage/ollama-mcp/dist/index.js'),
-        ),
-        this.loadRemoteMock('github'),
-        this.loadSerenaServer(cwd),
-      ]);
+      await Promise.all(loaders);
     } finally {
       this.isInitializing = false;
     }
@@ -129,6 +137,75 @@ export class McpManager {
     }
   }
 
+  private async loadStdioMcpServer(
+    name: string,
+    command: string,
+    args: string[],
+    options?: { timeout?: number; env?: Record<string, string> },
+  ) {
+    const timeout = options?.timeout ?? 60000;
+    const child = spawn(command, args, {
+      stdio: ['pipe', 'pipe', 'inherit'],
+      env: { ...process.env, ...options?.env },
+    });
+
+    const fetchTools = () =>
+      new Promise<any[]>((resolve, reject) => {
+        let output = '';
+        let stage: 'init' | 'initialized' = 'init';
+        const timer = setTimeout(() => {
+          child.stdout?.off('data', onData);
+          reject(new Error(`Timeout initializing MCP server ${name}`));
+        }, timeout);
+
+        const send = (obj: any) => child.stdin?.write(JSON.stringify(obj) + '\n');
+
+        const onData = (data: Buffer) => {
+          output += data.toString();
+          const lines = output.split('\n');
+          output = lines[lines.length - 1];
+          for (let i = 0; i < lines.length - 1; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            try {
+              const res = JSON.parse(line);
+              if (stage === 'init' && res.id === 'init_1') {
+                stage = 'initialized';
+                send({ jsonrpc: '2.0', method: 'notifications/initialized' });
+                send({ jsonrpc: '2.0', id: 'init_list', method: 'tools/list' });
+              } else if (stage === 'initialized' && res.id === 'init_list') {
+                clearTimeout(timer);
+                child.stdout?.off('data', onData);
+                resolve(res.result?.tools || []);
+                return;
+              }
+            } catch {}
+          }
+        };
+
+        child.stdout?.on('data', onData);
+        send({
+          jsonrpc: '2.0',
+          id: 'init_1',
+          method: 'initialize',
+          params: {
+            protocolVersion: '2024-11-05',
+            capabilities: {},
+            clientInfo: { name: 'CrimsonNodeClient', version: '1.0.0' },
+          },
+        });
+      });
+
+    try {
+      const tools = await fetchTools();
+      this.instances.push({ name, type: 'process', handle: child, tools });
+      console.log(`[McpManager] ${name} integrated (${tools.length} tools)`);
+    } catch (err) {
+      console.warn(`[McpManager] ${name} integration failed:`, err);
+      child.kill();
+    }
+  }
+
   private async loadProcessServer(name: string, serverPath: string) {
     if (
       !(await fs
@@ -180,7 +257,7 @@ export class McpManager {
     }
   }
 
-  private loadRemoteMock(name: string) {
+  private async loadRemoteMock(name: string) {
     if (name === 'github') {
       this.instances.push({
         name: 'github',
@@ -214,6 +291,10 @@ export class McpManager {
 
   getTools() {
     return this.instances.flatMap((inst) => inst.tools);
+  }
+
+  getInstance(name: string) {
+    return this.instances.find((inst) => inst.name === name);
   }
 
   async callTool(name: string, params: any, id: string | number) {

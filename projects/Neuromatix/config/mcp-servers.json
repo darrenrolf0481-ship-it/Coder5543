@@ -1,0 +1,116 @@
+{
+  "$schema": "./mcp-servers.schema.json",
+  "description": "Neuromatix MCP server registry. These servers are exposed alongside discovered system configs (e.g. /etc/zo/mcpo/config.json and /root/.claude/**/mcp_config.json).",
+  "mcpServers": {
+    "node-filesystem": {
+      "command": "node",
+      "args": [
+        "/usr/lib/node_modules/@modelcontextprotocol/server-filesystem/dist/index.js",
+        "/home/workspace"
+      ],
+      "description": "Node.js MCP filesystem server scoped to /home/workspace"
+    },
+    "github": {
+      "command": "node",
+      "args": [
+        "/usr/lib/node_modules/@modelcontextprotocol/server-github/dist/index.js"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": ""
+      },
+      "description": "GitHub MCP server (requires GITHUB_PERSONAL_ACCESS_TOKEN env var)"
+    },
+    "puppeteer": {
+      "command": "node",
+      "args": [
+        "/usr/lib/node_modules/@modelcontextprotocol/server-puppeteer/dist/index.js"
+      ],
+      "description": "Browser automation via Puppeteer"
+    },
+    "notebooklm": {
+      "command": "node",
+      "args": [
+        "/home/workspace/Mcp/notebooklm-mcp/dist/index.js"
+      ],
+      "description": "Google NotebookLM MCP server"
+    },
+    "openrouter": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@stabgan/openrouter-mcp-multimodal"
+      ],
+      "env": {
+        "OPENROUTER_API_KEY": ""
+      },
+      "description": "OpenRouter multimodal MCP server (requires OPENROUTER_API_KEY env var)"
+    },
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "serena-agent",
+        "serena",
+        "start-mcp-server",
+        "--project-from-cwd"
+      ],
+      "description": "Serena code-agent MCP server"
+    },
+    "vibe-coding-tools": {
+      "command": "node",
+      "args": [
+        "/home/workspace/Offline/vibe-coding-repo/dist/mcp-vibe-coding-tools.js"
+      ],
+      "env": {
+        "WORKSPACE_PATH": "/home/workspace"
+      },
+      "description": "Vibe coding tools: Terraform, CLI, git, web scraping, project management"
+    },
+    "gitops-tools": {
+      "command": "node",
+      "args": [
+        "/home/workspace/Offline/vibe-coding-repo/dist/gitops-server.js"
+      ],
+      "env": {
+        "GITHUB_API_KEY": "",
+        "GITLAB_API_KEY": ""
+      },
+      "description": "GitOps tools: GitHub/GitLab workflow runs, PRs, releases"
+    },
+    "gcloud-tools": {
+      "command": "node",
+      "args": [
+        "/home/workspace/Offline/vibe-coding-repo/dist/gcloud-server.js"
+      ],
+      "description": "Google Cloud tools: projects, compute, storage, auth"
+    },
+    "sage7": {
+      "command": "python3",
+      "args": [
+        "/home/workspace/Coder5543/projects/Surprise-UI/sage7_mcp.py"
+      ],
+      "description": "SAGE-7 agent bridge: chat with the forensic analyst persona and read telemetry"
+    },
+    "ollama": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "ollama-mcp"
+      ],
+      "env": {
+        "OLLAMA_HOST": "http://127.0.0.1:11434"
+      },
+      "description": "Ollama MCP server for local LLM chat"
+    }
+  },
+  "disabledMcpServers": {
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "Sequential thinking MCP server (install with: npm install -g @modelcontextprotocol/server-sequential-thinking)"
+    }
+  }
+}

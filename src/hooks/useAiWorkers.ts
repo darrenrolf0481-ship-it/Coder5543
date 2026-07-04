@@ -59,19 +59,44 @@ export function useAiWorkers(setChatMessages?: React.Dispatch<React.SetStateActi
 
   const refreshOllamaModels = useCallback(
     async (silent = false) => {
-      const url = workers.find((w) => w.provider === 'ollama')?.url || 'http://127.0.0.1:11434';
+      const ollamaWorkers = workers.filter((w) => w.provider === 'ollama');
+      if (ollamaWorkers.length === 0) {
+        setOllamaStatus('idle');
+        setAvailableModels([]);
+        return;
+      }
+
       setOllamaStatus('connecting');
+      setOllamaError(null);
+
+      // Group by URL so workers pointing at different Ollama hosts get the right model list.
+      const urls = Array.from(new Set(ollamaWorkers.map((w) => w.url || 'http://127.0.0.1:11434')));
+
       try {
-        const fetched = await fetchOllamaModels(url);
-        setAvailableModels(fetched);
+        const results = await Promise.all(
+          urls.map(async (url) => {
+            const fetched = await fetchOllamaModels(url);
+            return { url, fetched };
+          }),
+        );
+
+        const allModels = Array.from(new Set(results.flatMap((r) => r.fetched)));
+        setAvailableModels(allModels);
         setOllamaStatus('connected');
         setOllamaError(null);
-        // Assign each worker a distinct model from the fetched list
+
         setWorkers((prev) =>
-          prev.map((w, i) => ({
-            ...w,
-            model: fetched.includes(w.model) ? w.model : fetched[i % fetched.length] || w.model,
-          })),
+          prev.map((w) => {
+            if (w.provider !== 'ollama') return w;
+            const url = w.url || 'http://127.0.0.1:11434';
+            const fetched = results.find((r) => r.url === url)?.fetched ?? [];
+            const currentValid = fetched.includes(w.model);
+            return {
+              ...w,
+              models: fetched,
+              model: currentValid ? w.model : fetched[0] || w.model,
+            };
+          }),
         );
       } catch (err: any) {
         setAvailableModels([]);
@@ -81,7 +106,7 @@ export function useAiWorkers(setChatMessages?: React.Dispatch<React.SetStateActi
           setChatMessages((prev) => [
             {
               role: 'ai',
-              text: `⚠️ **Ollama Connection Error**: ${err.message}\n\nSet \`OLLAMA_ORIGINS="*" ollama serve\` to allow browser access.`,
+              text: `⚠️ **Ollama Connection Error**: ${err.message}\n\nMake sure Ollama is running and reachable (e.g. \`OLLAMA_HOST=http://127.0.0.1:11434 npm run dev\`).`,
               timestamp: Date.now(),
             },
             ...prev,

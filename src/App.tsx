@@ -1749,6 +1749,27 @@ function AppInner() {
                         </select>
                       </div>
                     </div>
+                    {w.provider === 'ollama' && (
+                      <div className="mt-4">
+                        <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1.5 font-black">
+                          Ollama Host
+                        </p>
+                        <input
+                          type="url"
+                          value={w.url}
+                          onChange={(e) =>
+                            setWorkers((prev) =>
+                              prev.map((x) =>
+                                x.id === w.id ? { ...x, url: e.target.value } : x,
+                              ),
+                            )
+                          }
+                          placeholder="http://127.0.0.1:11434"
+                          disabled={!w.enabled}
+                          className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-3 py-2.5 text-xs text-accent-300 font-mono outline-none focus:border-accent-600/60 transition-all disabled:opacity-40"
+                        />
+                      </div>
+                    )}
                     <div className="mt-4">
                       <p className="text-[9px] text-accent-700 uppercase tracking-widest mb-1.5 font-black">
                         Agent Archetype

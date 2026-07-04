@@ -98,6 +98,7 @@ function ApprovalCard() {
 
 export function ChatPanel() {
   const chatMessages = useArgusStore((s) => s.chatMessages);
+  const modelBusy    = useArgusStore((s) => s.modelBusy);
   const { handleInput } = useLabController();
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -107,7 +108,7 @@ export function ChatPanel() {
   }, [chatMessages]);
 
   const submit = () => {
-    if (!input.trim()) return;
+    if (!input.trim() || modelBusy) return;
     handleInput(input.trim());
     setInput('');
   };
@@ -127,18 +128,30 @@ export function ChatPanel() {
         <ApprovalCard />
       </div>
 
+      {/* Busy indicator */}
+      {modelBusy && (
+        <div className="px-3 pb-1.5 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-node-400 animate-pulse" />
+          <span className="text-[8px] font-black tracking-widest text-node-400 uppercase">
+            Model thinking…
+          </span>
+        </div>
+      )}
+
       {/* Input */}
       <div className="p-3 border-t border-node-900/20 flex gap-2 shrink-0">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && submit()}
-          placeholder="Command or message... (type 'help' for reference)"
-          className="flex-1 bg-slate-950/60 border border-node-900/30 rounded-xl px-3 py-2 text-[11px] text-slate-300 placeholder-slate-700 outline-none focus:border-node-700/50 transition-colors font-mono"
+          placeholder={modelBusy ? 'Model busy…' : "Command or message... (type 'help' for reference)"}
+          disabled={modelBusy}
+          className="flex-1 bg-slate-950/60 border border-node-900/30 rounded-xl px-3 py-2 text-[11px] text-slate-300 placeholder-slate-700 outline-none focus:border-node-700/50 transition-colors font-mono disabled:opacity-40"
         />
         <button
           onClick={submit}
-          className="w-9 h-9 rounded-xl bg-node-900/40 border border-node-700/40 flex items-center justify-center text-node-400 hover:bg-node-800/40 transition-all"
+          disabled={modelBusy}
+          className="w-9 h-9 rounded-xl bg-node-900/40 border border-node-700/40 flex items-center justify-center text-node-400 hover:bg-node-800/40 transition-all disabled:opacity-40 disabled:hover:bg-node-900/40"
           aria-label="Send"
         >
           <Send className="w-4 h-4" />

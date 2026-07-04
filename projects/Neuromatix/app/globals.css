@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #040406;
+    color: #f1f5f9;
+    overflow: hidden;
+  }
+  
+  .font-mono {
+    font-family: 'Space Mono', monospace;
+  }
+}
+
+/* Premium Futuristic & Glassmorphism Design System */
+.glass-panel {
+  background: rgba(10, 10, 18, 0.55);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-dev {
+  background: rgba(8, 12, 28, 0.6);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel-audit {
+  background: rgba(6, 18, 16, 0.6);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Custom interactive buttons */
+.btn-neural-primary {
+  background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-neural-primary::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  transition: 0.5s;
+}
+
+.btn-neural-primary:hover::before {
+  left: 100%;
+}
+
+.btn-neural-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px 0 rgba(59, 130, 246, 0.5);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-neural-primary:active {
+  transform: translateY(1px);
+}
+
+/* Secondary neural outline buttons */
+.btn-neural-secondary {
+  background: rgba(255, 255, 255, 0.03);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  transition: all 0.2s ease-in-out;
+  border-radius: 6px;
+}
+
+.btn-neural-secondary:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.12);
+  color: #c7d2fe;
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 12px 0 rgba(99, 102, 241, 0.2);
+}
+
+/* Audit theme buttons */
+.btn-neural-audit {
+  background: rgba(255, 255, 255, 0.03);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  transition: all 0.2s ease-in-out;
+  border-radius: 6px;
+}
+
+.btn-neural-audit:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.12);
+  color: #a7f3d0;
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 12px 0 rgba(16, 185, 129, 0.2);
+}
+
+/* Tech-pill command suggestion badges */
+.tech-pill {
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  color: #818cf8;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  transition: all 0.2s ease;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.tech-pill:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.25);
+}
+
+.tech-pill:disabled {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+  color: #475569;
+  cursor: not-allowed;
+}
+
+/* Futuristic Scanline / Overlay effects */
+.scanline::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 4px, 6px 100%;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.15;
+}
+
+/* Glowing text and status dot animations */
+.glow-text-blue {
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.glow-text-emerald {
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+/* Scrollbar custom styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(5, 5, 8, 0.4);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.2);
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.4);
+}

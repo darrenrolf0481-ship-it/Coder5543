@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { resolveApiUrl } from '../../utils/apiUrl';
 import {
   Settings as SettingsIcon,
   Sparkles,
@@ -133,6 +134,36 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   refreshOllamaModels,
   ollamaError,
 }) => {
+  // ── Ruflo Swarm Connection State ──────────────────────────────────────────
+  const [rufloEnabled, setRufloEnabled] = useState(false);
+  const [rufloConnected, setRufloConnected] = useState(false);
+  const [rufloToolCount, setRufloToolCount] = useState(0);
+  const [rufloTools, setRufloTools] = useState<string[]>([]);
+  const [rufloStatus, setRufloStatus] = useState<'idle' | 'checking' | 'connected' | 'offline'>('idle');
+  const [rufloError, setRufloError] = useState<string | null>(null);
+
+  const fetchRufloStatus = async () => {
+    setRufloStatus('checking');
+    try {
+      const res = await fetch(resolveApiUrl('ruflo/status'));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setRufloEnabled(data.enabled);
+      setRufloConnected(data.connected);
+      setRufloToolCount(data.toolCount);
+      setRufloTools(data.tools || []);
+      setRufloStatus(data.connected ? 'connected' : 'offline');
+      setRufloError(null);
+    } catch (err: any) {
+      setRufloStatus('offline');
+      setRufloError(err.message || 'Failed to query Ruflo status');
+    }
+  };
+
+  useEffect(() => {
+    fetchRufloStatus();
+  }, []);
+
   // ── KB panel state (local) ───────────────────────────────────────────────
   const [openKBPanelId, setOpenKBPanelId] = useState<number | null>(null);
   const [kbGithubUrl, setKbGithubUrl] = useState<Record<number, string>>({});
@@ -605,6 +636,61 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     )}
                   </div>
                 </div>
+              </div>
+
+              {/* Ruflo Swarm Connection Vitals */}
+              <div className="rounded-2xl border border-accent-900/20 bg-accent-950/10 p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-black text-accent-100 uppercase tracking-widest">
+                      Ruflo Swarm Status
+                    </h4>
+                    <p className="text-[10px] text-accent-700 mt-0.5">
+                      Multi-agent orchestration, vector memory, and self-learning hooks
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-2 h-2 rounded-full ${rufloStatus === 'connected' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : rufloStatus === 'checking' ? 'bg-yellow-500 animate-pulse' : 'bg-accent-500'}`}
+                    />
+                    <span className="text-[10px] font-mono uppercase tracking-tighter text-accent-300">
+                      {rufloStatus}
+                    </span>
+                    <button
+                      onClick={() => fetchRufloStatus()}
+                      className="px-3 py-1 bg-accent-900/30 hover:bg-accent-800 text-accent-400 hover:text-white rounded-lg text-[10px] font-black uppercase tracking-widest border border-accent-800/30 transition-all"
+                    >
+                      ↻ Query Status
+                    </button>
+                  </div>
+                </div>
+                {rufloError && (
+                  <div className="text-[10px] text-accent-300 font-mono bg-black/50 border border-accent-900/20 rounded-xl p-3 break-all">
+                    {rufloError}
+                  </div>
+                )}
+                {rufloConnected && (
+                  <div className="flex flex-col gap-2 pt-3 border-t border-accent-900/10">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-accent-800 uppercase font-black tracking-wider">
+                        Active Swarm Tools ({rufloToolCount}):
+                      </span>
+                      <span className="px-2 py-0.5 bg-green-950/30 border border-green-900/30 rounded-full text-[9px] font-mono text-green-400">
+                        Local MCP Server Online
+                      </span>
+                    </div>
+                    <div className="max-h-24 overflow-y-auto custom-scrollbar flex flex-wrap gap-1.5 p-2 bg-black/30 rounded-xl border border-accent-900/10">
+                      {rufloTools.map((t) => (
+                        <span
+                          key={t}
+                          className="px-2 py-0.5 bg-accent-950/30 border border-accent-900/30 rounded-full text-[9px] font-mono text-accent-400"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Workers Slots List */}

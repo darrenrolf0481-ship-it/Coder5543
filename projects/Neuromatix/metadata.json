@@ -1,0 +1,6 @@
+{
+  "name": "Neural Studio",
+  "description": "An immersive, agent-driven coding workspace with neural swarms, active terminal, persistent code editor, and an integrated Model Context Protocol (MCP) server hub.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["mcp-server-registry", "mcp-tool-execution"]
+}

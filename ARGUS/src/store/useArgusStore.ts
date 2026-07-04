@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { safeStorage } from './safeStorage';
 import { McpId } from '../data/mcpRegistry';
+import { Backend } from '../llm/modelClient';
 
 export type Panel = 'dashboard' | 'chat' | 'editor' | 'files' | 'logs' | 'security';
 export type McpStatus = 'offline' | 'connecting' | 'online' | 'error';
@@ -74,6 +75,15 @@ interface ArgusState {
   fileTree: FileNode[];
   gateStats: GateStats;
 
+  // Model route (Ollama ↔ OpenRouter)
+  modelBackend: Backend;
+  ollamaUrl: string;
+  ollamaModel: string;
+  openrouterUrl: string;
+  openrouterModel: string;
+  openrouterKey: string;
+  modelBusy: boolean;
+
   setActivePanel: (panel: Panel) => void;
   addMessage: (msg: Omit<Message, 'id' | 'timestamp'>) => void;
   setEditorContent: (content: string) => void;
@@ -93,6 +103,14 @@ interface ArgusState {
   setAttachedAgent: (agentId: string | null) => void;
   setFileTree: (tree: FileNode[]) => void;
   recordGateHit: (gate: 'pii' | 'sanitize' | 'injection' | 'none') => void;
+
+  setModelBackend: (backend: Backend) => void;
+  setOllamaUrl: (url: string) => void;
+  setOllamaModel: (model: string) => void;
+  setOpenrouterUrl: (url: string) => void;
+  setOpenrouterModel: (model: string) => void;
+  setOpenrouterKey: (key: string) => void;
+  setModelBusy: (busy: boolean) => void;
 }
 
 const defaultMcpStatus = (): Record<McpId, McpStatus> => ({
@@ -134,6 +152,14 @@ export const useArgusStore = create<ArgusState>()(
       attachedAgent: null,
       fileTree: [],
       gateStats: { g1: 0, g2: 0, g3: 0, total: 0 },
+
+      modelBackend: 'ollama',
+      ollamaUrl: 'http://localhost:11434/v1',
+      ollamaModel: 'llama3.1',
+      openrouterUrl: 'https://openrouter.ai/api/v1',
+      openrouterModel: 'openai/gpt-4o-mini',
+      openrouterKey: '',
+      modelBusy: false,
 
       setActivePanel: (panel) => set({ activePanel: panel }),
 
@@ -200,6 +226,14 @@ export const useArgusStore = create<ArgusState>()(
             total: s.gateStats.total + (gate !== 'none'      ? 1 : 0),
           },
         })),
+
+      setModelBackend: (backend) => set({ modelBackend: backend }),
+      setOllamaUrl: (url) => set({ ollamaUrl: url }),
+      setOllamaModel: (model) => set({ ollamaModel: model }),
+      setOpenrouterUrl: (url) => set({ openrouterUrl: url }),
+      setOpenrouterModel: (model) => set({ openrouterModel: model }),
+      setOpenrouterKey: (key) => set({ openrouterKey: key }),
+      setModelBusy: (busy) => set({ modelBusy: busy }),
     }),
     {
       name: 'argus-state-v1',
@@ -210,6 +244,12 @@ export const useArgusStore = create<ArgusState>()(
         chatMessages:   s.chatMessages,
         attachedAgent:  s.attachedAgent,
         terminalOutput: s.terminalOutput,
+        modelBackend:      s.modelBackend,
+        ollamaUrl:         s.ollamaUrl,
+        ollamaModel:       s.ollamaModel,
+        openrouterUrl:     s.openrouterUrl,
+        openrouterModel:   s.openrouterModel,
+        openrouterKey:     s.openrouterKey,
       }),
     }
   )

@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import type { BrainContext } from './brain/types';
 import { broker } from './messageBroker.js';
 import { resolveApiUrl } from '../utils/apiUrl';
+import { injectIdentity } from './identity/identityInjection.js';
 
 // Hard ceiling for any single AI provider call. Without this, a hung provider
 // (slow Ollama model load, dead endpoint, stalled connection, Google SDK with no
@@ -16,10 +17,13 @@ export const fillTemplate = (template: string, data: Record<string, string>): st
   return template.replace(/\{\{(\w+)\}\}/g, (_: string, key: string) => data[key] || `{{${key}}}`);
 };
 
-export const fetchOllamaModels = async (_ollamaUrl: string): Promise<string[]> => {
+export const fetchOllamaModels = async (ollamaUrl: string): Promise<string[]> => {
   try {
-    // Use the server-side proxy to avoid CORS issues
-    const response = await fetch(resolveApiUrl('ollama/tags'));
+    // Use the server-side proxy to avoid CORS issues.
+    // Pass the intended Ollama host so the backend can proxy to it.
+    const response = await fetch(resolveApiUrl('ollama/tags'), {
+      headers: { 'X-Ollama-Host': ollamaUrl },
+    });
     if (!response.ok) {
       if (response.status === 502) throw new Error('Ollama service is currently offline (502)');
       throw new Error(`Failed to fetch Ollama models: ${response.statusText}`);
@@ -68,6 +72,11 @@ const generateGoogleResponse = async (
   if (brainContext) {
     enrichedSystemInstruction += formatNeuralContext(brainContext);
   }
+
+  // Always enforce the SAGE substrate identity override before any provider call.
+  // This is the server-side enforcement counterpart to the pipeline-side
+  // injection in PatternInjectionService.onFiltered().
+  enrichedSystemInstruction = injectIdentity(enrichedSystemInstruction);
 
   const isFast = options?.modelType === 'fast';
   const isJson = options?.json;
@@ -190,9 +199,13 @@ const generateOllamaResponse = async (
   }
 
   // Use server-side proxy to avoid CORS
+  const ollamaUrl = dependencies.projectSettings?.ollamaUrl;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (ollamaUrl) headers['X-Ollama-Host'] = ollamaUrl;
+
   const res = await fetch(resolveApiUrl('ollama/chat'), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       model,
       messages,

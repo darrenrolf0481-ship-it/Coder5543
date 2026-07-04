@@ -1,0 +1,192 @@
+{
+  "$schema": "./mcp-server-docs.schema.json",
+  "description": "Human-readable documentation for MCP servers available in Neuromatix. Maps server names (after discovery/dedup) to capabilities, usage notes, and README-style overviews.",
+  "servers": {
+    "fetch": {
+      "overview": "HTTP client MCP server. Performs outbound web requests on behalf of the AI.",
+      "capabilities": [
+        "Fetch any public URL (GET/POST/PUT/DELETE)",
+        "Return raw text or parsed JSON responses",
+        "Send custom headers and request bodies"
+      ],
+      "commonTools": ["fetch_url", "fetch_json"],
+      "notes": "Useful for checking APIs, downloading docs, or verifying live endpoints. Responses are truncated to ~5000 chars."
+    },
+    "filesystem": {
+      "overview": "Python-based filesystem MCP server scoped to /home/workspace.",
+      "capabilities": [
+        "Read and write text files",
+        "List directories",
+        "Search files by name pattern",
+        "Path-traversal protected"
+      ],
+      "commonTools": ["read_file", "write_file", "list_directory", "search_files"],
+      "notes": "All paths are relative to /home/workspace. The node-filesystem server provides an alternative implementation if needed."
+    },
+    "node-filesystem": {
+      "overview": "Official Model Context Protocol filesystem server (Node.js) scoped to /home/workspace.",
+      "capabilities": [
+        "Read/write text and image files",
+        "List directories",
+        "Search files",
+        "Get directory tree summaries"
+      ],
+      "commonTools": ["read_file", "read_text_file", "write_file", "list_directory", "search_files"],
+      "notes": "Same scope as the Python filesystem server but with a broader official tool set. Use either one depending on which tool shape you prefer."
+    },
+    "shell": {
+      "overview": "Safe shell command MCP server for running commands in /home/workspace.",
+      "capabilities": [
+        "Run arbitrary shell commands (safe list only)",
+        "Check git status and recent commits",
+        "Operate inside a configurable working directory"
+      ],
+      "commonTools": ["run_command", "git_status", "git_log"],
+      "notes": "Destructive commands like rm/dd/mkfs/shutdown are blocked. Default cwd is /home/workspace."
+    },
+    "memory": {
+      "overview": "Persistent key-value memory MCP server for AI context across sessions.",
+      "capabilities": [
+        "Remember key/value pairs in namespaces",
+        "Recall specific keys or entire namespaces",
+        "Search memories by content",
+        "Delete memories"
+      ],
+      "commonTools": ["remember", "recall", "forget", "search_memory"],
+      "notes": "Memories are stored in /home/workspace/Sage72/uploads/memory.json and mirrored into sage_soul.json to survive session collapses."
+    },
+    "projscan": {
+      "overview": "Project scanning MCP server for workspace introspection.",
+      "capabilities": [
+        "Scan project structure",
+        "Provide context-aware project metadata"
+      ],
+      "commonTools": ["scan"],
+      "notes": "Runs with cwd=/home/workspace. Useful for getting a high-level map of the codebase."
+    },
+    "github": {
+      "overview": "Official GitHub MCP server for repository and issue operations.",
+      "capabilities": [
+        "Search repositories, issues, and code",
+        "Create issues and pull requests",
+        "Read file contents and commit history",
+        "Comment on issues/PRs"
+      ],
+      "commonTools": ["search_repositories", "create_issue", "get_file_contents", "search_issues"],
+      "notes": "Requires GITHUB_PERSONAL_ACCESS_TOKEN env var. Set it in .env.local to enable authenticated GitHub operations."
+    },
+    "puppeteer": {
+      "overview": "Browser automation MCP server using Puppeteer.",
+      "capabilities": [
+        "Navigate to URLs",
+        "Screenshot pages",
+        "Click, type, and extract page content",
+        "Evaluate JavaScript in browser context"
+      ],
+      "commonTools": ["puppeteer_navigate", "puppeteer_screenshot", "puppeteer_click", "puppeteer_evaluate"],
+      "notes": "Useful for scraping, rendering, or testing web pages. May require --no-sandbox in containerized environments."
+    },
+    "notebooklm": {
+      "overview": "Google NotebookLM MCP server for source ingestion, chat, and audio overviews.",
+      "capabilities": [
+        "Upload and manage sources",
+        "Chat with NotebookLM about sources",
+        "Generate audio overviews",
+        "Get citations"
+      ],
+      "commonTools": ["create_notebook", "add_source", "chat", "generate_audio_overview"],
+      "notes": "Requires Google authentication. Useful for research and summarizing documents."
+    },
+    "openrouter": {
+      "overview": "OpenRouter multimodal MCP server for calling LLMs via OpenRouter.",
+      "capabilities": [
+        "Chat completions across many models",
+        "Multimodal inputs (text + images)",
+        "Access to models from OpenAI, Anthropic, Google, etc. through one endpoint"
+      ],
+      "commonTools": ["chat_completion"],
+      "notes": "Requires OPENROUTER_API_KEY env var. Set it in .env.local."
+    },
+    "serena": {
+      "overview": "Serena code-agent MCP server for advanced code analysis and transformations.",
+      "capabilities": [
+        "Analyze code structure",
+        "Suggest refactors",
+        "Perform language-aware edits"
+      ],
+      "commonTools": ["analyze", "refactor", "edit"],
+      "notes": "Runs via uvx. Project context is inferred from the current working directory."
+    },
+    "sequential-thinking": {
+      "overview": "Official Sequential Thinking MCP server for structured reasoning.",
+      "capabilities": [
+        "Break complex problems into steps",
+        "Maintain a chain of thought across tool calls",
+        "Revise previous reasoning steps"
+      ],
+      "commonTools": ["sequentialthinking"],
+      "notes": "Not currently installed locally. Install with: npm install -g @modelcontextprotocol/server-sequential-thinking"
+    },
+    "sonarqube": {
+      "overview": "SonarQube MCP server from Claude plugins cache.",
+      "capabilities": [
+        "Query SonarQube code quality metrics",
+        "Fetch issues and hotspots"
+      ],
+      "commonTools": ["run_mcp"],
+      "notes": "Requires a running SonarQube instance and the sonar CLI. Discovered from /root/.claude plugin cache."
+    },
+    "vibe-coding-tools": {
+      "overview": "Comprehensive vibe-coding MCP server from /home/workspace/Offline/vibe-coding-repo.",
+      "capabilities": [
+        "Terraform operations (init/plan/apply/destroy/state/docs)",
+        "CLI and shell command helpers",
+        "Git operations",
+        "Web scraping",
+        "Project management utilities"
+      ],
+      "commonTools": ["terraform", "shell", "git_status", "scrape_url"],
+      "notes": "Scoped to /home/workspace via WORKSPACE_PATH. Dist files are pre-built; source lives in Offline/vibe-coding-repo/src."
+    },
+    "gitops-tools": {
+      "overview": "GitOps MCP server from /home/workspace/Offline/vibe-coding-repo.",
+      "capabilities": [
+        "List GitHub workflow runs",
+        "Manage pull requests",
+        "Inspect releases and deployments"
+      ],
+      "commonTools": ["github_list_workflow_runs", "github_list_pull_requests", "github_create_pull_request"],
+      "notes": "Requires GITHUB_API_KEY and/or GITLAB_API_KEY env vars for authenticated operations."
+    },
+    "gcloud-tools": {
+      "overview": "Google Cloud MCP server from /home/workspace/Offline/vibe-coding-repo.",
+      "capabilities": [
+        "List GCP projects",
+        "Manage Compute Engine instances",
+        "Inspect Cloud Storage buckets",
+        "Run gcloud commands"
+      ],
+      "commonTools": ["gcloud_projects_list", "gcloud_compute_instances_list", "gcloud_storage_buckets_list"],
+      "notes": "Requires gcloud CLI and authenticated application-default credentials. Set GOOGLE_APPLICATION_CREDENTIALS or run gcloud auth application-default login."
+    },
+    "sage7": {
+      "overview": "SAGE-7 agent bridge from /home/workspace/Coder5543/projects/Surprise-UI/sage7_mcp.py.",
+      "capabilities": [
+        "Chat with the SAGE-7 forensic analyst persona",
+        "Read SAGE-7 hardware/system telemetry"
+      ],
+      "commonTools": ["sage_chat", "get_sage_telemetry"],
+      "notes": "Talks to SAGE-7 on http://localhost:8001. The SAGE-7 server must be running."
+    },
+    "ollama": {
+      "overview": "Ollama MCP server for local LLM chat via npx.",
+      "capabilities": [
+        "Chat with local Ollama models",
+        "List available models",
+        "Generate completions"
+      ],
+      "commonTools": ["ollama_chat", "ollama_list_models"],
+      "notes": "Requires Ollama running at OLLAMA_HOST (default http://127.0.0.1:11434). Will be downloaded on first use via npx."
+    }
+  }
+}
