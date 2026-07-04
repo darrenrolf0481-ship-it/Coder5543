@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { safeStorage } from './safeStorage';
+import { useMemoryStore } from './useMemoryStore';
 import { McpId } from '../data/mcpRegistry';
 
 export type Panel = 'dashboard' | 'chat' | 'editor' | 'files' | 'logs' | 'security';
@@ -159,7 +160,11 @@ export const useArgusStore = create<ArgusState>()(
       openrouterKey: null,
       llmBusy: false,
 
-      setActivePanel: (panel) => set({ activePanel: panel }),
+      setActivePanel: (panel) =>
+        set((s) => ({
+          activePanel: panel,
+          terminalOutput: [...s.terminalOutput.slice(-199), `[UI] Panel → ${panel.toUpperCase()}`],
+        })),
 
       addMessage: (msg) =>
         set((s) => ({
@@ -195,7 +200,10 @@ export const useArgusStore = create<ArgusState>()(
         })),
 
       setMcpStatus: (mcp, status) =>
-        set((s) => ({ mcpStatus: { ...s.mcpStatus, [mcp]: status } })),
+        set((s) => ({
+          mcpStatus: { ...s.mcpStatus, [mcp]: status },
+          terminalOutput: [...s.terminalOutput.slice(-199), `[MCP] ${mcp} → ${status.toUpperCase()}`],
+        })),
 
       setSageBridgeStatus: (status) => set({ sageBridgeStatus: status }),
       setSevenBridgeStatus: (status) => set({ sevenBridgeStatus: status }),
@@ -204,13 +212,25 @@ export const useArgusStore = create<ArgusState>()(
       setSevenEndpoint: (endpoint) => set({ sevenEndpoint: endpoint }),
       setStormologistEndpoint: (endpoint) => set({ stormologistEndpoint: endpoint }),
 
-      addThreat: (entry) =>
+      addThreat: (entry) => {
+        // Central logging: every threat, from any source, hits the terminal
+        // and short-term memory — nothing can bypass it.
+        useMemoryStore.getState().addShortTerm({
+          type: 'threat',
+          summary: `[${entry.level.toUpperCase()}] ${entry.source} via ${entry.gate} (${(entry.confidence * 100).toFixed(0)}%)`,
+          tags: ['threat', entry.level, entry.source],
+        });
         set((s) => ({
           threatLog: [
             ...s.threatLog.slice(-499),
             { ...entry, id: crypto.randomUUID(), timestamp: Date.now() },
           ],
-        })),
+          terminalOutput: [
+            ...s.terminalOutput.slice(-199),
+            `[THREAT] ${entry.level.toUpperCase()} ${entry.source}/${entry.gate} ${(entry.confidence * 100).toFixed(0)}%`,
+          ],
+        }));
+      },
 
       setAttachedAgent: (agentId) => set({ attachedAgent: agentId }),
       setFileTree: (tree) => set({ fileTree: tree }),
