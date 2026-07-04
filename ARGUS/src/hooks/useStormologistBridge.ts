@@ -1,7 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useArgusStore } from '../store/useArgusStore';
 
-const DEFAULT_ENDPOINT = 'ws://localhost:8765';
+// Same-origin ws(s)://<host>/storm — proxied by the vite server to the
+// local daemon on :8765. Works over the HTTPS tunnel (wss) and locally (ws).
+const DEFAULT_ENDPOINT =
+  typeof window !== 'undefined'
+    ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/storm`
+    : 'ws://localhost:8765';
 const BACKOFF_MS = [2000, 4000, 8000, 16000, 30000];
 
 interface StormAlert {
@@ -34,12 +39,12 @@ export function useStormologistBridge() {
   const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
 
-  const addThreat          = useArgusStore((s) => s.addThreat);
-  const addApproval        = useArgusStore((s) => s.addApproval);
-  const addMessage         = useArgusStore((s) => s.addMessage);
-  const addTerminalOutput  = useArgusStore((s) => s.addTerminalOutput);
-  const setStormStatus     = useArgusStore((s) => s.setStormologistStatus);
-  const endpoint           = useArgusStore((s) => s.stormologistEndpoint) ?? DEFAULT_ENDPOINT;
+  const addThreat         = useArgusStore((s) => s.addThreat);
+  const addApproval       = useArgusStore((s) => s.addApproval);
+  const addMessage        = useArgusStore((s) => s.addMessage);
+  const addTerminalOutput = useArgusStore((s) => s.addTerminalOutput);
+  const setStormStatus    = useArgusStore((s) => s.setStormologistStatus);
+  const endpoint          = useArgusStore((s) => s.stormologistEndpoint) ?? DEFAULT_ENDPOINT;
 
   useEffect(() => {
     mountedRef.current = true;
