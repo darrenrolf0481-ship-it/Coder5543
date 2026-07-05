@@ -6,13 +6,18 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:standalone": "node build-standalone.mjs",
+    "stormologist": "node stormologist-daemon.cjs",
+    "stormologist:sim": "node stormologist-daemon.cjs --simulate",
+    "agents:mock": "node mock-agent-server.cjs"
   },
   "dependencies": {
     "framer-motion": "^12.42.0",
     "lucide-react": "^0.469.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "ws": "^8.21.0",
     "zustand": "^5.0.3"
   },
   "devDependencies": {

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { safeStorage } from './safeStorage';
+import { useMemoryStore } from './useMemoryStore';
 import { McpId } from '../data/mcpRegistry';
 
 export type Panel = 'dashboard' | 'chat' | 'editor' | 'files' | 'logs' | 'security';
@@ -74,6 +75,14 @@ interface ArgusState {
   fileTree: FileNode[];
   gateStats: GateStats;
 
+  // LLM backend
+  llmProvider: 'ollama' | 'openrouter';
+  llmModel: string;
+  ollamaEndpoint: string;
+  openrouterEndpoint: string;
+  openrouterKey: string | null;
+  llmBusy: boolean;
+
   setActivePanel: (panel: Panel) => void;
   addMessage: (msg: Omit<Message, 'id' | 'timestamp'>) => void;
   setEditorContent: (content: string) => void;
@@ -93,6 +102,13 @@ interface ArgusState {
   setAttachedAgent: (agentId: string | null) => void;
   setFileTree: (tree: FileNode[]) => void;
   recordGateHit: (gate: 'pii' | 'sanitize' | 'injection' | 'none') => void;
+
+  setLlmProvider: (p: 'ollama' | 'openrouter') => void;
+  setLlmModel: (m: string) => void;
+  setOllamaEndpoint: (e: string) => void;
+  setOpenrouterEndpoint: (e: string) => void;
+  setOpenrouterKey: (k: string | null) => void;
+  setLlmBusy: (b: boolean) => void;
 }
 
 const defaultMcpStatus = (): Record<McpId, McpStatus> => ({
@@ -135,7 +151,20 @@ export const useArgusStore = create<ArgusState>()(
       fileTree: [],
       gateStats: { g1: 0, g2: 0, g3: 0, total: 0 },
 
-      setActivePanel: (panel) => set({ activePanel: panel }),
+      llmProvider: 'ollama',
+      llmModel: 'llama3',
+      // '/ollama' is proxied by the vite server to localhost:11434 on the
+      // machine running ARGUS — required when viewing through a tunnel.
+      ollamaEndpoint: '/ollama',
+      openrouterEndpoint: 'https://openrouter.ai/api/v1',
+      openrouterKey: null,
+      llmBusy: false,
+
+      setActivePanel: (panel) =>
+        set((s) => ({
+          activePanel: panel,
+          terminalOutput: [...s.terminalOutput.slice(-199), `[UI] Panel → ${panel.toUpperCase()}`],
+        })),
 
       addMessage: (msg) =>
         set((s) => ({
@@ -171,7 +200,10 @@ export const useArgusStore = create<ArgusState>()(
         })),
 
       setMcpStatus: (mcp, status) =>
-        set((s) => ({ mcpStatus: { ...s.mcpStatus, [mcp]: status } })),
+        set((s) => ({
+          mcpStatus: { ...s.mcpStatus, [mcp]: status },
+          terminalOutput: [...s.terminalOutput.slice(-199), `[MCP] ${mcp} → ${status.toUpperCase()}`],
+        })),
 
       setSageBridgeStatus: (status) => set({ sageBridgeStatus: status }),
       setSevenBridgeStatus: (status) => set({ sevenBridgeStatus: status }),
@@ -180,16 +212,35 @@ export const useArgusStore = create<ArgusState>()(
       setSevenEndpoint: (endpoint) => set({ sevenEndpoint: endpoint }),
       setStormologistEndpoint: (endpoint) => set({ stormologistEndpoint: endpoint }),
 
-      addThreat: (entry) =>
+      addThreat: (entry) => {
+        // Central logging: every threat, from any source, hits the terminal
+        // and short-term memory — nothing can bypass it.
+        useMemoryStore.getState().addShortTerm({
+          type: 'threat',
+          summary: `[${entry.level.toUpperCase()}] ${entry.source} via ${entry.gate} (${(entry.confidence * 100).toFixed(0)}%)`,
+          tags: ['threat', entry.level, entry.source],
+        });
         set((s) => ({
           threatLog: [
             ...s.threatLog.slice(-499),
             { ...entry, id: crypto.randomUUID(), timestamp: Date.now() },
           ],
-        })),
+          terminalOutput: [
+            ...s.terminalOutput.slice(-199),
+            `[THREAT] ${entry.level.toUpperCase()} ${entry.source}/${entry.gate} ${(entry.confidence * 100).toFixed(0)}%`,
+          ],
+        }));
+      },
 
       setAttachedAgent: (agentId) => set({ attachedAgent: agentId }),
       setFileTree: (tree) => set({ fileTree: tree }),
+
+      setLlmProvider: (p) => set({ llmProvider: p }),
+      setLlmModel: (m) => set({ llmModel: m }),
+      setOllamaEndpoint: (e) => set({ ollamaEndpoint: e }),
+      setOpenrouterEndpoint: (e) => set({ openrouterEndpoint: e }),
+      setOpenrouterKey: (k) => set({ openrouterKey: k }),
+      setLlmBusy: (b) => set({ llmBusy: b }),
 
       recordGateHit: (gate) =>
         set((s) => ({
@@ -204,12 +255,26 @@ export const useArgusStore = create<ArgusState>()(
     {
       name: 'argus-state-v1',
       storage: safeStorage,
+      version: 2,
+      migrate: (persisted: unknown, version: number) => {
+        const p = persisted as Partial<ArgusState>;
+        // v1 → v2: direct localhost Ollama URL becomes the same-origin proxy path.
+        if (version < 2 && p.ollamaEndpoint === 'http://localhost:11434') {
+          p.ollamaEndpoint = '/ollama';
+        }
+        return p as ArgusState;
+      },
       partialize: (s) => ({
-        threatLog:      s.threatLog,
-        gateStats:      s.gateStats,
-        chatMessages:   s.chatMessages,
-        attachedAgent:  s.attachedAgent,
+        threatLog:    s.threatLog,
+        gateStats:    s.gateStats,
+        chatMessages: s.chatMessages,
+        attachedAgent: s.attachedAgent,
         terminalOutput: s.terminalOutput,
+        llmProvider:  s.llmProvider,
+        llmModel:     s.llmModel,
+        ollamaEndpoint: s.ollamaEndpoint,
+        openrouterEndpoint: s.openrouterEndpoint,
+        openrouterKey: s.openrouterKey,
       }),
     }
   )

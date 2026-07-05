@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileCode, Copy, Check } from 'lucide-react';
-import Editor from '@monaco-editor/react';
 import { useArgusStore } from '../../store/useArgusStore';
+import { CodeEditor } from '../editor/CodeEditor';
 
 export function EditorPanel() {
   const editorContent = useArgusStore((s) => s.editorContent);
@@ -21,7 +21,7 @@ export function EditorPanel() {
   const lineCount = editorContent.split('\n').length;
 
   return (
-    <div className="flex flex-col h-full bg-[#03070f]">
+    <div className="flex flex-col h-full">
       {/* Editor Toolbar */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-node-900/20 shrink-0">
         <div className="flex items-center gap-2">
@@ -46,36 +46,12 @@ export function EditorPanel() {
       </div>
 
       {/* Editor */}
-      <div className="flex-1 min-h-0 relative">
-        <Editor
-          height="100%"
-          language={editorLanguage.toLowerCase()}
-          theme="vs-dark"
-          value={editorContent}
-          onChange={(val) => {
-            const newContent = val ?? '';
-            setEditorContent(newContent);
-            addTerminalOutput(`[EDITOR] Content updated — ${newContent.split('\n').length} lines`);
-          }}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 11,
-            fontFamily: 'JetBrains Mono, Menlo, Monaco, Courier New, monospace',
-            lineNumbers: 'on',
-            roundedSelection: false,
-            scrollBeyondLastLine: false,
-            readOnly: false,
-            cursorStyle: 'line',
-            automaticLayout: true,
-            padding: { top: 12 },
-          }}
-          loading={
-            <div className="w-full h-full flex items-center justify-center bg-[#03070f] text-[9px] font-mono text-slate-700 uppercase tracking-widest">
-              Loading editor...
-            </div>
-          }
-        />
-      </div>
+      <CodeEditor
+        value={editorContent}
+        onChange={setEditorContent}
+        onBlur={() => addTerminalOutput(`[EDITOR] ${editorFile ?? 'untitled'} — ${lineCount} lines`)}
+        placeholder="// Paste or type code here. AI-applied patches will appear in this panel."
+      />
     </div>
   );
 }

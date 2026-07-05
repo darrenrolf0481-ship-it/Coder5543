@@ -6,9 +6,10 @@
  * Never decides. Never creates. Never modifies node state.
  *
  * Usage:
- *   node stormologist-daemon.js [--port 8765] [--simulate]
+ *   node stormologist-daemon.cjs [--port=8765] [--simulate]
+ *   npm run stormologist  |  npm run stormologist:sim
  *
- * ARGUS consumes alerts on ws://localhost:PORT
+ * ARGUS consumes alerts on ws://localhost:PORT (proxied at /storm)
  * Set STORMOLOGIST_ENABLED=false to disable entirely.
  */
 
