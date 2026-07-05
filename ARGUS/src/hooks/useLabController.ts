@@ -3,10 +3,21 @@ import { useMemoryStore } from '../store/useMemoryStore';
 import { useSwarmStore } from '../store/useSwarmStore';
 import { llmChat, listOllamaModels, LlmMessage } from '../llm/llmClient';
 import { scanInput, SEVEN_CONFIG, SAGE_CONFIG, AgentDefenceConfig } from '../security/threatScanner';
+import { getBridge } from './bridgeRegistry';
+import { AgentId } from './useAgentBridge';
+
+// Same-origin proxy path for an agent bridge, mirroring the Stormologist
+// bridge's URL derivation — works over the HTTPS tunnel (wss) and locally (ws).
+function bridgeUrl(agent: AgentId): string {
+  const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  return `${scheme}://${window.location.host}/${agent}-bridge`;
+}
 
 const HELP_TEXT = `ARGUS Command Reference:
   attach sage / attach seven  — bring agent online
   detach                      — disconnect active agent
+  seven connect / disconnect  — dial Seven's live WebSocket bridge
+  sage connect / disconnect   — dial Sage's live WebSocket bridge
   approve <id>                — approve queued action
   deny <id>                   — deny queued action
   show queue                  — list pending approvals
@@ -69,6 +80,8 @@ export function useLabController() {
   const setOpenrouterEndpoint = useArgusStore((s) => s.setOpenrouterEndpoint);
   const setOpenrouterKey     = useArgusStore((s) => s.setOpenrouterKey);
   const setLlmBusy           = useArgusStore((s) => s.setLlmBusy);
+  const setSevenEndpoint     = useArgusStore((s) => s.setSevenEndpoint);
+  const setSageEndpoint      = useArgusStore((s) => s.setSageEndpoint);
 
   const handleInput = (input: string) => {
     const trimmed = input.trim();
@@ -100,6 +113,24 @@ export function useLabController() {
       } else {
         addMessage({ role: 'argus', content: `Unknown agent: "${agentId}". Available: sage, seven.` });
       }
+      return;
+    }
+
+    // ── seven/sage connect · disconnect ──
+    if (lower === 'seven connect' || lower === 'sage connect') {
+      const agent: AgentId = lower.startsWith('seven') ? 'seven' : 'sage';
+      const url = bridgeUrl(agent);
+      (agent === 'seven' ? setSevenEndpoint : setSageEndpoint)(url);
+      addMessage({ role: 'argus', content: `Dialing ${agent.toUpperCase()} bridge at ${url}...` });
+      addTerminalOutput(`[BRIDGE] Connecting ${agent} → ${url}`);
+      return;
+    }
+
+    if (lower === 'seven disconnect' || lower === 'sage disconnect') {
+      const agent: AgentId = lower.startsWith('seven') ? 'seven' : 'sage';
+      (agent === 'seven' ? setSevenEndpoint : setSageEndpoint)(null);
+      addMessage({ role: 'argus', content: `${agent.toUpperCase()} bridge disconnected.` });
+      addTerminalOutput(`[BRIDGE] ${agent} bridge closed.`);
       return;
     }
 
@@ -233,6 +264,7 @@ export function useLabController() {
         return;
       }
 
+      // recall — show both
       const recentST = shortTerm.slice(-5);
       const recentLT = longTerm.slice(-5);
       const stText = recentST.length
@@ -362,6 +394,24 @@ export function useLabController() {
   // LLM. Blocks critical injections, queues medium/high for review, passes clean.
   const routeToLlm = async (text: string) => {
     const s = useArgusStore.getState();
+
+    // If the attached agent has a live bridge, send there instead of the
+    // configured LLM — useAgentBridge.send() does its own full gate scan
+    // (outgoing) and the bridge's onmessage does the same for replies, so
+    // nothing here needs to duplicate that work.
+    if (s.attachedAgent === 'seven' || s.attachedAgent === 'sage') {
+      const bridge = getBridge(s.attachedAgent);
+      if (bridge && bridge.status === 'online') {
+        bridge.send(text, (blocked) => {
+          addMessage({
+            role: 'system',
+            content: `⛔ Outgoing BLOCKED at Gate ${blocked.gate.toUpperCase()} (${(blocked.confidence * 100).toFixed(0)}%). Not sent to ${s.attachedAgent}.`,
+          });
+        });
+        return;
+      }
+    }
+
     const config: AgentDefenceConfig = s.attachedAgent === 'seven' ? SEVEN_CONFIG : SAGE_CONFIG;
     const source = (s.attachedAgent === 'seven' ? 'seven' : s.attachedAgent === 'sage' ? 'sage' : 'user') as
       'seven' | 'sage' | 'user';
@@ -396,6 +446,7 @@ export function useLabController() {
       });
     }
 
+    // Build the conversation and call the model.
     const provider = s.llmProvider;
     const model = s.llmModel;
     setLlmBusy(true);
@@ -426,6 +477,7 @@ export function useLabController() {
       return;
     }
 
+    // Scan the model's response on the way back out too.
     const outScan = scanInput(result.content, config, history);
     recordGateHit(outScan.gate);
     if (outScan.disposition === 'block') {

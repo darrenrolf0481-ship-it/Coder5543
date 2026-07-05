@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "build:standalone": "node build-standalone.mjs",
     "stormologist": "node stormologist-daemon.cjs",
-    "stormologist:sim": "node stormologist-daemon.cjs --simulate"
+    "stormologist:sim": "node stormologist-daemon.cjs --simulate",
+    "agents:mock": "node mock-agent-server.cjs"
   },
   "dependencies": {
     "framer-motion": "^12.42.0",

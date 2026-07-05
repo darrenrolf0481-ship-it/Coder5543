@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { scanInput, SAGE_CONFIG, SEVEN_CONFIG, ThreatResult } from '../security/threatScanner';
 import { useArgusStore } from '../store/useArgusStore';
+import { registerBridge } from './bridgeRegistry';
 
 export type AgentId = 'sage' | 'seven';
 
@@ -24,6 +25,7 @@ export function useAgentBridge(agentId: AgentId, wsUrl: string | null) {
   const addTerminalOutput    = useArgusStore((s) => s.addTerminalOutput);
   const addThreat            = useArgusStore((s) => s.addThreat);
   const addApproval          = useArgusStore((s) => s.addApproval);
+  const addMessage           = useArgusStore((s) => s.addMessage);
   const recordGateHit        = useArgusStore((s) => s.recordGateHit);
   const setSageBridgeStatus  = useArgusStore((s) => s.setSageBridgeStatus);
   const setSevenBridgeStatus = useArgusStore((s) => s.setSevenBridgeStatus);
@@ -60,7 +62,7 @@ export function useAgentBridge(agentId: AgentId, wsUrl: string | null) {
     };
     messageLog.current = [...messageLog.current, msg];
 
-    // ── Tiered routing (ADHD v2 diagram) ──────────────────────────────────────
+    // ── Tiered routing (ADHD v2 diagram) ───────────────────────────────────────────────
     if (threat.disposition === 'block') {
       // Critical: hard drop — never reaches Ruflo/swarm
       addThreat({ source: agentId, level: threat.level, gate: threat.gate, confidence: threat.confidence, content: content.slice(0, 120) });
@@ -86,8 +88,9 @@ export function useAgentBridge(agentId: AgentId, wsUrl: string | null) {
       // falls through: message is still delivered so Ruflo path is not broken
     }
 
+    addMessage({ role: 'agent', agentId, content });
     return msg;
-  }, [agentId, label, config, addThreat, addApproval, addTerminalOutput, recordGateHit]);
+  }, [agentId, label, config, addThreat, addApproval, addMessage, addTerminalOutput, recordGateHit]);
 
   const send = useCallback((content: string, onBlock?: (r: ThreatResult) => void) => {
     const threat = scanInput(content, config, getHistory());
@@ -122,7 +125,16 @@ export function useAgentBridge(agentId: AgentId, wsUrl: string | null) {
     setStatus_both('connecting');
     addTerminalOutput(`[BRIDGE:${label}] Connecting to ${wsUrl}...`);
 
-    ws.current = new WebSocket(wsUrl);
+    // A ws:// socket constructed from an https:// page throws a SecurityError
+    // synchronously (mixed content) on some browsers — never let that crash
+    // the app, just report offline and let the caller retry later.
+    try {
+      ws.current = new WebSocket(wsUrl);
+    } catch {
+      setStatus_both('offline');
+      addTerminalOutput(`[BRIDGE:${label}] ✕ Could not open socket (${wsUrl}).`);
+      return;
+    }
 
     ws.current.onopen = () => {
       setStatus_both('online');
@@ -148,6 +160,10 @@ export function useAgentBridge(agentId: AgentId, wsUrl: string | null) {
 
     return () => { ws.current?.close(); };
   }, [wsUrl, agentId, label, setStatus_both, processIncoming, addTerminalOutput]);
+
+  useEffect(() => {
+    registerBridge(agentId, { status, send });
+  }, [agentId, status, send]);
 
   return { status, send };
 }

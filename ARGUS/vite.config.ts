@@ -18,6 +18,19 @@ const proxy = {
     changeOrigin: true,
     rewrite: (path: string) => path.replace(/^\/storm/, ''),
   },
+  // WebSocket proxies to the (mock or real) Seven/Sage agent bridges.
+  '/seven-bridge': {
+    target: 'ws://localhost:8081',
+    ws: true,
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/seven-bridge/, ''),
+  },
+  '/sage-bridge': {
+    target: 'ws://localhost:8082',
+    ws: true,
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/sage-bridge/, ''),
+  },
 };
 
 export default defineConfig({
