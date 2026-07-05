@@ -37,13 +37,54 @@ import { extractAllCodeBlocks, isAnalysisMessage } from '../../utils/helpers';
 import { UseSwarmStateReturn } from '../../hooks/useSwarmState';
 import { SwarmCore } from './swarm/SwarmCore';
 
+// ── Small components ───────────────────────────────────────────────────────
+
+function Toggle({
+  label,
+  active,
+  onChange,
+  sub,
+}: {
+  label: string;
+  active: boolean;
+  onChange: (v: boolean) => void;
+  sub?: string;
+}) {
+  return (
+    <button
+      onClick={() => onChange(!active)}
+      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all border ${
+        active
+          ? 'bg-accent-700/30 border-accent-600/50 text-accent-200'
+          : 'bg-accent-950/20 border-accent-900/30 text-accent-800 hover:text-accent-600'
+      }`}
+      title={`${label}: ${active ? 'ON' : 'OFF'}`}
+    >
+      <span
+        className={`w-2 h-2 rounded-full transition-colors ${
+          active ? 'bg-accent-400 shadow-[0_0_6px_var(--color-accent-400)]' : 'bg-accent-900'
+        }`}
+      />
+      {label}
+      {sub !== undefined && <span className="text-[8px] opacity-70">({sub})</span>}
+    </button>
+  );
+}
+
 // ── Types ──────────────────────────────────────────────────────────────────
+
+interface LabToggles {
+  rufloEnabled: boolean;
+  rufloAutoMemory: boolean;
+  swarmEnabled: boolean;
+  agentAutoAttach: boolean;
+}
 
 interface ToolNeuronPanelProps {
   chatMessages: ChatMessage[];
   studioInput: string;
   setStudioInput: (v: string) => void;
-  handleStudioSubmit: (e: React.FormEvent) => void;
+  handleStudioSubmit: (e?: React.FormEvent) => void;
   isVaultUnlocked: boolean;
   setIsVaultUnlocked: (v: boolean) => void;
   swarmState: UseSwarmStateReturn;
@@ -64,6 +105,12 @@ interface ToolNeuronPanelProps {
   onApplyCode: (code: string, mode: 'refactor' | 'replace') => void;
   onSaveReport: (text: string) => void;
   onLoadRepoToEditor?: (files: any[], repoName: string) => void;
+  labToggles: LabToggles;
+  setLabToggle: (key: keyof LabToggles, value: boolean) => void;
+  rufloStatus: any;
+  rufloLoading: boolean;
+  rufloError: string | null;
+  commandHints: { cmd: string; desc: string }[];
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
@@ -88,9 +135,15 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
   onApplyCode,
   onSaveReport,
   onLoadRepoToEditor,
+  labToggles,
+  setLabToggle,
+  rufloStatus,
+  rufloLoading,
+  rufloError,
+  commandHints,
 }) => {
   const { vaultMemories, fetchVault } = useAppContext();
-  const { attachedAgent, detachAgent } = useAgentStore();
+  const { attachedAgent, attachAgent, detachAgent } = useAgentStore();
   // ── Local state ────────────────────────────────────────────────────────
   const [tnModule, setTnModule] = useState<
     'chat' | 'vision' | 'knowledge' | 'vault' | 'swarm' | 'help' | 'debug'
@@ -108,6 +161,13 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  // Auto-attach agent when the toggle is enabled and no agent is attached
+  useEffect(() => {
+    if (labToggles.agentAutoAttach && !attachedAgent && activePersonality?.name) {
+      attachAgent(activePersonality.name);
+    }
+  }, [labToggles.agentAutoAttach, attachedAgent, activePersonality.name, attachAgent]);
 
   // On mobile, scroll input into view when keyboard opens
   const handleInputFocus = () => {
@@ -259,10 +319,45 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
           {/* CHAT */}
           {tnModule === 'chat' && (
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="border-b border-accent-900/20 flex items-center px-8 bg-black/40 justify-between min-h-[64px] py-3 gap-4">
-                <h4 className="text-[11px] font-black text-accent-500 uppercase tracking-[0.4em] flex items-center gap-3 shrink-0">
-                  <MessageSquare className="w-4 h-4" /> Neural Chat Interface
-                </h4>
+              <div className="border-b border-accent-900/20 flex flex-col md:flex-row md:items-center px-4 md:px-8 bg-black/40 justify-between min-h-[64px] py-3 gap-3">
+                <div className="flex items-center justify-between md:justify-start gap-3">
+                  <h4 className="text-[11px] font-black text-accent-500 uppercase tracking-[0.4em] flex items-center gap-3 shrink-0">
+                    <MessageSquare className="w-4 h-4" /> Neural Chat Interface
+                  </h4>
+                </div>
+
+                {/* Lab Controls */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Toggle
+                    label="Ruflo"
+                    active={labToggles.rufloEnabled}
+                    onChange={(v) => setLabToggle('rufloEnabled', v)}
+                    sub={rufloLoading ? '…' : rufloError ? 'err' : rufloStatus?.connected ? `${rufloStatus.toolCount}` : 'off'}
+                  />
+                  <Toggle
+                    label="Auto-Mem"
+                    active={labToggles.rufloAutoMemory}
+                    onChange={(v) => setLabToggle('rufloAutoMemory', v)}
+                  />
+                  <Toggle
+                    label="Swarm"
+                    active={labToggles.swarmEnabled}
+                    onChange={(v) => setLabToggle('swarmEnabled', v)}
+                  />
+                  <Toggle
+                    label="Auto-Agent"
+                    active={labToggles.agentAutoAttach}
+                    onChange={(v) => setLabToggle('agentAutoAttach', v)}
+                  />
+                  <button
+                    onClick={() => setStudioInput(studioInput ? `${studioInput} /help` : '/help')}
+                    className="ml-1 p-1.5 rounded-lg bg-accent-950/20 text-accent-700 hover:text-accent-400 hover:bg-accent-900/30 transition-colors"
+                    title="Show commands"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
                 {attachedAgent ? (
                   <div className="flex items-center gap-2 bg-green-950/40 border border-green-800/50 text-green-400 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
@@ -396,21 +491,42 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
                 onSubmit={handleStudioSubmit}
                 className="p-3 md:p-6 bg-black/40 border-t border-accent-900/20 shrink-0"
               >
-                <div className="relative max-w-3xl mx-auto">
-                  <input
-                    ref={chatInputRef}
-                    value={studioInput}
-                    onChange={(e) => setStudioInput(e.target.value)}
-                    onFocus={handleInputFocus}
-                    placeholder="Send neural directive..."
-                    className="w-full bg-[#0d0404] border border-accent-900/40 rounded-2xl pl-4 pr-14 py-3.5 text-sm text-accent-100 focus:border-accent-600/60 outline-none"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-accent-700 hover:bg-accent-600 active:scale-95 rounded-xl text-white transition-all"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
+                <div className="max-w-3xl mx-auto space-y-2">
+                  <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                    {commandHints.slice(0, 8).map((hint) => (
+                      <button
+                        key={hint.cmd}
+                        type="button"
+                        onClick={() => setStudioInput(hint.cmd + ' ')}
+                        className="shrink-0 px-2 py-1 rounded-md bg-accent-950/30 border border-accent-900/20 text-[9px] font-mono text-accent-600 hover:text-accent-300 hover:border-accent-700/40 transition-colors"
+                      >
+                        {hint.cmd}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setStudioInput('/help')}
+                      className="shrink-0 px-2 py-1 rounded-md bg-accent-950/30 border border-accent-900/20 text-[9px] font-mono text-accent-600 hover:text-accent-300 hover:border-accent-700/40 transition-colors"
+                    >
+                      /help
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      ref={chatInputRef}
+                      value={studioInput}
+                      onChange={(e) => setStudioInput(e.target.value)}
+                      onFocus={handleInputFocus}
+                      placeholder="Send neural directive or /command..."
+                      className="w-full bg-[#0d0404] border border-accent-900/40 rounded-2xl pl-4 pr-14 py-3.5 text-sm text-accent-100 focus:border-accent-600/60 outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 bg-accent-700 hover:bg-accent-600 active:scale-95 rounded-xl text-white transition-all"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

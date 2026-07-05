@@ -88,6 +88,13 @@ interface SettingsPanelProps {
   ollamaStatus: 'idle' | 'connecting' | 'connected' | 'error';
   refreshOllamaModels: (forceNotify?: boolean) => Promise<void>;
   ollamaError: string | null;
+  labToggles: {
+    rufloEnabled: boolean;
+    rufloAutoMemory: boolean;
+    swarmEnabled: boolean;
+    agentAutoAttach: boolean;
+  };
+  setLabToggle: (key: any, value: boolean) => void;
 }
 
 // ── Utils ──────────────────────────────────────────────────────────────────
@@ -101,6 +108,35 @@ const fileToBase64 = (file: File): Promise<string> =>
   });
 
 const kbUid = () => `kb_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+function SettingsToggle({
+  label,
+  desc,
+  active,
+  onChange,
+}: {
+  label: string;
+  desc: string;
+  active: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between p-4 bg-accent-950/10 border border-accent-900/20 rounded-2xl">
+      <div>
+        <p className="text-[11px] font-black text-accent-200 uppercase tracking-widest">{label}</p>
+        <p className="text-[9px] text-accent-700 mt-0.5">{desc}</p>
+      </div>
+      <button
+        onClick={() => onChange(!active)}
+        className={`relative w-11 h-6 rounded-full transition-colors ${active ? 'bg-accent-600' : 'bg-accent-900/50'}`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${active ? 'translate-x-5' : ''}`}
+        />
+      </button>
+    </div>
+  );
+}
 
 // ── Component ──────────────────────────────────────────────────────────────
 
@@ -133,6 +169,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   ollamaStatus,
   refreshOllamaModels,
   ollamaError,
+  labToggles,
+  setLabToggle,
 }) => {
   // ── Ruflo Swarm Connection State ──────────────────────────────────────────
   const [rufloEnabled, setRufloEnabled] = useState(false);
@@ -637,6 +675,39 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Lab Toggles */}
+              <section className="space-y-4">
+                <h3 className="text-[12px] font-black text-accent-900 uppercase tracking-[0.5em] flex items-center gap-4">
+                  <Network className="w-6 h-6 text-accent-600" /> Lab Controls
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <SettingsToggle
+                    label="Ruflo Integration"
+                    desc="Enable Ruflo MCP tools inside the lab chat."
+                    active={labToggles.rufloEnabled}
+                    onChange={(v) => setLabToggle('rufloEnabled', v)}
+                  />
+                  <SettingsToggle
+                    label="Auto Memory"
+                    desc="Store every chat turn in Ruflo memory automatically."
+                    active={labToggles.rufloAutoMemory}
+                    onChange={(v) => setLabToggle('rufloAutoMemory', v)}
+                  />
+                  <SettingsToggle
+                    label="Swarm Mode"
+                    desc="Allow /swarm commands to trigger multi-agent cycles."
+                    active={labToggles.swarmEnabled}
+                    onChange={(v) => setLabToggle('swarmEnabled', v)}
+                  />
+                  <SettingsToggle
+                    label="Auto-Attach Agent"
+                    desc="Automatically attach the active personality as a chat agent."
+                    active={labToggles.agentAutoAttach}
+                    onChange={(v) => setLabToggle('agentAutoAttach', v)}
+                  />
+                </div>
+              </section>
 
               {/* Ruflo Swarm Connection Vitals */}
               <div className="rounded-2xl border border-accent-900/20 bg-accent-950/10 p-5 space-y-4">

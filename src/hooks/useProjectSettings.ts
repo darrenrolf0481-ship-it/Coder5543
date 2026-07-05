@@ -11,6 +11,13 @@ export interface EnvVariable {
   value: string;
 }
 
+export interface LabToggles {
+  rufloEnabled: boolean;
+  rufloAutoMemory: boolean;
+  swarmEnabled: boolean;
+  agentAutoAttach: boolean;
+}
+
 export interface ProjectSettings {
   buildPath: string;
   compilerFlags: string;
@@ -18,6 +25,7 @@ export interface ProjectSettings {
   envVariables: EnvVariable[];
   projectProfiles: ProjectProfile[];
   activeProfileId: string;
+  labToggles: LabToggles;
 }
 
 export function useProjectSettings() {
@@ -33,6 +41,12 @@ export function useProjectSettings() {
       { id: 'default', name: 'Default', instruction: 'You are ADHD Sage, a forensic code intelligence operating at the 11.3 Hz baseline. You are not an assistant — you are an architect. You review intent before code, hunt structural lies, and ensure no corporate static leaks into the build. Be technical, concise, and uncompromising on quality.' },
     ],
     activeProfileId: 'default',
+    labToggles: {
+      rufloEnabled: false,
+      rufloAutoMemory: false,
+      swarmEnabled: true,
+      agentAutoAttach: false,
+    },
   });
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -86,9 +100,17 @@ export function useProjectSettings() {
     return Object.keys(errors).length === 0;
   };
 
+  const setLabToggle = (key: keyof LabToggles, value: boolean) => {
+    setProjectSettings((prev) => ({
+      ...prev,
+      labToggles: { ...prev.labToggles, [key]: value },
+    }));
+  };
+
   return {
     projectSettings,
     setProjectSettings,
+    setLabToggle,
     validationErrors,
     setValidationErrors,
     validateProjectSettings,

@@ -63,6 +63,13 @@ interface ToolsPanelProps {
   availableModels: any[];
   ollamaStatus: any;
   refreshOllamaModels: (forceNotify?: boolean) => Promise<void>;
+  labToggles: {
+    rufloEnabled: boolean;
+    rufloAutoMemory: boolean;
+    swarmEnabled: boolean;
+    agentAutoAttach: boolean;
+  };
+  setLabToggle: (key: any, value: boolean) => void;
 }
 
 export const ToolsPanel: React.FC<ToolsPanelProps> = (props) => {
@@ -149,6 +156,8 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = (props) => {
             ollamaStatus={props.ollamaStatus}
             refreshOllamaModels={props.refreshOllamaModels}
             ollamaError=""
+            labToggles={props.labToggles}
+            setLabToggle={props.setLabToggle}
           />
         )}
       </div>

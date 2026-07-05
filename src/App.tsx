@@ -32,6 +32,9 @@ import { useProjectManager } from './hooks/useProjectManager';
 import { useTerminal } from './hooks/terminal/useTerminal';
 import { useTerminalLogic } from './hooks/terminal/useTerminalLogic';
 import { resolveApiUrl } from './utils/apiUrl';
+import { useLabController } from './hooks/useLabController';
+import { useRufloTools } from './hooks/useRufloTools';
+import { useAgentStore } from './store/useAgentStore';
 
 // Layout & Panels
 import { Sidebar } from './components/layout/Sidebar';
@@ -219,7 +222,7 @@ function AppInner() {
     }
   }, [lastWsSignal]);
 
-  const { projectSettings, setProjectSettings, validationErrors, validateProjectSettings } =
+  const { projectSettings, setProjectSettings, setLabToggle, validationErrors, validateProjectSettings } =
     useProjectSettings();
 
   // Chat & Studio State
@@ -848,6 +851,70 @@ function AppInner() {
     }
   };
 
+  // ── Lab controller: chat-centric command router for Crimson OS ──────────────
+  const ruflo = useRufloTools();
+  const { attachAgent, detachAgent, attachedAgent } = useAgentStore();
+
+  const lab = useLabController({
+    chatMessages,
+    setChatMessages,
+    chatInput: studioInput,
+    setChatInput: setStudioInput,
+
+    editorContent: editorState.editorContent,
+    editorLanguage: fsState.editorLanguage,
+    activeFileId: fsState.activeFileId,
+    activeFileName: fsState.projectFiles.find((f: any) => f.id === fsState.activeFileId)?.name || 'untitled',
+    projectFiles: fsState.projectFiles,
+    setProjectFiles: fsState.setProjectFiles,
+    setEditorContent: editorState.setEditorContent,
+    setEditorLanguage: fsState.setEditorLanguage,
+    setEditorMode: editorState.setEditorMode,
+    markFileDirty: fsState.markFileDirty,
+    setActiveFileId: fsState.setActiveFileId,
+    setActiveTab: navigateTo,
+
+    generateAIResponse,
+    setIsAiProcessing,
+    activePersonality,
+    projectSettings,
+    prepareContext,
+
+    handleStudioSubmit: chatState.handleStudioSubmit,
+    runStaticAnalysis: analysisState.runStaticAnalysis,
+    runDynamicTracing: analysisState.runDynamicTracing,
+    handleAnalyzeCode: analysisState.handleAnalyzeCode,
+    handleFullProjectAnalysis: analysisState.handleFullProjectAnalysis,
+    handleDeepProjectAudit: analysisState.handleDeepProjectAudit,
+    handleScanCode: analysisState.handleScanCode,
+    handleFormatCode: forgeState.handleFormatCode,
+    handleRefactorCode: forgeState.handleRefactorCode,
+    handleRefactorAllFiles: forgeState.handleRefactorAllFiles,
+    handleExplainCode: chatState.handleExplainCode,
+    handleReviewCode: chatState.handleReviewCode,
+    handleGenerateDocs: chatState.handleGenerateDocs,
+    handleRunCode: analysisState.handleRunCode,
+    handleApplyDocumentation: chatState.handleApplyDocumentation,
+
+    gitRepo: gitState.gitRepo,
+    handleGitInit: gitState.handleGitInit,
+    handleGitStage: gitState.handleGitStage,
+    handleGitStageAll: gitState.handleGitStageAll,
+    handleGitUnstage: gitState.handleGitUnstage,
+    handleGitCommit: confirmGitCommit,
+    handleGitPush: () => gitState.handleGitPush(setIsAiProcessing),
+    handleGitPull,
+    handleGitSaveAll,
+
+    swarm,
+    attachAgent,
+    detachAgent,
+    attachedAgent,
+
+    ruflo,
+    setEditorOutput,
+  });
+
   // Unified application context value
   const contextValue = {
     activeTab,
@@ -1132,7 +1199,7 @@ function AppInner() {
                 chatMessages={chatMessages}
                 studioInput={studioInput}
                 setStudioInput={setStudioInput}
-                handleStudioSubmit={chatState.handleStudioSubmit}
+                handleStudioSubmit={lab.handleSubmit}
                 isVaultUnlocked={isVaultUnlocked}
                 setIsVaultUnlocked={setIsVaultUnlocked}
                 swarmState={swarmState}
@@ -1145,6 +1212,12 @@ function AppInner() {
                 tnKnowledgePacks={tnKnowledgePacks}
                 handleKnowledgeUpload={handleKnowledgeUpload}
                 setActiveTab={navigateTo}
+                labToggles={projectSettings.labToggles}
+                setLabToggle={setLabToggle}
+                rufloStatus={ruflo.status}
+                rufloLoading={ruflo.loading}
+                rufloError={ruflo.error}
+                commandHints={lab.commandHints}
                 onApplyCode={(code, mode) => {
                   if (mode === 'refactor') {
                     forgeState.handleApplyRefactor(code, false, null);
@@ -1236,8 +1309,8 @@ function AppInner() {
                 isRunningCode={editorState.isRunningCode}
                 isScanningCode={editorState.isScanningCode}
                 scanResults={editorState.scanResults}
-                handleRunCode={analysisState.handleRunCode}
-                handleScanCode={analysisState.handleScanCode}
+                handleRunCode={() => lab.triggerCommand('/run')}
+                handleScanCode={() => lab.triggerCommand('/analyze')}
                 lastSavedTime={editorState.lastSavedTime}
                 forceSave={editorState.forceSave}
                 saveToFile={editorState.saveToFile}
@@ -1260,24 +1333,22 @@ function AppInner() {
                 editorAssistantInput={editorState.editorAssistantInput}
                 setEditorAssistantInput={editorState.setEditorAssistantInput}
                 handleEditorAssistantSubmit={chatState.handleEditorAssistantSubmit}
-                handleCodeReview={chatState.handleCodeReview}
+                handleCodeReview={() => lab.triggerCommand('/review')}
                 handleSaveAnalysis={forgeState.handleSaveAnalysis}
                 handleApplyDocumentation={chatState.handleApplyDocumentation}
                 handleApplyRefactor={forgeState.handleApplyRefactor}
                 handleApplyForge={forgeState.handleApplyForge}
                 isAiProcessing={isAiProcessing}
                 lastEditorAssistantPrompt={chatState.lastEditorAssistantPrompt}
-                handleExplainCode={chatState.handleExplainCode}
-                handleFullProjectAnalysis={analysisState.handleFullProjectAnalysis}
-                handleDeepProjectAudit={analysisState.handleDeepProjectAudit}
-                handleGenerateDocs={
-                  debuggerState.handleToggleCurrentLineBreakpoint /* Dummy JSDoc wrapper placeholder stub */
-                }
-                handleFormatCode={forgeState.handleFormatCode}
-                handleRefactorCode={forgeState.handleRefactorCode}
-                handleRefactorAllFiles={forgeState.handleRefactorAllFiles}
-                handleReviewCode={chatState.handleReviewCode}
-                handleAnalyzeData={chatState.handleAnalyzeData}
+                handleExplainCode={() => lab.triggerCommand('/explain')}
+                handleFullProjectAnalysis={() => lab.triggerCommand('/audit')}
+                handleDeepProjectAudit={() => lab.triggerCommand('/audit')}
+                handleGenerateDocs={() => lab.triggerCommand('/docs')}
+                handleFormatCode={() => lab.triggerCommand('/format')}
+                handleRefactorCode={() => lab.triggerCommand('/refactor')}
+                handleRefactorAllFiles={() => lab.triggerCommand('/refactor-all')}
+                handleReviewCode={() => lab.triggerCommand('/review')}
+                handleAnalyzeData={() => lab.triggerCommand('/analyze')}
                 handleGenerateCode={forgeState.handleGenerateCode}
                 breakpoints={debuggerLogic.breakpoints}
                 cursorLine={editorState.cursorLine}
@@ -1416,6 +1487,8 @@ function AppInner() {
                 availableModels={availableModels}
                 ollamaStatus={ollamaStatus}
                 refreshOllamaModels={refreshOllamaModels}
+                labToggles={projectSettings.labToggles}
+                setLabToggle={setLabToggle}
               />
             )}
           </div>

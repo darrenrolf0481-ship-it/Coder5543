@@ -168,6 +168,18 @@ async function startServer() {
       },
       appType: 'spa',
     });
+
+    // When running behind a VS Code / code-server proxy, Vite builds with a base
+    // like `/proxy/<port>/` so the browser requests assets under that prefix.
+    // In middleware mode Vite serves assets at root, so we forward proxy-prefixed
+    // non-API requests to Vite with the prefix stripped. API routers above already
+    // handle `/proxy/<port>/api/...`.
+    if (proxyPrefix) {
+      app.use(proxyPrefix, (req, res, next) => {
+        if (req.url.startsWith('/api/')) return next();
+        vite.middlewares.handle(req, res, next);
+      });
+    }
     app.use(vite.middlewares);
   }
 
