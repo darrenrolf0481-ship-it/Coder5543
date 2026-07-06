@@ -34,6 +34,7 @@ import { useTerminalLogic } from './hooks/terminal/useTerminalLogic';
 import { resolveApiUrl } from './utils/apiUrl';
 import { useLabController } from './hooks/useLabController';
 import { useRufloTools } from './hooks/useRufloTools';
+import { useLabBrainBridge } from './hooks/useLabBrainBridge';
 import { useAgentStore } from './store/useAgentStore';
 
 // Layout & Panels
@@ -854,6 +855,10 @@ function AppInner() {
   // ── Lab controller: chat-centric command router for Crimson OS ──────────────
   const ruflo = useRufloTools();
   const { attachAgent, detachAgent, attachedAgent } = useAgentStore();
+
+  // ── Lab Brain: full-power Antigravity oversight agent (watches ARGUS). Streams
+  //    its reasoning into the chat; `labBrain.sendTask(prompt)` tasks it. ───────
+  const labBrain = useLabBrainBridge(setChatMessages);
 
   const lab = useLabController({
     chatMessages,

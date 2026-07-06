@@ -27,6 +27,12 @@ Server runs at `http://localhost:5173`
 - Agent bridge with tiered routing, WebSocket, gate hits
 - Core panels: Header, Sidebar, Security, Chat, Logs, Files
 - Type system complete (`tsconfig.json` valid, zero errors)
+- **Antigravity oversight brain (`watcher/argus_watcher.py`)** — the reasoning
+  tier above the Stormologist. Sensor tier (SAGE health polls + WS broadcast)
+  runs creds-free; reasoning tier (Antigravity triggers/hooks/policies/subagents)
+  activates on `GEMINI_API_KEY`. Consumed by `useArgusWatchBridge.ts` on
+  `ws://localhost:8770` (mounted in `App.tsx`). Verified end-to-end; see
+  `watcher/README.md`. SDK + compiled binary installed & importing.
 
 ❌ **UI Implementation Gaps:**
 1. Missing SparkCore visualization (central orbital node graph)

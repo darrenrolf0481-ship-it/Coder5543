@@ -1,6 +1,7 @@
 
 import { useArgusStore } from './store/useArgusStore';
 import { useStormologistBridge } from './hooks/useStormologistBridge';
+import { useArgusWatchBridge } from './hooks/useArgusWatchBridge';
 import { MatrixRain } from './components/fx/MatrixRain';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -14,6 +15,7 @@ import { SecurityPanel } from './components/panels/SecurityPanel';
 export default function App() {
   const activePanel = useArgusStore((s) => s.activePanel);
   useStormologistBridge();
+  useArgusWatchBridge();
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#03070f] text-slate-200 relative">

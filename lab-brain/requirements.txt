@@ -1,0 +1,4 @@
+# Coder5543 Lab Brain — full-power Antigravity oversight agent
+google-antigravity>=0.1.5
+httpx>=0.27
+websockets>=13

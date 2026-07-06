@@ -1,0 +1,6 @@
+# ARGUS Antigravity watcher
+# Reasoning tier (optional at runtime, required for anomaly investigation):
+google-antigravity>=0.1.5
+# Sensor tier (always required):
+httpx>=0.27
+websockets>=13
