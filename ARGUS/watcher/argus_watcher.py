@@ -82,6 +82,7 @@ class WatchConfig:
     port: int = int(os.environ.get("ARGUS_WATCH_PORT", "8770"))
     poll_sec: float = float(os.environ.get("ARGUS_POLL_SEC", "15"))
     simulate: bool = False
+    stormologist_ws: str = os.environ.get("STORMOLOGIST_WS", "ws://127.0.0.1:8765")
     nodes: dict[str, str] = field(default_factory=lambda: {
         "seven": os.environ.get("SEVEN_URL", "http://localhost:8001"),
         "mama": os.environ.get("MAMA_URL", "http://localhost:3000"),
@@ -184,6 +185,20 @@ WATCH = WatchConfig()
 # active) drains the queue and investigates each one.
 ANOMALY_QUEUE: asyncio.Queue[dict] = asyncio.Queue()
 
+
+async def _forward_stormologist(meta: dict) -> None:
+    """Fire telemetry at the Stormologist daemon so its visual dashboard lights up.
+
+    Best-effort: if the Stormologist isn't running, we log and move on — it
+    must never block the sensor loop.
+    """
+    try:
+        async with websockets.connect(WATCH.stormologist_ws, open_timeout=2) as ws:
+            await ws.send(json.dumps({"type": "telemetry", "meta": meta}))
+    except Exception as exc:
+        log.debug("Stormologist forward skipped (%s)", exc)
+
+
 # Health-probe endpoints tried per node, in order. First 2xx wins.
 HEALTH_PATHS = ["/health", "/api/health", "/healthz", "/"]
 
@@ -236,12 +251,25 @@ async def sensor_loop() -> None:
                     }
                     await BROADCAST.watch_alert(**anomaly)
                     await ANOMALY_QUEUE.put({**anomaly, "node": name, "health": health})
+                    asyncio.create_task(_forward_stormologist({
+                        "statusCode": health["status_code"] or 0,
+                        "handshakeMs": health["latency_ms"] or 9999,
+                        "nodes": [name],
+                    }))
 
                 # State transition: node came back.
                 elif prev is False and now is True:
                     await BROADCAST.status(
                         f"{name.upper()} recovered ({health['latency_ms']}ms)."
                     )
+
+                # Auth/model error while technically reachable.
+                elif now is False and health["status_code"] in (403, 404):
+                    asyncio.create_task(_forward_stormologist({
+                        "statusCode": health["status_code"],
+                        "error": "model_not_found",
+                        "nodes": [name],
+                    }))
 
                 # Degraded latency while online.
                 elif now and health["latency_ms"] and health["latency_ms"] > 4000:
@@ -255,6 +283,10 @@ async def sensor_loop() -> None:
                             f"({health['latency_ms']}ms). Possible overload."
                         ),
                     )
+                    asyncio.create_task(_forward_stormologist({
+                        "handshakeMs": health["latency_ms"],
+                        "nodes": [name],
+                    }))
 
                 last_online[name] = now
 
