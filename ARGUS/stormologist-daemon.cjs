@@ -11,6 +11,7 @@
  *
  * ARGUS consumes alerts on ws://localhost:PORT (proxied at /storm)
  * Set STORMOLOGIST_ENABLED=false to disable entirely.
+ * Wire contract for external clients: see ESCALATION_PROTOCOL.md
  */
 
 const { WebSocketServer } = require('ws');
@@ -161,6 +162,15 @@ wss.on('connection', (ws) => {
       const msg = JSON.parse(data.toString());
       if (msg.type === 'telemetry') evaluateTelemetry(msg.meta);
       if (msg.type === 'resolve_incident') resolveIncident(msg.id, msg.method);
+      if (msg.type === 'list_incidents') {
+        // Pull-side of the escalation loop: an investigator (Lab Brain)
+        // queries the forensics log. Reply to the requester only.
+        const status = msg.status ?? 'open'; // 'open' | 'resolved' | 'all'
+        const incidents = status === 'all'
+          ? incidentLog
+          : incidentLog.filter((e) => e.resolution_status === status);
+        ws.send(JSON.stringify({ type: 'incident_list', incidents, timestamp: Date.now() }));
+      }
     } catch { /* ignore */ }
   });
 
