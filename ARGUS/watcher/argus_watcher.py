@@ -38,6 +38,7 @@ Env:
     ARGUS_POLL_SEC       Health poll interval, seconds           (default 15)
     ARGUS_WATCH_ENABLED  set to "false" to exit immediately
     GEMINI_API_KEY       enables the Antigravity reasoning tier
+    HERMES_URL           Hermes Command Center base URL          (default http://localhost:3001)
 """
 
 from __future__ import annotations
@@ -87,6 +88,7 @@ class WatchConfig:
         "seven": os.environ.get("SEVEN_URL", "http://localhost:8001"),
         "mama": os.environ.get("MAMA_URL", "http://localhost:3000"),
     })
+    hermes_url: str = os.environ.get("HERMES_URL", "http://localhost:3001")
 
     @property
     def has_creds(self) -> bool:
@@ -162,6 +164,12 @@ class Broadcaster:
             "recommendation": recommendation,
             "diagnosis": diagnosis,
         })
+        summary = (
+            f"[{severity.upper()}] {anomaly} — affected: {', '.join(affected)} — "
+            f"{recommendation}"
+            + (f" | diagnosis: {diagnosis}" if diagnosis else "")
+        )
+        asyncio.create_task(_forward_hermes("argus", "watch_alert", summary))
 
     async def audit(self, *, tool: str, decision: str, agent: str, detail: str) -> None:
         await self.broadcast({
@@ -171,6 +179,10 @@ class Broadcaster:
             "agent": agent,
             "detail": detail,
         })
+        asyncio.create_task(_forward_hermes(
+            "argus", "audit",
+            f"tool={tool} decision={decision} agent={agent} | {detail}",
+        ))
 
 
 BROADCAST = Broadcaster()
@@ -184,6 +196,22 @@ WATCH = WatchConfig()
 # Anomalies detected by the sensor are pushed here; the reasoning tier (if
 # active) drains the queue and investigates each one.
 ANOMALY_QUEUE: asyncio.Queue[dict] = asyncio.Queue()
+
+
+async def _forward_hermes(source: str, type_: str, content: str) -> None:
+    """Fan-out a copy of every ARGUS event to Hermes's ingest endpoint.
+
+    Best-effort — if Hermes is down, we log and move on.
+    """
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{WATCH.hermes_url}/api/hermes/ingest",
+                json={"source": source, "type": type_, "content": content},
+                timeout=3.0,
+            )
+    except Exception as exc:
+        log.debug("Hermes ingest forward skipped (%s)", exc)
 
 
 async def _forward_stormologist(meta: dict) -> None:
@@ -200,7 +228,7 @@ async def _forward_stormologist(meta: dict) -> None:
 
 
 # Health-probe endpoints tried per node, in order. First 2xx wins.
-HEALTH_PATHS = ["/health", "/api/health", "/healthz", "/"]
+HEALTH_PATHS = ["/health", "/api/health", "/healthz", "/sage/status", "/"]
 
 
 async def _probe_node(client: httpx.AsyncClient, name: str, base: str) -> dict:
@@ -212,13 +240,18 @@ async def _probe_node(client: httpx.AsyncClient, name: str, base: str) -> dict:
         try:
             resp = await client.get(url, timeout=5.0)
             latency = (time.monotonic() - started) * 1000
-            if resp.status_code < 500:
+            if resp.status_code < 400:
+                # Got a real success — done.
                 return {
-                    "online": resp.status_code < 400,
+                    "online": True,
                     "latency_ms": round(latency, 1),
                     "status_code": resp.status_code,
                     "detail": f"{path} -> {resp.status_code}",
                 }
+            if resp.status_code < 500:
+                # 4xx — path doesn't exist on this node, try the next one.
+                last = f"{path} -> {resp.status_code}"
+                continue
         except Exception as exc:  # connection refused, timeout, etc.
             last = repr(exc)
     return {"online": False, "latency_ms": None, "status_code": None, "detail": last}
