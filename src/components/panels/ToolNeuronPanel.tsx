@@ -36,6 +36,7 @@ import { DebugAnalysis, SwarmLog, KnowledgePack, ChatMessage } from './types';
 import { extractAllCodeBlocks, isAnalysisMessage } from '../../utils/helpers';
 import { UseSwarmStateReturn } from '../../hooks/useSwarmState';
 import { SwarmCore } from './swarm/SwarmCore';
+import { OmniRoutePanel } from './OmniRoutePanel';
 
 // ── Small components ───────────────────────────────────────────────────────
 
@@ -237,7 +238,7 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
 
   const modules = [
     { id: 'chat', label: 'Neural Chat', icon: <MessageSquare className="w-4 h-4" /> },
-    { id: 'vision', label: 'Code Analysis', icon: <LayoutTemplate className="w-4 h-4" /> },
+    { id: 'vision', label: 'OmniRoute', icon: <Activity className="w-4 h-4" /> },
     { id: 'knowledge', label: 'Knowledge RAG', icon: <Database className="w-4 h-4" /> },
     { id: 'vault', label: 'Memory Vault', icon: <ShieldCheck className="w-4 h-4" /> },
     { id: 'swarm', label: 'Swarm Core', icon: <Network className="w-4 h-4" /> },
@@ -800,29 +801,8 @@ export const ToolNeuronPanel: React.FC<ToolNeuronPanelProps> = ({
             </div>
           )}
 
-          {/* VISION */}
-          {tnModule === 'vision' && (
-            <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 space-y-6 md:space-y-8 text-center overflow-y-auto custom-scrollbar">
-              <div className="p-6 md:p-12 bg-accent-900/10 rounded-full border border-accent-600/20 shadow-[0_0_60px_var(--color-accent-700)/0.1]">
-                <LayoutTemplate className="w-24 h-24 text-accent-600" />
-              </div>
-              <div className="space-y-4 max-w-md">
-                <h3 className="text-3xl font-black text-accent-100 uppercase tracking-tighter">
-                  Code Analysis Engine
-                </h3>
-                <p className="text-sm text-accent-900 font-bold leading-relaxed">
-                  Side-by-side neural code analysis. Detect vulnerabilities, optimize performance,
-                  and refactor architecture instantly.
-                </p>
-              </div>
-              <button
-                onClick={() => setActiveTab('editor')}
-                className="px-12 py-5 bg-accent-700 text-white rounded-[32px] font-black text-xs uppercase tracking-[0.4em] shadow-2xl active:scale-95 transition-all"
-              >
-                Initialize Engine
-              </button>
-            </div>
-          )}
+          {/* OMNIROUTE */}
+          {tnModule === 'vision' && <OmniRoutePanel />}
 
           {/* SWARM */}
           {tnModule === 'swarm' && (

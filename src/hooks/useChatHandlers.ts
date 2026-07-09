@@ -153,9 +153,19 @@ ${prompt}`,
         projectSettings.projectProfiles.find(
           (p: any) => p.id === projectSettings.activeProfileId,
         ) || projectSettings.projectProfiles[0];
-      const kbDocs = (activePersonality.knowledgeBase ?? [])
-        .map((e: any) => `[KB: ${e.name}]\n${e.content}`)
+      const KB_ENTRY_MAX = 2000;
+      const KB_TOTAL_MAX = 8000;
+      const kbDocsRaw = (activePersonality.knowledgeBase ?? [])
+        .map((e: any) => {
+          const body = e.content.length > KB_ENTRY_MAX
+            ? e.content.slice(0, KB_ENTRY_MAX) + '...[truncated]'
+            : e.content;
+          return `[KB: ${e.name}]\n${body}`;
+        })
         .join('\n\n---\n\n');
+      const kbDocs = kbDocsRaw.length > KB_TOTAL_MAX
+        ? kbDocsRaw.slice(0, KB_TOTAL_MAX) + '\n...[kb truncated]'
+        : kbDocsRaw;
 
       // Build conversation history from the last 6 messages (3 turns)
       const recentHistory = chatMessages

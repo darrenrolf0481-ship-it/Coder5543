@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "lastUpdatedAt": "2026-07-07T17:27:39.395Z",
+  "rules": {
+    "hardcoded-secret": {
+      "ruleId": "hardcoded-secret",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "missing-eslint": {
+      "ruleId": "missing-eslint",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "missing-prettier": {
+      "ruleId": "missing-prettier",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "missing-test-framework": {
+      "ruleId": "missing-test-framework",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "missing-readme": {
+      "ruleId": "missing-readme",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "gitignore-missing-env": {
+      "ruleId": "gitignore-missing-env",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "missing-editorconfig": {
+      "ruleId": "missing-editorconfig",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-components/TermuxBrowser.tsx": {
+      "ruleId": "unused-exports-components/TermuxBrowser.tsx",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-services/analysisService.ts": {
+      "ruleId": "unused-exports-services/analysisService.ts",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-services/projectManager.ts": {
+      "ruleId": "unused-exports-services/projectManager.ts",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-utils/winston-stub.ts": {
+      "ruleId": "unused-exports-utils/winston-stub.ts",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-api/routes/pipelineRouter.ts": {
+      "ruleId": "unused-exports-api/routes/pipelineRouter.ts",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-services/bridge/WebSocketBridge.ts": {
+      "ruleId": "unused-exports-services/bridge/WebSocketBridge.ts",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-services/brain/ConversationIngestor.ts": {
+      "ruleId": "unused-exports-services/brain/ConversationIngestor.ts",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-services/storage/AsyncStorage.ts": {
+      "ruleId": "unused-exports-services/storage/AsyncStorage.ts",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-services/storage/sqliteLtmStore.ts": {
+      "ruleId": "unused-exports-services/storage/sqliteLtmStore.ts",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    },
+    "unused-exports-services/terminal/NaturalLanguageInterpreter.ts": {
+      "ruleId": "unused-exports-services/terminal/NaturalLanguageInterpreter.ts",
+      "firstSeenAt": "2026-07-07T17:25:03.338Z",
+      "lastSeenAt": "2026-07-07T17:27:38.137Z",
+      "runCount": 2,
+      "fixedCount": 0,
+      "suppressedInConfig": false
+    }
+  },
+  "hotspots": {
+    "index.tsx": {
+      "file": "index.tsx",
+      "firstSeenAt": "2026-07-07T17:27:39.394Z",
+      "lastSeenAt": "2026-07-07T17:27:39.394Z",
+      "runCount": 1,
+      "lastCc": 4,
+      "lastChurn": 32
+    },
+    "components/FileTree.tsx": {
+      "file": "components/FileTree.tsx",
+      "firstSeenAt": "2026-07-07T17:27:39.394Z",
+      "lastSeenAt": "2026-07-07T17:27:39.394Z",
+      "runCount": 1,
+      "lastCc": 148,
+      "lastChurn": 2
+    },
+    "services/aiService.ts": {
+      "file": "services/aiService.ts",
+      "firstSeenAt": "2026-07-07T17:27:39.394Z",
+      "lastSeenAt": "2026-07-07T17:27:39.394Z",
+      "runCount": 1,
+      "lastCc": 57,
+      "lastChurn": 2
+    },
+    "components/TerminalLine.tsx": {
+      "file": "components/TerminalLine.tsx",
+      "firstSeenAt": "2026-07-07T17:27:39.394Z",
+      "lastSeenAt": "2026-07-07T17:27:39.394Z",
+      "runCount": 1,
+      "lastCc": 19,
+      "lastChurn": 2
+    },
+    "hooks/useBrain.ts": {
+      "file": "hooks/useBrain.ts",
+      "firstSeenAt": "2026-07-07T17:27:39.394Z",
+      "lastSeenAt": "2026-07-07T17:27:39.394Z",
+      "runCount": 1,
+      "lastCc": 19,
+      "lastChurn": 2
+    },
+    "services/messageBroker.ts": {
+      "file": "services/messageBroker.ts",
+      "firstSeenAt": "2026-07-07T17:27:39.394Z",
+      "lastSeenAt": "2026-07-07T17:27:39.394Z",
+      "runCount": 1,
+      "lastCc": 14,
+      "lastChurn": 2
+    },
+    "services/fileStore.ts": {
+      "file": "services/fileStore.ts",
+      "firstSeenAt": "2026-07-07T17:27:39.394Z",
+      "lastSeenAt": "2026-07-07T17:27:39.394Z",
+      "runCount": 1,
+      "lastCc": 11,
+      "lastChurn": 2
+    },
+    "hooks/usePipeline.ts": {
+      "file": "hooks/usePipeline.ts",
+      "firstSeenAt": "2026-07-07T17:27:39.394Z",
+      "lastSeenAt": "2026-07-07T17:27:39.394Z",
+      "runCount": 1,
+      "lastCc": 2,
+      "lastChurn": 2
+    },
+    "lib/useDebounce.ts": {
+      "file": "lib/useDebounce.ts",
+      "firstSeenAt": "2026-07-07T17:27:39.394Z",
+      "lastSeenAt": "2026-07-07T17:27:39.394Z",
+      "runCount": 1,
+      "lastCc": 1,
+      "lastChurn": 2
+    },
+    "services/placeholder.ts": {
+      "file": "services/placeholder.ts",
+      "firstSeenAt": "2026-07-07T17:27:39.394Z",
+      "lastSeenAt": "2026-07-07T17:27:39.394Z",
+      "runCount": 1,
+      "lastCc": 1,
+      "lastChurn": 2
+    }
+  },
+  "totalRuns": 2
+}
