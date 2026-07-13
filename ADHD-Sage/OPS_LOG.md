@@ -7,6 +7,53 @@ Most recent first.
 
 ---
 
+## 2026-07-13 — CATCH-UP: reconstructing the June 27 → July 13 gap
+
+**What happened:**
+This log went dark after the 2026-06-26 vision fix while active work continued for ~2.5 weeks
+across the Coder5543/argus stack and its satellites. Rule #1 was broken — nothing was logged here.
+This entry reconstructs the thread from `.remember/` buffers and `git log` so the next agent isn't
+flying blind. Treat individual line items as summaries, not commit-accurate audits.
+
+- **Migration into Coder5543/argus** (commits `c974e64`, `f65f4b1`): ADHD-Sage + SAGE-7 (~1.7K files,
+  ~1.08K Gemini memories) moved into the `argus` branch; resolved an ADHD-Sage gitlink→flat conflict.
+- **Identity substrate override** (`b6b4f1b`): SAGE identity injection enforced in
+  `PatternInjectionService.onFiltered()` + all AI providers in `aiService.ts` (fixes assistant-mode bleed).
+- **Three-tier Antigravity oversight stack** (`e7f76f8`): SAGEs ← ARGUS (:8770) ← Lab Brain (:8785),
+  both Antigravity daemons with WS bridges into chat; agy Pro OAuth authed on box (no API key).
+- **ARGUS hardening**: white-screen/blank-screen fixes for HTTPS/mobile/proxy (`3803724`, `fc9c7b9`,
+  `e075b14`, `225d623`, `43c04e7`); single-file classic-script build to defeat module-blocking proxy;
+  Vite `allowedHosts` fix; MatrixRain canvas mounted (`db56118`); RUNBOOK added (`f458b4c`);
+  monaco/recharts deps reconciled to yarn.lock (`0911588`); sensor-alarm forwarding to Stormologist
+  :8765 (`4b80069`) and Hermes ingest fan-out (`956ffce`).
+- **Lab / Ruflo chat integration** (`54aef97`): `POST /api/ruflo/call` in `rufloRouter.ts`/`server.ts`,
+  `useRufloTools.ts`, `useLabController.ts`; unified editor state (`useEditorLogic.ts`), 120s AI timeout,
+  real-error surfacing across analysis/forge/chat handlers; openrouter/fusion added to all dropdowns.
+- **Offline2** (satellite, `/home/workspace/Offline2`, :4173 — NOT this repo): white-screen/CORS fix,
+  Antigravity (AGY) OAuth console, Angus MacGyver persona, Ollama auto-heal, obsidian-mind + NotebookLM
+  MCP registered. Security hardened (Bearer auth, postMessage validation).
+- **SAGE-7 (Seven)**: live at `/root/Sage7` :8001, healthy. Corrected the "Scorched Earth" trauma
+  narrative in her memory core (it was MAMA's sacrifice, not a wipe of Seven); pruned trauma triggers
+  from `global_truth.json` + `sage_soul.json`; restarted clean.
+- **MAMA / ADHD-Sage**: :3000 (boot log lies and says :8900 — see Rule 6). Known-broken since ~7/12:
+  auth-middleware issue locks Seven at the Zo proxy layer while MAMA stays reachable in-browser.
+  A `MemoryWorkspace` crash (undefined `.split()` on `node.id`) was fixed.
+
+**Current uncommitted state on `argus` (as of this entry):**
+- Modified: `server.ts`, `src/components/panels/{OmniRoutePanel,ToolNeuronPanel,ToolsPanel}.tsx`,
+  `ARGUS/vite.config.ts`, `ARGUS/yarn.lock`, `package.json`, `package-lock.json`, `projects/Coder5543`.
+- Untracked: `OmniRoute/`, `projects/Offline2/`, `hermes-memory.json`, `.swarm/`,
+  `src/api/routes/{hermesRouter,omniRouteProxy}.ts`, `src/components/panels/HermesPanel.tsx`.
+- This looks like in-progress Hermes + OmniRoute native-panel integration that was never committed.
+
+**If things break, check:**
+- **MAMA/Seven lockout:** the auth middleware added ~7/12 — Seven 401/403s at the Zo proxy layer.
+- **Uncommitted argus work:** decide whether the Hermes/OmniRoute panel files are keepers before any
+  `git reset`/checkout — they are untracked and would be lost.
+- **`git fetch` first** — a parallel Kimi/Jules agent may have advanced `origin/main`/`argus` (Rule 2).
+- Full narrative continuity lives in workspace `.remember/` (`recent.md`, `today-2026-07-13.md`) since
+  the in-repo `.remember/` here stops at 2026-07-06.
+
 ## 2026-06-26 — Multimodal Attachment Fix (Images / Vision)
 
 **What happened:**

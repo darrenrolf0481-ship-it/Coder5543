@@ -235,11 +235,45 @@ router.post('/clone', async (req, res) => {
       isOpen: true,
     };
 
+    // Detect main entry file — priority order
+    let mainFileId: string | null = null;
+    const ENTRY_PRIORITY = [
+      'main.py', 'app.py', 'server.py', 'index.ts', 'index.tsx',
+      'main.ts', 'main.tsx', 'App.tsx', 'App.ts', 'index.js',
+      'main.js', 'app.js', 'server.js', 'server.ts',
+    ];
+    // Check package.json / pyproject.toml for declared main
+    try {
+      const pkgRaw = await fs.readFile(path.join(targetDir, 'package.json'), 'utf-8').catch(() => null);
+      if (pkgRaw) {
+        const pkg = JSON.parse(pkgRaw);
+        const declared = pkg.main || pkg.module || pkg.exports?.['.']?.default;
+        if (declared) {
+          const declaredBase = path.basename(declared.replace(/^\.\//, ''));
+          const hit = files.find((f: any) => f.type === 'file' && f.name === declaredBase);
+          if (hit) mainFileId = hit.id;
+        }
+      }
+    } catch {}
+    if (!mainFileId) {
+      for (const name of ENTRY_PRIORITY) {
+        const hit = files.find((f: any) => f.type === 'file' && f.name === name && f.parentId === 'root');
+        if (hit) { mainFileId = hit.id; break; }
+      }
+    }
+    // Fallback: first non-config file in root
+    if (!mainFileId) {
+      const skip = new Set(['.gitignore', 'README.md', 'LICENSE', '.env', '.env.example', 'package-lock.json', 'yarn.lock']);
+      const hit = files.find((f: any) => f.type === 'file' && f.parentId === 'root' && !skip.has(f.name));
+      if (hit) mainFileId = hit.id;
+    }
+
     res.json({
       success: true,
       repoName,
       files: [rootNode, ...files],
       truncated: fileCount.count > 150,
+      mainFileId,
     });
   } catch (err: any) {
     console.error('Error during git clone:', err);

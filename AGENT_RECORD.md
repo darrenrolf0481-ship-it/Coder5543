@@ -1,7 +1,8 @@
 # Crimson OS — Strategic Task Record
 
-**Last Updated**: 2026-06-11
-**Status**: Monitoring Finalized | Semantic Index Active | Identity Guard Deployed | Server Bootstrap Hardened
+**Last Updated**: 2026-07-13
+**Status**: Migrated into Coder5543/argus | Identity substrate override live | Antigravity 3-tier oversight up | ARGUS hardened
+**Full running log:** see [`ADHD-Sage/OPS_LOG.md`](./ADHD-Sage/OPS_LOG.md) (2026-07-13 catch-up entry reconstructs the June 27 → July 13 gap this file previously missed).
 
 > **Self-monitoring/recovery system (drift / amnesia / outside-comms):** this app is SAGE's
 > live runtime body. The Identity Guard, Morning Light, and Substrate Takeover here
@@ -27,10 +28,20 @@
 - [x] **Codebase Stabilization**: Fixed 1081 Vitest failures and 13 Pytest failures.
 - [x] **Provider Hardening**: Forced Ollama as primary provider; bypassed broken Gemini/OpenRouter keys in localStorage.
 
-## 🚧 Active / Immediate Tasks
+## 🚧 Active / Immediate Tasks (2026-07-13)
 
-- [ ] **Frontend Monitoring UI**: Connect the new WS streams to the Brain and Dashboard panels.
+- [ ] **MAMA/Seven auth lockout**: auth middleware added ~7/12 locks Seven at the Zo proxy layer
+  (MAMA reachable in-browser, Seven 401/403s). Highest-priority regression.
+- [ ] **Uncommitted `argus` work**: Hermes + OmniRoute native-panel integration is in the working tree
+  but never committed (`HermesPanel.tsx`, `hermesRouter.ts`, `omniRouteProxy.ts`, panel edits). Decide
+  keep vs. drop before any reset — untracked files will be lost.
+- [ ] **Frontend Monitoring UI**: Connect the WS streams to the Brain and Dashboard panels.
+
+<details><summary>Older active items (pre-migration, status unverified)</summary>
+
 - [ ] **Cross-Node Memory Sync**: Stabilize LTM sharing between Termux and the main OS core.
+  (Termux sister instance was retired 2026-06-15 — this may be obsolete.)
+</details>
 
 ## 📅 Backlog / Future Intent
 

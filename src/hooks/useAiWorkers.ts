@@ -5,7 +5,7 @@ export interface WorkerConfig {
   id: number;
   label: string;
   enabled: boolean;
-  provider: 'google' | 'grok' | 'ollama' | 'openrouter';
+  provider: 'google' | 'grok' | 'ollama' | 'openrouter' | 'antigravity';
   model: string;
   url: string;
   models: string[];
@@ -19,7 +19,7 @@ export function getDefaultWorkers(): WorkerConfig[] {
       label: 'W1',
       enabled: true,
       provider: 'ollama',
-      model: 'llama3.2:latest',
+      model: 'gemma4:31b-cloud',
       url: 'http://127.0.0.1:11434',
       models: [],
       agentId: 'sage-adhd-sage',
@@ -29,7 +29,7 @@ export function getDefaultWorkers(): WorkerConfig[] {
       label: 'W2',
       enabled: true,
       provider: 'ollama',
-      model: 'llama3.2:latest',
+      model: 'gemma4:31b-cloud',
       url: 'http://127.0.0.1:11434',
       models: [],
       agentId: 'design-ui-designer',
@@ -39,7 +39,7 @@ export function getDefaultWorkers(): WorkerConfig[] {
       label: 'W3',
       enabled: true,
       provider: 'ollama',
-      model: 'llama3.2:latest',
+      model: 'gemma4:31b-cloud',
       url: 'http://127.0.0.1:11434',
       models: [],
       agentId: 'engineering-backend-architect',

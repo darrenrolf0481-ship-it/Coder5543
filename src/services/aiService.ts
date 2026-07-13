@@ -297,6 +297,45 @@ const generateOpenRouterResponse = async (
   return text;
 };
 
+const generateAntigravityResponse = async (
+  finalPrompt: string | any[],
+  systemInstruction: string,
+  dependencies: any,
+): Promise<string> => {
+  const { aiModel, signal } = dependencies;
+  const messages: any[] = systemInstruction
+    ? [{ role: 'system', content: systemInstruction }]
+    : [];
+
+  if (Array.isArray(finalPrompt)) {
+    messages.push(
+      ...finalPrompt.map((p) => ({
+        role: p.role === 'model' ? 'assistant' : 'user',
+        content: p.parts?.[0]?.text ?? String(p),
+      })),
+    );
+  } else {
+    messages.push({ role: 'user', content: finalPrompt });
+  }
+
+  const res = await fetch(resolveApiUrl('antigravity/chat'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, model: aiModel }),
+    signal,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Antigravity error (${res.status}): ${err.error || res.statusText}`);
+  }
+
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content;
+  if (text === undefined) throw new Error('Antigravity returned empty response');
+  return text;
+};
+
 export const generateAIResponse = async (
   prompt: string | any[],
   systemInstruction: string,
@@ -373,6 +412,8 @@ export const generateAIResponse = async (
             options,
             dependencies,
           );
+        case 'antigravity':
+          return generateAntigravityResponse(finalPrompt, systemInstruction, dependencies);
         default:
           return '';
       }

@@ -24,6 +24,9 @@ import githubRouter from './src/api/routes/githubRouter.js';
 import ollamaRouter from './src/api/routes/ollamaRouter.js';
 import ttsRouter from './src/api/routes/ttsRouter.js';
 import rufloRouter from './src/api/routes/rufloRouter.js';
+import hermesRouter from './src/api/routes/hermesRouter.js';
+import omniRouteProxy from './src/api/routes/omniRouteProxy.js';
+import antigravityRouter from './src/api/routes/antigravityRouter.js';
 import { WebSocketBridge } from './src/services/bridge/WebSocketBridge.js';
 import { conversationIngestor } from './src/services/brain/ConversationIngestor.js';
 
@@ -65,6 +68,9 @@ const API_ROUTERS: ReadonlyArray<readonly [string, Router]> = [
   ['ollama', ollamaRouter],
   ['tts', ttsRouter],
   ['ruflo', rufloRouter],
+  ['hermes', hermesRouter],
+  ['omniroute', omniRouteProxy],
+  ['antigravity', antigravityRouter],
 ];
 
 function registerRouters(app: Express, prefix = ''): void {
@@ -117,6 +123,16 @@ async function startServer() {
 
   app.use(express.json());
   app.use(corsMiddleware);
+
+  // ── ARGUS dashboard — served as a static sub-app so it benefits from the
+  //    same port-3002 proxy treatment that already works on mobile.
+  const argusDistPath = path.join(process.cwd(), 'ARGUS', 'dist');
+  const argusIndex = path.join(argusDistPath, 'index.html');
+  // Serve at both /argus and /proxy/3002/argus (proxy-prefix variant).
+  for (const argusBase of ['/argus', `${proxyPrefix ?? ''}/argus`].filter(Boolean)) {
+    app.use(argusBase, express.static(argusDistPath));
+    app.get(`${argusBase}/*splat`, (_req, res) => res.sendFile(argusIndex));
+  }
 
   // ── Register Modular Routers (mirrored behind the VS Code proxy when present) ─
   registerRouters(app);

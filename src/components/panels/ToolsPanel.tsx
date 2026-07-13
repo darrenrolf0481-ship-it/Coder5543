@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
-import { FolderOpen, Brain, Smartphone, HardDrive, Layers, Settings as SettingsIcon } from 'lucide-react';
+import { FolderOpen, Brain, Smartphone, HardDrive, Settings as SettingsIcon, Bot } from 'lucide-react';
 import { BrainPanel } from './BrainPanel';
 import { NodeBridgePanel } from './NodeBridgePanel';
 import { StoragePanel } from './StoragePanel';
 import { ProjectPanel } from './ProjectPanel';
-import { UnifiedResultsPanel } from './UnifiedResultsPanel';
 import { SettingsPanel } from './SettingsPanel';
+import { HermesPanel } from './HermesPanel';
 
-type ToolsTab = 'projects' | 'brain' | 'bridge' | 'storage' | 'results' | 'settings';
+type ToolsTab = 'projects' | 'brain' | 'bridge' | 'storage' | 'settings' | 'hermes';
 
 const TABS: { id: ToolsTab; label: string; icon: React.ReactNode }[] = [
   { id: 'projects', label: 'Projects', icon: <FolderOpen className="w-3.5 h-3.5" /> },
   { id: 'brain', label: 'Brain', icon: <Brain className="w-3.5 h-3.5" /> },
+  { id: 'hermes', label: 'Hermes', icon: <Bot className="w-3.5 h-3.5" /> },
   { id: 'bridge', label: 'Node Bridge', icon: <Smartphone className="w-3.5 h-3.5" /> },
   { id: 'storage', label: 'Storage', icon: <HardDrive className="w-3.5 h-3.5" /> },
-  { id: 'results', label: 'Results', icon: <Layers className="w-3.5 h-3.5" /> },
   { id: 'settings', label: 'Settings', icon: <SettingsIcon className="w-3.5 h-3.5" /> },
 ];
 
@@ -36,6 +36,7 @@ interface ToolsPanelProps {
   onProjectCreate: (name: string) => void;
   onProjectDelete: (id: string) => void;
   onLoadServerProject: (name: string) => void;
+  onGitHubClone?: (files: any[], mainFileId: string | null) => void;
   // Settings
   theme: 'dark' | 'light';
   toggleTheme: () => void;
@@ -105,6 +106,7 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = (props) => {
             onProjectCreate={props.onProjectCreate}
             onProjectDelete={props.onProjectDelete}
             onLoadServerProject={props.onLoadServerProject}
+            onGitHubClone={props.onGitHubClone}
           />
         )}
         {activeTab === 'brain' && <BrainPanel />}
@@ -124,9 +126,7 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = (props) => {
             handleStorageUpload={props.handleStorageUpload}
           />
         )}
-        {activeTab === 'results' && (
-          <UnifiedResultsPanel maxHeight="100%" showTabs={true} />
-        )}
+        {activeTab === 'hermes' && <HermesPanel />}
         {activeTab === 'settings' && (
           <SettingsPanel
             theme={props.theme}

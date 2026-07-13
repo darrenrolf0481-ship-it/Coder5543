@@ -56,7 +56,7 @@ export function usePersonalities() {
     // Save locally
     const preferences = {
       aiProvider: 'ollama',
-      aiModel: 'llama3.2:latest',
+      aiModel: 'gemma4:31b-cloud',
       geminiApiKey,
       grokApiKey,
       openrouterApiKey,
@@ -65,9 +65,9 @@ export function usePersonalities() {
       const stored = localStorage.getItem('node_preferences');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed.aiProvider !== 'ollama' || parsed.aiModel !== 'llama3.2:latest') {
+        if (parsed.aiProvider !== 'ollama') {
           parsed.aiProvider = 'ollama';
-          parsed.aiModel = 'llama3.2:latest';
+          parsed.aiModel = parsed.aiModel || 'gemma4:31b-cloud';
         }
         Object.assign(preferences, parsed);
       }

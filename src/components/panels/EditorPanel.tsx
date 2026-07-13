@@ -397,7 +397,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
         console.warn('Monaco loading timed out. Switching to lightweight editor fallback.');
         setUseFallback(true);
       }
-    }, 1500);
+    }, 8000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -813,7 +813,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
               </button>
             </div>
           </div>
-          <div className="flex-1 relative z-10 overflow-hidden">
+          <div className="flex-1 relative z-10 min-h-0">
             {isScanningCode && (
               <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
                 <div className="absolute inset-0 bg-accent-900/10 mix-blend-overlay"></div>
@@ -835,7 +835,7 @@ export const EditorPanel: React.FC<EditorPanelProps> = ({
                 </div>
               </div>
             )}
-            <div className="flex-1 flex flex-col lg:flex-row relative overflow-hidden h-full w-full">
+            <div className="flex-1 flex flex-col lg:flex-row relative h-full w-full min-h-0">
               {/* PRIMARY EDITOR PANEL */}
               <div
                 className={`flex-1 flex flex-col h-full ${isSplitScreen ? 'border-r border-accent-900/30 w-full lg:w-1/2' : 'w-full'}`}

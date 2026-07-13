@@ -1465,6 +1465,19 @@ function AppInner() {
                     }
                   } catch (err) { console.error('Failed to load server project:', err); }
                 }}
+                onGitHubClone={(files, mainFileId) => {
+                  const LANG_MAP: Record<string, string> = { py:'python',js:'javascript',ts:'typescript',tsx:'typescript',jsx:'javascript',html:'html',css:'css',rs:'rust',go:'go',java:'java',cpp:'cpp',json:'json',md:'markdown' };
+                  fsState.setProjectFiles(files);
+                  const target = mainFileId
+                    ? files.find((f: any) => f.id === mainFileId)
+                    : files.filter((f: any) => f.type === 'file')[0];
+                  if (target) {
+                    const ext = target.name?.split('.').pop() || '';
+                    fsState.setActiveFileId(target.id);
+                    fsState.setEditorLanguage(LANG_MAP[ext] || target.language || 'text');
+                  }
+                  setActiveTab('editor');
+                }}
                 // Settings
                 theme={theme}
                 toggleTheme={toggleTheme}

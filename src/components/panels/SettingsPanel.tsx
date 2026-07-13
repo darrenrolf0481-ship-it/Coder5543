@@ -30,7 +30,7 @@ export interface WorkerConfig {
   id: number;
   label: string;
   enabled: boolean;
-  provider: 'google' | 'grok' | 'ollama' | 'openrouter';
+  provider: 'google' | 'grok' | 'ollama' | 'openrouter' | 'antigravity';
   model: string;
   url: string;
   models: string[];
@@ -823,8 +823,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                                             : e.target.value === 'grok'
                                               ? 'grok-beta'
                                               : e.target.value === 'openrouter'
-                                                ? 'openrouter/fusion'
-                                                : x.model || 'llama3.2:latest',
+                                                ? 'google/gemma-2-9b-it:free'
+                                                : e.target.value === 'antigravity'
+                                                  ? 'gemini-3.1-pro-preview'
+                                                  : x.model || 'gemma4:31b-cloud',
                                       }
                                     : x,
                                 ),
@@ -833,16 +835,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                             className="w-full bg-black/60 border border-accent-900/30 rounded-xl px-4 py-3 text-xs text-accent-100 font-mono outline-none focus:border-accent-600/60 transition-all"
                           >
                             <option value="ollama" className="bg-[#0a0202]">
-                              Ollama (Local Llama)
+                              Ollama (Local)
+                            </option>
+                            <option value="openrouter" className="bg-[#0a0202]">
+                              OpenRouter (Free)
                             </option>
                             <option value="google" className="bg-[#0a0202]">
                               Google Gemini
                             </option>
                             <option value="grok" className="bg-[#0a0202]">
-                              xAI Grok (Garage)
+                              xAI Grok
                             </option>
-                            <option value="openrouter" className="bg-[#0a0202]">
-                              OpenRouter
+                            <option value="antigravity" className="bg-[#0a0202]">
+                              Antigravity ⚡ (uses credits)
                             </option>
                           </select>
                         </div>
@@ -872,7 +877,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                                 ))
                               ) : (
                                 <option value={w.model} className="bg-[#0a0202]">
-                                  {w.model || 'llama3.2:latest'}
+                                  {w.model || 'gemma4:31b-cloud'}
                                 </option>
                               )
                             ) : w.provider === 'google' ? (
@@ -887,14 +892,26 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                                   {m}
                                 </option>
                               ))
+                            ) : w.provider === 'antigravity' ? (
+                              [
+                                'gemini-3.1-pro-preview',
+                                'gemini-3-flash',
+                                'claude-opus-4-6',
+                                'claude-sonnet-4-6',
+                              ].map((m) => (
+                                <option key={m} value={m} className="bg-[#0a0202]">
+                                  {m}
+                                </option>
+                              ))
                             ) : (
                               [
-                                'openrouter/fusion',
                                 'google/gemma-2-9b-it:free',
+                                'meta-llama/llama-3.1-8b-instruct:free',
                                 'meta-llama/llama-3.2-3b-instruct:free',
                                 'qwen/qwen-2.5-7b-instruct:free',
-                                'deepseek/deepseek-chat',
-                                'meta-llama/llama-3.1-8b-instruct:free',
+                                'qwen/qwen3-8b:free',
+                                'mistralai/mistral-7b-instruct:free',
+                                'nousresearch/hermes-3-llama-3.1-8b:free',
                               ].map((m) => (
                                 <option key={m} value={m} className="bg-[#0a0202]">
                                   {m}
