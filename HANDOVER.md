@@ -96,6 +96,24 @@ The application will serve:
 - Front-end & Dev HMR: `http://localhost:3001` (or the server's external address mapped to that port).
 - Server API: `http://localhost:3001`
 
+### If the app is stuck on "Initializing Substrate" / a blank screen over the tunnel
+
+The zo preview tunnel blocks `<script type="module">` outright (see
+`ARGUS/RUNBOOK.md`, gotcha #1 — same root cause). Both `npm run dev` and the
+normal `vite build` output are module scripts, so over the tunnel the app's JS
+never executes: the splash times out after ~6s and you're left on a dead page,
+while the only UI that loads is ARGUS (which already has a classic-script
+build). To serve Crimson OS in a tunnel-proof form instead:
+
+```bash
+npm run start:standalone
+```
+
+This runs `build-standalone.mjs` (bundles the whole front-end into one
+classic-script `dist/index.html`, no module scripts) and starts the production
+Express server on `:3002` — same origin for the UI, API, and WebSocket bridge.
+There is no HMR in this mode; re-run it after code changes.
+
 ---
 
 ## 🛠️ Hotspot Files to Know
