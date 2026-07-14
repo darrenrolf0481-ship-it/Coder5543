@@ -7,6 +7,8 @@
     "dev": "PORT=3002 tsx server.ts",
     "start": "NODE_ENV=production tsx server.ts",
     "build": "PORT=3002 vite build",
+    "build:standalone": "node build-standalone.mjs",
+    "start:standalone": "npm run build:standalone && npm start",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "test": "vitest",
