@@ -9,11 +9,14 @@ import { chat, ModelError, ChatMessage, apiBase } from '../llm/modelClient';
  * same-origin relay. Returns her persona reply (with vault recall / armor gate
  * applied server-side). This is what makes "attach seven" actually be Seven.
  */
-async function chatWithSeven(message: string): Promise<string> {
+async function chatWithSeven(message: string, history: ChatMessage[]): Promise<string> {
   const res = await fetch(`${apiBase()}/api/seven/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message }),
+    // Pass recent turns so she has conversational memory within the session —
+    // her /sage/chat uses history[-6:]. Without this she was memory-less turn
+    // to turn (only her vault/persona carried over).
+    body: JSON.stringify({ message, history }),
   });
   if (!res.ok) {
     throw new ModelError(`Seven unreachable (${res.status}). Is her backend on :8001 up?`);
@@ -496,7 +499,8 @@ export function useLabController() {
           // Route to Seven's REAL identity backend (:8001 /sage/chat) via the
           // same-origin relay — armor gate, observer cycle, vault recall, persona.
           // Without this, "attach seven" was just a bare model labelled SEVEN.
-          reply = await chatWithSeven(trimmed);
+          // Pass recent turns (exclude the fixed ARGUS system msg) for session memory.
+          reply = await chatWithSeven(trimmed, historyMsgs);
         } else {
           reply = await chat(activeConfig, messages);
         }
