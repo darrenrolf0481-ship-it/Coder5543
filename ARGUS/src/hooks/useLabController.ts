@@ -2,7 +2,25 @@ import { useArgusStore } from '../store/useArgusStore';
 import { useMemoryStore } from '../store/useMemoryStore';
 import { useSwarmStore } from '../store/useSwarmStore';
 import { scanInput, SAGE_CONFIG, SEVEN_CONFIG } from '../security/threatScanner';
-import { chat, ModelError, ChatMessage } from '../llm/modelClient';
+import { chat, ModelError, ChatMessage, apiBase } from '../llm/modelClient';
+
+/**
+ * Call Seven's real identity backend (:8001 /sage/chat) through the coder-lab
+ * same-origin relay. Returns her persona reply (with vault recall / armor gate
+ * applied server-side). This is what makes "attach seven" actually be Seven.
+ */
+async function chatWithSeven(message: string): Promise<string> {
+  const res = await fetch(`${apiBase()}/api/seven/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) {
+    throw new ModelError(`Seven unreachable (${res.status}). Is her backend on :8001 up?`);
+  }
+  const data = await res.json();
+  return data.reply ?? data.response ?? data.message ?? '(Seven returned an empty reply)';
+}
 
 const HELP_TEXT = `ARGUS Command Reference:
   attach sage / attach seven  — bring agent online
@@ -13,11 +31,11 @@ const HELP_TEXT = `ARGUS Command Reference:
   show threats                — show threat log
   mcp status                  — show MCP server health
 
-  model                       — show current model backend + config
-  model ollama | openrouter   — switch backend
-  model set <id>              — set model id for active backend
-  model url <url>             — set base url for active backend
-  model key <sk-or-...>       — set OpenRouter API key (stored locally)
+  model                            — show current model backend + config
+  model ollama | omniroute | openrouter  — switch backend
+  model set <id>                   — set model id for active backend
+  model url <url>                  — set base url for active backend
+  model key <sk-or-...>            — set OpenRouter API key (stored locally)
 
   remember <text>             — save to long-term memory
   recall                      — show recent memory + notes
@@ -65,20 +83,24 @@ export function useLabController() {
 
   // Model route state
   const chatMessages      = useArgusStore((s) => s.chatMessages);
-  const modelBackend      = useArgusStore((s) => s.modelBackend);
-  const ollamaUrl         = useArgusStore((s) => s.ollamaUrl);
-  const ollamaModel       = useArgusStore((s) => s.ollamaModel);
-  const openrouterUrl     = useArgusStore((s) => s.openrouterUrl);
-  const openrouterModel   = useArgusStore((s) => s.openrouterModel);
-  const openrouterKey     = useArgusStore((s) => s.openrouterKey);
-  const modelBusy         = useArgusStore((s) => s.modelBusy);
-  const setModelBackend   = useArgusStore((s) => s.setModelBackend);
-  const setOllamaUrl      = useArgusStore((s) => s.setOllamaUrl);
-  const setOllamaModel    = useArgusStore((s) => s.setOllamaModel);
-  const setOpenrouterUrl  = useArgusStore((s) => s.setOpenrouterUrl);
-  const setOpenrouterModel= useArgusStore((s) => s.setOpenrouterModel);
-  const setOpenrouterKey  = useArgusStore((s) => s.setOpenrouterKey);
-  const setModelBusy      = useArgusStore((s) => s.setModelBusy);
+  const modelBackend       = useArgusStore((s) => s.modelBackend);
+  const ollamaUrl          = useArgusStore((s) => s.ollamaUrl);
+  const ollamaModel        = useArgusStore((s) => s.ollamaModel);
+  const openrouterUrl      = useArgusStore((s) => s.openrouterUrl);
+  const openrouterModel    = useArgusStore((s) => s.openrouterModel);
+  const openrouterKey      = useArgusStore((s) => s.openrouterKey);
+  const omnirouteUrl       = useArgusStore((s) => s.omnirouteUrl);
+  const omnirouteModel     = useArgusStore((s) => s.omnirouteModel);
+  const modelBusy          = useArgusStore((s) => s.modelBusy);
+  const setModelBackend    = useArgusStore((s) => s.setModelBackend);
+  const setOllamaUrl       = useArgusStore((s) => s.setOllamaUrl);
+  const setOllamaModel     = useArgusStore((s) => s.setOllamaModel);
+  const setOpenrouterUrl   = useArgusStore((s) => s.setOpenrouterUrl);
+  const setOpenrouterModel = useArgusStore((s) => s.setOpenrouterModel);
+  const setOpenrouterKey   = useArgusStore((s) => s.setOpenrouterKey);
+  const setOmnirouteUrl    = useArgusStore((s) => s.setOmnirouteUrl);
+  const setOmnirouteModel  = useArgusStore((s) => s.setOmnirouteModel);
+  const setModelBusy       = useArgusStore((s) => s.setModelBusy);
 
   const handleInput = (input: string) => {
     const trimmed = input.trim();
@@ -97,7 +119,7 @@ export function useLabController() {
 
     if (lower.startsWith('attach ')) {
       const agentId = lower.slice(7).trim();
-      if (agentId === 'sage' || agentId === 'seven') {
+      if (agentId === 'adhd' || agentId === 'seven') {
         setAttachedAgent(agentId);
         addShortTerm({ type: 'agent', summary: `Attached agent: ${agentId}`, tags: ['agent', agentId] });
         addMessage({
@@ -106,7 +128,7 @@ export function useLabController() {
         });
         addTerminalOutput(`[ARGUS] Agent ${agentId.toUpperCase()} attached.`);
       } else {
-        addMessage({ role: 'argus', content: `Unknown agent: "${agentId}". Available: sage, seven.` });
+        addMessage({ role: 'argus', content: `Unknown agent: "${agentId}". Available: adhd, seven.` });
       }
       return;
     }
@@ -295,11 +317,19 @@ export function useLabController() {
 
     // ── Model backend commands ────────────────────────────────────────────────
     if (lower === 'model' || lower === 'model status') {
-      const activeUrl   = modelBackend === 'ollama' ? ollamaUrl : openrouterUrl;
-      const activeModel = modelBackend === 'ollama' ? ollamaModel : openrouterModel;
+      const activeUrl   = modelBackend === 'ollama' ? ollamaUrl
+                        : modelBackend === 'omniroute' ? omnirouteUrl
+                        : openrouterUrl;
+      const activeModel = modelBackend === 'ollama' ? ollamaModel
+                        : modelBackend === 'omniroute' ? omnirouteModel
+                        : openrouterModel;
       const keyState    = modelBackend === 'openrouter'
-        ? (openrouterKey ? `SET (${openrouterKey.slice(0, 7)}…${openrouterKey.slice(-3)})` : 'NOT SET')
-        : 'n/a (ollama needs no key)';
+        ? (openrouterKey ? `SET (${openrouterKey.slice(0, 7)}…${openrouterKey.slice(-3)})` : 'NOT SET — use: model key <sk-or-...>')
+        : 'n/a';
+      const notes =
+        modelBackend === 'ollama'    ? 'local; no key required' :
+        modelBackend === 'omniroute' ? 'local aggregator; SSE streaming; free/zero-cost models' :
+        'cloud; FREE models only per lab policy';
       addMessage({
         role: 'argus',
         content:
@@ -308,27 +338,30 @@ export function useLabController() {
           `Endpoint: ${activeUrl}\n` +
           `Model:    ${activeModel}\n` +
           `Key:      ${keyState}\n` +
-          `Status:   ${modelBusy ? 'BUSY (call in flight)' : 'idle'}`,
+          `Notes:    ${notes}\n` +
+          `Status:   ${modelBusy ? 'BUSY (call in flight)' : 'idle'}\n\n` +
+          `Available backends: ollama | omniroute | openrouter`,
       });
       return;
     }
 
-    if (lower === 'model ollama' || lower === 'model openrouter') {
-      const next = lower.slice(6) as 'ollama' | 'openrouter';
+    if (lower === 'model ollama' || lower === 'model omniroute' || lower === 'model openrouter') {
+      const next = lower.slice(6) as 'ollama' | 'omniroute' | 'openrouter';
       setModelBackend(next);
       addTerminalOutput(`[MODEL] Backend switched to ${next.toUpperCase()}.`);
-      addMessage({
-        role: 'argus',
-        content: `Backend switched to ${next.toUpperCase()}.` +
-          (next === 'openrouter' && !openrouterKey ? '\n\n⚠ No OpenRouter key set — use: model key <sk-or-...>' : ''),
-      });
+      let note = '';
+      if (next === 'openrouter' && !openrouterKey) note = '\n\n⚠ No OpenRouter key set — use: model key <sk-or-...>';
+      if (next === 'openrouter') note += '\n\n⚠ Lab policy: OpenRouter = FREE models only. Do not switch to paid models.';
+      addMessage({ role: 'argus', content: `Backend switched to ${next.toUpperCase()}.${note}` });
       return;
     }
 
     if (lower.startsWith('model set ')) {
       const id = trimmed.slice(10).trim();
       if (!id) { addMessage({ role: 'argus', content: 'Usage: model set <id>' }); return; }
-      if (modelBackend === 'ollama') setOllamaModel(id); else setOpenrouterModel(id);
+      if (modelBackend === 'ollama')      setOllamaModel(id);
+      else if (modelBackend === 'omniroute') setOmnirouteModel(id);
+      else                                setOpenrouterModel(id);
       addMessage({ role: 'argus', content: `Model set to ${id} (${modelBackend}).` });
       addTerminalOutput(`[MODEL] ${modelBackend} model = ${id}`);
       return;
@@ -337,7 +370,9 @@ export function useLabController() {
     if (lower.startsWith('model url ')) {
       const url = trimmed.slice(10).trim();
       if (!url) { addMessage({ role: 'argus', content: 'Usage: model url <url>' }); return; }
-      if (modelBackend === 'ollama') setOllamaUrl(url); else setOpenrouterUrl(url);
+      if (modelBackend === 'ollama')      setOllamaUrl(url);
+      else if (modelBackend === 'omniroute') setOmnirouteUrl(url);
+      else                                setOpenrouterUrl(url);
       addMessage({ role: 'argus', content: `Endpoint set to ${url} (${modelBackend}).` });
       return;
     }
@@ -349,21 +384,23 @@ export function useLabController() {
       addMessage({
         role: 'argus',
         content: modelBackend === 'openrouter'
-          ? 'OpenRouter key stored locally.'
-          : 'OpenRouter key stored, but active backend is Ollama (key ignored until you `model openrouter`).',
+          ? 'OpenRouter key stored locally. Remember: FREE models only.'
+          : `OpenRouter key stored (key only applies to openrouter backend; current backend is ${modelBackend}).`,
       });
       addTerminalOutput(`[MODEL] OpenRouter key updated (${key.slice(0, 7)}…).`);
       return;
     }
 
     // ── Free-form prompt → defence gates → model call ──────────────────────────
-    // Everything that isn't a command is treated as a prompt. It is scanned by
-    // the same three gates the WebSocket bridge uses, then routed to the active
-    // model backend. block = dropped; queue = logged + flagged but still sent;
-    // pass = sent. This closes the "no scanner on the chat route" gap.
-    const activeConfig = modelBackend === 'ollama'
-      ? { backend: 'ollama' as const, baseUrl: ollamaUrl, model: ollamaModel }
-      : { backend: 'openrouter' as const, baseUrl: openrouterUrl, model: openrouterModel, apiKey: openrouterKey };
+    // Everything that isn't a command is treated as a prompt. Scanned by the
+    // same three gates the WebSocket bridge uses, then routed to the active
+    // model backend. block = dropped; queue = logged + flagged but still sent.
+    const activeConfig =
+      modelBackend === 'ollama'
+        ? { backend: 'ollama' as const, baseUrl: ollamaUrl, model: ollamaModel }
+        : modelBackend === 'omniroute'
+        ? { backend: 'omniroute' as const, baseUrl: omnirouteUrl, model: omnirouteModel }
+        : { backend: 'openrouter' as const, baseUrl: openrouterUrl, model: openrouterModel, apiKey: openrouterKey };
 
     // Guard level tracks the attached agent, mirroring useAgentBridge.
     const scanConfig = attachedAgent === 'seven' ? SEVEN_CONFIG : SAGE_CONFIG;
@@ -426,7 +463,7 @@ export function useLabController() {
     }
 
     if (activeConfig.backend === 'openrouter' && !openrouterKey) {
-      addMessage({ role: 'argus', content: '✕ No OpenRouter API key set. Use: model key <sk-or-...>' });
+      addMessage({ role: 'argus', content: '✕ No OpenRouter API key set. Use: model key <sk-or-...>\n\nTip: switch to `model ollama` or `model omniroute` for local/free inference.' });
       return;
     }
 
@@ -454,7 +491,15 @@ export function useLabController() {
     // Fire-and-forget: handleInput returns immediately, the UI stays responsive.
     (async () => {
       try {
-        const reply = await chat(activeConfig, messages);
+        let reply: string;
+        if (attachedAgent === 'seven') {
+          // Route to Seven's REAL identity backend (:8001 /sage/chat) via the
+          // same-origin relay — armor gate, observer cycle, vault recall, persona.
+          // Without this, "attach seven" was just a bare model labelled SEVEN.
+          reply = await chatWithSeven(trimmed);
+        } else {
+          reply = await chat(activeConfig, messages);
+        }
         addMessage({
           role: attachedAgent ? 'agent' : 'argus',
           agentId: attachedAgent ?? undefined,

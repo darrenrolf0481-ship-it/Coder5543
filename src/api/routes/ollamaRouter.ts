@@ -66,4 +66,29 @@ router.post('/embeddings', async (req, res) => {
   }
 });
 
+/**
+ * OpenAI-compatible passthrough. Ollama natively serves the OpenAI shape at
+ * `/v1/*` (e.g. /v1/chat/completions). Browsers behind the proxy can't reach
+ * `localhost:11434` directly, so ARGUS calls this same-origin relay instead:
+ *   <base>/api/ollama/v1/chat/completions  →  ollama :11434/v1/chat/completions
+ * Handles both streaming and non-streaming by relaying the raw body/stream.
+ */
+router.all(/^\/v1\/.*/, async (req, res) => {
+  try {
+    const target = `${getOllamaBase(req)}${req.originalUrl.replace(/^.*\/api\/ollama/, '')}`;
+    const r = await fetch(target, {
+      method: req.method,
+      headers: { 'Content-Type': 'application/json' },
+      body: req.method === 'GET' || req.method === 'HEAD' ? undefined : JSON.stringify(req.body),
+    });
+    res.status(r.status);
+    const ct = r.headers.get('content-type');
+    if (ct) res.setHeader('Content-Type', ct);
+    const text = await r.text();
+    res.send(text);
+  } catch (err: any) {
+    res.status(502).json({ error: `Ollama unreachable: ${err.message}` });
+  }
+});
+
 export default router;

@@ -29,7 +29,7 @@ export interface ApprovalItem {
 
 export interface ThreatEntry {
   id: string;
-  source: 'sage' | 'seven' | 'user' | 'system' | 'stormologist';
+  source: 'adhd' | 'seven' | 'user' | 'system' | 'stormologist';
   level: ThreatLevel;
   gate: string;
   confidence: number;
@@ -75,13 +75,15 @@ interface ArgusState {
   fileTree: FileNode[];
   gateStats: GateStats;
 
-  // Model route (Ollama ↔ OpenRouter)
+  // Model route (Ollama → OmniRoute → OpenRouter)
   modelBackend: Backend;
   ollamaUrl: string;
   ollamaModel: string;
   openrouterUrl: string;
   openrouterModel: string;
   openrouterKey: string;
+  omnirouteUrl: string;
+  omnirouteModel: string;
   modelBusy: boolean;
 
   setActivePanel: (panel: Panel) => void;
@@ -110,6 +112,8 @@ interface ArgusState {
   setOpenrouterUrl: (url: string) => void;
   setOpenrouterModel: (model: string) => void;
   setOpenrouterKey: (key: string) => void;
+  setOmnirouteUrl: (url: string) => void;
+  setOmnirouteModel: (model: string) => void;
   setModelBusy: (busy: boolean) => void;
 }
 
@@ -127,7 +131,7 @@ const BOOT_MESSAGE: Message = {
   id: 'argus-boot',
   role: 'argus',
   content:
-    'ARGUS ONLINE.\n\nAll eyes open. Connect your MCP servers to begin. Type "attach sage" or "attach seven" to bring agents online. Type "help" for command reference.',
+    'ARGUS ONLINE.\n\nAll eyes open. Connect your MCP servers to begin. Type "attach adhd" or "attach seven" to bring agents online. Type "help" for command reference.',
   timestamp: Date.now(),
 };
 
@@ -155,10 +159,12 @@ export const useArgusStore = create<ArgusState>()(
 
       modelBackend: 'ollama',
       ollamaUrl: 'http://localhost:11434/v1',
-      ollamaModel: 'llama3.1',
+      ollamaModel: 'llama3.2:latest',
       openrouterUrl: 'https://openrouter.ai/api/v1',
-      openrouterModel: 'openai/gpt-4o-mini',
+      openrouterModel: 'meta-llama/llama-3.1-8b-instruct:free',
       openrouterKey: '',
+      omnirouteUrl: 'http://localhost:20130/v1',
+      omnirouteModel: 'auto/best-fast',
       modelBusy: false,
 
       setActivePanel: (panel) => set({ activePanel: panel }),
@@ -233,6 +239,8 @@ export const useArgusStore = create<ArgusState>()(
       setOpenrouterUrl: (url) => set({ openrouterUrl: url }),
       setOpenrouterModel: (model) => set({ openrouterModel: model }),
       setOpenrouterKey: (key) => set({ openrouterKey: key }),
+      setOmnirouteUrl: (url) => set({ omnirouteUrl: url }),
+      setOmnirouteModel: (model) => set({ omnirouteModel: model }),
       setModelBusy: (busy) => set({ modelBusy: busy }),
     }),
     {
@@ -250,6 +258,8 @@ export const useArgusStore = create<ArgusState>()(
         openrouterUrl:     s.openrouterUrl,
         openrouterModel:   s.openrouterModel,
         openrouterKey:     s.openrouterKey,
+        omnirouteUrl:      s.omnirouteUrl,
+        omnirouteModel:    s.omnirouteModel,
       }),
     }
   )

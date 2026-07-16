@@ -22,6 +22,7 @@ import brainRouter from './src/api/routes/brainRouter.js';
 import terminalRouter from './src/api/routes/terminalRouter.js';
 import githubRouter from './src/api/routes/githubRouter.js';
 import ollamaRouter from './src/api/routes/ollamaRouter.js';
+import sevenRouter from './src/api/routes/sevenRouter.js';
 import ttsRouter from './src/api/routes/ttsRouter.js';
 import rufloRouter from './src/api/routes/rufloRouter.js';
 import hermesRouter from './src/api/routes/hermesRouter.js';
@@ -66,6 +67,7 @@ const API_ROUTERS: ReadonlyArray<readonly [string, Router]> = [
   ['terminal', terminalRouter],
   ['github', githubRouter],
   ['ollama', ollamaRouter],
+  ['seven', sevenRouter],
   ['tts', ttsRouter],
   ['ruflo', rufloRouter],
   ['hermes', hermesRouter],
