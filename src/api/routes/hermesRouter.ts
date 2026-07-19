@@ -103,66 +103,66 @@ router.post('/ingest', (req, res) => {
 
 // Hermes Bridge — write messages/tasks to Claude Code's bridge DB
 const BRIDGE_DB = '/home/workspace/hermes-bridge/bridge.db';
-const BRIDGE_INBOX = '/home/workspace/hermes-bridge/inbox';
 
-function bridgeWrite(type: 'message' | 'task', payload: Record<string, unknown>) {
-  const ts = new Date().toISOString();
-  if (type === 'message') {
-    const body = String(payload.body || '');
-    const from = String(payload.from || 'hermes');
-    execSync(`python3 -c "
-import sqlite3, sys
-db = sqlite3.connect('${BRIDGE_DB}')
+const PY_INSERT_MESSAGE = `
+import sqlite3, sys, json
+args = json.loads(sys.argv[1])
+db = sqlite3.connect(args['db'])
 db.execute('INSERT INTO messages (from_agent, to_agent, body, timestamp, read) VALUES (?,?,?,?,0)',
-  ['${from}', 'mother', sys.argv[1], '${ts}'])
+  [args['from'], 'mother', args['body'], args['ts']])
 db.commit(); db.close()
-" ${JSON.stringify(body)}`);
-  } else {
-    const desc = String(payload.description || '');
-    const priority = Number(payload.priority) || 5;
-    const taskType = String(payload.type || 'action');
-    execSync(`python3 -c "
-import sqlite3, sys
-db = sqlite3.connect('${BRIDGE_DB}')
+`.trim();
+
+const PY_INSERT_TASK = `
+import sqlite3, sys, json
+args = json.loads(sys.argv[1])
+db = sqlite3.connect(args['db'])
 db.execute('INSERT INTO tasks (from_agent, to_agent, type, priority, description, status, created_at) VALUES (?,?,?,?,?,?,?)',
-  ['hermes', 'mother', sys.argv[1], ${priority}, sys.argv[2], 'pending', '${ts}'])
+  ['hermes', 'mother', args['type'], args['priority'], args['desc'], 'pending', args['ts']])
 db.commit(); db.close()
-" ${JSON.stringify(taskType)} ${JSON.stringify(desc)}`);
-  }
+`.trim();
+
+const PY_STATUS = `
+import sqlite3, sys, json
+db = sqlite3.connect(sys.argv[1])
+msgs = db.execute('SELECT COUNT(*) FROM messages WHERE read=0').fetchone()[0]
+tasks = db.execute('SELECT COUNT(*) FROM tasks WHERE status="pending"').fetchone()[0]
+print(json.dumps({'unread_messages': msgs, 'pending_tasks': tasks}))
+db.close()
+`.trim();
+
+function writeMessage(body: string, from: string) {
+  const arg = JSON.stringify({ db: BRIDGE_DB, from, body, ts: new Date().toISOString() });
+  execSync(`python3 -c ${JSON.stringify(PY_INSERT_MESSAGE)} ${JSON.stringify(arg)}`);
 }
 
-// POST /api/hermes/bridge/message — Hermes sends a note to Claude Code
+function writeTask(desc: string, type: string, priority: number) {
+  const arg = JSON.stringify({ db: BRIDGE_DB, type, priority, desc, ts: new Date().toISOString() });
+  execSync(`python3 -c ${JSON.stringify(PY_INSERT_TASK)} ${JSON.stringify(arg)}`);
+}
+
 router.post('/bridge/message', (req, res) => {
   try {
     const { body, from = 'hermes' } = req.body as { body: string; from?: string };
     if (!body) { res.status(400).json({ error: 'body required' }); return; }
-    bridgeWrite('message', { body, from });
+    writeMessage(body, from);
     res.json({ ok: true });
   } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
 
-// POST /api/hermes/bridge/task — Hermes queues an action task for Claude Code
 router.post('/bridge/task', (req, res) => {
   try {
     const { description, type = 'action', priority = 5 } = req.body as { description: string; type?: string; priority?: number };
     if (!description) { res.status(400).json({ error: 'description required' }); return; }
-    bridgeWrite('task', { description, type, priority });
+    writeTask(description, type, priority);
     res.json({ ok: true });
   } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
 
-// GET /api/hermes/bridge/status — how many unread messages/tasks are pending
 router.get('/bridge/status', (req, res) => {
   try {
-    const result = execSync(`python3 -c "
-import sqlite3, json
-db = sqlite3.connect('${BRIDGE_DB}')
-msgs = db.execute('SELECT COUNT(*) FROM messages WHERE read=0').fetchone()[0]
-tasks = db.execute('SELECT COUNT(*) FROM tasks WHERE status=\\'pending\\'').fetchone()[0]
-print(json.dumps({'unread_messages': msgs, 'pending_tasks': tasks}))
-db.close()
-"`).toString().trim();
-    res.json(JSON.parse(result));
+    const out = execSync(`python3 -c ${JSON.stringify(PY_STATUS)} ${JSON.stringify(BRIDGE_DB)}`).toString().trim();
+    res.json(JSON.parse(out));
   } catch(e: any) { res.status(500).json({ error: e.message }); }
 });
 
