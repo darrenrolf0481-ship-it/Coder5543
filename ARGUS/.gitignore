@@ -1,2 +1,5 @@
 node_modules
 dist
+standalone
+supervisor-status.json
+supervisor.log

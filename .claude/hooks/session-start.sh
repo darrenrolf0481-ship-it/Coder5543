@@ -11,7 +11,7 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
-ARGUS_DIR="/home/user/ARGUS"
+ARGUS_DIR="$CLAUDE_PROJECT_DIR/ARGUS"
 
 if [ ! -d "$ARGUS_DIR" ]; then
   exit 0
